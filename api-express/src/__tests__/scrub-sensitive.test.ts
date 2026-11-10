@@ -101,3 +101,26 @@ describe('scrubString', () => {
     );
   });
 });
+
+describe('contenu des fichiers déposés', () => {
+  const contenu = Buffer.from('%PDF-1.4 contenu du rapport').toString('base64');
+  const contenuMasque = `[contenu masqué : ${contenu.length} caractères]`;
+
+  test('remplace le contenu par sa taille, garde le content_type', () => {
+    expect(scrubSensitive({ file: { content_type: 'application/pdf', content: contenu } })).toEqual({
+      file: { content_type: 'application/pdf', content: contenuMasque },
+    });
+    expect(scrubSensitive({ files: [{ content_type: 'image/png', content: contenu }] })).toEqual({
+      files: [{ content_type: 'image/png', content: contenuMasque }],
+    });
+  });
+
+  test('masque aussi le contenu du body sérialisé en chaîne', () => {
+    const scrubbed = scrubString(
+      JSON.stringify({ file: { content_type: 'application/pdf', content: contenu } })
+    );
+    expect(scrubbed).not.toContain(contenu);
+    expect(scrubbed).toContain(contenuMasque);
+    expect(scrubbed).toContain('"content_type":"application/pdf"');
+  });
+});
