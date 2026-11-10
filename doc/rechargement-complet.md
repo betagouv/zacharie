@@ -51,10 +51,12 @@ changement de version du stockage).
 `requestCarcassesReload(userId)` (`api-express/src/utils/carcasses-reload.ts`) incrémente
 `User.carcasses_reload_version`. Il est appelé :
 
-- après chaque écriture (création, modification, suppression) d'une relation, sans condition, avec
-  l'`owner_id` de la relation écrite. **Toute écriture d'une relation
-  `CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY` appelle `requestCarcassesReload(owner_id)`.** Les relations
-  partenaires (`CAN_TRANSMIT_CARCASSES_TO_ENTITY`) ne changent pas le périmètre des carcasses.
+- après chaque écriture (création, modification, suppression) d'une relation, avec l'`owner_id` de
+  la relation écrite. **Toute écriture d'une relation `CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY` doit
+  appeler `requestCarcassesReload(owner_id)`.** L'appel est fait sans condition sur le type ni sur le
+  statut de la relation : une relation partenaire (`CAN_TRANSMIT_CARCASSES_TO_ENTITY`) ou une demande
+  de rattachement en attente déclenche aussi un rechargement, alors qu'elle ne change pas le
+  périmètre. Coût accepté : un rechargement de trop, jamais une donnée fausse.
   Exceptions : la relation créée avec une entité neuve (création d'une association de chasse,
   pré-enregistrement d'un destinataire) ou pour un compte neuf (invitation d'un nouveau membre) :
   l'entité n'a encore aucune fiche, ou le compte n'a encore aucun appareil ;
@@ -62,10 +64,18 @@ changement de version du stockage).
   (`POST /admin/user/:user_id/carcasses-reload`), quand un seul compte a des données locales fausses :
   pas besoin d'avancer la constante globale.
 
-## Limite connue
+## Limites connues
 
-Une fiche synchronisée sans carcasse disparaît de l'appareil lors d'un rechargement complet : aucune
-route ne la renvoie. Correction prévue côté serveur, dans une autre PR.
+- **Pas de transaction.** L'écriture de la relation et l'incrément de la version sont deux requêtes
+  séparées. Si l'incrément échoue après l'écriture, aucun rechargement n'a lieu et rien ne le relance.
+  Correction : bouton superadmin « Recharger ses données ».
+- **Version qui change pendant un chargement paginé.** Le client lit `fullReload` et `reloadVersion`
+  sur la page 0 seulement. Si la version augmente entre la page 0 (delta) et une page suivante, cette
+  page est calculée sans filtre `updated_at`, avec le même décalage : le résultat de ce pull est
+  incomplet. Le client stocke la version de la page 0, donc le pull suivant recharge tout et corrige.
+- **Fiche sans carcasse.** Le périmètre se lit sur les carcasses. Une fiche synchronisée sans carcasse
+  n'est renvoyée qu'à son créateur et à son examinateur initial. Pour les autres utilisateurs (premier
+  détenteur, par exemple), elle disparaît de l'appareil lors d'un rechargement complet.
 
 ## Quand avancer `FORCE_FULL_RELOAD_AFTER`
 
