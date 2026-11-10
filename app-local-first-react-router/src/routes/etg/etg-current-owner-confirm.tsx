@@ -142,6 +142,13 @@ export default function CurrentOwnerConfirm() {
     nextOwnerEntity,
   ]);
 
+  const renvoiModal = useRef(
+    createModal({
+      id: 'etg-renvoi-modal',
+      isOpenedByDefault: false,
+    })
+  ).current;
+
   if (!currentTransmission.next_owner_role) {
     return null;
   }
@@ -387,13 +394,6 @@ export default function CurrentOwnerConfirm() {
   if (!canConfirmCurrentOwner) {
     return null;
   }
-
-  const renvoiModal = useRef(
-    createModal({
-      id: 'etg-renvoi-modal',
-      isOpenedByDefault: false,
-    })
-  ).current;
 
   function handleRenvoi() {
     const nextTransmission: CarcasseTransmission = {
