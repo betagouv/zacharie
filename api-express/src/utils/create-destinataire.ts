@@ -160,15 +160,17 @@ export async function createDestinataire(
     });
   }
 
-  const ownerRelation = await prisma.entityAndUserRelations.create({
-    data: {
-      owner_id: ownerUser.id,
-      entity_id: createdEntity.id,
-      relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-      status: EntityRelationStatus.ADMIN,
-    },
+  await prisma.$transaction(async (tx) => {
+    const ownerRelation = await tx.entityAndUserRelations.create({
+      data: {
+        owner_id: ownerUser.id,
+        entity_id: createdEntity.id,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.ADMIN,
+      },
+    });
+    await requestCarcassesReloadIfAccessChanged(null, ownerRelation, tx);
   });
-  await requestCarcassesReloadIfAccessChanged(null, ownerRelation);
 
   await sendEmail({
     emails: ['contact@zacharie.beta.gouv.fr'],

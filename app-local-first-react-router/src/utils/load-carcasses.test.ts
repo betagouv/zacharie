@@ -156,4 +156,25 @@ describe('loadCarcasses — rechargement complet', () => {
     expect(Object.keys(mocks.state.users).sort()).toEqual(['U-DETENTEUR', 'U-SERVEUR', 'U-SORTI']);
     expect(Object.keys(mocks.state.entities).sort()).toEqual(['E-MA-RELATION', 'E-SERVEUR', 'E-SORTIE']);
   });
+
+  it('rechargement complet demandé entre deux pages : reprend à la première page en rechargement complet', async () => {
+    const carcassePaths: Array<string> = [];
+    let reloadRequested = false;
+    mocks.get.mockImplementation(({ path, query }: { path: string; query?: { page: string } }) => {
+      if (path === 'now') return Promise.resolve({ ok: true, data: 2000 });
+      if (path === '/carcasse/count') return Promise.resolve({ ok: false });
+      carcassePaths.push(query!.page);
+      const response = serverResponse(reloadRequested);
+      // page 0 en delta, puis la demande de rechargement arrive : la page 1 est en rechargement complet
+      if (!reloadRequested && query!.page === '0') {
+        reloadRequested = true;
+        return Promise.resolve({ ...response, data: { ...response.data, hasMore: true } });
+      }
+      return Promise.resolve(response);
+    });
+    await loadCarcasses();
+    expect(carcassePaths).toEqual(['0', '1', '0']);
+    // traité comme un rechargement complet : la carcasse sortie du périmètre est retirée
+    expect(Object.keys(mocks.state.carcasses).sort()).toEqual(['C-REFUSEE', 'C-SERVEUR']);
+  });
 });

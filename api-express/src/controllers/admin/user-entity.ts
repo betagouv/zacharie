@@ -85,8 +85,11 @@ router.post(
       if (!entityHasUsers) nextEntityRelation.status = EntityRelationStatus.ADMIN;
     }
 
-    const relation = await prisma.entityAndUserRelations.create({ data: nextEntityRelation });
-    await requestCarcassesReloadIfAccessChanged(null, relation);
+    const relation = await prisma.$transaction(async (tx) => {
+      const created = await tx.entityAndUserRelations.create({ data: nextEntityRelation });
+      await requestCarcassesReloadIfAccessChanged(null, created, tx);
+      return created;
+    });
 
     if (relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
       await linkBrevoCompanyToContact(entity, owner);
@@ -115,11 +118,14 @@ router.put(
       return;
     }
 
-    const relation = await prisma.entityAndUserRelations.update({
-      where: { id: existingEntityRelation.id },
-      data: body.status ? { status: body.status } : {},
+    const relation = await prisma.$transaction(async (tx) => {
+      const updated = await tx.entityAndUserRelations.update({
+        where: { id: existingEntityRelation.id },
+        data: body.status ? { status: body.status } : {},
+      });
+      await requestCarcassesReloadIfAccessChanged(existingEntityRelation, updated, tx);
+      return updated;
     });
-    await requestCarcassesReloadIfAccessChanged(existingEntityRelation, relation);
 
     if (relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
       await linkBrevoCompanyToContact(entity, owner);
@@ -141,8 +147,10 @@ router.delete(
     });
 
     if (existingEntityRelation) {
-      await prisma.entityAndUserRelations.delete({ where: { id: existingEntityRelation.id } });
-      await requestCarcassesReloadIfAccessChanged(existingEntityRelation, null);
+      await prisma.$transaction(async (tx) => {
+        await tx.entityAndUserRelations.delete({ where: { id: existingEntityRelation.id } });
+        await requestCarcassesReloadIfAccessChanged(existingEntityRelation, null, tx);
+      });
       if (existingEntityRelation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
         await unlinkBrevoCompanyToContact(entity, owner);
       }

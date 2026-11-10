@@ -43,4 +43,11 @@ describe('requestCarcassesReloadIfAccessChanged', () => {
       expect(call[0].data.carcasses_reload_requested_at).toBeInstanceOf(Date);
     }
   });
+
+  test('écrit la demande avec le client de la transaction de la relation', async () => {
+    const tx = { user: { update: vi.fn() } };
+    await requestCarcassesReloadIfAccessChanged(null, rel(MEMBER), tx as any);
+    expect(tx.user.update).toHaveBeenCalledTimes(1);
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
 });

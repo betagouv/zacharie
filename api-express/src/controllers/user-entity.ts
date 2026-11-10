@@ -240,10 +240,11 @@ router.post(
         if (!entityHasUsers) nextEntityRelation.status = EntityRelationStatus.ADMIN;
       }
 
-      const relation = await prisma.entityAndUserRelations.create({
-        data: nextEntityRelation,
+      const relation = await prisma.$transaction(async (tx) => {
+        const created = await tx.entityAndUserRelations.create({ data: nextEntityRelation });
+        await requestCarcassesReloadIfAccessChanged(null, created, tx);
+        return created;
       });
-      await requestCarcassesReloadIfAccessChanged(null, relation);
 
       if (relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
         await linkBrevoCompanyToContact(entity, req.user);
@@ -396,13 +397,14 @@ router.put(
         }
       }
 
-      const relation = await prisma.entityAndUserRelations.update({
-        where: {
-          id: existingEntityRelation.id,
-        },
-        data: nextEntityRelation,
+      const relation = await prisma.$transaction(async (tx) => {
+        const updated = await tx.entityAndUserRelations.update({
+          where: { id: existingEntityRelation.id },
+          data: nextEntityRelation,
+        });
+        await requestCarcassesReloadIfAccessChanged(existingEntityRelation, updated, tx);
+        return updated;
       });
-      await requestCarcassesReloadIfAccessChanged(existingEntityRelation, relation);
 
       if (relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
         await linkBrevoCompanyToContact(entity, req.user);
@@ -496,12 +498,10 @@ router.delete(
           });
           return;
         }
-        await prisma.entityAndUserRelations.delete({
-          where: {
-            id: existingEntityRelation.id,
-          },
+        await prisma.$transaction(async (tx) => {
+          await tx.entityAndUserRelations.delete({ where: { id: existingEntityRelation.id } });
+          await requestCarcassesReloadIfAccessChanged(existingEntityRelation, null, tx);
         });
-        await requestCarcassesReloadIfAccessChanged(existingEntityRelation, null);
         if (softDeleteEntity) {
           await prisma.entity.update({
             where: { id: entity.id },

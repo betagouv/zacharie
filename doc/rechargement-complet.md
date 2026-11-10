@@ -43,7 +43,9 @@ corrigée en base sans que son `updated_at` bouge, n'est jamais renvoyée : la c
   `CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY`, statut `ADMIN` ou `MEMBER`). Sans ça, les carcasses déjà
   existantes d'une entité rejointe n'arrivent jamais (leur `updated_at` ne bouge pas), et celles d'une
   entité quittée restent sur l'appareil. **Toute nouvelle écriture de `EntityAndUserRelations` doit
-  appeler ce helper.**
+  appeler ce helper, dans la même transaction (`prisma.$transaction`, client `tx` passé au helper)** :
+  sinon un échec après l'écriture de la relation perd la demande, et une nouvelle tentative ne trouve
+  plus rien à changer.
 - par un superadmin, bouton « Recharger ses données » sur la page de l'utilisateur
   (`POST /admin/user/:user_id/carcasses-reload`), quand un seul compte a des données locales fausses :
   pas besoin d'avancer la constante globale.

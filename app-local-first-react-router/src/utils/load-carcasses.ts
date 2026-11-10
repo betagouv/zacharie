@@ -109,6 +109,23 @@ export async function loadCarcasses() {
       if (signal.aborted) return;
       if (!res.ok || !res.data) return null;
 
+      // Rechargement complet demandé entre deux pages : les pages suivantes portent tout le périmètre,
+      // avec un offset qui ne correspond plus aux pages déjà lues. On recommence à la première page.
+      if (page > 0 && res.data.fullReload !== fullReload) {
+        for (const list of [
+          carcassesFetched,
+          feisFetched,
+          usersFetched,
+          entitiesFetched,
+          carcasseModifRequests,
+          carcassesIntermediairesFetched,
+        ]) {
+          list.length = 0;
+        }
+        page = 0;
+        continue;
+      }
+
       carcassesFetched.push(...(res.data.carcasses || []));
       feisFetched.push(...(res.data.feis || []));
       usersFetched.push(...(res.data.users || []));

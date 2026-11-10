@@ -56,7 +56,11 @@ import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
 import { z } from 'zod';
 import { normalizeNumeroCfei, sanitize } from '~/utils/sanitize';
 import { inviteUser } from '~/utils/invite-user';
-import { requestCarcassesReload, requestCarcassesReloadIfAccessChanged } from '~/utils/carcasses-reload';
+import {
+  givesCarcassesAccess,
+  requestCarcassesReload,
+  requestCarcassesReloadIfAccessChanged,
+} from '~/utils/carcasses-reload';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
 // Schemas for validation
@@ -520,13 +524,17 @@ router.post(
         await prisma.password.delete({
           where: { id: existingPassword.id },
         });
-        const deletedRelations = await prisma.entityAndUserRelations.deleteMany({
-          where: {
+        // une invitation expirée retire l'utilisateur de ses entités : rechargement seulement s'il en
+        // était membre (une demande REQUESTED ne donnait accès à aucune carcasse)
+        await prisma.$transaction(async (tx) => {
+          const relationsWhere = {
             owner_id: user.id,
             relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-          },
+          };
+          const relations = await tx.entityAndUserRelations.findMany({ where: relationsWhere });
+          await tx.entityAndUserRelations.deleteMany({ where: relationsWhere });
+          if (relations.some(givesCarcassesAccess)) await requestCarcassesReload(user.id, tx);
         });
-        if (deletedRelations.count > 0) await requestCarcassesReload(user.id);
         res.status(400).send({
           ok: false,
           data: { user: null },
@@ -1253,15 +1261,17 @@ router.post(
       },
     });
     if (!existingRelation) {
-      const createdRelation = await prisma.entityAndUserRelations.create({
-        data: {
-          owner_id: newUser.id,
-          entity_id: entity_id,
-          status: EntityRelationStatus.MEMBER,
-          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-        },
+      await prisma.$transaction(async (tx) => {
+        const createdRelation = await tx.entityAndUserRelations.create({
+          data: {
+            owner_id: newUser.id,
+            entity_id: entity_id,
+            status: EntityRelationStatus.MEMBER,
+            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+          },
+        });
+        await requestCarcassesReloadIfAccessChanged(null, createdRelation, tx);
       });
-      await requestCarcassesReloadIfAccessChanged(null, createdRelation);
     }
 
     await inviteUser(newUser, user, entity);

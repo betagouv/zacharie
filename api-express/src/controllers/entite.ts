@@ -292,15 +292,18 @@ router.post(
 
     createdEntity = await updateOrCreateBrevoCompany(createdEntity);
 
-    const createdEntityRelation = await prisma.entityAndUserRelations.create({
-      data: {
-        owner_id: user.id,
-        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-        entity_id: createdEntity.id,
-        status: EntityRelationStatus.ADMIN,
-      },
+    const createdEntityRelation = await prisma.$transaction(async (tx) => {
+      const created = await tx.entityAndUserRelations.create({
+        data: {
+          owner_id: user.id,
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+          entity_id: createdEntity.id,
+          status: EntityRelationStatus.ADMIN,
+        },
+      });
+      await requestCarcassesReloadIfAccessChanged(null, created, tx);
+      return created;
     });
-    await requestCarcassesReloadIfAccessChanged(null, createdEntityRelation);
 
     await sendEmail({
       emails: ['contact@zacharie.beta.gouv.fr'],
