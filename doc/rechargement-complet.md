@@ -95,6 +95,8 @@ un chasseur en fait le plus souvent une seule. La charge arrive sur le serveur a
 pas en une fois.
 
 Pour une correction en place sur quelques carcasses qui restent dans le périmètre, mettre
-`updated_at = now()` dans le même script SQL suffit (le `@updatedAt` de Prisma ne joue pas en SQL
-brut) : elles repartent dans le delta. Cela ne marche pas pour une carcasse qui sort du périmètre ou
+`updated_at = clock_timestamp()` et `version = version + 1` dans le même script SQL suffit (le
+`@updatedAt` de Prisma ne joue pas en SQL brut) : elles repartent dans le delta. Pas `now()` : il
+renvoie l'heure du début de la transaction, et un client qui pull entre ce début et le `COMMIT` ne
+verra jamais la correction. Faire le `COMMIT` tout de suite après l'`UPDATE`. Cela ne marche pas pour une carcasse qui sort du périmètre ou
 qui est supprimée en dur : il faut alors avancer la constante.
