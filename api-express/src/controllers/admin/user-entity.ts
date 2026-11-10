@@ -7,6 +7,7 @@ import type { RequestWithUser } from '~/types/request';
 import type { UserEntityResponse } from '~/types/responses';
 import { linkBrevoCompanyToContact, unlinkBrevoCompanyToContact } from '~/third-parties/brevo';
 import { getEntity, userEntitySchema } from '~/controllers/user-entity';
+import { requestCarcassesReload } from '~/utils/carcasses-reload';
 
 const router: express.Router = express.Router();
 
@@ -85,6 +86,7 @@ router.post(
     }
 
     const relation = await prisma.entityAndUserRelations.create({ data: nextEntityRelation });
+    await requestCarcassesReload(relation.owner_id);
 
     if (relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
       await linkBrevoCompanyToContact(entity, owner);
@@ -117,6 +119,7 @@ router.put(
       where: { id: existingEntityRelation.id },
       data: body.status ? { status: body.status } : {},
     });
+    await requestCarcassesReload(relation.owner_id);
 
     if (relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
       await linkBrevoCompanyToContact(entity, owner);
@@ -139,6 +142,7 @@ router.delete(
 
     if (existingEntityRelation) {
       await prisma.entityAndUserRelations.delete({ where: { id: existingEntityRelation.id } });
+      await requestCarcassesReload(existingEntityRelation.owner_id);
       if (existingEntityRelation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
         await unlinkBrevoCompanyToContact(entity, owner);
       }

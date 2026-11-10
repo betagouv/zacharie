@@ -18,6 +18,7 @@ import {
 import sendNotificationToUser from '~/service/notifications';
 import { FEDERATION_ENTITY_TYPES } from '~/utils/federation-stats';
 import { z } from 'zod';
+import { requestCarcassesReload } from '~/utils/carcasses-reload';
 
 export const userEntitySchema = z.object({
   owner_id: z.string(),
@@ -242,6 +243,7 @@ router.post(
       const relation = await prisma.entityAndUserRelations.create({
         data: nextEntityRelation,
       });
+      await requestCarcassesReload(relation.owner_id);
 
       if (relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
         await linkBrevoCompanyToContact(entity, req.user);
@@ -400,6 +402,7 @@ router.put(
         },
         data: nextEntityRelation,
       });
+      await requestCarcassesReload(relation.owner_id);
 
       if (relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
         await linkBrevoCompanyToContact(entity, req.user);
@@ -498,6 +501,7 @@ router.delete(
             id: existingEntityRelation.id,
           },
         });
+        await requestCarcassesReload(existingEntityRelation.owner_id);
         if (softDeleteEntity) {
           await prisma.entity.update({
             where: { id: entity.id },

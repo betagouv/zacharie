@@ -56,6 +56,7 @@ import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
 import { z } from 'zod';
 import { normalizeNumeroCfei, sanitize } from '~/utils/sanitize';
 import { inviteUser } from '~/utils/invite-user';
+import { requestCarcassesReload } from '~/utils/carcasses-reload';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
 // Schemas for validation
@@ -525,6 +526,7 @@ router.post(
             relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
           },
         });
+        await requestCarcassesReload(user.id);
         res.status(400).send({
           ok: false,
           data: { user: null },
@@ -1259,6 +1261,7 @@ router.post(
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         },
       });
+      await requestCarcassesReload(newUser.id);
     }
 
     await inviteUser(newUser, user, entity);
