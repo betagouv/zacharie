@@ -14,6 +14,7 @@ import {
 import prisma from '~/prisma';
 import { avecNombreLarves } from '~/prisma-omit';
 import { catchErrors } from '~/middlewares/errors';
+import { uploadRateLimit } from '~/middlewares/upload-rate-limit';
 import { getArchivedOrFreshFtpPdf } from '~/utils/trichine-ftp-document';
 import {
   DOCUMENT_CONTENT_TYPE_BY_EXTENSION,
@@ -1014,6 +1015,7 @@ const documentSchema = z.object({
 router.post(
   '/pool/:pool_id/documents',
   passport.authenticate('user', { session: false }),
+  uploadRateLimit,
   catchErrors(async (req: RequestWithUser, res: express.Response) => {
     const context = await guardLabo(req, res);
     if (!context) return;
@@ -1093,6 +1095,7 @@ async function findEchantillonForLabo(
 router.post(
   '/echantillon/:echantillon_id/documents',
   passport.authenticate('user', { session: false }),
+  uploadRateLimit,
   catchErrors(async (req: RequestWithUser, res: express.Response) => {
     const context = await guardLabo(req, res);
     if (!context) return;
@@ -1160,6 +1163,7 @@ const photosSchema = z.object({
 router.post(
   '/ftp/:ftp_id/photos',
   passport.authenticate('user', { session: false }),
+  uploadRateLimit,
   catchErrors(async (req: RequestWithUser, res: express.Response) => {
     const context = await guardLabo(req, res);
     if (!context) return;
