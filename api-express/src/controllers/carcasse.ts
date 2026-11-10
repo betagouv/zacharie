@@ -120,16 +120,29 @@ router.get(
     // Modif requests are loaded BY carcasse (not embedded): the client keys its full-history map by
     // zacharie_carcasse_id. Every modif mutation bumps its carcasse's updated_at, so the carcasses in
     // this delta carry the full set of modif requests that changed.
-    const [users, feis, carcassesIntermediaires, carcasseModifRequests] = await Promise.all([
-      prisma.user.findMany({ where: { id: { in: [...userIds].filter(Boolean) } }, select: userFeiSelect }),
-      prisma.fei.findMany({ where: { numero: { in: [...feiNumeros].filter(Boolean) } } }),
-      prisma.carcasseIntermediaire.findMany({
-        where: { zacharie_carcasse_id: { in: [...carcassesIds].filter(Boolean) } },
-      }),
-      prisma.carcasseModificationRequest.findMany({
-        where: { zacharie_carcasse_id: { in: [...carcassesIds].filter(Boolean) } },
-      }),
-    ]);
+    // Le périmètre se lit sur les carcasses : une fiche sans carcasse n'y entre pas. Ses rattachés
+    // directs la reçoivent quand même (une seule fois, en première page), sinon elle disparaît de
+    // leur appareil après une déconnexion.
+    const emptyFeisWhere: Prisma.FeiWhereInput = {
+      Carcasses: { none: {} },
+      OR: [{ created_by_user_id: req.user.id }, { examinateur_initial_user_id: req.user.id }],
+    };
+    if (!includeDeleted) emptyFeisWhere.deleted_at = null;
+    if (afterDate) emptyFeisWhere.updated_at = { gte: afterDate };
+
+    const [users, feisWithCarcasses, emptyFeis, carcassesIntermediaires, carcasseModifRequests] =
+      await Promise.all([
+        prisma.user.findMany({ where: { id: { in: [...userIds].filter(Boolean) } }, select: userFeiSelect }),
+        prisma.fei.findMany({ where: { numero: { in: [...feiNumeros].filter(Boolean) } } }),
+        parsedPage === 0 ? prisma.fei.findMany({ where: emptyFeisWhere }) : [],
+        prisma.carcasseIntermediaire.findMany({
+          where: { zacharie_carcasse_id: { in: [...carcassesIds].filter(Boolean) } },
+        }),
+        prisma.carcasseModificationRequest.findMany({
+          where: { zacharie_carcasse_id: { in: [...carcassesIds].filter(Boolean) } },
+        }),
+      ]);
+    const feis = [...feisWithCarcasses, ...emptyFeis];
 
     for (const intermediaire of carcassesIntermediaires) {
       entityIds.add(intermediaire.intermediaire_entity_id!);
