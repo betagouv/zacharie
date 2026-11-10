@@ -17,8 +17,10 @@ import { catchErrors } from '~/middlewares/errors';
 import { getArchivedOrFreshFtpPdf } from '~/utils/trichine-ftp-document';
 import {
   DOCUMENT_CONTENT_TYPE_BY_EXTENSION,
+  MAX_PHOTOS_PAR_DEPOT,
   storeTrichineDocument,
   uploadedFileSchema,
+  uploadedPhotoSchema,
 } from '~/utils/trichine-document-upload';
 import type { RequestWithUser } from '~/types/request';
 import { capture } from '~/third-parties/sentry';
@@ -1005,7 +1007,7 @@ router.post(
 /* -------------------------------------------------------------------------- */
 
 const documentSchema = z.object({
-  type: z.string().optional(),
+  type: z.enum([TrichineDocumentType.RAPPORT_COFRAC, TrichineDocumentType.AUTRE]).optional(),
   file: uploadedFileSchema,
 });
 
@@ -1151,7 +1153,7 @@ router.get(
 );
 
 const photosSchema = z.object({
-  files: z.array(uploadedFileSchema).min(1),
+  files: z.array(uploadedPhotoSchema).min(1).max(MAX_PHOTOS_PAR_DEPOT),
 });
 
 // LVD : upload des photographies de larves sur la FTP de confirmation à destination du LNR
