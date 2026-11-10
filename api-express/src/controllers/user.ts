@@ -1261,7 +1261,6 @@ router.post(
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         },
       });
-      await requestCarcassesReload(newUser.id);
     }
 
     await inviteUser(newUser, user, entity);
