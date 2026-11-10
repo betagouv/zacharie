@@ -79,6 +79,10 @@ if (viteDevServer) {
 } else {
   // Vite fingerprints its assets so we can cache forever.
   app.use('/assets', express.static('build/assets', { immutable: true, maxAge: '1y' }));
+  // Un fichier d'un ancien build (onglet ouvert avant un déploiement) n'existe plus : on répond 404,
+  // pas index.html. Sinon le navigateur reçoit du HTML à la place d'un JS, et le service worker le
+  // met en cache sous l'URL du JS.
+  app.use('/assets', (req, res) => res.status(404).end());
 }
 
 // Universal Links (iOS) & App Links (Android)
