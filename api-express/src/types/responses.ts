@@ -221,6 +221,23 @@ export interface AdminUserLockoutInfo {
   last_failure_at: string | null;
 }
 
+export interface AdminInboxResponse {
+  ok: boolean;
+  data: null | {
+    en_attente_activation: number;
+    cfei_introuvable: number;
+    onboarding_incomplet: number;
+    comptes_bloques: Array<{
+      id: string;
+      prenom: string | null;
+      nom_de_famille: string | null;
+      email: string;
+    }>;
+    entites_non_pretes: number;
+  };
+  error: string;
+}
+
 export interface AdminUserDataResponse {
   ok: boolean;
   data: null | {
