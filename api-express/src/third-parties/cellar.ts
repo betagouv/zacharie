@@ -1,4 +1,10 @@
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  NoSuchKey,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import dayjs from 'dayjs';
 import { CELLAR_BUCKET, CELLAR_HOST, CELLAR_KEY_ID, CELLAR_KEY_SECRET } from '~/config';
@@ -58,15 +64,17 @@ export async function uploadToCellar({
   return key;
 }
 
-// Renvoie null si l'objet n'existe pas (clé obsolète, bucket vidé...)
+// Renvoie null si l'objet n'existe pas (clé obsolète, bucket vidé...).
+// Toute autre erreur (réseau, droits, panne) remonte en 502 au handler global, qui la capture dans Sentry.
 export async function getFromCellar(key: string): Promise<Buffer | null> {
   try {
     const response = await getClient().send(new GetObjectCommand({ Bucket: CELLAR_BUCKET, Key: key }));
     if (!response.Body) return null;
     const bytes = await response.Body.transformToByteArray();
     return Buffer.from(bytes);
-  } catch {
-    return null;
+  } catch (error) {
+    if (error instanceof NoSuchKey) return null;
+    throw Object.assign(new Error('Cellar indisponible'), { status: 502, cause: error });
   }
 }
 
