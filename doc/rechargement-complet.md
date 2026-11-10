@@ -54,7 +54,10 @@ changement de version du stockage).
 - après chaque écriture (création, modification, suppression) d'une relation, sans condition, avec
   l'`owner_id` de la relation écrite. **Toute écriture d'une relation
   `CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY` appelle `requestCarcassesReload(owner_id)`.** Les relations
-  partenaires (`CAN_TRANSMIT_CARCASSES_TO_ENTITY`) ne changent pas le périmètre des carcasses ;
+  partenaires (`CAN_TRANSMIT_CARCASSES_TO_ENTITY`) ne changent pas le périmètre des carcasses.
+  Exceptions : la relation créée avec une entité neuve (création d'une association de chasse,
+  pré-enregistrement d'un destinataire) ou pour un compte neuf (invitation d'un nouveau membre) :
+  l'entité n'a encore aucune fiche, ou le compte n'a encore aucun appareil ;
 - par un superadmin, bouton « Recharger ses données » sur la page de l'utilisateur
   (`POST /admin/user/:user_id/carcasses-reload`), quand un seul compte a des données locales fausses :
   pas besoin d'avancer la constante globale.
