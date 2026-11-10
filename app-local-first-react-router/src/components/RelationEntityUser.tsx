@@ -190,7 +190,8 @@ export default function RelationEntityUser({
             )}
           </div>
         )}
-        {myRelationIsPending &&
+        {/* un compte pas encore activé par l'équipe Zacharie est aussi en attente, même admin de l'entité */}
+        {(myRelationIsPending || (canHandleCarcassesForEntity && !user.activated)) &&
           !canApproveRelation &&
           relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY && (
             <p className="flex-1 self-center italic md:flex-none">En attente de validation</p>

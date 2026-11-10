@@ -19,6 +19,10 @@ import sendNotificationToUser from '~/service/notifications';
 import { FEDERATION_ENTITY_TYPES } from '~/utils/federation-stats';
 import { z } from 'zod';
 import { requestCarcassesReload } from '~/utils/carcasses-reload';
+import {
+  hasReachedMaxAssociationsDeChasse,
+  MAX_ASSOCIATIONS_DE_CHASSE_ERROR,
+} from '~/utils/associations-de-chasse-limit';
 
 export const userEntitySchema = z.object({
   owner_id: z.string(),
@@ -211,6 +215,19 @@ router.post(
           ok: false,
           data: { relation: null, entity: null },
           error: 'Vous avez déjà ajouté cette entité',
+        });
+        return;
+      }
+
+      if (
+        entity.type === EntityTypes.PREMIER_DETENTEUR &&
+        body.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY &&
+        (await hasReachedMaxAssociationsDeChasse(body.owner_id))
+      ) {
+        res.status(409).send({
+          ok: false,
+          data: { relation: null, entity: null },
+          error: MAX_ASSOCIATIONS_DE_CHASSE_ERROR,
         });
         return;
       }
