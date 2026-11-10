@@ -85,6 +85,7 @@ export async function loadCarcasses() {
 
     const lastUpdateFromServer = useZustandStore.getState().lastUpdateFromServer;
     const after = String(getDeltaAfter(lastUpdateFromServer));
+    const reloadVersion = String(useZustandStore.getState().carcassesReloadVersion);
     const carcassesFetched: CarcassesGetResponse['data']['carcasses'] = [];
     const feisFetched: CarcassesGetResponse['data']['feis'] = [];
     const carcassesIntermediairesFetched: CarcassesGetResponse['data']['carcassesIntermediaires'] = [];
@@ -94,6 +95,7 @@ export async function loadCarcasses() {
     let page = 0;
     let hasMore = true;
     let fullReload = false;
+    let receivedReloadVersion = 0;
 
     while (hasMore) {
       const res = await API.get({
@@ -103,6 +105,7 @@ export async function loadCarcasses() {
           withDeleted: 'true',
           page: `${page}`,
           limit: '5000',
+          reloadVersion,
         },
         signal,
       }).then((r) => r as CarcassesGetResponse);
@@ -116,24 +119,29 @@ export async function loadCarcasses() {
       carcasseModifRequests.push(...(res.data.carcasseModifRequests || []));
       carcassesIntermediairesFetched.push(...(res.data.carcassesIntermediaires || []));
       hasMore = res.data.hasMore;
-      if (page === 0) fullReload = res.data.fullReload;
+      if (page === 0) {
+        fullReload = res.data.fullReload;
+        receivedReloadVersion = res.data.reloadVersion;
+      }
       page += 1;
     }
 
     // Guard against logout/abort races: don't clobber a freshly-reset store.
     if (signal.aborted || !useUser.getState().user) return;
 
-    if (carcassesFetched.length === 0 && !fullReload) {
-      console.log('no carcasses fetched');
+    if (carcassesFetched.length === 0 && feisFetched.length === 0 && !fullReload) {
+      console.log('no carcasses nor feis fetched');
       useZustandStore.setState(() => ({
         lastUpdateFromServer: serverDate,
+        carcassesReloadVersion: receivedReloadVersion,
       }));
       checkLocalCarcassesIntegrity(signal);
       return;
     }
 
     // Rechargement complet : le serveur a renvoyé tout le périmètre, les copies locales absentes de
-    // la réponse sont sorties du périmètre. On ne garde que les modifications locales pas encore synchronisées.
+    // la réponse sont sorties du périmètre. On ne garde que les modifications locales pas encore synchronisées
+    // (fiches, carcasses, CarcasseIntermediaire, demandes de modification).
     const keepLocal = <T extends { is_synced: boolean }>(items: Array<T>) =>
       fullReload ? items.filter((item) => !item.is_synced) : items;
 
@@ -157,7 +165,7 @@ export async function loadCarcasses() {
     });
 
     const newFeis = mergeItems({
-      oldItems: Object.values(useZustandStore.getState().feis) || [],
+      oldItems: keepLocal(Object.values(useZustandStore.getState().feis)),
       newItems: feisFetched,
       idKey: (c) => c.numero,
     });
@@ -217,6 +225,7 @@ export async function loadCarcasses() {
       users: newUsers,
       entities: newEntities,
       lastUpdateFromServer: serverDate,
+      carcassesReloadVersion: receivedReloadVersion,
     }));
     checkLocalCarcassesIntegrity(signal);
   } finally {

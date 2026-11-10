@@ -3,7 +3,7 @@ import useZustandStore from '@app/zustand/store';
 import { useCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 import useUser from '@app/zustand/user';
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { createModal } from '@app/components/Modal';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import {
   CarcasseModificationRequestStatus,

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { createModal } from '@app/components/Modal';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { CarcasseModificationRequestStatus, CarcasseModificationRequestType } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';

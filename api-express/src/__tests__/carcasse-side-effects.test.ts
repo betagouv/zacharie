@@ -6,7 +6,13 @@ import sendNotificationToUser from '~/service/notifications';
 import { sendWebhook } from '~/utils/api';
 import { capture } from '~/third-parties/sentry';
 import { formatRenvoiExpediteurEmail } from '~/utils/formatCarcasseEmail';
-import { getEmailDeliveryFailure, sendEmail, sendTemplateEmail } from '~/third-parties/brevo';
+import {
+  getEmailDeliveryFailure,
+  sendEmail,
+  sendTemplateEmail,
+  updateBrevoETGDealPremiereFiche,
+  updateBrevoSVIDealPremiereFiche,
+} from '~/third-parties/brevo';
 import { BrevoTemplateId } from '~/third-parties/brevo-templates';
 import {
   CIRCUIT_COURT_DELIVERY_CHECK_DELAY_MS,
@@ -17,6 +23,7 @@ import {
   notifyNextOwnerUser,
   notifySviAssignment,
   runCarcasseUpdateSideEffects,
+  trackEtgFirstFei,
   webhookIntermediaireClose,
 } from '~/utils/carcasse-side-effects';
 
@@ -985,5 +992,92 @@ describe('formatSviAssignedEmail', () => {
 
     expect(prisma.entity.findUnique).not.toHaveBeenCalled();
     expect(params.entity_name).toBe('Pierre Petit');
+  });
+});
+
+// Le passage du deal Brevo en « 1ère fiche traitée / reçue » ne doit partir qu'une fois par entité,
+// pas à chaque carcasse : `at_least_one_fei_treated` sert de marqueur.
+describe('trackEtgFirstFei', () => {
+  const updatedAt = new Date('2026-11-10T10:00:00.000Z');
+  const existing = { current_owner_role: FeiOwnerRole.ETG, current_owner_entity_id: 'etg-1' };
+  const updated = { current_owner_role: FeiOwnerRole.SVI, updated_at: updatedAt };
+
+  test('updates the Brevo deal and marks the ETG on its first treated fiche', async () => {
+    vi.mocked(prisma.entity.findUnique).mockResolvedValue({
+      id: 'etg-1',
+      type: 'ETG',
+      at_least_one_fei_treated: null,
+    } as any);
+
+    await trackEtgFirstFei(existing as any, updated as any);
+
+    expect(updateBrevoETGDealPremiereFiche).toHaveBeenCalledTimes(1);
+    expect(prisma.entity.update).toHaveBeenCalledWith({
+      where: { id: 'etg-1' },
+      data: { at_least_one_fei_treated: updatedAt },
+    });
+  });
+
+  test('does nothing once the ETG already treated a fiche', async () => {
+    vi.mocked(prisma.entity.findUnique).mockResolvedValue({
+      id: 'etg-1',
+      type: 'ETG',
+      at_least_one_fei_treated: new Date('2026-01-01'),
+    } as any);
+
+    await trackEtgFirstFei(existing as any, updated as any);
+
+    expect(updateBrevoETGDealPremiereFiche).not.toHaveBeenCalled();
+    expect(prisma.entity.update).not.toHaveBeenCalled();
+  });
+});
+
+describe('notifySviAssignment — Brevo first fiche', () => {
+  const updatedAt = new Date('2026-11-10T10:00:00.000Z');
+  const makeCarcasse = (overrides: any = {}) => ({
+    zacharie_carcasse_id: `${feiNumero}_BR-A`,
+    fei_numero: feiNumero,
+    examinateur_initial_user_id: 'exam-1',
+    premier_detenteur_user_id: 'pd-1',
+    premier_detenteur_prochain_detenteur_id_cache: 'etg-1',
+    svi_entity_id: 'svi-1',
+    current_owner_entity_id: 'svi-1',
+    next_owner_role: FeiOwnerRole.SVI,
+    updated_at: updatedAt,
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    vi.mocked(prisma.user.findMany).mockResolvedValue([] as any);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: 'exam-1' } as any);
+  });
+
+  test('updates the Brevo deal and marks the SVI on its first received fiche', async () => {
+    vi.mocked(prisma.entity.findUnique).mockResolvedValue({
+      id: 'svi-1',
+      type: 'SVI',
+      at_least_one_fei_treated: null,
+    } as any);
+
+    await notifySviAssignment(makeCarcasse({ next_owner_role: null }) as any, makeCarcasse() as any);
+
+    expect(updateBrevoSVIDealPremiereFiche).toHaveBeenCalledTimes(1);
+    expect(prisma.entity.update).toHaveBeenCalledWith({
+      where: { id: 'svi-1' },
+      data: { at_least_one_fei_treated: updatedAt },
+    });
+  });
+
+  test('does nothing once the SVI already received a fiche', async () => {
+    vi.mocked(prisma.entity.findUnique).mockResolvedValue({
+      id: 'svi-1',
+      type: 'SVI',
+      at_least_one_fei_treated: new Date('2026-01-01'),
+    } as any);
+
+    await notifySviAssignment(makeCarcasse({ next_owner_role: null }) as any, makeCarcasse() as any);
+
+    expect(updateBrevoSVIDealPremiereFiche).not.toHaveBeenCalled();
+    expect(prisma.entity.update).not.toHaveBeenCalled();
   });
 });

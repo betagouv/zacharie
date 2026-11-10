@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import { CarcasseType } from '@prisma/client';
-import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { createModal } from '@app/components/Modal';
 import API from '@app/services/api';
 import type { SviCarcassesAVenirResponse, SviCarcasseAVenir } from '@api/src/types/responses';
 

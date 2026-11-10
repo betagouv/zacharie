@@ -599,6 +599,27 @@ describe('POST /user-entity/', () => {
         expect(res.body.data.relation.status).toBe(EntityRelationStatus.REQUESTED);
         expect(sendEmail).not.toHaveBeenCalled();
       });
+
+      test('un chasseur déjà rattaché à 5 associations (demandes en attente comprises) ne peut pas en rejoindre une 6e', async () => {
+        mockAssociation({ hasMembers: true });
+        vi.mocked(prisma.entityAndUserRelations.count).mockResolvedValueOnce(5);
+
+        const res = await joinRequest();
+
+        expect(res.status).toBe(409);
+        expect(res.body.error).toBe('Vous ne pouvez pas être rattaché à plus de 5 associations de chasse.');
+        expect(prisma.entityAndUserRelations.create).not.toHaveBeenCalled();
+      });
+
+      test('un chasseur rattaché à 4 associations peut en rejoindre une 5e', async () => {
+        mockAssociation({ hasMembers: true });
+        vi.mocked(prisma.entityAndUserRelations.count).mockResolvedValueOnce(4);
+
+        const res = await joinRequest();
+
+        expect(res.status).toBe(200);
+        expect(prisma.entityAndUserRelations.create).toHaveBeenCalledOnce();
+      });
     });
 
     test('REQUESTED relation by non-CHASSEUR is blocked from notifying admins', async () => {

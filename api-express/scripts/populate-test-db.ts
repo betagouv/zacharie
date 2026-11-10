@@ -822,6 +822,31 @@ Christine
       });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (ETG, PD = association)`);
     }
+    // Fiche de « Association de chasseurs » où examinateur@ n'apparaît nulle part : elle n'y a accès
+    // qu'en devenant membre de l'association.
+    if ((role as string) === 'ASSOCIATION_FICHE_EXISTANTE') {
+      const membre = users.find((user) => user.email === 'examinateur-premier-detenteur@example.fr')!;
+      const fei = await prisma.fei.create({
+        data: {
+          ...feiPremierDetenteurEstAssociation,
+          numero: 'ZACH-20250707-ASSO1-165245',
+          created_by_user_id: membre.id,
+          examinateur_initial_user_id: membre.id,
+          premier_detenteur_user_id: membre.id,
+        },
+      });
+      const carcasses = await prisma.carcasse.createMany({
+        data: getCarcasses(fei, {
+          ...ownershipValidatedByPremierDetenteur,
+          current_owner_user_id: membre.id,
+          current_owner_user_name_cache: `${membre.prenom} ${membre.nom_de_famille}`,
+          prev_owner_user_id: membre.id,
+        }),
+      });
+      console.log(
+        `Fei ${fei.numero} created with ${carcasses.count} carcasses (association, sans examinateur@)`
+      );
+    }
     if (role === FeiOwnerRole.ETG) {
       const fei = await prisma.fei.create({ data: feiValidatedByPremierDetenteur });
       const carcasses = await prisma.carcasse.createMany({
@@ -1356,6 +1381,32 @@ Christine
         await prisma.carcasse.createMany({ data: getCarcasses(fei, ownershipValidatedByExaminateur) });
       }
       console.log(`CHASSEUR_MANY_FICHES seeded: ${count} fiches À compléter`);
+    }
+    // examinateur@example.fr est rattaché au maximum d'associations de chasse (5, dont une demande en attente)
+    if ((role as string) === 'CHASSEUR_5_ASSOCIATIONS') {
+      const examinateur = users.find((u) => u.email === 'examinateur@example.fr')!;
+      for (let i = 1; i <= 5; i++) {
+        const association = await prisma.entity.create({
+          data: {
+            raison_sociale: `Association limite ${i}`,
+            nom_d_usage: `Association limite ${i}`,
+            type: EntityTypes.PREMIER_DETENTEUR,
+            zacharie_compatible: true,
+            address_ligne_1: `${i} rue des Chasseurs`,
+            code_postal: '75000',
+            ville: 'Paris',
+          },
+        });
+        await prisma.entityAndUserRelations.create({
+          data: {
+            owner_id: examinateur.id,
+            entity_id: association.id,
+            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+            status: i === 5 ? EntityRelationStatus.REQUESTED : EntityRelationStatus.ADMIN,
+          },
+        });
+      }
+      console.log('CHASSEUR_5_ASSOCIATIONS seeded: examinateur rattaché à 5 associations');
     }
     if ((role as string) === 'ETG_ALL_REFUSED_TO_SVI') {
       const fei = await prisma.fei.create({ data: feiAllRefusedByEtgToSvi });

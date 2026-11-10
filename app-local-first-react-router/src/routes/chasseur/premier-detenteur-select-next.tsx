@@ -33,7 +33,7 @@ import { getEntityDisplay } from '@app/utils/get-entity-display';
 import Button from '@codegouvfr/react-dsfr/Button';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { getCarcasseTransmission } from '@app/utils/get-carcasses-transmission';
-import { createModal, type ModalProps } from '@codegouvfr/react-dsfr/Modal';
+import { createModal, type ModalProps } from '@app/components/Modal';
 import PartenaireNouveau from '@app/components/PartenaireNouveau';
 import CCGNouveau from '@app/components/CCGNouveau';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';

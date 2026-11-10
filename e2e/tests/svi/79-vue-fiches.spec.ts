@@ -14,6 +14,11 @@ test('79 - Vue /app/svi (liste fiches) avec barre latérale de filtres', async (
   await expect(page).toHaveURL(/\/app\/svi/);
   await expect(page.getByRole('link', { name: feiId })).toBeVisible({ timeout: 10000 });
 
+  // La carte affiche le premier détenteur, pas l'ETG qui a transmis la fiche au SVI.
+  const card = page.getByRole('link', { name: feiId });
+  await expect(card).toContainText('Pierre Petit');
+  await expect(card).not.toContainText('ETG 1');
+
   // La liste des transmissions affiche désormais une barre latérale de filtres (recherche + statut).
   await expect(page.getByPlaceholder('Rechercher une fiche').first()).toBeVisible();
 });

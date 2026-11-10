@@ -16,7 +16,7 @@ import piecesList from '@app/data/svi/pieces-list.json';
 import piecesTree from '@app/data/svi/pieces-tree.json';
 import dayjs from 'dayjs';
 import InputNotEditable from '@app/components/InputNotEditable';
-import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { createModal } from '@app/components/Modal';
 import ModalTreeDisplay from '@app/components/ModalTreeDisplay';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import useUser from '@app/zustand/user';

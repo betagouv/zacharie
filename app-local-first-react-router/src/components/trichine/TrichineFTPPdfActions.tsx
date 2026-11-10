@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { createModal } from '@app/components/Modal';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import useDownloadFtpPdf from '@app/utils/download-ftp-pdf';
 
