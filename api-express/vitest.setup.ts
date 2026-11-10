@@ -63,6 +63,7 @@ vi.mock('./src/prisma', () => ({
     entityAndUserRelations: {
       findFirst: vi.fn(),
       findMany: vi.fn().mockResolvedValue([]),
+      count: vi.fn().mockResolvedValue(0),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),

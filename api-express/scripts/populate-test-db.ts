@@ -1382,6 +1382,32 @@ Christine
       }
       console.log(`CHASSEUR_MANY_FICHES seeded: ${count} fiches À compléter`);
     }
+    // examinateur@example.fr est rattaché au maximum d'associations de chasse (5, dont une demande en attente)
+    if ((role as string) === 'CHASSEUR_5_ASSOCIATIONS') {
+      const examinateur = users.find((u) => u.email === 'examinateur@example.fr')!;
+      for (let i = 1; i <= 5; i++) {
+        const association = await prisma.entity.create({
+          data: {
+            raison_sociale: `Association limite ${i}`,
+            nom_d_usage: `Association limite ${i}`,
+            type: EntityTypes.PREMIER_DETENTEUR,
+            zacharie_compatible: true,
+            address_ligne_1: `${i} rue des Chasseurs`,
+            code_postal: '75000',
+            ville: 'Paris',
+          },
+        });
+        await prisma.entityAndUserRelations.create({
+          data: {
+            owner_id: examinateur.id,
+            entity_id: association.id,
+            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+            status: i === 5 ? EntityRelationStatus.REQUESTED : EntityRelationStatus.ADMIN,
+          },
+        });
+      }
+      console.log('CHASSEUR_5_ASSOCIATIONS seeded: examinateur rattaché à 5 associations');
+    }
     if ((role as string) === 'ETG_ALL_REFUSED_TO_SVI') {
       const fei = await prisma.fei.create({ data: feiAllRefusedByEtgToSvi });
       const carcasses = await prisma.carcasse.createMany({

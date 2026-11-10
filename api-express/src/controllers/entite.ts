@@ -39,6 +39,10 @@ import { z } from 'zod';
 import createUserId from '~/utils/createUserId';
 import { inviteUser } from '~/utils/invite-user';
 import { createDestinataire, destinataireSchema } from '~/utils/create-destinataire';
+import {
+  hasReachedMaxAssociationsDeChasse,
+  MAX_ASSOCIATIONS_DE_CHASSE_ERROR,
+} from '~/utils/associations-de-chasse-limit';
 
 router.get(
   '/working-for',
@@ -282,6 +286,11 @@ router.post(
         error: '',
         data: { createdEntity: existingEntity, createdEntityRelation: relation },
       });
+      return;
+    }
+
+    if (await hasReachedMaxAssociationsDeChasse(user.id)) {
+      res.status(409).send({ ok: false, error: MAX_ASSOCIATIONS_DE_CHASSE_ERROR, data: null });
       return;
     }
 
