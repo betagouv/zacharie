@@ -56,7 +56,10 @@ changement de version du stockage).
   appeler `requestCarcassesReload(owner_id)`.** L'appel est fait sans condition sur le type ni sur le
   statut de la relation : une relation partenaire (`CAN_TRANSMIT_CARCASSES_TO_ENTITY`) ou une demande
   de rattachement en attente déclenche aussi un rechargement, alors qu'elle ne change pas le
-  périmètre. Coût accepté : un rechargement de trop, jamais une donnée fausse ;
+  périmètre. Coût accepté : un rechargement de trop, jamais une donnée fausse.
+  Exceptions : la relation créée avec une entité neuve (création d'une association de chasse,
+  pré-enregistrement d'un destinataire) ou pour un compte neuf (invitation d'un nouveau membre) :
+  l'entité n'a encore aucune fiche, ou le compte n'a encore aucun appareil ;
 - par un superadmin, bouton « Recharger ses données » sur la page de l'utilisateur
   (`POST /admin/user/:user_id/carcasses-reload`), quand un seul compte a des données locales fausses :
   pas besoin d'avancer la constante globale.
@@ -102,6 +105,8 @@ un chasseur en fait le plus souvent une seule. La charge arrive sur le serveur a
 pas en une fois.
 
 Pour une correction en place sur quelques carcasses qui restent dans le périmètre, mettre
-`updated_at = now()` dans le même script SQL suffit (le `@updatedAt` de Prisma ne joue pas en SQL
-brut) : elles repartent dans le delta. Cela ne marche pas pour une carcasse qui sort du périmètre ou
+`updated_at = clock_timestamp()` et `version = version + 1` dans le même script SQL suffit (le
+`@updatedAt` de Prisma ne joue pas en SQL brut) : elles repartent dans le delta. Pas `now()` : il
+renvoie l'heure du début de la transaction, et un client qui pull entre ce début et le `COMMIT` ne
+verra jamais la correction. Faire le `COMMIT` tout de suite après l'`UPDATE`. Cela ne marche pas pour une carcasse qui sort du périmètre ou
 qui est supprimée en dur : il faut alors avancer la constante.
