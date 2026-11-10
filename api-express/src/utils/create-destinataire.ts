@@ -18,7 +18,6 @@ import {
 import createUserId from '~/utils/createUserId';
 import { inviteUser } from '~/utils/invite-user';
 import { sanitize } from '~/utils/sanitize';
-import { requestCarcassesReload } from '~/utils/carcasses-reload';
 
 // un destinataire ne s'inscrit pas lui-même sur Zacharie : un chasseur, un ETG ou un admin
 // le pré-enregistre avec le compte de son représentant, qui reçoit une invitation.
@@ -168,7 +167,6 @@ export async function createDestinataire(
       status: EntityRelationStatus.ADMIN,
     },
   });
-  await requestCarcassesReload(ownerUser.id);
 
   await sendEmail({
     emails: ['contact@zacharie.beta.gouv.fr'],
