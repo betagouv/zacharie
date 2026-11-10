@@ -5,7 +5,6 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import dayjs from 'dayjs';
 import { CELLAR_BUCKET, CELLAR_HOST, CELLAR_KEY_ID, CELLAR_KEY_SECRET } from '~/config';
 
@@ -76,13 +75,6 @@ export async function getFromCellar(key: string): Promise<Buffer | null> {
     if (error instanceof NoSuchKey) return null;
     throw Object.assign(new Error('Cellar indisponible'), { status: 502, cause: error });
   }
-}
-
-// URL pré-signée (1h par défaut) pour un téléchargement direct par le navigateur
-export async function getCellarSignedUrl(key: string, expiresInSeconds = 3600): Promise<string> {
-  return getSignedUrl(getClient(), new GetObjectCommand({ Bucket: CELLAR_BUCKET, Key: key }), {
-    expiresIn: expiresInSeconds,
-  });
 }
 
 export async function deleteFromCellar(key: string): Promise<void> {
