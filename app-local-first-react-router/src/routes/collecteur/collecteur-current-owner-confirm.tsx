@@ -1,6 +1,6 @@
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { type ButtonProps } from '@codegouvfr/react-dsfr/Button';
-import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { createModal } from '@app/components/Modal';
 import { toast } from 'react-toastify';
 import { useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router';

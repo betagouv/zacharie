@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { EntityRelationType, EntityRelationStatus, EntityTypes, User, Prisma } from '@prisma/client';
 import type { EntityWithUserRelations } from '@api/src/types/entity';
-import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { createModal } from '@app/components/Modal';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import API from '@app/services/api';
 import { Link, useSearchParams } from 'react-router';

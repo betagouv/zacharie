@@ -30,6 +30,11 @@ export default tseslint.config(
               message:
                 'Utiliser `@app/components/Input` : il pose `type="text"` par défaut, sans quoi le piège à focus des modales DSFR plante.',
             },
+            {
+              name: '@codegouvfr/react-dsfr/Modal',
+              message:
+                'Utiliser `@app/components/Modal` : son `open()` attend que DSFR ait enregistré la modale, sinon il plante.',
+            },
           ],
         },
       ],

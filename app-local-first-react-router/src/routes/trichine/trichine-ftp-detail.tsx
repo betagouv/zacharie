@@ -5,7 +5,7 @@ import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@app/components/Input';
 import { Select } from '@codegouvfr/react-dsfr/Select';
-import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { createModal } from '@app/components/Modal';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
