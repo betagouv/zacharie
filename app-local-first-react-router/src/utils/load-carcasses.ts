@@ -123,8 +123,8 @@ export async function loadCarcasses() {
     // Guard against logout/abort races: don't clobber a freshly-reset store.
     if (signal.aborted || !useUser.getState().user) return;
 
-    if (carcassesFetched.length === 0 && !fullReload) {
-      console.log('no carcasses fetched');
+    if (carcassesFetched.length === 0 && feisFetched.length === 0 && !fullReload) {
+      console.log('no carcasses nor feis fetched');
       useZustandStore.setState(() => ({
         lastUpdateFromServer: serverDate,
       }));
