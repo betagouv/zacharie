@@ -874,7 +874,7 @@ Intégration dans `api-express/src/utils/carcasse-access.ts` + `fei-access.ts` (
   - PDF rapports COFRAC uploadés par les LVD/LNR (type `RAPPORT_COFRAC`)
   - Photographies de larves uploadées par les LVD (type `PHOTOGRAPHIE_LARVE`)
 - Convention de clé : `trichine/{type}/{annee}/{id-document}.{ext}`
-- URL pré-signée (expiration ~1h) pour téléchargement utilisateur
+- Téléchargement via l'API (droits vérifiés à chaque requête), jamais d'URL pré-signée ni publique
 
 ## 13. Roadmap d'implémentation (post-validation spec)
 
