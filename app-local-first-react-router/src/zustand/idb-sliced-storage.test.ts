@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 type Batch = { puts: Array<[IDBValidKey, unknown]>; deletes: IDBValidKey[] };
 
 const idb = new Map<IDBValidKey, unknown>();
-const failures = { read: false, write: false };
+const failures = { read: false, write: false, abortsWithoutError: 0 };
 // transactions d'écriture validées, dans l'ordre
 const batches: Batch[] = [];
 
@@ -31,6 +31,11 @@ vi.mock('idb-keyval', () => ({
   }),
   promisifyRequest: vi.fn(async (batch: Batch) => {
     if (failures.write) throw new Error('QuotaExceededError');
+    // transaction annulée par WebKit (app iOS en arrière-plan) : rejet avec null
+    if (failures.abortsWithoutError > 0) {
+      failures.abortsWithoutError--;
+      throw null;
+    }
     batches.push(batch);
     for (const [key, value] of batch.puts) idb.set(key, value);
     for (const key of batch.deletes) idb.delete(key);
@@ -51,11 +56,23 @@ const RECORD_KEYS = ['feis'];
 
 const putKeys = (batch: Batch) => batch.puts.map(([key]) => key);
 
+// environnement node : un document minimal pour la visibilité de l'app
+const fakeDocument = Object.assign(new EventTarget(), {
+  visibilityState: 'visible' as DocumentVisibilityState,
+});
+vi.stubGlobal('document', fakeDocument);
+const setVisibility = (state: DocumentVisibilityState) => {
+  fakeDocument.visibilityState = state;
+  fakeDocument.dispatchEvent(new Event('visibilitychange'));
+};
+
 beforeEach(() => {
   idb.clear();
   batches.length = 0;
   failures.read = false;
   failures.write = false;
+  failures.abortsWithoutError = 0;
+  fakeDocument.visibilityState = 'visible';
   vi.clearAllMocks();
   setLocalTeardownInProgress(false);
 });
@@ -242,5 +259,44 @@ describe('createSlicedIDBStorage', () => {
     await storage.setItem('x', { state: { feis: {}, logs: [] }, version: 11 });
     expect(idb.has('zs:feis/a')).toBe(false);
     expect(idb.get('zs:__meta__')).toEqual({ version: 11 });
+  });
+
+  it('réécrit sans alerter quand WebKit annule la transaction sans erreur', async () => {
+    const storage = createSlicedIDBStorage<State>(KEYS, RECORD_KEYS);
+    await storage.getItem('x');
+    failures.abortsWithoutError = 1;
+    await storage.setItem('x', { state: { feis: { A: 1 }, logs: [] }, version: 11 });
+
+    expect(idb.get('zs:feis/A')).toBe(1);
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(capture).not.toHaveBeenCalled();
+  });
+
+  it("attend que l'app revienne au premier plan pour réécrire après une annulation sans erreur", async () => {
+    const storage = createSlicedIDBStorage<State>(KEYS, RECORD_KEYS);
+    await storage.getItem('x');
+    fakeDocument.visibilityState = 'hidden';
+    failures.abortsWithoutError = 1;
+    const write = storage.setItem('x', { state: { feis: { A: 1 }, logs: [] }, version: 11 });
+
+    await vi.waitFor(() => expect(promisifyRequest).toHaveBeenCalledTimes(1));
+    expect(idb.has('zs:feis/A')).toBe(false);
+
+    setVisibility('visible');
+    await write;
+    expect(idb.get('zs:feis/A')).toBe(1);
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('alerte et remonte une vraie erreur si la nouvelle tentative est aussi annulée sans erreur', async () => {
+    const storage = createSlicedIDBStorage<State>(KEYS, RECORD_KEYS);
+    await storage.getItem('x');
+    failures.abortsWithoutError = 2;
+    await storage.setItem('x', { state: { feis: { A: 1 }, logs: [] }, version: 11 });
+
+    expect(toast.error).toHaveBeenCalledTimes(1);
+    expect(capture).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(capture).mock.calls[0][0]).toBeInstanceOf(Error);
+    expect(vi.mocked(capture).mock.calls[0][1]).toMatchObject({ extra: { visibilityState: 'visible' } });
   });
 });

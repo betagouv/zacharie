@@ -37,6 +37,38 @@ function writeBatch(puts: Array<[IDBValidKey, unknown]>, deletes: Array<IDBValid
   });
 }
 
+function waitUntilVisible(): Promise<void> {
+  if (document.visibilityState === 'visible') return Promise.resolve();
+  return new Promise((resolve) => {
+    const onChange = () => {
+      if (document.visibilityState !== 'visible') return;
+      document.removeEventListener('visibilitychange', onChange);
+      resolve();
+    };
+    document.addEventListener('visibilitychange', onChange);
+  });
+}
+
+// iOS WKWebView : quand l'app passe en arrière-plan, WebKit annule les transactions en cours sans
+// objet d'erreur (rejet avec null). On réessaie une fois, l'app au premier plan.
+async function writeBatchWithRetry(
+  puts: Array<[IDBValidKey, unknown]>,
+  deletes: Array<IDBValidKey>
+): Promise<void> {
+  try {
+    await writeBatch(puts, deletes);
+  } catch (error) {
+    if (error != null) throw error;
+    await waitUntilVisible();
+    if (localTeardownInProgress) return;
+    try {
+      await writeBatch(puts, deletes);
+    } catch (retryError) {
+      throw retryError ?? new Error('IndexedDB transaction aborted without error');
+    }
+  }
+}
+
 const recordKeyPrefix = (sliceKey: string) => `${PREFIX}${sliceKey}/`;
 
 function warnUserDataNotSaved() {
@@ -199,7 +231,7 @@ export function createSlicedIDBStorage<S extends Record<string, unknown>>(
     if (previous.size === 0) return;
     puts.push([META_KEY, { version: value.version }]);
     try {
-      await writeBatch(puts, deletes);
+      await writeBatchWithRetry(puts, deletes);
     } catch (error) {
       // Restore the refs so the failed slices are written again on the next setItem
       for (const [key, prevRef] of previous) prevRefs.set(key, prevRef);
@@ -208,6 +240,7 @@ export function createSlicedIDBStorage<S extends Record<string, unknown>>(
         capture(error as Error, {
           extra: {
             context: 'idb-sliced setItem',
+            visibilityState: document.visibilityState,
             slices: Object.fromEntries([...previous.keys()].map((key) => [key, describeSlice(state[key])])),
           },
         });
