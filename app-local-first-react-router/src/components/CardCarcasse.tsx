@@ -3,7 +3,8 @@ import useZustandStore from '@app/zustand/store';
 import { useCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 import useUser from '@app/zustand/user';
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { createModal } from '@app/components/Modal';
+import LazyModal from '@app/components/LazyModal';
+import { useLazyModal } from '@app/utils/use-lazy-modal';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import {
   CarcasseModificationRequestStatus,
@@ -16,10 +17,9 @@ import {
   UserRoles,
 } from '@prisma/client';
 import dayjs from 'dayjs';
-import { type ReactNode, useMemo, useRef } from 'react';
+import { type ReactNode, useMemo } from 'react';
 import { useParams } from 'react-router';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
-import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import {
   getCarcasseCardDisplay,
   type CardAccent,
@@ -49,18 +49,11 @@ export default function CardCarcasse({
   forceManquante,
   forceAccept,
 }: CardCarcasseProps) {
-  const cacasseModal = useRef(
-    createModal({
-      id: `carcasse-modal-${carcasse.zacharie_carcasse_id}`,
-      isOpenedByDefault: false,
-    })
-  ).current;
-
-  const isCarcasseModalOpen = useIsModalOpen(cacasseModal);
+  const carcasseModal = useLazyModal(`carcasse-modal-${carcasse.zacharie_carcasse_id}`);
 
   const params = useParams();
-  const feis = useZustandStore((state) => state.feis);
-  const fei = feis[params.fei_numero!];
+  // seulement la date : la fiche change à chaque carcasse ajoutée (updated_at), sans re-rendre les cartes
+  const dateMiseAMort = useZustandStore((state) => state.feis[params.fei_numero!]?.date_mise_a_mort);
   const carcassesIntermediaires = useCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id);
   const latestIntermediaire = carcassesIntermediaires[0];
   const entities = useZustandStore((state) => state.entities);
@@ -88,7 +81,7 @@ export default function CardCarcasse({
 
   let miseAMort = '';
   if (!hideDateMiseAMort) {
-    miseAMort += `Mise à mort\u00A0: ${dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')}`;
+    miseAMort += `Mise à mort\u00A0: ${dayjs(dateMiseAMort).format('DD/MM/YYYY')}`;
     if (carcasse.heure_mise_a_mort) {
       miseAMort += ` à ${carcasse.heure_mise_a_mort}`;
     }
@@ -224,7 +217,7 @@ export default function CardCarcasse({
         <button
           className="flex flex-1 flex-row items-center gap-3 border-none p-4 text-left hover:bg-transparent"
           type="button"
-          onClick={onClick ? onClick : cacasseModal.open}
+          onClick={onClick ? onClick : carcasseModal.open}
         >
           {statusIconId && (
             <span
@@ -309,26 +302,31 @@ export default function CardCarcasse({
         )}
       </div>
 
-      <cacasseModal.Component
-        size="large"
-        title={`${carcasse.espece} - N° ${carcasse.numero_bracelet}`}
-        buttons={[
-          {
-            children: 'Fermer',
-            onClick: () => cacasseModal.close(),
-          },
-        ]}
-      >
-        {isCarcasseModalOpen && (
-          <CarcasseDetails
-            carcasseId={carcasse.zacharie_carcasse_id}
-            statusNewCard={statusNewCard}
-            motifRefus={motifRefus}
-            cardDisplay={cardDisplay}
-            isEcarteePourInspection={isEcarteePourInspection}
-          />
-        )}
-      </cacasseModal.Component>
+      {carcasseModal.isMounted && (
+        <LazyModal
+          modal={carcasseModal.modal}
+          size="large"
+          title={`${carcasse.espece} - N° ${carcasse.numero_bracelet}`}
+          buttons={[
+            {
+              children: 'Fermer',
+              onClick: () => carcasseModal.close(),
+            },
+          ]}
+        >
+          {(isOpen) =>
+            isOpen && (
+              <CarcasseDetails
+                carcasseId={carcasse.zacharie_carcasse_id}
+                statusNewCard={statusNewCard}
+                motifRefus={motifRefus}
+                cardDisplay={cardDisplay}
+                isEcarteePourInspection={isEcarteePourInspection}
+              />
+            )
+          }
+        </LazyModal>
+      )}
     </>
   );
 }

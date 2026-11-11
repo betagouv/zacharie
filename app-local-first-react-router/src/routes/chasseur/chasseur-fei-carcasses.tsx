@@ -1,6 +1,6 @@
 import NouvelleCarcasse from './examinateur-carcasses-nouvelle';
 import { UserRoles } from '@prisma/client';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import Alert from '@codegouvfr/react-dsfr/Alert';
 import { createModal } from '@app/components/Modal';
@@ -14,6 +14,8 @@ import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import CardCarcasse from '@app/components/CardCarcasse';
+import LazyModal from '@app/components/LazyModal';
+import { useLazyModal } from '@app/utils/use-lazy-modal';
 import { isCarcasseDejaEnvoyee, isCarcassePriseEnChargeEnAval } from '@app/utils/carcasse-deja-envoyee';
 import type { Carcasse } from '@prisma/client';
 import { lookupAnomalie } from '@app/utils/anomalies-referentiel';
@@ -307,7 +309,9 @@ export default function CarcassesExaminateur({
   );
 }
 
-export function CarcasseExaminateur({
+// memo : ajouter une carcasse ne re-rend pas les autres cartes de la liste (les objets carcasse
+// non modifiés gardent la même référence dans le store)
+export const CarcasseExaminateur = memo(function CarcasseExaminateur({
   carcasse,
   canEditAsPremierDetenteur,
   canEditAsExaminateurInitial,
@@ -320,13 +324,8 @@ export function CarcasseExaminateur({
   const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
   const addLog = useZustandStore((state) => state.addLog);
 
-  const editModal = useRef(
-    createModal({ id: `carcasse-edit-${carcasse.zacharie_carcasse_id}`, isOpenedByDefault: false })
-  ).current;
-  const isEditModalOpen = useIsModalOpen(editModal);
-  const confirmDeleteModal = useRef(
-    createModal({ id: `carcasse-delete-${carcasse.zacharie_carcasse_id}`, isOpenedByDefault: false })
-  ).current;
+  const editModal = useLazyModal(`carcasse-edit-${carcasse.zacharie_carcasse_id}`);
+  const confirmDeleteModal = useLazyModal(`carcasse-delete-${carcasse.zacharie_carcasse_id}`);
 
   // Une carcasse prise en charge par l'aval ne se modifie ni ne se supprime plus, même si d'autres
   // carcasses de la fiche sont restées et rouvrent les droits d'édition du chasseur. Tant que la
@@ -393,51 +392,59 @@ export function CarcasseExaminateur({
         onEdit={() => editModal.open()}
         onClick={() => editModal.open()}
       />
-      <editModal.Component
-        size="large"
-        title={`${carcasse.espece || 'Carcasse'} — N° ${carcasse.numero_bracelet}`}
-        buttons={[
-          {
-            children: 'Supprimer',
-            priority: 'tertiary no outline',
-            iconId: 'fr-icon-delete-bin-line',
-            className: 'text-error-main-525',
-            doClosesModal: false,
-            // On ferme la modale d'édition avant d'ouvrir la confirmation :
-            // les modales DSFR ne s'empilent pas proprement (verrou de scroll booléen).
-            onClick: () => {
-              editModal.close();
-              confirmDeleteModal.open();
+      {editModal.isMounted && (
+        <LazyModal
+          modal={editModal.modal}
+          size="large"
+          title={`${carcasse.espece || 'Carcasse'} — N° ${carcasse.numero_bracelet}`}
+          buttons={[
+            {
+              children: 'Supprimer',
+              priority: 'tertiary no outline',
+              iconId: 'fr-icon-delete-bin-line',
+              className: 'text-error-main-525',
+              doClosesModal: false,
+              // On ferme la modale d'édition avant d'ouvrir la confirmation :
+              // les modales DSFR ne s'empilent pas proprement (verrou de scroll booléen).
+              onClick: () => {
+                editModal.close();
+                confirmDeleteModal.open();
+              },
             },
-          },
-          { children: 'Terminer', doClosesModal: true },
-        ]}
-      >
-        {isEditModalOpen && <CarcasseExamenInitialForm carcasse={carcasse} />}
-      </editModal.Component>
+            { children: 'Terminer', doClosesModal: true },
+          ]}
+        >
+          {(isOpen) => isOpen && <CarcasseExamenInitialForm carcasse={carcasse} />}
+        </LazyModal>
+      )}
 
-      <confirmDeleteModal.Component
-        title="Supprimer la carcasse"
-        buttons={[
-          { children: 'Annuler', priority: 'secondary', doClosesModal: true },
-          {
-            children: 'Supprimer',
-            priority: 'tertiary',
-            iconId: 'fr-icon-delete-bin-line',
-            className: 'bg-error-main-525 text-white',
-            doClosesModal: false,
-            onClick: handleDelete,
-          },
-        ]}
-      >
-        <p className="mb-0">
-          Voulez-vous supprimer la carcasse <strong>N° {carcasse.numero_bracelet}</strong>
-          {carcasse.espece ? ` (${carcasse.espece})` : ''}&nbsp;? Cette opération est irréversible.
-        </p>
-      </confirmDeleteModal.Component>
+      {confirmDeleteModal.isMounted && (
+        <LazyModal
+          modal={confirmDeleteModal.modal}
+          title="Supprimer la carcasse"
+          buttons={[
+            { children: 'Annuler', priority: 'secondary', doClosesModal: true },
+            {
+              children: 'Supprimer',
+              priority: 'tertiary',
+              iconId: 'fr-icon-delete-bin-line',
+              className: 'bg-error-main-525 text-white',
+              doClosesModal: false,
+              onClick: handleDelete,
+            },
+          ]}
+        >
+          {() => (
+            <p className="mb-0">
+              Voulez-vous supprimer la carcasse <strong>N° {carcasse.numero_bracelet}</strong>
+              {carcasse.espece ? ` (${carcasse.espece})` : ''}&nbsp;? Cette opération est irréversible.
+            </p>
+          )}
+        </LazyModal>
+      )}
     </>
   );
-}
+});
 
 // === Carte d'ajout : même gabarit que les cartes remplies, en squelette ===
 function AddCarcasseCard({ id, onClick }: { id: string; onClick: () => void }) {
