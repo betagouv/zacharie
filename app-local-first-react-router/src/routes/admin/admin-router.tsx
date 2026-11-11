@@ -23,6 +23,7 @@ import { TRICHINE_FEATURE_ENABLED } from '@app/utils/trichine';
 import AdminBugResolution from './bug-resolution';
 import AdminAuditLog from './audit-log';
 import AdminHistory from './history';
+import AdminStatsRef from './stats-ref';
 
 export default function RouterAdmin() {
   return (
@@ -123,6 +124,10 @@ export default function RouterAdmin() {
       <Route
         path="historique"
         element={<AdminHistory />}
+      />
+      <Route
+        path="stats-ref"
+        element={<AdminStatsRef />}
       />
     </Route>
   );

@@ -51,6 +51,7 @@ const adminSections: Array<{ title: string; links: Array<AdminNavLink> }> = [
         ? [{ to: '/app/admin/trichine', label: 'Trichine', icon: 'fr-icon-microscope-line' }]
         : []),
       { to: '/app/admin/api-keys', label: 'Clés API', icon: 'fr-icon-lock-line' },
+      { to: '/app/admin/stats-ref', label: 'Références stats', icon: 'fr-icon-bar-chart-box-line' },
     ],
   },
 ];

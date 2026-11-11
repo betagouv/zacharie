@@ -47,7 +47,7 @@ export async function populateDb(role?: FeiOwnerRole) {
     "EntityAndUserRelations", "UserRelations", "ApiKeyLog", "ApiKeyApprovalByUserOrEntity", "ApiKey",
     "Password", "Entity", "User",
     "FeiHistory", "CarcasseHistory", "CarcasseIntermediaireHistory", "UserHistory", "EntityHistory",
-    "EntityAndUserRelationsHistory"
+    "EntityAndUserRelationsHistory", "stats_ref_national"
     RESTART IDENTITY CASCADE`;
 
   /* 

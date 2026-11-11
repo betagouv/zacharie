@@ -164,6 +164,13 @@ vi.mock('./src/prisma', () => ({
       create: vi.fn(),
       findMany: vi.fn().mockResolvedValue([]),
     },
+    statsRefNational: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
   },
 }));
 
