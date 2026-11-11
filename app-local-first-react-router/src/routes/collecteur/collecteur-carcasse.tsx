@@ -15,6 +15,11 @@ import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from '@app/utils/get
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import CardCarcasse from '@app/components/CardCarcasse';
 import InputMultiSelect from '@app/components/InputMultiSelect';
+import {
+  PendingModificationBanner,
+  RequestBraceletRenameButton,
+  HistoriqueDesModifications,
+} from '@app/components/CarcasseModificationRequest';
 import type { Carcasse } from '@prisma/client';
 
 interface CarcasseIntermediaireProps {
@@ -353,14 +358,18 @@ export default function CarcasseIntermediaireComp({
 
   return (
     <>
-      <CardCarcasse
-        carcasse={carcasse}
-        forceRefus={!!refus}
-        forceManquante={!!carcasseManquante}
-        forceAccept={!!carcasseIntermediaire.check_manuel}
-        onClick={canEdit ? () => refusIntermediaireModal.open() : undefined}
-        className="[zoom:1.3] [&_.text-manquante]:text-gray-500! [&.border-manquante]:border-gray-500!"
-      />
+      {/* Bannière et carte groupées : le `gap-4` du parent ne sépare que les carcasses entre elles. */}
+      <div className="flex flex-col">
+        <CardCarcasse
+          carcasse={carcasse}
+          forceRefus={!!refus}
+          forceManquante={!!carcasseManquante}
+          forceAccept={!!carcasseIntermediaire.check_manuel}
+          onClick={canEdit ? () => refusIntermediaireModal.open() : undefined}
+          className="[zoom:1.3] [&_.text-manquante]:text-gray-500! [&.border-manquante]:border-gray-500!"
+        />
+        <PendingModificationBanner carcasse={carcasse} />
+      </div>
       {canEdit && (
         <refusIntermediaireModal.Component
           title={
@@ -423,6 +432,8 @@ export default function CarcasseIntermediaireComp({
                   ))}
                 </div>
               )}
+              {/* Historique affiché dans la modale pour rester attaché à la carcasse en cours. */}
+              <HistoriqueDesModifications carcasse={carcasse} />
               <div className="mt-4">
                 {/* cutsom radio buttons en reprenant le code de @codegouvfr/react-dsfr/RadioButtons pour y insérer un input pour le nombre d'animaux acceptés */}
                 <fieldset className="fr-fieldset">
@@ -588,6 +599,16 @@ export default function CarcasseIntermediaireComp({
                       >
                         {carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse manquante' : 'Lot manquant'}
                       </label>
+                    </div>
+
+                    {/* Corriger le numéro de marquage : la correction est appliquée tout de suite,
+                        l'examinateur initial en est seulement informé. */}
+                    <div className="fr-mt-2w">
+                      <RequestBraceletRenameButton
+                        carcasse={carcasse}
+                        requestedByEntityId={intermediaire.intermediaire_entity_id}
+                        onSubmitted={() => refusIntermediaireModal.close()}
+                      />
                     </div>
                   </div>
                 </fieldset>
