@@ -1,5 +1,6 @@
 import * as cron from 'cron';
 import { capture } from '../third-parties/sentry.ts';
+import { Prisma } from '@prisma/client';
 import prisma from '~/prisma';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -19,24 +20,23 @@ export async function launchCronJob(name: string, job: TaskFn): Promise<boolean>
   try {
     const uniqueKey = `${dayjs().utc().format('YYYY-MM-DD:HH:mm')}_${name}`;
     console.log('uniqueKey', uniqueKey);
-    const cronJobAlreadyExisting = await prisma.cronJob.findUnique({
-      where: {
-        unique_key: uniqueKey,
-      },
-    });
-    if (cronJobAlreadyExisting) {
-      capture(new Error(`Cron job ${name} already existing`), {
-        level: 'error',
+    // plusieurs instances lancent le cron en même temps : la contrainte unique sur unique_key sert de verrou
+    const cronJob = await prisma.cronJob
+      .create({
+        data: {
+          unique_key: uniqueKey,
+          name,
+          active: true,
+        },
+      })
+      .catch((error: unknown) => {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') return null;
+        throw error;
       });
+    if (!cronJob) {
+      console.log(`Cron job ${name} already launched by another instance`);
       return false;
     }
-    const cronJob = await prisma.cronJob.create({
-      data: {
-        unique_key: uniqueKey,
-        name,
-        active: true,
-      },
-    });
 
     await job();
 
