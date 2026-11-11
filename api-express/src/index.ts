@@ -31,7 +31,7 @@ import {
   VITE_APP_URL,
 } from './config.ts';
 import { sendError } from './middlewares/errors.ts';
-import { capture, scrubSentryBreadcrumb, scrubSentryEvent } from './third-parties/sentry.ts';
+import { capture, SENTRY_SCRUB_OPTIONS } from './third-parties/sentry.ts';
 
 import userRouter from './controllers/user.ts';
 import userEntityRouter from './controllers/user-entity.ts';
@@ -99,8 +99,7 @@ if (sentryEnabled) {
     // of transactions for performance monitoring.
     // We recommend adjusting this value in production
     tracesSampleRate: 0.01,
-    beforeSend: scrubSentryEvent,
-    beforeBreadcrumb: scrubSentryBreadcrumb,
+    ...SENTRY_SCRUB_OPTIONS,
   });
 }
 

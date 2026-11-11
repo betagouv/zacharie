@@ -35,8 +35,8 @@ function onlyUserId(user: unknown) {
   return { id: String(user.id) };
 }
 
-// Branché en `beforeSend` : couvre aussi les données de requête ajoutées automatiquement par Sentry.
-export function scrubSentryEvent(event: Event): Event {
+// Couvre aussi les données de requête (body, en-têtes) ajoutées automatiquement par Sentry.
+export function scrubSentryEvent<T extends Event>(event: T): T {
   if (event.message) event.message = scrubString(event.message);
   for (const exception of event.exception?.values ?? []) {
     if (exception.value) exception.value = scrubString(exception.value);
@@ -65,6 +65,14 @@ export function scrubSentryBreadcrumb(breadcrumb: Breadcrumb): Breadcrumb {
     data: breadcrumb.data ? (scrubSensitive(breadcrumb.data) as Breadcrumb['data']) : breadcrumb.data,
   };
 }
+
+// À passer à chaque Sentry.init : `beforeSend` ne s'applique qu'aux erreurs, les transactions de
+// performance (tracesSampleRate) portent elles aussi le body et les en-têtes de la requête.
+export const SENTRY_SCRUB_OPTIONS = {
+  beforeSend: scrubSentryEvent,
+  beforeSendTransaction: scrubSentryEvent,
+  beforeBreadcrumb: scrubSentryBreadcrumb,
+} satisfies Pick<Sentry.NodeOptions, 'beforeSend' | 'beforeSendTransaction' | 'beforeBreadcrumb'>;
 
 function capture(
   error: string | Error,
