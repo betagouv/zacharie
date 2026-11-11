@@ -392,7 +392,7 @@ function buildModalTimeline(args: {
   fei: any;
   carcasse: Carcasse;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  intermediaires: Array<any>;
+  intermediaires: ReadonlyArray<any>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   entities: Record<string, any>;
 }): Array<ModalTimelineEvent> {

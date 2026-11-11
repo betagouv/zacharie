@@ -20,7 +20,7 @@ export default function FEIDonneesDeChasse({
   intermediaires,
 }: {
   carcasseId?: Carcasse['zacharie_carcasse_id'];
-  intermediaires: Array<CarcassesIntermediaire>;
+  intermediaires: ReadonlyArray<CarcassesIntermediaire>;
 }) {
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);

@@ -9,20 +9,44 @@ import type {
 } from '@app/types/carcasses-intermediaire';
 import dayjs from 'dayjs';
 
+type CarcasseIntermediaireWithId = CarcasseIntermediaire & { id: CarcassesIntermediaire['id'] };
+
+const NO_INTERMEDIAIRES: Array<CarcasseIntermediaireWithId> = [];
+
+// Index carcasse → intermédiaires, construit une seule fois par version du store et partagé par
+// toutes les cartes : sans lui, chaque carte parcourait tous les intermédiaires de l'utilisateur
+// (300 cartes × 20 000 intermédiaires ≈ 1 s à chaque modification du store).
+const indexByStoreVersion = new WeakMap<
+  Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>,
+  Map<string, Array<CarcasseIntermediaireWithId>>
+>();
+
+function getIndexByCarcasse(byId: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>) {
+  let index = indexByStoreVersion.get(byId);
+  if (index) return index;
+  index = new Map();
+  for (const ci of Object.values(byId)) {
+    if (ci.deleted_at) continue;
+    let intermediaires = index.get(ci.zacharie_carcasse_id);
+    if (!intermediaires) {
+      intermediaires = [];
+      index.set(ci.zacharie_carcasse_id, intermediaires);
+    }
+    intermediaires.push({ id: ci.intermediaire_id, ...ci });
+  }
+  for (const intermediaires of index.values()) {
+    intermediaires.sort((a, b) => (dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1));
+  }
+  indexByStoreVersion.set(byId, index);
+  return index;
+}
+
+// Le tableau renvoyé est partagé entre les appelants : ne pas le modifier.
 export function filterCarcassesIntermediairesForCarcasse(
   byId: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>,
   zacharie_carcasse_id: string
-): Array<CarcasseIntermediaire & { id: CarcassesIntermediaire['id'] }> {
-  const intermediaires: Array<CarcasseIntermediaire & { id: CarcassesIntermediaire['id'] }> = [];
-  for (const ci of Object.values(byId)) {
-    if (ci.zacharie_carcasse_id !== zacharie_carcasse_id || ci.deleted_at) continue;
-    const intermediaire: CarcasseIntermediaire & { id: CarcassesIntermediaire['id'] } = {
-      id: ci.intermediaire_id,
-      ...ci,
-    };
-    intermediaires.push(intermediaire);
-  }
-  return intermediaires.sort((a, b) => (dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1));
+): ReadonlyArray<CarcasseIntermediaireWithId> {
+  return getIndexByCarcasse(byId).get(zacharie_carcasse_id) ?? NO_INTERMEDIAIRES;
 }
 
 export function filterCarcassesIntermediairesForIntermediaire(
@@ -36,10 +60,10 @@ export function filterCarcassesIntermediairesForIntermediaire(
 
 export function useCarcassesIntermediairesForCarcasse(
   zacharie_carcasse_id: string | undefined
-): Array<CarcasseIntermediaire & { id: CarcassesIntermediaire['id'] }> {
+): ReadonlyArray<CarcasseIntermediaireWithId> {
   const byId = useZustandStore((state) => state.carcassesIntermediaireById);
   return useMemo(() => {
-    if (!zacharie_carcasse_id) return [];
+    if (!zacharie_carcasse_id) return NO_INTERMEDIAIRES;
     return filterCarcassesIntermediairesForCarcasse(byId, zacharie_carcasse_id);
   }, [byId, zacharie_carcasse_id]);
 }
