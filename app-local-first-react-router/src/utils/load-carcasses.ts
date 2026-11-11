@@ -14,9 +14,13 @@ let loadCarcassesAbortController: AbortController | null = null;
 // Contrôle d'intégrité store local / serveur : au plus une fois par utilisateur toutes les 6 heures.
 const INTEGRITY_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
 let lastIntegrityCheck: { userId: string; at: number } | null = null;
+// Le prochain pull demande tout le périmètre (version de rechargement inférieure à toute version serveur).
+let fullReloadRequested = false;
 
-// Observation seulement : compare le nombre de carcasses non supprimées du périmètre serveur
-// au nombre de carcasses non supprimées synchronisées du store, et remonte l'écart à Sentry.
+// Compare le nombre de carcasses non supprimées du périmètre serveur au nombre de carcasses non
+// supprimées synchronisées du store. Le pull delta ne renvoie que le périmètre actuel : une carcasse
+// qui en est sortie (renvoi fait sur un autre appareil, destinataire changé par l'expéditeur) reste en
+// local. En cas d'écart, on remonte à Sentry et on recharge tout le périmètre, ce qui retire ces copies.
 async function checkLocalCarcassesIntegrity(signal: AbortSignal) {
   const user = useUser.getState().user;
   if (!user) return;
@@ -51,6 +55,8 @@ async function checkLocalCarcassesIntegrity(signal: AbortSignal) {
       integrity_gap: serverCount > localCount ? 'manquantes_localement' : 'en_trop_localement',
     },
   });
+  fullReloadRequested = true;
+  loadCarcasses();
 }
 
 export function abortLoadCarcasses(reason: string = 'aborted') {
@@ -85,7 +91,9 @@ export async function loadCarcasses() {
 
     const lastUpdateFromServer = useZustandStore.getState().lastUpdateFromServer;
     const after = String(getDeltaAfter(lastUpdateFromServer));
-    const reloadVersion = String(useZustandStore.getState().carcassesReloadVersion);
+    const reloadVersion = fullReloadRequested
+      ? '-1'
+      : String(useZustandStore.getState().carcassesReloadVersion);
     const carcassesFetched: CarcassesGetResponse['data']['carcasses'] = [];
     const feisFetched: CarcassesGetResponse['data']['feis'] = [];
     const carcassesIntermediairesFetched: CarcassesGetResponse['data']['carcassesIntermediaires'] = [];
@@ -122,6 +130,7 @@ export async function loadCarcasses() {
       if (page === 0) {
         fullReload = res.data.fullReload;
         receivedReloadVersion = res.data.reloadVersion;
+        if (fullReload) fullReloadRequested = false;
       }
       page += 1;
     }
