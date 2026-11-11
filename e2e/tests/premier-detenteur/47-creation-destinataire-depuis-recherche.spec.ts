@@ -1,7 +1,13 @@
 import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
-import { openVenteDon, venteDonModal, allerAEtape, enregistrerVenteDon } from '../../utils/vente-don';
+import {
+  openVenteDon,
+  venteDonModal,
+  allerAEtape,
+  enregistrerVenteDon,
+  creerDestinataire,
+} from '../../utils/vente-don';
 
 test.use({
   viewport: { width: 350, height: 667 },
@@ -14,35 +20,57 @@ test.beforeEach(async () => {
   await resetDb('PREMIER_DETENTEUR');
 });
 
-test("Le hint « Ajoutez-le en cliquant ici » ouvre la création inline d'un partenaire", async ({ page }) => {
+test("« Créer « … » » depuis la recherche ouvre l'ajout d'un destinataire, raison sociale préremplie", async ({
+  page,
+}) => {
   const feiId = 'ZACH-20250707-QZ6E0-155242';
-  // Le champ « Raison Sociale » interroge l'annuaire des entreprises (API externe) : on le neutralise
+  // Le champ « Raison Sociale » interroge l'annuaire des entreprises (API externe) : on simule sa réponse
   // pour que le test ne dépende pas du réseau ni des résultats réels.
   await page.route('https://recherche-entreprises.api.gouv.fr/**', (route) =>
-    route.fulfill({ json: { results: [] } })
+    route.fulfill({
+      json: {
+        results: [
+          {
+            nom_complet: 'MA BOUCHERIE TEST SARL',
+            matching_etablissements: [
+              {
+                siret: '12345678900012',
+                adresse: '12 RUE DU COMMERCE 75015 PARIS',
+                code_postal: '75015',
+                libelle_commune: 'PARIS',
+              },
+            ],
+          },
+        ],
+      },
+    })
   );
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
 
   await openVenteDon(page);
+  await creerDestinataire(page, 'Ma Boucherie Test');
 
-  // Le hint est visible à l'étape Destinataire
-  const hint = venteDonModal(page).getByText('Ajoutez-le en cliquant ici');
-  await expect(hint).toBeVisible({ timeout: 10000 });
-
-  // Cliquer le hint ouvre le formulaire de création inline
-  await hint.click();
-  await expect(venteDonModal(page).getByText('Ajouter un destinataire')).toBeVisible({ timeout: 10000 });
-
-  // Saisir le nom dans le champ « Raison Sociale » (creatable select) AVANT le type :
-  // onCreateOption remet entityType à undefined, il faut donc choisir le type après.
+  // La raison sociale, en tête du formulaire, reprend le nom tapé dans la recherche, et l'annuaire
+  // des entreprises est interrogé tout de suite : ses résultats s'affichent sans rien retaper
   const modal = venteDonModal(page);
-  const raisonSocialeInput = modal.locator("[class*='raison_sociale'] input").first();
-  await raisonSocialeInput.scrollIntoViewIfNeeded();
-  await raisonSocialeInput.fill('Ma Boucherie Test');
-  await raisonSocialeInput.press('Enter');
+  // le nom est dans le champ de saisie, curseur à la fin : on peut continuer à taper
+  const raisonSociale = modal.locator('#raison_sociale');
+  await expect(raisonSociale).toBeFocused();
+  await expect(raisonSociale).toHaveValue('Ma Boucherie Test');
+  await expect
+    .poll(() => raisonSociale.evaluate((input: HTMLInputElement) => input.selectionStart))
+    .toBe('Ma Boucherie Test'.length);
+  const resultatAnnuaire = page.getByRole('option', { name: /MA BOUCHERIE TEST SARL - 75015 PARIS/ });
+  await expect(resultatAnnuaire).toBeVisible({ timeout: 10000 });
+  await resultatAnnuaire.click();
 
-  // Sélectionner le type après avoir saisi la raison sociale
+  // Choisir le résultat de l'annuaire remplit le SIRET et l'adresse
+  await expect(modal.locator("[class*='raison_sociale__single-value']")).toHaveText('MA BOUCHERIE TEST SARL');
+  await expect(modal.locator('#partenaire-nouveau-siret')).toHaveValue('12345678900012');
+  await expect(modal.locator('#partenaire-nouveau-address_ligne_1')).toHaveValue('12 RUE DU COMMERCE');
+
+  // La qualité du destinataire vient sous la raison sociale
   const commerceDeDetail = modal.getByText('Commerce de détail (boucherie, restaurant, etc.)');
   await commerceDeDetail.scrollIntoViewIfNeeded();
   await commerceDeDetail.click();
@@ -60,19 +88,6 @@ test("Le hint « Ajoutez-le en cliquant ici » ouvre la création inline d'un pa
   await prenom.scrollIntoViewIfNeeded();
   await prenom.fill('Jean');
 
-  const adresse = modal.locator('#partenaire-nouveau-address_ligne_1');
-  await adresse.scrollIntoViewIfNeeded();
-  await adresse.fill('12 rue du Commerce');
-
-  const codePostal = modal.locator('#partenaire-nouveau-code_postal');
-  await codePostal.scrollIntoViewIfNeeded();
-  await codePostal.fill('75015');
-
-  // InputVille affiche un autocomplete basé sur le code postal : on sélectionne la suggestion.
-  const villeSuggestion = modal.getByRole('button', { name: /75015 PARIS/i }).first();
-  await villeSuggestion.scrollIntoViewIfNeeded();
-  await villeSuggestion.click();
-
   // Le formulaire inline a son propre bouton « Enregistrer », distinct de celui de la modale
   // vente / don : on le cible via l'id du formulaire.
   const submit = modal
@@ -83,9 +98,12 @@ test("Le hint « Ajoutez-le en cliquant ici » ouvre la création inline d'un pa
 
   // Le formulaire inline disparaît et le partenaire créé est sélectionné comme prochain détenteur
   await expect(modal.getByText('Ajouter un destinataire')).toBeHidden({ timeout: 15000 });
-  await expect(
-    modal.locator("[class*='select-prochain-detenteur']").getByText('Ma Boucherie Test')
-  ).toBeVisible({ timeout: 10000 });
+  await expect(modal.getByPlaceholder('Tapez le nom du destinataire')).toHaveValue(
+    /^MA BOUCHERIE TEST SARL/,
+    {
+      timeout: 10000,
+    }
+  );
 
   // Continuer le dispatch : stockage (circuit court = pas de transport)
   await allerAEtape(page, 'Stockage');

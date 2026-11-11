@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
-import { openVenteDon, venteDonModal } from '../../utils/vente-don';
+import { openVenteDon, venteDonModal, creerDestinataire } from '../../utils/vente-don';
 
 test.use({
   viewport: { width: 350, height: 667 },
@@ -22,10 +22,7 @@ test.beforeEach(async ({ page }) => {
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await openVenteDon(page);
-  const hint = venteDonModal(page).getByText('Ajoutez-le en cliquant ici');
-  await hint.scrollIntoViewIfNeeded();
-  await hint.click();
-  await expect(venteDonModal(page).getByText('Ajouter un destinataire')).toBeVisible({ timeout: 10000 });
+  await creerDestinataire(page, 'Jean Dupont');
 });
 
 async function remplirRepresentantEtAdresse(page: Page) {
@@ -73,7 +70,7 @@ test('Un consommateur final ajouté comme destinataire est nommé par son repré
 
   // Le formulaire inline disparaît et le consommateur final est sélectionné comme prochain détenteur
   await expect(modal.getByText('Ajouter un destinataire')).toBeHidden({ timeout: 15000 });
-  await expect(modal.locator("[class*='select-prochain-detenteur']").getByText('Jean Dupont')).toBeVisible({
+  await expect(modal.getByPlaceholder('Tapez le nom du destinataire')).toHaveValue(/^Jean Dupont/, {
     timeout: 10000,
   });
 });
@@ -84,6 +81,12 @@ test("Un destinataire autre qu'un consommateur final exige une raison sociale", 
   const commerceDeDetail = modal.getByText('Commerce de détail (boucherie, restaurant, etc.)');
   await commerceDeDetail.scrollIntoViewIfNeeded();
   await commerceDeDetail.click();
+
+  // La raison sociale est préremplie avec le nom tapé dans la recherche : on la vide
+  const effacerRaisonSociale = modal.locator("[class*='raison_sociale__clear-indicator']");
+  await effacerRaisonSociale.scrollIntoViewIfNeeded();
+  await effacerRaisonSociale.click();
+  await expect(modal.locator("[class*='raison_sociale__single-value']")).toHaveCount(0);
 
   await remplirRepresentantEtAdresse(page);
 

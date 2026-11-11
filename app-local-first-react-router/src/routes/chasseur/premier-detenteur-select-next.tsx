@@ -619,6 +619,8 @@ function DispatchGroupForm({
   const usageDomestique = isUsageDomestique(group);
   const prochainDetenteur = group.recipientEntityId ? entities[group.recipientEntityId] : null;
   const recipientInputId = `${Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}_${group.id}`;
+  // le nom tapé dans la recherche préremplit la raison sociale du destinataire à créer
+  const [nomPartenaireACreer, setNomPartenaireACreer] = useState('');
 
   // Sans destinataire enregistré, on cherche directement. Sinon on propose d'abord les plus récents,
   // la recherche restant accessible via « Envoyer à un autre destinataire ». Un destinataire déjà
@@ -672,6 +674,7 @@ function DispatchGroupForm({
             <div className="rounded border border-gray-300 p-3">
               <p className="mb-2 text-sm font-bold">Ajouter un destinataire</p>
               <PartenaireNouveau
+                defaultRaisonSociale={nomPartenaireACreer}
                 onFinish={(newEntity) => {
                   if (newEntity) {
                     onChange({ recipientEntityId: newEntity.id });
@@ -700,56 +703,50 @@ function DispatchGroupForm({
                   options={prochainsDetenteursOptions}
                   value={group.recipientEntityId}
                   onSelect={(recipientEntityId) => onChange({ recipientEntityId })}
-                  onCreate={() => onCreatingPartenaireChange(true)}
+                  onCreate={(query) => {
+                    setNomPartenaireACreer(query);
+                    onCreatingPartenaireChange(true);
+                  }}
                 />
               ) : (
-                <fieldset className="fr-fieldset">
-                  <legend className="fr-fieldset__legend">
-                    Prochain détenteur des carcasses
-                    <span className="fr-hint-text">Choisissez parmi vos destinataires habituels.</span>
-                  </legend>
-                  <div className="flex w-full flex-col items-start gap-2 px-2">
-                    <ul className="fr-tags-group">
-                      {destinatairesAffiches.map((destinataire) => (
-                        <li key={destinataire.id}>
-                          <Tag
-                            pressed={group.recipientEntityId === destinataire.id}
-                            // pas de coche sur le tag sélectionné : la couleur suffit
-                            className="bg-none! pr-3! after:hidden!"
-                            nativeButtonProps={{
-                              onClick: () => onChange({ recipientEntityId: destinataire.id }),
-                            }}
-                          >
-                            {destinataire.label}
-                          </Tag>
-                        </li>
-                      ))}
-                    </ul>
-                    {destinatairesEnregistres.length > NB_DESTINATAIRES_AFFICHES && (
-                      <button
-                        type="button"
-                        className="fr-link fr-text--sm"
-                        onClick={() => setShowAllDestinataires((showAll) => !showAll)}
-                      >
-                        {showAllDestinataires
-                          ? 'Afficher moins'
-                          : `Afficher tout (${destinatairesEnregistres.length})`}
-                      </button>
-                    )}
-                    <Button
+                <div className="flex w-full flex-col items-start gap-2">
+                  <RadioButtons
+                    className="mb-0 w-full"
+                    classes={richRadioClasses}
+                    legend="Prochain détenteur des carcasses"
+                    hintText="Choisissez parmi vos destinataires habituels."
+                    options={destinatairesAffiches.map((destinataire) => ({
+                      label: destinataire.label,
+                      nativeInputProps: {
+                        checked: group.recipientEntityId === destinataire.id,
+                        onChange: () => onChange({ recipientEntityId: destinataire.id }),
+                      },
+                    }))}
+                  />
+                  {destinatairesEnregistres.length > NB_DESTINATAIRES_AFFICHES && (
+                    <button
                       type="button"
-                      priority="secondary"
-                      iconId="fr-icon-add-line"
-                      className="mt-2"
-                      onClick={() => {
-                        onChange({ recipientEntityId: null });
-                        setShowSearch(true);
-                      }}
+                      className="fr-link fr-text--sm"
+                      onClick={() => setShowAllDestinataires((showAll) => !showAll)}
                     >
-                      Envoyer à un autre destinataire
-                    </Button>
-                  </div>
-                </fieldset>
+                      {showAllDestinataires
+                        ? 'Afficher moins'
+                        : `Afficher tout (${destinatairesEnregistres.length})`}
+                    </button>
+                  )}
+                  <Button
+                    type="button"
+                    priority="secondary"
+                    iconId="fr-icon-add-line"
+                    className="mt-2"
+                    onClick={() => {
+                      onChange({ recipientEntityId: null });
+                      setShowSearch(true);
+                    }}
+                  >
+                    Envoyer à un autre destinataire
+                  </Button>
+                </div>
               )}
               {errorFor('recipientEntityId') && (
                 <p className="fr-error-text mt-1">{errorFor('recipientEntityId')}</p>

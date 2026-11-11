@@ -1,4 +1,4 @@
-import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Input } from '@app/components/Input';
 import { useState, ChangeEvent, useEffect, useRef, useMemo, type ReactNode } from 'react';
 
 type DestinataireOption = { label: string | null; value: string };
@@ -10,7 +10,7 @@ interface InputDestinataireProps {
   options: Array<DestinataireOption>;
   value: string | null;
   onSelect: (value: string | null) => void;
-  onCreate: () => void;
+  onCreate: (query: string) => void;
 }
 
 function normalize(value: string): string {
@@ -116,7 +116,7 @@ export default function InputDestinataire({
           <button
             onClick={() => {
               setIsOpen(false);
-              onCreate();
+              onCreate(query);
             }}
             type="button"
             className="block py-2 pl-4 text-left font-bold text-(--text-action-high-blue-france)"
