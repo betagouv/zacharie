@@ -102,7 +102,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6]
 
     services:
       postgres:
@@ -187,10 +187,10 @@ jobs:
           PGDATABASE: zacharietest
           PGBASEURL: postgres://postgres:postgres@localhost:5432
 
-      - name: Run Playwright shard ${{ matrix.shard }}/4
+      - name: Run Playwright shard ${{ matrix.shard }}/6
         run: |
           cd e2e
-          npx playwright test --shard=${{ matrix.shard }}/4 --reporter=blob
+          npx playwright test --shard=${{ matrix.shard }}/6 --reporter=blob
         env:
           PGBASEURL: postgres://postgres:postgres@localhost:5432
           POSTGRESQL_ADDON_URI: postgres://postgres:postgres@localhost:5432/zacharietest
