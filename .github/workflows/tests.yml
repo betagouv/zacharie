@@ -129,17 +129,40 @@ jobs:
             api-playground/package-lock.json
             e2e/package-lock.json
 
-      - name: Install app + api + bac à sable deps in parallel
+      # Les dépendances changent rarement : on garde les node_modules (client Prisma généré compris)
+      # en cache, et on ne relance npm ci que si un lockfile, un schema Prisma ou Node change
+      - name: Restore node_modules
+        id: nm-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            app-local-first-react-router/node_modules
+            api-express/node_modules
+            api-playground/node_modules
+            e2e/node_modules
+          key: e2e-node-modules-${{ runner.os }}-${{ hashFiles('.nvmrc', 'app-local-first-react-router/package-lock.json', 'api-express/package-lock.json', 'api-playground/package-lock.json', 'e2e/package-lock.json', 'app-local-first-react-router/prisma/schema.prisma', 'api-express/prisma/schema.prisma') }}
+
+      - name: Install app + api + bac à sable + e2e deps in parallel
+        if: steps.nm-cache.outputs.cache-hit != 'true'
         run: |
           (cd app-local-first-react-router && npm ci && npx prisma generate) &
           (cd api-express && npm ci && npx prisma generate) &
           (cd api-playground && npm ci) &
+          (cd e2e && npm ci) &
           wait
 
-      - name: Install e2e deps
-        run: |
-          cd e2e
-          npm ci
+      # sauvegardé juste après l'install, avant que les tests n'écrivent dans node_modules (.vite...).
+      # Les 6 shards tentent la sauvegarde en même temps : un seul y arrive, les autres affichent un warning.
+      - name: Save node_modules
+        if: steps.nm-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            app-local-first-react-router/node_modules
+            api-express/node_modules
+            api-playground/node_modules
+            e2e/node_modules
+          key: ${{ steps.nm-cache.outputs.cache-primary-key }}
 
       - name: Get Playwright version
         id: pw-version
