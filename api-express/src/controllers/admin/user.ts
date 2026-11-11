@@ -109,7 +109,7 @@ router.post(
 );
 
 const adminNewUserSchema = z.object({
-  [Prisma.UserScalarFieldEnum.email]: z.string().trim().toLowerCase().email(),
+  [Prisma.UserScalarFieldEnum.email]: z.string().trim().toLowerCase().email('Adresse email invalide'),
   [Prisma.UserScalarFieldEnum.roles]: z
     .array(
       z.enum(Object.values(UserRoles).filter((r) => r !== UserRoles.ADMIN) as [UserRoles, ...UserRoles[]])
@@ -161,7 +161,7 @@ const adminUserUpdateSchema = z.object({
   [Prisma.UserScalarFieldEnum.prenom]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.prochain_bracelet_a_utiliser]: z.number().optional(),
   [Prisma.UserScalarFieldEnum.telephone]: z.string().optional(),
-  [Prisma.UserScalarFieldEnum.email]: z.string().email().optional(),
+  [Prisma.UserScalarFieldEnum.email]: z.string().email('Adresse email invalide').optional(),
   [Prisma.UserScalarFieldEnum.addresse_ligne_1]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.addresse_ligne_2]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.code_postal]: z.string().optional(),
@@ -195,9 +195,13 @@ router.post(
     ) => {
       const result = adminUserUpdateSchema.safeParse(req.body);
       if (!result.success) {
-        const error = new Error(result.error.message);
-        res.status(406);
-        return next(error);
+        res.status(406).send({
+          ok: false,
+          data: { user: null },
+          error: result.error.errors[0].message,
+          message: '',
+        });
+        return;
       }
       const body = result.data;
       const userId = req.params.user_id;
