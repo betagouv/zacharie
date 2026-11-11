@@ -15,6 +15,7 @@ import { normalizeNumeroCfei, sanitize } from '~/utils/sanitize';
 import { hasAllRequiredFields } from '~/utils/user';
 import type {
   AdminUsersResponse,
+  AdminUserRow,
   AdminUserDataResponse,
   AdminNewUserDataResponse,
   AdminUserFeisResponse,
@@ -35,7 +36,8 @@ import {
 import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
 import { BrevoTemplateId } from '~/third-parties/brevo-templates';
 import { requestCarcassesReload } from '~/utils/carcasses-reload';
-import { LOCKOUT_DURATION_MINUTES, MAX_FAILED_ATTEMPTS } from '~/utils/login-lockout';
+import { LOCKOUT_DURATION_MINUTES, MAX_FAILED_ATTEMPTS, lockedEmailsSql } from '~/utils/login-lockout';
+import { parseList } from '~/utils/admin-list-filters';
 
 async function getLockoutInfo(email: string): Promise<AdminUserLockoutInfo> {
   const since = dayjs().subtract(LOCKOUT_DURATION_MINUTES, 'minute').toDate();
@@ -638,54 +640,189 @@ router.get(
   )
 );
 
+// Filtres de la liste admin des utilisateurs, mêmes paramètres que l'URL de la page.
+// Écrits en SQL : la validation CFEI, le blocage et le tri par compteurs ne s'expriment pas en `where` Prisma.
+function adminUsersWhereSql(query: express.Request['query']) {
+  const conditions: Array<Prisma.Sql> = [];
+
+  const search = typeof query.q === 'string' ? query.q.trim() : '';
+  if (search) {
+    const pattern = `%${search.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
+    conditions.push(Prisma.sql`concat_ws(' ', u.id, u.prenom, u.nom_de_famille, u.email, u.telephone,
+      u.addresse_ligne_1, u.addresse_ligne_2, u.code_postal, u.ville, u.numero_cfei, u.roles::text) ILIKE ${pattern}`);
+  }
+
+  const roles = parseList(query.roles).flatMap((role) => {
+    if (role === 'ETG_TRANSPORT')
+      return [Prisma.sql`('ETG' = ANY(u.roles::text[]) AND u.etg_role = 'TRANSPORT')`];
+    if (role === 'ETG_RECEPTION')
+      return [Prisma.sql`('ETG' = ANY(u.roles::text[]) AND u.etg_role = 'RECEPTION')`];
+    if (Object.values(UserRoles).includes(role as UserRoles))
+      return [Prisma.sql`${role} = ANY(u.roles::text[])`];
+    return [];
+  });
+  if (roles.length) conditions.push(Prisma.sql`(${Prisma.join(roles, ' OR ')})`);
+
+  // Sans statut coché, les supprimés sont masqués.
+  const statuts = parseList(query.statut).flatMap((statut) => {
+    if (statut === 'activated') return [Prisma.sql`(u.activated AND u.deleted_at IS NULL)`];
+    if (statut === 'deactivated') return [Prisma.sql`(NOT u.activated AND u.deleted_at IS NULL)`];
+    if (statut === 'deleted') return [Prisma.sql`u.deleted_at IS NOT NULL`];
+    if (statut === 'blocked') return [Prisma.sql`(u.deleted_at IS NULL AND u.email IN (${lockedEmailsSql}))`];
+    return [];
+  });
+  conditions.push(
+    statuts.length ? Prisma.sql`(${Prisma.join(statuts, ' OR ')})` : Prisma.sql`u.deleted_at IS NULL`
+  );
+
+  const cfei = parseList(query.cfei).flatMap((value) => {
+    if (value === 'with_cfei') return [Prisma.sql`COALESCE(u.numero_cfei, '') <> ''`];
+    if (value === 'without_cfei') return [Prisma.sql`COALESCE(u.numero_cfei, '') = ''`];
+    if (value === 'trained') return [Prisma.sql`u.est_forme_a_l_examen_initial IS TRUE`];
+    if (value === 'not_trained') return [Prisma.sql`u.est_forme_a_l_examen_initial IS NOT TRUE`];
+    return [];
+  });
+  if (cfei.length) conditions.push(Prisma.sql`(${Prisma.join(cfei, ' OR ')})`);
+
+  const onboarding = parseList(query.onboarding).flatMap((value) => {
+    if (value === 'completed') return [Prisma.sql`u.onboarded_at IS NOT NULL`];
+    if (value === 'incomplete') return [Prisma.sql`u.onboarded_at IS NULL`];
+    return [];
+  });
+  if (onboarding.length) conditions.push(Prisma.sql`(${Prisma.join(onboarding, ' OR ')})`);
+
+  const officialCfeiExists = Prisma.sql`EXISTS (
+    SELECT 1 FROM "OfficialCfei" o WHERE UPPER(o.numero_cfei) = UPPER(u.numero_cfei)
+  )`;
+  const cfeiValidation = parseList(query.cfei_validation).flatMap((value) => {
+    if (value === 'valid') return [officialCfeiExists];
+    if (value === 'invalid')
+      return [Prisma.sql`(COALESCE(u.numero_cfei, '') <> '' AND NOT ${officialCfeiExists})`];
+    if (value === 'missing') return [Prisma.sql`COALESCE(u.numero_cfei, '') = ''`];
+    return [];
+  });
+  if (cfeiValidation.length) conditions.push(Prisma.sql`(${Prisma.join(cfeiValidation, ' OR ')})`);
+
+  return Prisma.join(conditions, ' AND ');
+}
+
+// `u.id` en dernier : un ordre total, sinon la pagination peut sauter ou répéter des lignes.
+const ADMIN_USERS_ORDER_BY: Record<string, Prisma.Sql> = {
+  name_asc: Prisma.sql`lower(COALESCE(NULLIF(concat_ws(' ', u.nom_de_famille, u.prenom), ''), u.email, '')) ASC, u.id`,
+  name_desc: Prisma.sql`lower(COALESCE(NULLIF(concat_ws(' ', u.nom_de_famille, u.prenom), ''), u.email, '')) DESC, u.id`,
+  created_asc: Prisma.sql`u.created_at ASC, u.id`,
+  created_desc: Prisma.sql`u.created_at DESC, u.id`,
+  last_seen_asc: Prisma.sql`u.last_login_at ASC NULLS LAST, u.id`,
+  last_seen_desc: Prisma.sql`u.last_login_at DESC NULLS LAST, u.id`,
+  carcasses_desc: Prisma.sql`nb_carcasses DESC, u.id`,
+  fiches_desc: Prisma.sql`nb_fiches DESC, u.id`,
+};
+
 router.get(
   '/users',
   catchErrors(
     async (req: express.Request, res: express.Response<AdminUsersResponse>, next: express.NextFunction) => {
-      const users = await prisma.user.findMany({
-        orderBy: {
-          last_login_at: { sort: 'desc', nulls: 'last' },
-        },
-      });
+      const limit = Math.min(parseInt(req.query.limit as string) || 100, 500);
+      const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
+      const where = adminUsersWhereSql(req.query);
+      const tri = req.query.tri as string;
+      const orderBy = Object.prototype.hasOwnProperty.call(ADMIN_USERS_ORDER_BY, tri)
+        ? ADMIN_USERS_ORDER_BY[tri]
+        : ADMIN_USERS_ORDER_BY.created_desc;
+
       // carcasses et fiches (non supprimées) où l'utilisateur apparaît à n'importe quelle étape du circuit :
       // création, examen initial, premier détenteur, intermédiaire ou SVI
-      const countsRows = await prisma.$queryRaw<
-        Array<{ user_id: string; carcasses: number; fiches: number }>
-      >`
-        WITH links AS (
-          SELECT u.user_id, c.zacharie_carcasse_id, c.fei_numero
-          FROM "Carcasse" c
-          JOIN "Fei" f ON f.numero = c.fei_numero AND f.deleted_at IS NULL
-          CROSS JOIN LATERAL unnest(ARRAY[
-            c.created_by_user_id,
-            c.examinateur_initial_user_id,
-            c.premier_detenteur_user_id,
-            c.svi_user_id,
-            c.svi_ipm1_user_id,
-            c.svi_ipm2_user_id,
-            c.svi_closed_by_user_id
-          ]) AS u(user_id)
-          WHERE c.deleted_at IS NULL AND u.user_id IS NOT NULL
-          UNION
-          SELECT ci.intermediaire_user_id, ci.zacharie_carcasse_id, ci.fei_numero
-          FROM "CarcasseIntermediaire" ci
-          JOIN "Carcasse" c ON c.zacharie_carcasse_id = ci.zacharie_carcasse_id AND c.deleted_at IS NULL
-          JOIN "Fei" f ON f.numero = ci.fei_numero AND f.deleted_at IS NULL
-          WHERE ci.deleted_at IS NULL
-        )
-        SELECT user_id,
-          COUNT(DISTINCT zacharie_carcasse_id)::int AS carcasses,
-          COUNT(DISTINCT fei_numero)::int AS fiches
-        FROM links
-        GROUP BY user_id;
-      `;
-      const counts: AdminUsersResponse['data']['counts'] = {};
-      for (const row of countsRows) {
-        counts[row.user_id] = { carcasses: row.carcasses, fiches: row.fiches };
-      }
+      const [rows, [{ total }], [{ has_official_cfeis }]] = await Promise.all([
+        prisma.$queryRaw<
+          Array<{
+            id: string;
+            nb_carcasses: number;
+            nb_fiches: number;
+            official_numero_cfei: string | null;
+            official_nom: string | null;
+            official_prenom: string | null;
+            official_departement: string | null;
+            is_blocked: boolean;
+          }>
+        >`
+          WITH links AS (
+            SELECT u.user_id, c.zacharie_carcasse_id, c.fei_numero
+            FROM "Carcasse" c
+            JOIN "Fei" f ON f.numero = c.fei_numero AND f.deleted_at IS NULL
+            CROSS JOIN LATERAL unnest(ARRAY[
+              c.created_by_user_id,
+              c.examinateur_initial_user_id,
+              c.premier_detenteur_user_id,
+              c.svi_user_id,
+              c.svi_ipm1_user_id,
+              c.svi_ipm2_user_id,
+              c.svi_closed_by_user_id
+            ]) AS u(user_id)
+            WHERE c.deleted_at IS NULL AND u.user_id IS NOT NULL
+            UNION
+            SELECT ci.intermediaire_user_id, ci.zacharie_carcasse_id, ci.fei_numero
+            FROM "CarcasseIntermediaire" ci
+            JOIN "Carcasse" c ON c.zacharie_carcasse_id = ci.zacharie_carcasse_id AND c.deleted_at IS NULL
+            JOIN "Fei" f ON f.numero = ci.fei_numero AND f.deleted_at IS NULL
+            WHERE ci.deleted_at IS NULL
+          ),
+          counts AS (
+            SELECT user_id,
+              COUNT(DISTINCT zacharie_carcasse_id)::int AS carcasses,
+              COUNT(DISTINCT fei_numero)::int AS fiches
+            FROM links
+            GROUP BY user_id
+          )
+          SELECT u.id,
+            COALESCE(counts.carcasses, 0)::int AS nb_carcasses,
+            COALESCE(counts.fiches, 0)::int AS nb_fiches,
+            official.numero_cfei AS official_numero_cfei,
+            official.nom AS official_nom,
+            official.prenom AS official_prenom,
+            official.departement AS official_departement,
+            COALESCE(u.email IN (${lockedEmailsSql}), false) AS is_blocked
+          FROM "User" u
+          LEFT JOIN counts ON counts.user_id = u.id
+          LEFT JOIN LATERAL (
+            SELECT o.numero_cfei, o.nom, o.prenom, o.departement
+            FROM "OfficialCfei" o
+            WHERE UPPER(o.numero_cfei) = UPPER(u.numero_cfei)
+            LIMIT 1
+          ) official ON true
+          WHERE ${where}
+          ORDER BY ${orderBy}
+          LIMIT ${limit} OFFSET ${offset}
+        `,
+        prisma.$queryRaw<Array<{ total: number }>>`
+          SELECT COUNT(*)::int AS total FROM "User" u WHERE ${where}
+        `,
+        prisma.$queryRaw<Array<{ has_official_cfeis: boolean }>>`
+          SELECT EXISTS (SELECT 1 FROM "OfficialCfei") AS has_official_cfeis
+        `,
+      ]);
+
+      const users = await prisma.user.findMany({ where: { id: { in: rows.map((row) => row.id) } } });
+      const usersById = new Map(users.map((user) => [user.id, user]));
+      const data: Array<AdminUserRow> = rows.flatMap((row) => {
+        const user = usersById.get(row.id);
+        if (!user) return [];
+        return [
+          {
+            ...user,
+            nb_carcasses: row.nb_carcasses,
+            nb_fiches: row.nb_fiches,
+            cfei_validation: !user.numero_cfei ? 'missing' : row.official_numero_cfei ? 'valid' : 'invalid',
+            official_cfei: row.official_numero_cfei
+              ? { nom: row.official_nom, prenom: row.official_prenom, departement: row.official_departement }
+              : null,
+            is_blocked: row.is_blocked,
+          },
+        ];
+      });
+
       res.status(200).send({
         ok: true,
-        data: { users, counts },
+        data: { users: data, total, has_official_cfeis },
         error: '',
       });
     }

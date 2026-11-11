@@ -1,10 +1,10 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { UserEtgRoles, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
-import type { AdminUsersResponse, AdminOfficialCfeisResponse, OfficialCfei } from '@api/src/types/responses';
+import type { AdminUserRow, AdminUsersResponse } from '@api/src/types/responses';
 import Chargement from '@app/components/Chargement';
 import FiltersSidebar from '@app/components/FiltersSidebar';
 import CheckboxFilterSection from '@app/components/CheckboxFilterSection';
@@ -12,14 +12,22 @@ import API from '@app/services/api';
 
 import ConnexionButton from '@app/components/ConnexionButton';
 import AdminViews, { type AdminView } from './admin-views';
-import { useDebouncedUrlText, useUrlFilters, useUrlList } from './use-url-filters';
+import { toApiQuery, useDebouncedUrlText, usePageOffset, useUrlFilters, useUrlList } from './use-url-filters';
 
-type AdminUser = NonNullable<AdminUsersResponse['data']['users']>[number];
-type AdminUserCounts = AdminUsersResponse['data']['counts'];
+const LIMIT = 100;
 
-const NO_COUNTS = { carcasses: 0, fiches: 0 };
-
-type CfeiValidationStatus = 'valid' | 'invalid' | 'missing';
+// Toutes les valeurs de rôle, plus les deux sous-rôles ETG placés juste après ETG.
+const ROLE_OPTIONS: Array<{ value: string; label: string }> = Object.values(UserRoles)
+  .sort()
+  .flatMap((role) =>
+    role === UserRoles.ETG
+      ? [
+          { value: role, label: role },
+          { value: 'ETG_TRANSPORT', label: 'ETG (transport)' },
+          { value: 'ETG_RECEPTION', label: 'ETG (gestion)' },
+        ]
+      : [{ value: role, label: role }]
+  );
 
 const USER_VIEWS: Array<AdminView> = [
   { label: 'Tous', params: {} },
@@ -27,6 +35,7 @@ const USER_VIEWS: Array<AdminView> = [
   { label: 'CFEI introuvable', params: { cfei_validation: 'invalid' } },
   { label: 'Chasseurs non formés EI', params: { roles: UserRoles.CHASSEUR, cfei: 'not_trained' } },
   { label: 'Désactivés', params: { statut: 'deactivated' } },
+  { label: 'Bloqués', params: { statut: 'blocked' } },
   { label: 'Supprimés', params: { statut: 'deleted' } },
 ];
 
@@ -56,108 +65,169 @@ function StatusIcon({
   );
 }
 
-// Ligne mémoïsée : une frappe dans la recherche ne refabrique que les lignes qui changent.
-const UserRow = memo(function UserRow({
+const pillColors = {
+  green: 'bg-green-100 text-green-800',
+  red: 'bg-red-100 text-red-800',
+  orange: 'bg-orange-100 text-orange-800',
+  grey: 'bg-gray-200 text-gray-700',
+} as const;
+
+function Pill({
+  color,
+  children,
+  title,
+}: {
+  color: keyof typeof pillColors;
+  children: string;
+  title?: string;
+}) {
+  return (
+    <span
+      className={`inline-block rounded px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap no-underline ${pillColors[color]}`}
+      title={title}
+    >
+      {children}
+    </span>
+  );
+}
+
+function formatDate(date: Date | string | null) {
+  return date ? dayjs(date).format('DD/MM/YY') : '—';
+}
+
+function cfeiTooltip(user: AdminUserRow) {
+  if (user.cfei_validation === 'missing') return 'CFEI non renseigné';
+  if (user.cfei_validation === 'invalid') return 'CFEI non trouvé';
+  const official = user.official_cfei;
+  if (!official) return 'CFEI validé';
+  const nom = [official.prenom, official.nom].filter(Boolean).join(' ');
+  return `CFEI validé : ${nom}${official.departement ? ` — ${official.departement}` : ''}`;
+}
+
+function UserTableRow({
   user,
-  cfeiStatus,
-  officialDetails,
-  showCfeiShield,
-  counts,
+  showCfeiValidation,
   onActivate,
 }: {
-  user: AdminUser;
-  cfeiStatus: CfeiValidationStatus | null;
-  officialDetails: OfficialCfei | null;
-  showCfeiShield: boolean;
-  counts: AdminUserCounts[string];
+  user: AdminUserRow;
+  showCfeiValidation: boolean;
   onActivate: (userId: string) => void;
 }) {
-  const isChasseur = user.roles?.includes(UserRoles.CHASSEUR);
+  const isChasseur = user.roles.includes(UserRoles.CHASSEUR);
   const fullName =
     [user.nom_de_famille, user.prenom].filter(Boolean).join(' ') || user.email || 'Voir le détail';
-  const cfeiTooltip =
-    cfeiStatus === 'valid'
-      ? `CFEI validé${
-          officialDetails
-            ? ` : ${officialDetails.prenom} ${officialDetails.nom}${
-                officialDetails.departement ? ` — ${officialDetails.departement}` : ''
-              }`
-            : ''
-        }`
-      : cfeiStatus === 'invalid'
-        ? 'CFEI non trouvé'
-        : 'CFEI non renseigné';
 
   return (
-    <div className="border-b border-gray-200 px-2 py-1.5 hover:bg-gray-50">
-      {/* Ligne 1 : identité + pictos statut (à gauche) + dates + actions (à droite) */}
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <Link
-          to={`/app/admin/user/${user.id}`}
-          className="max-w-[14rem] truncate text-sm font-medium no-underline"
-          title={fullName}
-        >
-          {fullName}
-        </Link>
-        {user.isZacharieAdmin && (
-          <span
-            className="fr-icon-admin-fill fr-icon--sm text-action-high-blue-france shrink-0"
-            title="Administrateur"
-            aria-label="Administrateur"
-            role="img"
-          />
+    <tr
+      data-user-id={user.id}
+      className={`border-b align-top hover:bg-blue-50 ${user.deleted_at ? 'text-gray-400' : ''}`}
+    >
+      <td className="max-w-[16rem] p-1">
+        <div className="flex items-center gap-1">
+          <Link
+            to={`/app/admin/user/${user.id}`}
+            className={`truncate font-medium ${user.deleted_at ? 'text-gray-400 line-through' : ''}`}
+            title={fullName}
+          >
+            {fullName}
+          </Link>
+          {user.isZacharieAdmin && (
+            <span
+              className="fr-icon-admin-fill fr-icon--sm text-action-high-blue-france shrink-0"
+              title="Administrateur"
+              aria-label="Administrateur"
+              role="img"
+            />
+          )}
+        </div>
+        {user.email && (
+          <div
+            className="truncate text-gray-500"
+            title={user.email}
+          >
+            {user.email}
+          </div>
         )}
+        {user.telephone && <div className="text-gray-500">{user.telephone}</div>}
+      </td>
+      <td className="p-1">
         {user.roles.map((role) => (
           <Badge
             key={role}
             severity="info"
             small
           >
-            {role}
+            {role === UserRoles.ETG
+              ? `ETG ${user.etg_role === UserEtgRoles.TRANSPORT ? 'transport' : 'gestion'}`
+              : role}
           </Badge>
         ))}
-        {/* Cluster de pictos statut */}
-        <span className="flex items-center gap-1.5">
-          {user.deleted_at && (
-            <StatusIcon
-              icon="fr-icon-delete-bin-fill"
-              color="red"
-              title="Supprimé"
-            />
+      </td>
+      <td className="p-1">
+        <div className="flex flex-wrap gap-1">
+          {user.deleted_at ? (
+            <Pill
+              color="grey"
+              title={`Supprimé le ${formatDate(user.deleted_at)}`}
+            >
+              Supprimé
+            </Pill>
+          ) : (
+            <Pill color={user.activated ? 'green' : 'red'}>{user.activated ? 'Actif' : 'Inactif'}</Pill>
           )}
-          <StatusIcon
-            icon="fr-icon-account-circle-fill"
-            color={user.activated ? 'green' : 'red'}
-            title={user.activated ? 'Activé' : 'Inactif'}
-          />
-          <StatusIcon
-            icon="fr-icon-road-map-fill"
-            color={user.onboarded_at ? 'green' : 'orange'}
-            title={user.onboarded_at ? 'Onboardé' : 'Non onboardé'}
-          />
-          {isChasseur && (
+          {user.is_blocked && (
+            <Pill
+              color="orange"
+              title="Trop d'échecs de connexion récents"
+            >
+              Bloqué
+            </Pill>
+          )}
+        </div>
+      </td>
+      <td className="p-1">
+        {user.onboarded_at ? (
+          <span title={`Onboardé le ${formatDate(user.onboarded_at)}`}>✓</span>
+        ) : (
+          <Pill color="orange">Incomplet</Pill>
+        )}
+      </td>
+      <td className="p-1 whitespace-nowrap">
+        {isChasseur ? (
+          <span className="flex items-center gap-1">
             <StatusIcon
               icon="fr-icon-award-fill"
               color={user.est_forme_a_l_examen_initial ? 'green' : 'red'}
               title={user.est_forme_a_l_examen_initial ? 'Formé EI' : 'Non formé EI'}
             />
-          )}
-          {isChasseur && showCfeiShield && (
-            <StatusIcon
-              icon="fr-icon-shield-fill"
-              color={cfeiStatus === 'valid' ? 'green' : cfeiStatus === 'invalid' ? 'red' : 'grey'}
-              title={cfeiTooltip}
-            />
-          )}
-        </span>
-        <span className="ml-auto flex items-center gap-2">
-          <span
-            className="text-xs whitespace-nowrap text-gray-500"
-            suppressHydrationWarning
-          >
-            Créé {dayjs(user.created_at).format('DD/MM/YY')}
-            {user.last_login_at && ` · Vu ${dayjs(user.last_login_at).format('DD/MM/YY')}`}
+            {showCfeiValidation && (
+              <StatusIcon
+                icon="fr-icon-shield-fill"
+                color={
+                  user.cfei_validation === 'valid'
+                    ? 'green'
+                    : user.cfei_validation === 'invalid'
+                      ? 'red'
+                      : 'grey'
+                }
+                title={cfeiTooltip(user)}
+              />
+            )}
+            {user.numero_cfei || <span className="text-gray-400">—</span>}
           </span>
+        ) : (
+          <span className="text-gray-400">—</span>
+        )}
+      </td>
+      <td className="max-w-[10rem] truncate p-1">
+        {[user.code_postal, user.ville].filter(Boolean).join(' ') || '—'}
+      </td>
+      <td className="p-1 text-right tabular-nums">{user.nb_fiches}</td>
+      <td className="p-1 text-right tabular-nums">{user.nb_carcasses}</td>
+      <td className="p-1 whitespace-nowrap tabular-nums">{formatDate(user.last_login_at)}</td>
+      <td className="p-1 whitespace-nowrap tabular-nums">{formatDate(user.created_at)}</td>
+      <td className="p-1">
+        <div className="flex items-center justify-end gap-1">
           {!user.activated && !user.deleted_at && isChasseur && (
             <Button
               size="small"
@@ -167,41 +237,25 @@ const UserRow = memo(function UserRow({
               Activer
             </Button>
           )}
-          <ConnexionButton
-            user={user}
-            type="tertiary no outline"
-          />
-        </span>
-      </div>
-      {/* Ligne 2 : coordonnées + CFEI (gris) */}
-      <div className="flex flex-wrap items-center gap-x-2 text-xs text-gray-500">
-        {user.email && (
-          <span
-            className="max-w-[18rem] truncate"
-            title={user.email}
-          >
-            {user.email}
-          </span>
-        )}
-        {user.telephone && <span>· {user.telephone}</span>}
-        {(user.code_postal || user.ville) && (
-          <span>· {[user.code_postal, user.ville].filter(Boolean).join(' ')}</span>
-        )}
-        {isChasseur && <span>· CFEI {user.numero_cfei || <span className="text-gray-400">—</span>}</span>}
-        <span className="ml-auto whitespace-nowrap">
-          {counts.carcasses} carcasse{counts.carcasses > 1 ? 's' : ''} - {counts.fiches} fiche
-          {counts.fiches > 1 ? 's' : ''}
-        </span>
-      </div>
-    </div>
+          {!user.deleted_at && (
+            <ConnexionButton
+              user={user}
+              type="tertiary no outline"
+            />
+          )}
+        </div>
+      </td>
+    </tr>
   );
-});
+}
 
 export default function AdminUsers() {
-  const [users, setUsers] = useState<Array<AdminUser>>([]);
-  const [counts, setCounts] = useState<AdminUserCounts>({});
-  const [officialCfeis, setOfficialCfeis] = useState<Array<OfficialCfei>>([]);
+  const [users, setUsers] = useState<Array<AdminUserRow>>([]);
+  const [total, setTotal] = useState(0);
+  const [hasOfficialCfeis, setHasOfficialCfeis] = useState(false);
+  const [loading, setLoading] = useState(true);
   const { searchParams, setFilters, replaceFilters } = useUrlFilters();
+  const offset = usePageOffset(searchParams, LIMIT);
   const urlSearchQuery = searchParams.get('q') ?? '';
   const [searchQuery, setSearchQuery] = useDebouncedUrlText(urlSearchQuery, (value) =>
     setFilters({ q: value }, { replace: true })
@@ -212,174 +266,22 @@ export default function AdminUsers() {
   const selectedOnboardingStatuses = useUrlList(searchParams, 'onboarding');
   const selectedStatuses = useUrlList(searchParams, 'statut');
   const sortBy = searchParams.get('tri') || 'created_desc';
+  const queryString = searchParams.toString();
 
-  const officialCfeiMap = useMemo(() => {
-    const map = new Map<string, OfficialCfei>();
-    officialCfeis.forEach((cfei) => {
-      map.set(cfei.numero_cfei.toUpperCase(), cfei);
-    });
-    return map;
-  }, [officialCfeis]);
-
-  const getCfeiValidationStatus = useCallback(
-    (user: { numero_cfei: string | null }): CfeiValidationStatus => {
-      if (!user.numero_cfei) return 'missing';
-      return officialCfeiMap.has(user.numero_cfei.toUpperCase()) ? 'valid' : 'invalid';
-    },
-    [officialCfeiMap]
-  );
-
-  const getOfficialCfeiDetails = useCallback(
-    (user: { numero_cfei: string | null }): OfficialCfei | null => {
-      if (!user.numero_cfei) return null;
-      return officialCfeiMap.get(user.numero_cfei.toUpperCase()) || null;
-    },
-    [officialCfeiMap]
-  );
-
-  const roleOptions = useMemo(() => {
-    const rolesSet = new Set<UserRoles>();
-    users.forEach((user) => {
-      user.roles?.forEach((role) => rolesSet.add(role));
-    });
-    const options: Array<{ value: string; label: string }> = Array.from(rolesSet)
-      .sort()
-      .map((role) => ({ value: role, label: role }));
-    if (rolesSet.has(UserRoles.ETG)) {
-      const etgIndex = options.findIndex((o) => o.value === UserRoles.ETG);
-      options.splice(
-        etgIndex + 1,
-        0,
-        { value: 'ETG_TRANSPORT', label: 'ETG (transport)' },
-        { value: 'ETG_RECEPTION', label: 'ETG (gestion)' }
-      );
-    }
-    return options;
-  }, [users]);
-
-  // Texte de recherche fabriqué une fois par utilisateur, pas à chaque frappe.
-  const searchableTextByUserId = useMemo(() => {
-    const map = new Map<string, string>();
-    users.forEach((user) => {
-      map.set(
-        user.id,
-        [
-          user.id,
-          user.prenom,
-          user.nom_de_famille,
-          user.email,
-          user.telephone,
-          user.addresse_ligne_1,
-          user.addresse_ligne_2,
-          user.code_postal,
-          user.ville,
-          user.numero_cfei,
-          ...user.roles,
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase()
-      );
-    });
-    return map;
-  }, [users]);
-
-  const filteredUsers = useMemo(() => {
-    const query = urlSearchQuery.trim().toLowerCase();
-    return users.filter((user) => {
-      if (query && !searchableTextByUserId.get(user.id)?.includes(query)) {
-        return false;
-      }
-      if (selectedRoles.length) {
-        const match = selectedRoles.some((role) => {
-          if (role === 'ETG_TRANSPORT') {
-            return user.roles?.includes(UserRoles.ETG) && user.etg_role === UserEtgRoles.TRANSPORT;
-          }
-          if (role === 'ETG_RECEPTION') {
-            return user.roles?.includes(UserRoles.ETG) && user.etg_role === UserEtgRoles.RECEPTION;
-          }
-          return user.roles?.includes(role as UserRoles);
-        });
-        if (!match) return false;
-      }
-      if (selectedCfeiStatuses.length) {
-        const match = selectedCfeiStatuses.some((status) => {
-          if (status === 'with_cfei') return !!user.numero_cfei;
-          if (status === 'without_cfei') return !user.numero_cfei;
-          if (status === 'trained') return user.est_forme_a_l_examen_initial;
-          if (status === 'not_trained') return !user.est_forme_a_l_examen_initial;
-          return false;
-        });
-        if (!match) return false;
-      }
-      if (selectedOnboardingStatuses.length) {
-        const match = selectedOnboardingStatuses.some((status) => {
-          if (status === 'completed') return !!user.onboarded_at;
-          if (status === 'incomplete') return !user.onboarded_at;
-          return false;
-        });
-        if (!match) return false;
-      }
-      if (selectedCfeiValidations.length && officialCfeis.length > 0) {
-        if (!selectedCfeiValidations.includes(getCfeiValidationStatus(user))) return false;
-      }
-      return true;
-    });
-  }, [
-    users,
-    searchableTextByUserId,
-    urlSearchQuery,
-    selectedRoles,
-    selectedCfeiStatuses,
-    selectedOnboardingStatuses,
-    selectedCfeiValidations,
-    officialCfeis.length,
-    getCfeiValidationStatus,
-  ]);
-
-  // Le filtre Statut s'applique par-dessus les filtres de base. Sans statut coché, on cache les supprimés.
-  const statusFilteredUsers = useMemo(() => {
-    return filteredUsers.filter((user) => {
-      if (selectedStatuses.length) {
-        return selectedStatuses.some((status) => {
-          if (status === 'activated') return user.activated && !user.deleted_at;
-          if (status === 'deactivated') return !user.activated && !user.deleted_at;
-          if (status === 'deleted') return !!user.deleted_at;
-          return false;
-        });
-      }
-      return !user.deleted_at;
-    });
-  }, [filteredUsers, selectedStatuses]);
-
-  const sortedUsers = useMemo(() => {
-    return [...statusFilteredUsers].sort((a, b) => {
-      if (sortBy === 'name_asc' || sortBy === 'name_desc') {
-        const nameA = ([a.nom_de_famille, a.prenom].filter(Boolean).join(' ') || a.email || '').toLowerCase();
-        const nameB = ([b.nom_de_famille, b.prenom].filter(Boolean).join(' ') || b.email || '').toLowerCase();
-        const cmp = nameA.localeCompare(nameB, 'fr');
-        return sortBy === 'name_asc' ? cmp : -cmp;
-      }
-      if (sortBy === 'created_asc' || sortBy === 'created_desc') {
-        const cmp = dayjs(a.created_at).valueOf() - dayjs(b.created_at).valueOf();
-        return sortBy === 'created_asc' ? cmp : -cmp;
-      }
-      if (sortBy === 'last_seen_asc' || sortBy === 'last_seen_desc') {
-        const aSeen = a.last_login_at ? dayjs(a.last_login_at).valueOf() : null;
-        const bSeen = b.last_login_at ? dayjs(b.last_login_at).valueOf() : null;
-        if (aSeen === null && bSeen === null) return 0;
-        if (aSeen === null) return 1;
-        if (bSeen === null) return -1;
-        const cmp = aSeen - bSeen;
-        return sortBy === 'last_seen_asc' ? cmp : -cmp;
-      }
-      if (sortBy === 'carcasses_desc' || sortBy === 'fiches_desc') {
-        const key = sortBy === 'carcasses_desc' ? 'carcasses' : 'fiches';
-        return (counts[b.id]?.[key] ?? 0) - (counts[a.id]?.[key] ?? 0);
-      }
-      return 0;
-    });
-  }, [statusFilteredUsers, sortBy, counts]);
+  useEffect(() => {
+    setLoading(true);
+    const query = toApiQuery(new URLSearchParams(queryString), LIMIT, offset);
+    API.get({ path: 'admin/users', query })
+      .then((res) => res as AdminUsersResponse)
+      .then((res) => {
+        if (res.ok) {
+          setUsers(res.data.users);
+          setTotal(res.data.total);
+          setHasOfficialCfeis(res.data.has_official_cfeis);
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [queryString, offset]);
 
   const onActivate = useCallback((userId: string) => {
     API.post({
@@ -392,20 +294,7 @@ export default function AdminUsers() {
     });
   }, []);
 
-  useEffect(() => {
-    Promise.all([
-      API.get({ path: 'admin/users' }).then((res) => res as AdminUsersResponse),
-      API.get({ path: 'admin/official-cfeis' }).then((res) => res as AdminOfficialCfeisResponse),
-    ]).then(([usersRes, cfeisRes]) => {
-      if (usersRes.ok) {
-        setUsers(usersRes.data.users);
-        setCounts(usersRes.data.counts);
-      }
-      if (cfeisRes.ok) setOfficialCfeis(cfeisRes.data.officialCfeis);
-    });
-  }, []);
-
-  if (!users?.length) {
+  if (loading && users.length === 0) {
     return <Chargement />;
   }
 
@@ -446,7 +335,7 @@ export default function AdminUsers() {
           <CheckboxFilterSection
             title="Rôle"
             scroll
-            options={roleOptions}
+            options={ROLE_OPTIONS}
             selected={selectedRoles}
             onChange={(next) => setFilters({ roles: next })}
           />
@@ -455,6 +344,7 @@ export default function AdminUsers() {
             options={[
               { value: 'activated', label: 'Activés' },
               { value: 'deactivated', label: 'Désactivés' },
+              { value: 'blocked', label: 'Bloqués' },
               { value: 'deleted', label: 'Supprimés' },
             ]}
             selected={selectedStatuses}
@@ -480,7 +370,7 @@ export default function AdminUsers() {
             selected={selectedOnboardingStatuses}
             onChange={(next) => setFilters({ onboarding: next })}
           />
-          {officialCfeis.length > 0 && (
+          {hasOfficialCfeis && (
             <CheckboxFilterSection
               title="Validation CFEI"
               options={[
@@ -523,21 +413,58 @@ export default function AdminUsers() {
             views={USER_VIEWS}
             keep={['tri']}
           />
-          <div className="flex flex-col bg-white">
-            {sortedUsers.map((user) => {
-              const isChasseur = user.roles?.includes(UserRoles.CHASSEUR);
-              return (
-                <UserRow
-                  key={user.id}
-                  user={user}
-                  cfeiStatus={isChasseur ? getCfeiValidationStatus(user) : null}
-                  officialDetails={isChasseur ? getOfficialCfeiDetails(user) : null}
-                  showCfeiShield={officialCfeis.length > 0}
-                  counts={counts[user.id] ?? NO_COUNTS}
-                  onActivate={onActivate}
-                />
-              );
-            })}
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-lg font-bold">Utilisateurs ({total})</h3>
+            <div className="flex items-center gap-2">
+              <button
+                className="fr-btn fr-btn--sm fr-btn--secondary"
+                disabled={offset === 0}
+                onClick={() => setFilters({ page: offset - LIMIT > 0 ? String(offset / LIMIT) : null })}
+              >
+                Précédent
+              </button>
+              <span className="text-sm tabular-nums">
+                {total ? offset + 1 : 0}–{Math.min(offset + LIMIT, total)} / {total}
+              </span>
+              <button
+                className="fr-btn fr-btn--sm fr-btn--secondary"
+                disabled={offset + LIMIT >= total}
+                onClick={() => setFilters({ page: String(offset / LIMIT + 2) })}
+              >
+                Suivant
+              </button>
+            </div>
+          </div>
+          <div className="overflow-x-auto bg-white">
+            <table className={`w-full border-collapse text-xs ${loading ? 'opacity-60' : ''}`}>
+              <thead>
+                <tr className="border-b bg-gray-100 text-left">
+                  <th className="p-1">Utilisateur</th>
+                  <th className="p-1">Rôle</th>
+                  <th className="p-1">Statut</th>
+                  <th className="p-1">Onboarding</th>
+                  <th className="p-1">CFEI</th>
+                  <th className="p-1">Commune</th>
+                  <th className="p-1 text-right">Fiches</th>
+                  <th className="p-1 text-right">Carcasses</th>
+                  <th className="p-1">Vu le</th>
+                  <th className="p-1">Créé le</th>
+                  <th className="p-1">
+                    <span className="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((user) => (
+                  <UserTableRow
+                    key={user.id}
+                    user={user}
+                    showCfeiValidation={hasOfficialCfeis}
+                    onActivate={onActivate}
+                  />
+                ))}
+              </tbody>
+            </table>
           </div>
           <div className="flex items-start bg-white px-4 py-2">
             <a
