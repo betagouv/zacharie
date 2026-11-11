@@ -89,7 +89,8 @@ test("/app/admin et l'ancien tableau de bord mènent à « À traiter », les st
   await page.goto('http://localhost:3290/app/admin/dashboard');
   await expect(page).toHaveURL(/\/app\/admin\/a-traiter/, { timeout: 10000 });
 
-  await page.getByRole('link', { name: 'Statistiques', exact: true }).click();
+  // le pied de page a aussi un lien « Statistiques » (/stats) : on clique celui du menu admin
+  await page.getByRole('navigation').getByRole('link', { name: 'Statistiques', exact: true }).click();
   await expect(page).toHaveURL(/\/app\/admin\/statistiques/);
   await expect(page.getByRole('heading', { name: 'Statistiques' })).toBeVisible({ timeout: 10000 });
 });
