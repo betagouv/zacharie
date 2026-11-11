@@ -195,7 +195,7 @@ router.post(
     ) => {
       const result = adminUserUpdateSchema.safeParse(req.body);
       if (!result.success) {
-        res.status(400).send({
+        res.status(406).send({
           ok: false,
           data: { user: null },
           error: result.error.errors[0].message,
