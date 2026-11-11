@@ -1,12 +1,18 @@
 # Rechargement complet des données locales
 
-Deux déclencheurs forcent un rechargement complet du périmètre de carcasses d'un appareil :
+Trois déclencheurs forcent un rechargement complet du périmètre de carcasses d'un appareil :
 
 - la date `FORCE_FULL_RELOAD_AFTER` (`api-express/src/utils/force-full-reload.ts`) : pour tous les
   utilisateurs ;
-- le compteur `User.carcasses_reload_version` : pour un seul utilisateur, sur tous ses appareils.
+- le compteur `User.carcasses_reload_version` : pour un seul utilisateur, sur tous ses appareils ;
+- le contrôle d'intégrité du client (`checkLocalCarcassesIntegrity`,
+  `app-local-first-react-router/src/utils/load-carcasses.ts`, au plus toutes les 6 heures) : si le
+  nombre de carcasses synchronisées du store diffère de `GET /carcasse/count`, l'appareil envoie
+  `reloadVersion=-1` à son pull suivant. Cas typique : une carcasse sortie du périmètre (renvoi fait
+  sur un autre appareil, destinataire changé par l'expéditeur) que le delta ne retire jamais.
 
-Le serveur décide, le client obéit : il ne compare jamais lui-même les dates ni les versions.
+Hors contrôle d'intégrité, le serveur décide, le client obéit : il ne compare jamais lui-même les dates
+ni les versions.
 
 ## Pourquoi
 
