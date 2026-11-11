@@ -4,7 +4,8 @@
 -- Le commentaire au-dessus de chaque requête est le titre du bloc texte Metabase correspondant.
 --
 -- Sources :
--- - vues « données propres » de clean-views.sql : carcasse_view, fei_view, carcasse_intermediaire_view ;
+-- - vues « données propres » de clean-views.sql : carcasse_view, fei_view. Les étapes intermédiaires sont lues
+--   dans "CarcasseIntermediaire" (deleted_at IS NULL) pour des carcasses déjà filtrées par carcasse_view ;
 -- - stats_ref_national : volumes, objectifs et taux nationaux, saisis dans l'admin (/app/admin/stats-ref).
 --   Volumes en carcasses, taux et objectifs en pourcentage (45 = 45 %) ;
 -- - stats_ref_ofb_tableau_chasse : tableaux de chasse OFB par département, importés par
@@ -24,7 +25,14 @@
 
 
 -- 1. Circuit long — grand gibier : part des carcasses tracées dans Zacharie
-WITH carcasses AS (
+WITH etapes_circuit_long AS (
+    -- lignes intermédiaires lues une seule fois (un EXISTS sur carcasse_intermediaire_view recalcule
+    -- les vues par carcasse et dépasse le délai de Metabase) ; la carcasse est déjà filtrée par carcasse_view
+    SELECT DISTINCT zacharie_carcasse_id
+    FROM "CarcasseIntermediaire"
+    WHERE deleted_at IS NULL AND intermediaire_role IN ('ETG', 'SVI', 'COLLECTEUR_PRO')
+),
+carcasses AS (
     SELECT
         to_char(COALESCE(c.date_mise_a_mort, f.date_mise_a_mort) - interval '5 months', 'YYYY') || '-' ||
             (extract(year FROM COALESCE(c.date_mise_a_mort, f.date_mise_a_mort) - interval '5 months')::int + 1) AS saison,
@@ -39,11 +47,7 @@ WITH carcasses AS (
           OR c.current_owner_role IN ('ETG', 'SVI', 'COLLECTEUR_PRO')
           OR c.prev_owner_role IN ('ETG', 'SVI', 'COLLECTEUR_PRO')
           OR c.next_owner_role IN ('ETG', 'SVI', 'COLLECTEUR_PRO')
-          OR EXISTS (
-              SELECT 1 FROM carcasse_intermediaire_view ci
-              WHERE ci.zacharie_carcasse_id = c.zacharie_carcasse_id
-                AND ci.intermediaire_role IN ('ETG', 'SVI', 'COLLECTEUR_PRO')
-          )
+          OR c.zacharie_carcasse_id IN (SELECT zacharie_carcasse_id FROM etapes_circuit_long)
       )
 ),
 saisons AS (
@@ -67,7 +71,14 @@ ORDER BY s.saison;
 
 
 -- 2. Circuit long — petit gibier : part des animaux tracés dans Zacharie
-WITH carcasses AS (
+WITH etapes_circuit_long AS (
+    -- lignes intermédiaires lues une seule fois (un EXISTS sur carcasse_intermediaire_view recalcule
+    -- les vues par carcasse et dépasse le délai de Metabase) ; la carcasse est déjà filtrée par carcasse_view
+    SELECT DISTINCT zacharie_carcasse_id
+    FROM "CarcasseIntermediaire"
+    WHERE deleted_at IS NULL AND intermediaire_role IN ('ETG', 'SVI', 'COLLECTEUR_PRO')
+),
+carcasses AS (
     SELECT
         to_char(COALESCE(c.date_mise_a_mort, f.date_mise_a_mort) - interval '5 months', 'YYYY') || '-' ||
             (extract(year FROM COALESCE(c.date_mise_a_mort, f.date_mise_a_mort) - interval '5 months')::int + 1) AS saison,
@@ -82,11 +93,7 @@ WITH carcasses AS (
           OR c.current_owner_role IN ('ETG', 'SVI', 'COLLECTEUR_PRO')
           OR c.prev_owner_role IN ('ETG', 'SVI', 'COLLECTEUR_PRO')
           OR c.next_owner_role IN ('ETG', 'SVI', 'COLLECTEUR_PRO')
-          OR EXISTS (
-              SELECT 1 FROM carcasse_intermediaire_view ci
-              WHERE ci.zacharie_carcasse_id = c.zacharie_carcasse_id
-                AND ci.intermediaire_role IN ('ETG', 'SVI', 'COLLECTEUR_PRO')
-          )
+          OR c.zacharie_carcasse_id IN (SELECT zacharie_carcasse_id FROM etapes_circuit_long)
       )
 ),
 saisons AS (
@@ -110,7 +117,14 @@ ORDER BY s.saison;
 
 
 -- 3. Jauge circuit long — grand gibier : part tracée de la saison en cours vs objectif
-WITH saison_en_cours AS (
+WITH etapes_circuit_long AS (
+    -- lignes intermédiaires lues une seule fois (un EXISTS sur carcasse_intermediaire_view recalcule
+    -- les vues par carcasse et dépasse le délai de Metabase) ; la carcasse est déjà filtrée par carcasse_view
+    SELECT DISTINCT zacharie_carcasse_id
+    FROM "CarcasseIntermediaire"
+    WHERE deleted_at IS NULL AND intermediaire_role IN ('ETG', 'SVI', 'COLLECTEUR_PRO')
+),
+saison_en_cours AS (
     SELECT to_char(CURRENT_DATE - interval '5 months', 'YYYY') || '-' ||
         (extract(year FROM CURRENT_DATE - interval '5 months')::int + 1) AS saison
 ),
@@ -129,18 +143,15 @@ carcasses AS (
           OR c.current_owner_role IN ('ETG', 'SVI', 'COLLECTEUR_PRO')
           OR c.prev_owner_role IN ('ETG', 'SVI', 'COLLECTEUR_PRO')
           OR c.next_owner_role IN ('ETG', 'SVI', 'COLLECTEUR_PRO')
-          OR EXISTS (
-              SELECT 1 FROM carcasse_intermediaire_view ci
-              WHERE ci.zacharie_carcasse_id = c.zacharie_carcasse_id
-                AND ci.intermediaire_role IN ('ETG', 'SVI', 'COLLECTEUR_PRO')
-          )
+          OR c.zacharie_carcasse_id IN (SELECT zacharie_carcasse_id FROM etapes_circuit_long)
       )
 )
+-- part_tracee_pct en première colonne : la jauge Metabase affiche la première valeur de la première ligne
 SELECT
-    s.saison,
     ROUND((100.0 * (SELECT COALESCE(SUM(volume), 0) FROM carcasses WHERE saison = s.saison)
         / NULLIF(ref.valeur, 0))::numeric, 1) AS part_tracee_pct,
-    obj.valeur AS objectif_pct
+    obj.valeur AS objectif_pct,
+    s.saison
 FROM saison_en_cours s
 LEFT JOIN LATERAL (
     SELECT r.valeur
@@ -156,7 +167,14 @@ LEFT JOIN stats_ref_national obj
 
 
 -- 4. Jauge circuit long — petit gibier : part tracée de la saison en cours vs objectif
-WITH saison_en_cours AS (
+WITH etapes_circuit_long AS (
+    -- lignes intermédiaires lues une seule fois (un EXISTS sur carcasse_intermediaire_view recalcule
+    -- les vues par carcasse et dépasse le délai de Metabase) ; la carcasse est déjà filtrée par carcasse_view
+    SELECT DISTINCT zacharie_carcasse_id
+    FROM "CarcasseIntermediaire"
+    WHERE deleted_at IS NULL AND intermediaire_role IN ('ETG', 'SVI', 'COLLECTEUR_PRO')
+),
+saison_en_cours AS (
     SELECT to_char(CURRENT_DATE - interval '5 months', 'YYYY') || '-' ||
         (extract(year FROM CURRENT_DATE - interval '5 months')::int + 1) AS saison
 ),
@@ -175,18 +193,15 @@ carcasses AS (
           OR c.current_owner_role IN ('ETG', 'SVI', 'COLLECTEUR_PRO')
           OR c.prev_owner_role IN ('ETG', 'SVI', 'COLLECTEUR_PRO')
           OR c.next_owner_role IN ('ETG', 'SVI', 'COLLECTEUR_PRO')
-          OR EXISTS (
-              SELECT 1 FROM carcasse_intermediaire_view ci
-              WHERE ci.zacharie_carcasse_id = c.zacharie_carcasse_id
-                AND ci.intermediaire_role IN ('ETG', 'SVI', 'COLLECTEUR_PRO')
-          )
+          OR c.zacharie_carcasse_id IN (SELECT zacharie_carcasse_id FROM etapes_circuit_long)
       )
 )
+-- part_tracee_pct en première colonne : la jauge Metabase affiche la première valeur de la première ligne
 SELECT
-    s.saison,
     ROUND((100.0 * (SELECT COALESCE(SUM(volume), 0) FROM carcasses WHERE saison = s.saison)
         / NULLIF(ref.valeur, 0))::numeric, 1) AS part_tracee_pct,
-    obj.valeur AS objectif_pct
+    obj.valeur AS objectif_pct,
+    s.saison
 FROM saison_en_cours s
 LEFT JOIN LATERAL (
     SELECT r.valeur
@@ -202,7 +217,14 @@ LEFT JOIN stats_ref_national obj
 
 
 -- 5. Circuit court — grand gibier : part des carcasses tracées dans Zacharie
-WITH carcasses AS (
+WITH etapes_etg AS (
+    -- lignes intermédiaires lues une seule fois (un EXISTS sur carcasse_intermediaire_view recalcule
+    -- les vues par carcasse et dépasse le délai de Metabase) ; la carcasse est déjà filtrée par carcasse_view
+    SELECT DISTINCT zacharie_carcasse_id
+    FROM "CarcasseIntermediaire"
+    WHERE deleted_at IS NULL AND zacharie_carcasse_id IS NOT NULL AND intermediaire_role = 'ETG'
+),
+carcasses AS (
     SELECT
         to_char(COALESCE(c.date_mise_a_mort, f.date_mise_a_mort) - interval '5 months', 'YYYY') || '-' ||
             (extract(year FROM COALESCE(c.date_mise_a_mort, f.date_mise_a_mort) - interval '5 months')::int + 1) AS saison,
@@ -215,10 +237,7 @@ WITH carcasses AS (
       AND c.premier_detenteur_depot_type IS DISTINCT FROM 'ETG'
       AND c.current_owner_role IS DISTINCT FROM 'ETG' AND c.current_owner_role IS DISTINCT FROM 'SVI'
       AND c.prev_owner_role IS DISTINCT FROM 'ETG' AND c.prev_owner_role IS DISTINCT FROM 'SVI'
-      AND NOT EXISTS (
-          SELECT 1 FROM carcasse_intermediaire_view ci
-          WHERE ci.zacharie_carcasse_id = c.zacharie_carcasse_id AND ci.intermediaire_role = 'ETG'
-      )
+      AND c.zacharie_carcasse_id NOT IN (SELECT zacharie_carcasse_id FROM etapes_etg)
       AND COALESCE(c.next_owner_role, c.current_owner_role) IN (
           'COMMERCE_DE_DETAIL', 'REPAS_DE_CHASSE_OU_ASSOCIATIF', 'CANTINE_OU_RESTAURATION_COLLECTIVE',
           'ASSOCIATION_CARITATIVE', 'CONSOMMATEUR_FINAL'
@@ -245,7 +264,14 @@ ORDER BY s.saison;
 
 
 -- 6. Jauge circuit court — grand gibier : part tracée de la saison en cours vs objectif
-WITH saison_en_cours AS (
+WITH etapes_etg AS (
+    -- lignes intermédiaires lues une seule fois (un EXISTS sur carcasse_intermediaire_view recalcule
+    -- les vues par carcasse et dépasse le délai de Metabase) ; la carcasse est déjà filtrée par carcasse_view
+    SELECT DISTINCT zacharie_carcasse_id
+    FROM "CarcasseIntermediaire"
+    WHERE deleted_at IS NULL AND zacharie_carcasse_id IS NOT NULL AND intermediaire_role = 'ETG'
+),
+saison_en_cours AS (
     SELECT to_char(CURRENT_DATE - interval '5 months', 'YYYY') || '-' ||
         (extract(year FROM CURRENT_DATE - interval '5 months')::int + 1) AS saison
 ),
@@ -262,20 +288,18 @@ carcasses AS (
       AND c.premier_detenteur_depot_type IS DISTINCT FROM 'ETG'
       AND c.current_owner_role IS DISTINCT FROM 'ETG' AND c.current_owner_role IS DISTINCT FROM 'SVI'
       AND c.prev_owner_role IS DISTINCT FROM 'ETG' AND c.prev_owner_role IS DISTINCT FROM 'SVI'
-      AND NOT EXISTS (
-          SELECT 1 FROM carcasse_intermediaire_view ci
-          WHERE ci.zacharie_carcasse_id = c.zacharie_carcasse_id AND ci.intermediaire_role = 'ETG'
-      )
+      AND c.zacharie_carcasse_id NOT IN (SELECT zacharie_carcasse_id FROM etapes_etg)
       AND COALESCE(c.next_owner_role, c.current_owner_role) IN (
           'COMMERCE_DE_DETAIL', 'REPAS_DE_CHASSE_OU_ASSOCIATIF', 'CANTINE_OU_RESTAURATION_COLLECTIVE',
           'ASSOCIATION_CARITATIVE', 'CONSOMMATEUR_FINAL'
       )
 )
+-- part_tracee_pct en première colonne : la jauge Metabase affiche la première valeur de la première ligne
 SELECT
-    s.saison,
     ROUND((100.0 * (SELECT COALESCE(SUM(volume), 0) FROM carcasses WHERE saison = s.saison)
         / NULLIF(ref.valeur, 0))::numeric, 1) AS part_tracee_pct,
-    obj.valeur AS objectif_pct
+    obj.valeur AS objectif_pct,
+    s.saison
 FROM saison_en_cours s
 LEFT JOIN LATERAL (
     SELECT r.valeur
