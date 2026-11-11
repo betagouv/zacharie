@@ -29,7 +29,7 @@ async function openAdminStatsRef(page: Page) {
 }
 
 async function addVolumeGlobal2022(page: Page) {
-  await page.getByLabel('Saison').fill('2022-2023');
+  await page.getByLabel('Saison').selectOption('2022-2023');
   await page.getByLabel('Circuit').selectOption({ label: 'Circuit long' });
   await page.getByLabel('Type de gibier').selectOption({ label: 'Grand gibier' });
   await page.getByLabel('Indicateur').selectOption({ label: 'Volume global (carcasses)' });

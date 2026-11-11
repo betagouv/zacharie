@@ -29,6 +29,18 @@ const INDICATEUR_LABELS: Record<StatsRefIndicateur, string> = {
   [StatsRefIndicateur.TAUX_SAISIE_BPH_HORS_ZACHARIE]: 'Taux de saisie BPH hors Zacharie (%)',
 };
 
+// Saisons du 1er juin au 31 mai, de 2020-2021 à deux saisons après la saison en cours (objectifs), la plus
+// récente en premier
+function getSaisons(): Array<string> {
+  const now = dayjs();
+  const saisonEnCours = now.month() >= 5 ? now.year() : now.year() - 1;
+  const saisons: Array<string> = [];
+  for (let debut = saisonEnCours + 2; debut >= 2020; debut--) saisons.push(`${debut}-${debut + 1}`);
+  return saisons;
+}
+
+const SAISONS = getSaisons();
+
 type FormState = {
   saison: string;
   circuit: StatsRefCircuit;
@@ -139,16 +151,30 @@ export default function AdminStatsRef() {
           }}
         >
           <div className="grid grid-cols-1 gap-x-4 md:grid-cols-3">
-            <Input
+            <Select
               label="Saison"
-              hintText="Format 2025-2026"
-              nativeInputProps={{
+              hint="Du 1er juin au 31 mai"
+              nativeSelectProps={{
                 value: form.saison,
                 required: true,
-                placeholder: '2025-2026',
                 onChange: (e) => setForm({ ...form, saison: e.currentTarget.value }),
               }}
-            />
+            >
+              <option
+                value=""
+                disabled
+              >
+                Choisir une saison
+              </option>
+              {SAISONS.map((saison) => (
+                <option
+                  key={saison}
+                  value={saison}
+                >
+                  {saison}
+                </option>
+              ))}
+            </Select>
             <Select
               label="Circuit"
               nativeSelectProps={{
