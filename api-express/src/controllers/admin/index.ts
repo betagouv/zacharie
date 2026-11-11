@@ -19,6 +19,7 @@ import bugResolutionRouter from './bug-resolution.ts';
 import searchRouter from './search.ts';
 import auditLogRouter from './audit-log.ts';
 import historyRouter from './history.ts';
+import inboxRouter from './inbox.ts';
 
 const router: express.Router = express.Router();
 
@@ -67,5 +68,6 @@ router.use(bugResolutionRouter);
 router.use(searchRouter);
 router.use(auditLogRouter);
 router.use(historyRouter);
+router.use(inboxRouter);
 
 export default router;

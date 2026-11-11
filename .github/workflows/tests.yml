@@ -87,13 +87,16 @@ jobs:
           cd app-local-first-react-router
           npm run vitest
 
+      # base jetable pour les tests vitest qui exercent du SQL brut (*.db.test.ts, sautés sans VITEST_DB_URL)
       - name: API vitest
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: |
           cd api-express
+          npx prisma migrate deploy
           npm run test
         env:
           POSTGRESQL_ADDON_URI: postgres://postgres:postgres@localhost:5432/zacharietest
+          VITEST_DB_URL: postgres://postgres:postgres@localhost:5432/zacharietest
 
   e2e:
     timeout-minutes: 20

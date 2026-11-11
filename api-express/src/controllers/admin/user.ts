@@ -35,9 +35,7 @@ import {
 import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
 import { BrevoTemplateId } from '~/third-parties/brevo-templates';
 import { requestCarcassesReload } from '~/utils/carcasses-reload';
-
-const MAX_FAILED_ATTEMPTS = 5;
-const LOCKOUT_DURATION_MINUTES = 15;
+import { LOCKOUT_DURATION_MINUTES, MAX_FAILED_ATTEMPTS } from '~/utils/login-lockout';
 
 async function getLockoutInfo(email: string): Promise<AdminUserLockoutInfo> {
   const since = dayjs().subtract(LOCKOUT_DURATION_MINUTES, 'minute').toDate();
