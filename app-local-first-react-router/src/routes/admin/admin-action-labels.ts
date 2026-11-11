@@ -28,6 +28,9 @@ const ADMIN_ACTION_LABELS: Record<string, string> = {
   'POST /premiers-detenteurs/import': 'Import de premiers détenteurs',
   'POST /bug-resolution': 'Nouvelle enquête de bug',
   'POST /bug-resolution/:id/message': 'Message à Albert',
+  'POST /stats-ref': 'Ajout de référence stats',
+  'PUT /stats-ref/:id': 'Modification de référence stats',
+  'DELETE /stats-ref/:id': 'Suppression de référence stats',
 };
 
 export function adminActionLabel(action: string) {

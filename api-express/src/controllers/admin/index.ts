@@ -20,6 +20,7 @@ import searchRouter from './search.ts';
 import auditLogRouter from './audit-log.ts';
 import historyRouter from './history.ts';
 import inboxRouter from './inbox.ts';
+import statsRefRouter from './stats-ref.ts';
 
 const router: express.Router = express.Router();
 
@@ -69,5 +70,6 @@ router.use(searchRouter);
 router.use(auditLogRouter);
 router.use(historyRouter);
 router.use(inboxRouter);
+router.use(statsRefRouter);
 
 export default router;
