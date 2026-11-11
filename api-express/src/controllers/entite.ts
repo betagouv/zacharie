@@ -409,6 +409,10 @@ router.post(
   )
 );
 
+function ccgNumeroDejaUtiliseMessage(numeroDdecpp: string) {
+  return `Le numéro d'identification ${numeroDdecpp} est déjà utilisé par une autre chambre froide. Vérifiez le numéro ou contactez-nous à contact@zacharie.beta.gouv.fr.`;
+}
+
 const ccgSchema = z.object({
   nom_d_usage: z.string(),
   address_ligne_1: z.string(),
@@ -438,6 +442,41 @@ router.post(
       return next(error);
     }
     const body = result.data;
+    const numeroDdecpp = sanitize(body[Prisma.EntityScalarFieldEnum.numero_ddecpp]) || null;
+
+    // numero_ddecpp est unique : si le CCG existe déjà, on y rattache le chasseur au lieu d'en créer un
+    const existingEntity = numeroDdecpp
+      ? await prisma.entity.findUnique({ where: { numero_ddecpp: numeroDdecpp } })
+      : null;
+    if (existingEntity) {
+      if (existingEntity.deleted_at || existingEntity.type !== EntityTypes.CCG) {
+        res.status(409);
+        return next(new Error(ccgNumeroDejaUtiliseMessage(numeroDdecpp!)));
+      }
+      const existingRelation = await prisma.entityAndUserRelations.findFirst({
+        where: {
+          owner_id: user.id,
+          entity_id: existingEntity.id,
+          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+          deleted_at: null,
+        },
+      });
+      const createdEntityRelation =
+        existingRelation ??
+        (await prisma.entityAndUserRelations.create({
+          data: {
+            owner_id: user.id,
+            relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+            entity_id: existingEntity.id,
+          },
+        }));
+      res.status(200).send({
+        ok: true,
+        error: '',
+        data: { createdEntity: existingEntity, createdEntityRelation },
+      });
+      return;
+    }
 
     const data: Prisma.EntityUncheckedCreateInput = {
       raison_sociale: sanitize(body[Prisma.EntityScalarFieldEnum.nom_d_usage]),
@@ -449,7 +488,7 @@ router.post(
       code_postal: sanitize(body[Prisma.EntityScalarFieldEnum.code_postal]),
       ville: sanitize(body[Prisma.EntityScalarFieldEnum.ville]),
       siret: sanitize(body[Prisma.EntityScalarFieldEnum.siret]) || null,
-      numero_ddecpp: sanitize(body[Prisma.EntityScalarFieldEnum.numero_ddecpp]) || null,
+      numero_ddecpp: numeroDdecpp,
       zacharie_compatible: true,
     };
 
@@ -546,6 +585,15 @@ router.put(
       return next(error);
     }
     const body = result.data;
+    const numeroDdecpp = sanitize(body[Prisma.EntityScalarFieldEnum.numero_ddecpp]) || null;
+
+    if (numeroDdecpp) {
+      const existingEntity = await prisma.entity.findUnique({ where: { numero_ddecpp: numeroDdecpp } });
+      if (existingEntity && existingEntity.id !== entityId) {
+        res.status(409);
+        return next(new Error(ccgNumeroDejaUtiliseMessage(numeroDdecpp)));
+      }
+    }
 
     const updatedEntity = await prisma.entity.update({
       where: { id: entityId },
@@ -557,7 +605,7 @@ router.put(
         code_postal: sanitize(body[Prisma.EntityScalarFieldEnum.code_postal]),
         ville: sanitize(body[Prisma.EntityScalarFieldEnum.ville]),
         siret: sanitize(body[Prisma.EntityScalarFieldEnum.siret]) || null,
-        numero_ddecpp: sanitize(body[Prisma.EntityScalarFieldEnum.numero_ddecpp]) || null,
+        numero_ddecpp: numeroDdecpp,
       },
     });
 
