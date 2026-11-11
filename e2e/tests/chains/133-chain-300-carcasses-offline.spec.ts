@@ -35,6 +35,10 @@ const pad = (n: number) => String(n).padStart(3, '0');
 // mais ~1,8s/carcasse à froid ; d'où 3s/carcasse + 180s de base (compilation initiale + chaînage
 // multi-acteurs + synchro). Le rythme store → sync côté transmission reste couvert par l'assertion
 // ferme des bandeaux de notification.
+// Pas de trace : Playwright capturerait un snapshot du DOM (qui grossit à chaque carcasse) à chaque
+// action, ce qui fausse la mesure de la vitesse de l'UI. Les logs « addCarcasse … took » suffisent.
+test.use({ trace: 'off' });
+
 test.setTimeout(Number((DAIM_COUNT + CHEV_COUNT + PIGEON_LOTS.length) * 3000 + 180000));
 
 test.beforeAll(async () => {
