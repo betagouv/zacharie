@@ -2,7 +2,7 @@ import { test, expect, type Page } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Scenario 169 — Un admin Zacharie saisit les références nationales lues par Metabase pour les KPI
+// Scenario 171 — Un admin Zacharie saisit les références nationales lues par Metabase pour les KPI
 // (table stats_ref_national) sur /app/admin/stats-ref : ajout, doublon refusé, modification,
 // suppression. Chaque écriture apparaît dans le journal admin.
 

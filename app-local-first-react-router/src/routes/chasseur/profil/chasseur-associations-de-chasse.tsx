@@ -10,6 +10,7 @@ import useUser from '@app/zustand/user';
 import SelectCustom from '@app/components/SelectCustom';
 import API from '@app/services/api';
 import RelationEntityUser from '@app/components/RelationEntityUser';
+import { MAX_ASSOCIATIONS_DE_CHASSE } from '@app/utils/max-associations-de-chasse';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 
 const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
@@ -71,6 +72,8 @@ export default function MesAssociationsDeChasse() {
 
   const userHasAssociationsChasses =
     Object.values(userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR]).length > 0;
+
+  const hasReachedMaxAssociations = userEntities.length >= MAX_ASSOCIATIONS_DE_CHASSE;
 
   const [showForm, setShowForm] = useState(!userHasAssociationsChasses);
   useEffect(() => {
@@ -208,7 +211,12 @@ export default function MesAssociationsDeChasse() {
 
       {(userHasAssociationsChasses || user.checked_has_asso_de_chasse) && (
         <>
-          {!showForm ? (
+          {hasReachedMaxAssociations ? (
+            <p className="mt-4 italic">
+              Vous êtes rattaché à {MAX_ASSOCIATIONS_DE_CHASSE} associations de chasse, le maximum possible.
+              Retirez-en une pour en ajouter une autre.
+            </p>
+          ) : !showForm ? (
             <>
               <Button
                 priority="secondary"

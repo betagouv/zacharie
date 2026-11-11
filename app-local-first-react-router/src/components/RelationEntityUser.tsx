@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { EntityRelationType, EntityRelationStatus, EntityTypes, User, Prisma } from '@prisma/client';
 import type { EntityWithUserRelations } from '@api/src/types/entity';
-import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { createModal } from '@app/components/Modal';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import API from '@app/services/api';
 import { Link, useSearchParams } from 'react-router';
@@ -190,7 +190,8 @@ export default function RelationEntityUser({
             )}
           </div>
         )}
-        {myRelationIsPending &&
+        {/* un compte pas encore activé par l'équipe Zacharie est aussi en attente, même admin de l'entité */}
+        {(myRelationIsPending || (canHandleCarcassesForEntity && !user.activated)) &&
           !canApproveRelation &&
           relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY && (
             <p className="flex-1 self-center italic md:flex-none">En attente de validation</p>

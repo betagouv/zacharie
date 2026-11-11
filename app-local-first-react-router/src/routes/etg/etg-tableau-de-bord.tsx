@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import type { Carcasse } from '@prisma/client';
 import { CarcasseStatus, CarcasseType, EntityRelationType, EntityTypes } from '@prisma/client';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
+import { Tooltip as DsfrTooltip } from '@codegouvfr/react-dsfr/Tooltip';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 import { SegmentedControl } from '@codegouvfr/react-dsfr/SegmentedControl';
 import { BarChart } from 'react-dsfr-chart/BarChart';
@@ -481,7 +482,13 @@ export default function EtgTableauDeBord() {
                   </Badge>
                 )}
               </span>
-              <span className="text-sm text-gray-600">Score de qualité du tri à réception</span>
+              <span className="flex items-center gap-1 text-sm text-gray-600">
+                Score de qualité du tri à réception
+                <DsfrTooltip
+                  kind="hover"
+                  title="Score = 100 × (1 − carcasses saisies pour balle d'abdomen ou putréfaction ÷ carcasses acceptées et inspectées par le SVI). 100 = aucune carcasse qui aurait dû être refusée n'a été présentée au SVI. Échelle : 85-100 Excellent · 60-84 Bon · 40-59 Moyen · 0-39 À améliorer."
+                />
+              </span>
               <span className="mt-1 text-xs text-gray-400">
                 {courante.saisiesDisqualifiantes} saisie{courante.saisiesDisqualifiantes > 1 ? 's' : ''} pour
                 motif disqualifiant sur {courante.inspectees} carcasse{courante.inspectees > 1 ? 's' : ''}{' '}
@@ -495,11 +502,6 @@ export default function EtgTableauDeBord() {
               </span>
             </div>
           </div>
-          <p className="m-0 text-xs text-gray-500">
-            Score = 100 × (1 − carcasses saisies pour balle d'abdomen ou putréfaction ÷ carcasses acceptées et
-            inspectées par le SVI). 100 = aucune carcasse qui aurait dû être refusée n'a été présentée au SVI.
-            Échelle : 85-100 Excellent · 60-84 Bon · 40-59 Moyen · 0-39 À améliorer.
-          </p>
           <ChartCard
             title="Motifs de refus"
             legend

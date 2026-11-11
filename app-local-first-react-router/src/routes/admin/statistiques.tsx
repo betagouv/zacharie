@@ -19,7 +19,7 @@ const dashboardTabs = [
   { tabId: 'saisies-svi' as const, label: 'Saisies SVI' },
 ];
 
-export default function AdminDashboard() {
+export default function AdminStatistiques() {
   const [loading, setLoading] = useState(true);
   const [partsDeMarche, setPartsDeMarche] = useState<AdminPartsDeMarcheResponse['data'] | null>(null);
   const [saisiesSvi, setSaisiesSvi] = useState<AdminSaisiesSviResponse['data'] | null>(null);
@@ -61,9 +61,9 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6 py-6">
       <title>
-        Tableau de bord | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
+        Statistiques | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
       </title>
-      <h2 className="text-xl font-bold">Tableau de bord</h2>
+      <h2 className="text-xl font-bold">Statistiques</h2>
 
       <Tabs
         selectedTabId={selectedTab}

@@ -16,7 +16,8 @@ const adminSections: Array<{ title: string; links: Array<AdminNavLink> }> = [
   {
     title: 'Pilotage',
     links: [
-      { to: '/app/admin/dashboard', label: 'Tableau de bord', icon: 'fr-icon-dashboard-3-line' },
+      { to: '/app/admin/a-traiter', label: 'À traiter', icon: 'fr-icon-inbox-line' },
+      { to: '/app/admin/statistiques', label: 'Statistiques', icon: 'fr-icon-dashboard-3-line' },
       {
         href: import.meta.env.VITE_METABASE_DASHBOARD_URL,
         label: 'Metabase',

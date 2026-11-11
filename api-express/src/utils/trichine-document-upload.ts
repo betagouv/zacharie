@@ -35,6 +35,29 @@ export const uploadedFileSchema = z.object({
 
 export type UploadedFile = z.infer<typeof uploadedFileSchema>;
 
+export const uploadedPhotoSchema = uploadedFileSchema.extend({
+  content_type: z.enum(['image/jpeg', 'image/png', 'image/webp']),
+});
+
+export const MAX_PHOTOS_PAR_DEPOT = 10;
+
+// Octets magiques attendus en tête de fichier : le content_type déclaré par le client ne suffit pas
+const SIGNATURES: Record<string, Array<{ offset: number; bytes: number[] }>> = {
+  'application/pdf': [{ offset: 0, bytes: [0x25, 0x50, 0x44, 0x46, 0x2d] }],
+  'image/jpeg': [{ offset: 0, bytes: [0xff, 0xd8, 0xff] }],
+  'image/png': [{ offset: 0, bytes: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] }],
+  'image/webp': [
+    { offset: 0, bytes: [0x52, 0x49, 0x46, 0x46] },
+    { offset: 8, bytes: [0x57, 0x45, 0x42, 0x50] },
+  ],
+};
+
+function contenuCorrespondAuType(body: Buffer, contentType: string): boolean {
+  const signatures = SIGNATURES[contentType];
+  if (!signatures) return false;
+  return signatures.every(({ offset, bytes }) => bytes.every((byte, index) => body[offset + index] === byte));
+}
+
 type StoreResult =
   | { kind: 'ok'; document: Awaited<ReturnType<typeof prisma.trichineDocument.create>> }
   | { kind: 'error'; status: number; error: string };
@@ -73,6 +96,9 @@ export async function storeTrichineDocument({
       status: 400,
       error: `Fichier trop volumineux (${Math.floor(MAX_UPLOAD_BYTES / 1024 / 1024)} Mo maximum)`,
     };
+  }
+  if (!contenuCorrespondAuType(body, contentType)) {
+    return { kind: 'error', status: 400, error: 'Le contenu du fichier ne correspond pas à son format' };
   }
 
   const document = await prisma.trichineDocument.create({

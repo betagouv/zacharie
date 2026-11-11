@@ -38,6 +38,7 @@ export default function AdminEntites() {
     setFilters({ search: value }, { replace: true })
   );
   const selectedCompatibles = useUrlList(searchParams, 'compatible');
+  const selectedStatuses = useUrlList(searchParams, 'statut');
   const selectedTabId = searchParams.get('type') || 'all';
 
   useEffect(() => {
@@ -62,6 +63,13 @@ export default function AdminEntites() {
       const value = entity.zacharie_compatible ? 'true' : 'false';
       if (!selectedCompatibles.includes(value)) return false;
     }
+    // Sans statut coché, on cache les supprimées (comme la liste des utilisateurs).
+    if (selectedStatuses.length) {
+      const value = entity.deleted_at ? 'deleted' : 'active';
+      if (!selectedStatuses.includes(value)) return false;
+    } else if (entity.deleted_at) {
+      return false;
+    }
     return true;
   });
 
@@ -80,7 +88,9 @@ export default function AdminEntites() {
       <div className="md:-ml-4 md:flex">
         <FiltersSidebar
           storageKey="admin-entities-filters"
-          activeFilterCount={(urlSearch.trim() ? 1 : 0) + selectedCompatibles.length}
+          activeFilterCount={
+            (urlSearch.trim() ? 1 : 0) + selectedCompatibles.length + selectedStatuses.length
+          }
           onReset={() => replaceFilters({}, ['type'])}
         >
           <div className="relative">
@@ -104,6 +114,15 @@ export default function AdminEntites() {
             ]}
             selected={selectedCompatibles}
             onChange={(next) => setFilters({ compatible: next })}
+          />
+          <CheckboxFilterSection
+            title="Statut"
+            options={[
+              { value: 'active', label: 'Actives' },
+              { value: 'deleted', label: 'Supprimées' },
+            ]}
+            selected={selectedStatuses}
+            onChange={(next) => setFilters({ statut: next })}
           />
         </FiltersSidebar>
         <div className="min-w-0 flex-1 md:px-4">

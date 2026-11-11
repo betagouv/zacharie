@@ -1,6 +1,6 @@
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { type ButtonProps } from '@codegouvfr/react-dsfr/Button';
-import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { createModal } from '@app/components/Modal';
 import { toast } from 'react-toastify';
 import { useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router';
@@ -71,6 +71,13 @@ export default function CurrentOwnerConfirm() {
     }
     return true;
   }, [currentTransmission.next_owner_role, currentTransmission.next_owner_user_id, user.id, nextOwnerEntity]);
+
+  const renvoiModal = useRef(
+    createModal({
+      id: 'collecteur-renvoi-modal',
+      isOpenedByDefault: false,
+    })
+  ).current;
 
   if (isCircuitCourt) {
     return null;
@@ -174,13 +181,6 @@ export default function CurrentOwnerConfirm() {
   if (!canConfirmCurrentOwner) {
     return null;
   }
-
-  const renvoiModal = useRef(
-    createModal({
-      id: 'collecteur-renvoi-modal',
-      isOpenedByDefault: false,
-    })
-  ).current;
 
   function handleRenvoi() {
     const nextTransmission: CarcasseTransmission = {

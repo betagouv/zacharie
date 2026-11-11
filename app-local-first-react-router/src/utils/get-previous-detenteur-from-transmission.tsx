@@ -37,6 +37,32 @@ function resolveOwnerName(
 }
 
 /**
+ * Premier détenteur d'une fiche. Le name_cache peut être absent (ex. fiche transmise avant que
+ * le cache soit rempli) : on résout d'abord depuis l'id du premier détenteur, le cache n'est
+ * qu'un fallback.
+ *
+ * Lecture non réactive du store : même raison que pour getPreviousDetenteur ci-dessous.
+ */
+export function getPremierDetenteur(
+  transmission: CarcasseTransmissionWihMetadata,
+  usersById: Record<UserForFei['id'], UserForFei>
+): DetenteurDisplay {
+  const entities = useZustandStore.getState().entities;
+  const name =
+    resolveOwnerName(
+      transmission.content.premier_detenteur_entity_id || transmission.content.premier_detenteur_user_id,
+      entities,
+      usersById
+    ) ||
+    transmission.content.premier_detenteur_name_cache ||
+    null;
+  return {
+    name,
+    icon: iconForRole(FeiOwnerRole.PREMIER_DETENTEUR),
+  };
+}
+
+/**
  * Détenteur précédent d'une fiche : celui qui m'a donné la fiche.
  * On reconstitue la chaîne de possession ordonnée (premier détenteur en tête,
  * puis les intermédiaires par created_at croissant) et on prend l'élément qui
@@ -55,21 +81,7 @@ export function getPreviousDetenteur(
   myUserId: string
 ): DetenteurDisplay {
   const entities = useZustandStore.getState().entities;
-
-  // Le name_cache peut être absent (ex. fiche transmise avant que le cache soit rempli) :
-  // on résout d'abord depuis l'id du premier détenteur, le cache n'est qu'un fallback.
-  const premierDetenteurName =
-    resolveOwnerName(
-      transmission.content.premier_detenteur_entity_id || transmission.content.premier_detenteur_user_id,
-      entities,
-      usersById
-    ) ||
-    transmission.content.premier_detenteur_name_cache ||
-    null;
-  const premierDetenteur: DetenteurDisplay = {
-    name: premierDetenteurName,
-    icon: iconForRole(FeiOwnerRole.PREMIER_DETENTEUR),
-  };
+  const premierDetenteur = getPremierDetenteur(transmission, usersById);
 
   // transmission.intermediaires est en ordre chronologique décroissant (index 0 = plus récent,
   // dernier index = plus ancien). On raisonne directement sur cet ordre, sans copie ni reverse :
@@ -122,7 +134,7 @@ export function getPreviousDetenteur(
         entities,
         usersById
       ) ||
-      premierDetenteurName ||
+      premierDetenteur.name ||
       null,
     icon: iconForRole(previous.intermediaire_role),
   };

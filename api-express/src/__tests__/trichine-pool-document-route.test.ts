@@ -3,6 +3,7 @@ import request from 'supertest';
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { TrichineStatutLogistiqueFTP, UserRoles } from '@prisma/client';
 import laboratoireRouter from '~/controllers/laboratoire';
+import { sendError } from '~/middlewares/errors';
 import prisma from '~/prisma';
 import { getFromCellar } from '~/third-parties/cellar';
 
@@ -20,6 +21,7 @@ vi.mock('~/third-parties/cellar', () => ({
 const app = express();
 app.use(express.json());
 app.use('/laboratoire', laboratoireRouter);
+app.use(sendError);
 
 const laboUser = { id: 'user-labo', roles: [UserRoles.LABORATOIRE], activated: true, isZacharieAdmin: false };
 
@@ -95,5 +97,14 @@ describe('GET /laboratoire/pool/:pool_id/document/:document_id', () => {
     vi.mocked(getFromCellar).mockResolvedValue(null);
     const response = await get();
     expect(response.status).toBe(404);
+  });
+
+  test('502 si le stockage est en panne (pas un faux 404)', async () => {
+    vi.mocked(getFromCellar).mockRejectedValue(
+      Object.assign(new Error('Cellar indisponible'), { status: 502 })
+    );
+    const response = await get();
+    expect(response.status).toBe(502);
+    expect(response.body.code).toBe('SERVER_ERROR');
   });
 });

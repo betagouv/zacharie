@@ -34,9 +34,8 @@ import {
 } from '~/third-parties/brevo';
 import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
 import { BrevoTemplateId } from '~/third-parties/brevo-templates';
-
-const MAX_FAILED_ATTEMPTS = 5;
-const LOCKOUT_DURATION_MINUTES = 15;
+import { requestCarcassesReload } from '~/utils/carcasses-reload';
+import { LOCKOUT_DURATION_MINUTES, MAX_FAILED_ATTEMPTS } from '~/utils/login-lockout';
 
 async function getLockoutInfo(email: string): Promise<AdminUserLockoutInfo> {
   const since = dayjs().subtract(LOCKOUT_DURATION_MINUTES, 'minute').toDate();
@@ -370,6 +369,28 @@ router.post(
         where: { id: userId },
         data: { deleted_at: new Date() },
       });
+      res.status(200).send({ ok: true, data: { user: savedUser }, error: '', message: '' });
+    }
+  )
+);
+
+// Tous les appareils de l'utilisateur re-téléchargent leur périmètre de carcasses à leur prochaine synchro.
+router.post(
+  '/user/:user_id/carcasses-reload',
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<UserConnexionResponse>,
+      next: express.NextFunction
+    ) => {
+      const userId = req.params.user_id;
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        res.status(400).send({ ok: false, data: { user: null }, error: 'User not found', message: '' });
+        return;
+      }
+      const savedUser = await requestCarcassesReload(userId);
+      setAdminAuditChanges(res, user, savedUser, ['carcasses_reload_version']);
       res.status(200).send({ ok: true, data: { user: savedUser }, error: '', message: '' });
     }
   )

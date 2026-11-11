@@ -3,7 +3,7 @@ import { UserRoles } from '@prisma/client';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import Alert from '@codegouvfr/react-dsfr/Alert';
-import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { createModal } from '@app/components/Modal';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import CarcasseExamenInitialForm from '@app/components/CarcasseExamenInitialForm';
 import { formatCarcasseLotCount } from '@app/utils/count-carcasses';

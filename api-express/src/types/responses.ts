@@ -222,6 +222,23 @@ export interface AdminUserLockoutInfo {
   last_failure_at: string | null;
 }
 
+export interface AdminInboxResponse {
+  ok: boolean;
+  data: null | {
+    en_attente_activation: number;
+    cfei_introuvable: number;
+    onboarding_incomplet: number;
+    comptes_bloques: Array<{
+      id: string;
+      prenom: string | null;
+      nom_de_famille: string | null;
+      email: string;
+    }>;
+    entites_non_pretes: number;
+  };
+  error: string;
+}
+
 export interface AdminUserDataResponse {
   ok: boolean;
   data: null | {
@@ -266,6 +283,8 @@ export interface CarcassesGetResponse {
     total: number;
     // le client remplace ses carcasses locales au lieu de les merger (voir FORCE_FULL_RELOAD_AFTER)
     fullReload: boolean;
+    // User.carcasses_reload_version : le client la renvoie à son prochain pull (voir doc/rechargement-complet.md)
+    reloadVersion: number;
   };
   error: string;
 }

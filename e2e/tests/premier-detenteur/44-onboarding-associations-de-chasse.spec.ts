@@ -139,6 +139,14 @@ test("44b - Onboarding asso : création d'une nouvelle association via le formul
     timeout: 10000,
   });
   await expect(page.getByText(/Société de Chasse du Test/i).first()).toBeVisible({ timeout: 10000 });
+  // la saisie d'un numéro CFEI met le compte en attente de validation par l'équipe Zacharie :
+  // admin de l'association qu'il vient de créer, il voit quand même qu'il est en attente
+  await expect(
+    page
+      .locator('.bg-contrast-grey')
+      .filter({ hasText: 'Société de Chasse du Test' })
+      .getByText('En attente de validation')
+  ).toBeVisible();
 });
 
 // Scenario 44c — "Chercher une entité existante" link toggles the create form back to the search

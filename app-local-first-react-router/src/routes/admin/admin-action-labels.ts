@@ -5,6 +5,7 @@ const ADMIN_ACTION_LABELS: Record<string, string> = {
   'POST /user/:user_id': 'Modification d’utilisateur',
   'POST /user/:user_id/soft-delete': 'Suppression d’utilisateur',
   'POST /user/:user_id/restore': 'Restauration d’utilisateur',
+  'POST /user/:user_id/carcasses-reload': 'Rechargement des données demandé',
   'POST /user/:user_id/unblock': 'Déblocage de la connexion',
   'POST /user/:user_id/invitation-link': 'Lien d’invitation généré',
   'POST /user/:user_id/send-reset-password': 'Réinitialisation du mot de passe envoyée',
