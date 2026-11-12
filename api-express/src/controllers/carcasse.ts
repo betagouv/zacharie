@@ -18,7 +18,11 @@ import { getCarcasseAccessWhere } from '~/utils/carcasse-access';
 import { FORCE_FULL_RELOAD_AFTER } from '~/utils/force-full-reload';
 
 const zodQuerySchema = z.object({
-  page: z.string(),
+  // pagination par curseur : updated_at (ms) et id de la dernière carcasse reçue, absents en première page
+  cursorUpdatedAt: z.string().optional(),
+  cursorId: z.string().optional(),
+  // envoyé seulement par un bundle antérieur à la pagination par curseur
+  page: z.string().optional(),
   after: z.string(),
   limit: z.string(),
   withDeleted: z.string(),
@@ -47,9 +51,23 @@ router.get(
       res.status(400).send({ ok: false, data: null, error: 'Invalid query parameters' });
       return;
     }
-    const { page, after, limit, withDeleted, reloadVersion } = queryResult.data;
+    const { cursorUpdatedAt, cursorId, page, after, limit, withDeleted, reloadVersion } = queryResult.data;
 
-    const parsedPage = parseInt(page, 10);
+    // Un bundle resté sur la pagination par page recevrait la première page en boucle : on la lui sert,
+    // puis on refuse la suite. Il abandonne ce chargement et recharge tout au prochain démarrage.
+    if (page !== undefined && page !== '0') {
+      res.status(400).send({ ok: false, data: null, error: 'Pagination par page abandonnée' });
+      return;
+    }
+    const cursorDate = cursorUpdatedAt ? new Date(Number(cursorUpdatedAt)) : undefined;
+    if (
+      (cursorDate === undefined) !== (cursorId === undefined) ||
+      (cursorDate && isNaN(cursorDate.getTime()))
+    ) {
+      res.status(400).send({ ok: false, data: null, error: 'Invalid query parameters' });
+      return;
+    }
+    const isFirstPage = !cursorDate;
     const parsedLimit = parseInt(limit, 10);
     const includeDeleted = withDeleted === 'true';
     const requestedAfterDate = Number(after) ? new Date(Number(after)) : undefined;
@@ -81,16 +99,25 @@ router.get(
       where.updated_at = { gte: afterDate };
     }
 
-    // Execute count and findMany in parallel
-    const [total, carcasses] = await Promise.all([
-      prisma.carcasse.count({ where }),
-      prisma.carcasse.findMany({
-        where,
-        orderBy: { updated_at: 'desc' },
-        skip: parsedPage * parsedLimit,
-        take: parsedLimit,
-      }),
-    ]);
+    // Page suivante : strictement après la dernière carcasse reçue, dans l'ordre (updated_at, id)
+    // décroissant. L'index Carcasse(updated_at desc, zacharie_carcasse_id desc) sert ce tri : la base
+    // lit seulement la page, sans trier ni sauter tout le périmètre (cf e2e/load/README.md).
+    if (cursorDate && cursorId) {
+      where.AND = [
+        {
+          OR: [
+            { updated_at: { lt: cursorDate } },
+            { updated_at: cursorDate, zacharie_carcasse_id: { lt: cursorId } },
+          ],
+        },
+      ];
+    }
+
+    const carcasses = await prisma.carcasse.findMany({
+      where,
+      orderBy: [{ updated_at: 'desc' }, { zacharie_carcasse_id: 'desc' }],
+      take: parsedLimit,
+    });
 
     const feiNumeros = new Set<string>();
     const carcassesIds = new Set<string>();
@@ -138,7 +165,7 @@ router.get(
       await Promise.all([
         prisma.user.findMany({ where: { id: { in: [...userIds].filter(Boolean) } }, select: userFeiSelect }),
         prisma.fei.findMany({ where: { numero: { in: [...feiNumeros].filter(Boolean) } } }),
-        parsedPage === 0 ? prisma.fei.findMany({ where: emptyFeisWhere }) : [],
+        isFirstPage ? prisma.fei.findMany({ where: emptyFeisWhere }) : [],
         prisma.carcasseIntermediaire.findMany({
           where: { zacharie_carcasse_id: { in: [...carcassesIds].filter(Boolean) } },
         }),
@@ -176,7 +203,6 @@ router.get(
         carcassesIntermediaires,
         carcasseModifRequests,
         hasMore: carcasses.length === parsedLimit,
-        total,
         fullReload,
         reloadVersion: req.user.carcasses_reload_version,
       },

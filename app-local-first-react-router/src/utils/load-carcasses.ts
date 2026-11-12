@@ -3,7 +3,7 @@ import useZustandStore from '@app/zustand/store';
 import { mergeItems } from './merge-fetched-items';
 import API from '@app/services/api';
 import { getFeiAndCarcasseAndIntermediaireIds } from './get-carcasse-intermediaire-id';
-import type { CarcasseModificationRequest } from '@prisma/client';
+import type { Carcasse, CarcasseModificationRequest } from '@prisma/client';
 import useUser from '@app/zustand/user';
 import { capture } from '@app/services/sentry';
 import { isLocalTeardownInProgress } from '@app/zustand/idb-sliced-storage';
@@ -100,21 +100,21 @@ export async function loadCarcasses() {
     const carcasseModifRequests: CarcassesGetResponse['data']['carcasseModifRequests'] = [];
     const usersFetched: CarcassesGetResponse['data']['users'] = [];
     const entitiesFetched: CarcassesGetResponse['data']['entities'] = [];
-    let page = 0;
+    // curseur : updated_at (ms) et id de la dernière carcasse reçue, la page suivante commence après
+    let cursor: { updatedAt: string; id: string } | null = null;
     let hasMore = true;
     let fullReload = false;
     let receivedReloadVersion = 0;
 
     while (hasMore) {
-      const res = await API.get({
+      const query: Record<string, string> = { after, withDeleted: 'true', limit: '5000', reloadVersion };
+      if (cursor) {
+        query.cursorUpdatedAt = cursor.updatedAt;
+        query.cursorId = cursor.id;
+      }
+      const res: CarcassesGetResponse = await API.get({
         path: '/carcasse',
-        query: {
-          after,
-          withDeleted: 'true',
-          page: `${page}`,
-          limit: '5000',
-          reloadVersion,
-        },
+        query,
         signal,
       }).then((r) => r as CarcassesGetResponse);
       if (signal.aborted) return;
@@ -126,13 +126,19 @@ export async function loadCarcasses() {
       entitiesFetched.push(...(res.data.entities || []));
       carcasseModifRequests.push(...(res.data.carcasseModifRequests || []));
       carcassesIntermediairesFetched.push(...(res.data.carcassesIntermediaires || []));
-      hasMore = res.data.hasMore;
-      if (page === 0) {
+      if (!cursor) {
         fullReload = res.data.fullReload;
         receivedReloadVersion = res.data.reloadVersion;
         if (fullReload) fullReloadRequested = false;
       }
-      page += 1;
+      const lastCarcasse: Carcasse | undefined = res.data.carcasses?.at(-1);
+      hasMore = res.data.hasMore && !!lastCarcasse;
+      if (lastCarcasse) {
+        cursor = {
+          updatedAt: String(new Date(lastCarcasse.updated_at).getTime()),
+          id: lastCarcasse.zacharie_carcasse_id,
+        };
+      }
     }
 
     // Guard against logout/abort races: don't clobber a freshly-reset store.

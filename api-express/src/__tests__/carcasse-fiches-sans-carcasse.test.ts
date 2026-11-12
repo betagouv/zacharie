@@ -33,10 +33,10 @@ beforeEach(() => {
     args?.where?.Carcasses ? [ficheSansCarcasse] : []) as any);
 });
 
-function getCarcasses(query: { after?: string; page?: string } = {}) {
+function getCarcasses(query: { after?: string; cursorUpdatedAt?: string; cursorId?: string } = {}) {
   return request(app)
     .get('/carcasse')
-    .query({ after: query.after ?? '0', withDeleted: 'true', page: query.page ?? '0', limit: '5000' })
+    .query({ after: '0', withDeleted: 'true', limit: '5000', ...query })
     .set('x-test-user', JSON.stringify(examinateur));
 }
 
@@ -65,7 +65,7 @@ describe('GET /carcasse — fiches sans carcasse', () => {
   });
 
   test('pages suivantes → pas de nouvel envoi des fiches sans carcasse', async () => {
-    const res = await getCarcasses({ page: '1' });
+    const res = await getCarcasses({ cursorUpdatedAt: `${Date.now()}`, cursorId: 'ZACH-1_MM-001' });
     expect(res.status).toBe(200);
     expect(emptyFeisWhere()).toBeUndefined();
     expect(res.body.data.feis).toEqual([]);

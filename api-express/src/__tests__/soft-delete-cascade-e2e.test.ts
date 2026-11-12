@@ -68,7 +68,7 @@ app.use('/carcasse', carcasseRouter);
 (prisma.carcasseIntermediaire as any).findMany = vi.fn().mockResolvedValue([]);
 
 // Default required query params for GET /carcasse/ (zod-validated)
-const CARCASSE_QS = 'page=0&after=0&limit=100&withDeleted=false';
+const CARCASSE_QS = 'after=0&limit=100&withDeleted=false';
 
 function authed(req: request.Test, user: object = examinateurInitial) {
   return req.set('x-test-user', JSON.stringify(user));
@@ -224,7 +224,7 @@ describe('GET /carcasse/ after soft-delete', () => {
   test('GET /carcasse/?withDeleted=true&after=... → updated_at gates the delta; deleted_at is not forced null', async () => {
     // postérieur à FORCE_FULL_RELOAD_AFTER, sinon le serveur force un rechargement complet
     const cutoff = FORCE_FULL_RELOAD_AFTER.getTime() + 1;
-    await authed(request(app).get(`/carcasse?page=0&after=${cutoff}&limit=100&withDeleted=true`), sviUser);
+    await authed(request(app).get(`/carcasse?after=${cutoff}&limit=100&withDeleted=true`), sviUser);
 
     const where: any = vi.mocked(prisma.carcasse.findMany).mock.calls[0][0]!.where;
     expect(where.updated_at).toEqual({ gte: new Date(cutoff) });
