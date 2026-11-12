@@ -68,7 +68,8 @@ test('Un collègue voit la prise en charge, le refus et la transmission à un co
   const tracabilite = page.getByRole('group').filter({
     has: page.getByRole('heading', { name: 'Données de traçabilité' }),
   });
-  await expect(tracabilite.getByText('Collecteur Pro 2', { exact: true })).toBeVisible();
-  await expect(tracabilite.getByText('Transport des carcasses')).toBeVisible();
+  await expect(
+    tracabilite.locator('div').filter({ hasText: /^Collecteur Pro 2Transport des carcasses$/ })
+  ).toBeVisible();
   await expect(tracabilite.getByText('En attente de prise en charge', { exact: true })).toBeVisible();
 });
