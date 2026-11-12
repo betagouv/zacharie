@@ -5,6 +5,7 @@ import prisma from '~/prisma';
 import { capture } from './sentry';
 import { IS_DEV_OR_TEST, ENVIRONMENT } from '~/config';
 import { escapeBrevoPlaceholders } from '~/utils/sanitize';
+import { getChasseurDealName } from '~/utils/brevo-chasseur-deal-name';
 
 const DISABLED = ENVIRONMENT === 'test' || IS_DEV_OR_TEST;
 // const DISABLED = false;
@@ -799,13 +800,13 @@ async function updateBrevoChasseurDeal(chasseur: User) {
       const createDealBodyAttributes: BrevoDeal['attributes'] = {
         created_at: new Date().toISOString(),
         d_patement: chasseur.code_postal?.length > 4 ? Number(chasseur.code_postal.slice(0, 2)) : 0,
-        deal_name: `${chasseur.prenom} ${chasseur.nom_de_famille}`,
+        deal_name: getChasseurDealName(chasseur),
         deal_owner: '67d2cf69c9580538a20d4b95', // fixed owner id, to hack deals system to fit our needs
         deal_stage: getChasseurPipelineStep(chasseur, chasseurPipeline.stages), // it's an ObjectId
         pipeline: chasseurPipeline.pipeline,
       };
       await apiInstance.crmDealsPost({
-        name: `${chasseur.prenom} ${chasseur.nom_de_famille}`,
+        name: getChasseurDealName(chasseur),
         attributes: createDealBodyAttributes,
         linkedContactsIds: [chasseur.brevo_contact_id],
       });
@@ -816,7 +817,7 @@ async function updateBrevoChasseurDeal(chasseur: User) {
       await apiInstance.crmDealsIdPatch(dealToUpdate.id, {
         attributes: {
           d_patement: chasseur.code_postal?.length > 4 ? Number(chasseur.code_postal.slice(0, 2)) : 0,
-          deal_name: `${chasseur.prenom} ${chasseur.nom_de_famille}`,
+          deal_name: getChasseurDealName(chasseur),
           deal_stage: getChasseurPipelineStep(chasseur, chasseurPipeline.stages),
         },
       });

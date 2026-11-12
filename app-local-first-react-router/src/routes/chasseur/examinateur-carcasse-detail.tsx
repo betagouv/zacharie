@@ -118,7 +118,7 @@ function buildChasseurTimeline(
   fei: Fei,
   transmission: CarcasseTransmissionWihMetadata,
   carcasse: Carcasse,
-  intermediaires: Array<CarcasseIntermediaire>,
+  intermediaires: ReadonlyArray<CarcasseIntermediaire>,
   users: Record<string, UserForFei>,
   entities: Record<string, EntityWithUserRelation>
 ): Array<TimelineEvent> {

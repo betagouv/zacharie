@@ -4,8 +4,8 @@ import dayjs from 'dayjs';
 import { Input } from '@app/components/Input';
 import { CarcasseType, Prisma } from '@prisma/client';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
-import { createModal } from '@app/components/Modal';
-import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
+import LazyModal from '@app/components/LazyModal';
+import { useLazyModal } from '@app/utils/use-lazy-modal';
 import refusIntermedaire from '@app/data/refus-intermediaire.json';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
@@ -64,13 +64,9 @@ export default function CarcasseIntermediaireComp({
 
   const formRef = useRef<HTMLFormElement>(null);
 
-  const refusIntermediaireModal = useRef(
-    createModal({
-      isOpenedByDefault: false,
-      id: `refus-intermediaire-modal-carcasse-${carcasseIntermediaireId}`,
-    })
-  ).current;
-  const isRefusIntermediaireModalOpen = useIsModalOpen(refusIntermediaireModal);
+  const refusIntermediaireModal = useLazyModal(
+    `refus-intermediaire-modal-carcasse-${carcasseIntermediaireId}`
+  );
 
   const [carcasseManquante, setCarcasseManquante] = useState(!!carcasse.intermediaire_carcasse_manquante);
   const [carcasseRefusCheckbox, setCarcasseRefusCheckbox] = useState(!!carcasseIntermediaire.refus);
@@ -370,8 +366,9 @@ export default function CarcasseIntermediaireComp({
         />
         <PendingModificationBanner carcasse={carcasse} />
       </div>
-      {canEdit && (
-        <refusIntermediaireModal.Component
+      {canEdit && refusIntermediaireModal.isMounted && (
+        <LazyModal
+          modal={refusIntermediaireModal.modal}
           title={
             <>
               {carcasse.espece} - N° {carcasse.numero_bracelet}
@@ -411,297 +408,266 @@ export default function CarcasseIntermediaireComp({
             </>
           }
         >
-          {isRefusIntermediaireModalOpen && (
-            <form
-              method="POST"
-              ref={formRef}
-              onSubmit={(e) => e.preventDefault()}
-              id={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
-            >
-              {commentairesIntermediaires.length > 0 && (
-                <div className="mb-4 rounded-sm border border-gray-300 bg-gray-50 px-3 py-2 text-sm">
-                  <p className="mb-2 font-semibold">Commentaires des intermédiaires</p>
-                  {commentairesIntermediaires.map((c, i) => (
-                    <div
-                      key={`${c.nom}-${i}`}
-                      className="mb-2 last:mb-0"
-                    >
-                      <p className="font-medium">{c.nom}</p>
-                      <p>{c.commentaire}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {/* Historique affiché dans la modale pour rester attaché à la carcasse en cours. */}
-              <HistoriqueDesModifications carcasse={carcasse} />
-              <div className="mt-4">
-                {/* cutsom radio buttons en reprenant le code de @codegouvfr/react-dsfr/RadioButtons pour y insérer un input pour le nombre d'animaux acceptés */}
-                <fieldset className="fr-fieldset">
-                  <div className="fr-fieldset__content">
-                    {/* Radio: Lot accepté / Carcasse acceptée */}
-                    <div className="fr-radio-group">
-                      <input
-                        type="radio"
-                        id="carcasse-status-accept"
-                        name="carcasse-status"
-                        required
-                        checked={
-                          !carcasseRefusCheckbox &&
-                          !carcasseManquante &&
-                          !carcasseAcceptPartielCheckbox &&
-                          !!carcasseIntermediaire.check_manuel &&
-                          !carcasseIntermediaire.refus &&
-                          !carcasse.intermediaire_carcasse_manquante &&
-                          (carcasse.type === CarcasseType.PETIT_GIBIER
-                            ? carcasseIntermediaire.nombre_d_animaux_acceptes === nombreAnimauxTotal
-                            : true)
-                        }
-                        onChange={() => {
-                          refusIntermediaireModal.close();
-                          submitCarcasseAccept();
-                        }}
-                        disabled={!canEdit}
-                      />
-                      <label
-                        className="fr-label"
-                        htmlFor="carcasse-status-accept"
+          {(isRefusIntermediaireModalOpen) =>
+            isRefusIntermediaireModalOpen && (
+              <form
+                method="POST"
+                ref={formRef}
+                onSubmit={(e) => e.preventDefault()}
+                id={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
+              >
+                {commentairesIntermediaires.length > 0 && (
+                  <div className="mb-4 rounded-sm border border-gray-300 bg-gray-50 px-3 py-2 text-sm">
+                    <p className="mb-2 font-semibold">Commentaires des intermédiaires</p>
+                    {commentairesIntermediaires.map((c, i) => (
+                      <div
+                        key={`${c.nom}-${i}`}
+                        className="mb-2 last:mb-0"
                       >
-                        {carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse acceptée' : 'Lot accepté'}
-                      </label>
-                    </div>
-
-                    {/* Radio: Lot partiellement accepté (uniquement pour petit gibier) */}
-                    {carcasse.type === CarcasseType.PETIT_GIBIER && (
-                      <>
-                        <div className="fr-radio-group">
-                          <input
-                            type="radio"
-                            id="carcasse-status-accept-partiel"
-                            name="carcasse-status"
-                            required
-                            checked={!!carcasseAcceptPartielCheckbox && !carcasseManquante}
-                            onChange={() => {
-                              submitCarcasseAcceptPartiel();
-                            }}
-                            disabled={!canEdit}
-                          />
-                          <label
-                            className="fr-label"
-                            htmlFor="carcasse-status-accept-partiel"
-                          >
-                            Lot partiellement accepté
-                          </label>
-                        </div>
-                        {/* Input pour le nombre d'animaux acceptés - affiché uniquement si "Lot partiellement accepté" est sélectionné */}
-                        {carcasseAcceptPartielCheckbox && !carcasseManquante && (
-                          <div className="mb-4 ml-8">
-                            <Input
-                              label="Nombre d'animaux acceptés"
-                              hintText={`Nombre total d'animaux dans le lot : ${nombreAnimauxTotal}`}
-                              nativeInputProps={{
-                                type: 'number',
-                                min: 1,
-                                max: nombreAnimauxTotal,
-                                name: Prisma.CarcasseIntermediaireScalarFieldEnum.nombre_d_animaux_acceptes,
-                                form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
-                                value: nombreAnimauxAcceptes ?? '',
-                                disabled: !canEdit || carcasseManquante,
-                                onChange: (e) => {
-                                  const rawValue = e.currentTarget.value;
-                                  if (rawValue === '') {
-                                    updateNombreAnimauxAcceptes(null);
-                                    return;
-                                  }
-                                  const numValue = Number(rawValue);
-                                  // Clamp value between 0 and nombreAnimauxTotal
-                                  const clampedValue = Math.max(1, Math.min(numValue, nombreAnimauxTotal));
-                                  updateNombreAnimauxAcceptes(clampedValue);
-                                },
-                              }}
-                            />
-                          </div>
-                        )}
-                      </>
-                    )}
-
-                    {/* Radio: Lot refusé / Carcasse refusée */}
-                    <div className="fr-radio-group">
-                      <input
-                        type="radio"
-                        id="carcasse-status-refus"
-                        name="carcasse-status"
-                        required
-                        checked={
-                          (!!carcasseRefusCheckbox || !!carcasseIntermediaire.refus) &&
-                          !carcasseManquante &&
-                          !carcasseAcceptPartielCheckbox
-                        }
-                        onChange={() => {
-                          setCarcasseManquante(false);
-                          setCarcasseRefusCheckbox(true);
-                          setCarcasseAcceptPartielCheckbox(false);
-                          // Mettre automatiquement 0 animaux acceptés pour un refus de petit gibier
-                          if (carcasse.type === CarcasseType.PETIT_GIBIER && nombreAnimauxTotal > 0) {
-                            setNombreAnimauxAcceptes(0);
-                            updateNombreAnimauxAcceptes(0);
+                        <p className="font-medium">{c.nom}</p>
+                        <p>{c.commentaire}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* Historique affiché dans la modale pour rester attaché à la carcasse en cours. */}
+                <HistoriqueDesModifications carcasse={carcasse} />
+                <div className="mt-4">
+                  {/* cutsom radio buttons en reprenant le code de @codegouvfr/react-dsfr/RadioButtons pour y insérer un input pour le nombre d'animaux acceptés */}
+                  <fieldset className="fr-fieldset">
+                    <div className="fr-fieldset__content">
+                      {/* Radio: Lot accepté / Carcasse acceptée */}
+                      <div className="fr-radio-group">
+                        <input
+                          type="radio"
+                          id="carcasse-status-accept"
+                          name="carcasse-status"
+                          required
+                          checked={
+                            !carcasseRefusCheckbox &&
+                            !carcasseManquante &&
+                            !carcasseAcceptPartielCheckbox &&
+                            !!carcasseIntermediaire.check_manuel &&
+                            !carcasseIntermediaire.refus &&
+                            !carcasse.intermediaire_carcasse_manquante &&
+                            (carcasse.type === CarcasseType.PETIT_GIBIER
+                              ? carcasseIntermediaire.nombre_d_animaux_acceptes === nombreAnimauxTotal
+                              : true)
                           }
-                        }}
-                        disabled={!canEdit}
-                      />
-                      <label
-                        className="fr-label"
-                        htmlFor="carcasse-status-refus"
-                      >
-                        {carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse refusée' : 'Lot refusé'}
-                      </label>
-                      {carcasse.type === CarcasseType.PETIT_GIBIER && (
-                        <p className="fr-hint-text">
-                          Si vous refusez seulement quelques animaux, utilisez plutôt l'option "Lot
-                          partiellement accepté"
-                        </p>
-                      )}
-                    </div>
-                    {!!carcasseRefusCheckbox && (
-                      <div className="mb-4">
-                        <InputMultiSelect
-                          label="Motif de refus *"
-                          isMulti={false}
-                          canEdit
-                          data={refusIntermedaire[carcasse.type || CarcasseType.GROS_GIBIER]}
-                          placeholder="Tapez un motif de refus"
-                          onChange={([refus]) => {
-                            setRefus(refus);
-                            submitCarcasseRefus(refus);
+                          onChange={() => {
+                            refusIntermediaireModal.close();
+                            submitCarcasseAccept();
                           }}
-                          values={[refus]}
-                          creatable
+                          disabled={!canEdit}
+                        />
+                        <label
+                          className="fr-label"
+                          htmlFor="carcasse-status-accept"
+                        >
+                          {carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse acceptée' : 'Lot accepté'}
+                        </label>
+                      </div>
+
+                      {/* Radio: Lot partiellement accepté (uniquement pour petit gibier) */}
+                      {carcasse.type === CarcasseType.PETIT_GIBIER && (
+                        <>
+                          <div className="fr-radio-group">
+                            <input
+                              type="radio"
+                              id="carcasse-status-accept-partiel"
+                              name="carcasse-status"
+                              required
+                              checked={!!carcasseAcceptPartielCheckbox && !carcasseManquante}
+                              onChange={() => {
+                                submitCarcasseAcceptPartiel();
+                              }}
+                              disabled={!canEdit}
+                            />
+                            <label
+                              className="fr-label"
+                              htmlFor="carcasse-status-accept-partiel"
+                            >
+                              Lot partiellement accepté
+                            </label>
+                          </div>
+                          {/* Input pour le nombre d'animaux acceptés - affiché uniquement si "Lot partiellement accepté" est sélectionné */}
+                          {carcasseAcceptPartielCheckbox && !carcasseManquante && (
+                            <div className="mb-4 ml-8">
+                              <Input
+                                label="Nombre d'animaux acceptés"
+                                hintText={`Nombre total d'animaux dans le lot : ${nombreAnimauxTotal}`}
+                                nativeInputProps={{
+                                  type: 'number',
+                                  min: 1,
+                                  max: nombreAnimauxTotal,
+                                  name: Prisma.CarcasseIntermediaireScalarFieldEnum.nombre_d_animaux_acceptes,
+                                  form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
+                                  value: nombreAnimauxAcceptes ?? '',
+                                  disabled: !canEdit || carcasseManquante,
+                                  onChange: (e) => {
+                                    const rawValue = e.currentTarget.value;
+                                    if (rawValue === '') {
+                                      updateNombreAnimauxAcceptes(null);
+                                      return;
+                                    }
+                                    const numValue = Number(rawValue);
+                                    // Clamp value between 0 and nombreAnimauxTotal
+                                    const clampedValue = Math.max(1, Math.min(numValue, nombreAnimauxTotal));
+                                    updateNombreAnimauxAcceptes(clampedValue);
+                                  },
+                                }}
+                              />
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      {/* Radio: Lot refusé / Carcasse refusée */}
+                      <div className="fr-radio-group">
+                        <input
+                          type="radio"
+                          id="carcasse-status-refus"
+                          name="carcasse-status"
+                          required
+                          checked={
+                            (!!carcasseRefusCheckbox || !!carcasseIntermediaire.refus) &&
+                            !carcasseManquante &&
+                            !carcasseAcceptPartielCheckbox
+                          }
+                          onChange={() => {
+                            setCarcasseManquante(false);
+                            setCarcasseRefusCheckbox(true);
+                            setCarcasseAcceptPartielCheckbox(false);
+                            // Mettre automatiquement 0 animaux acceptés pour un refus de petit gibier
+                            if (carcasse.type === CarcasseType.PETIT_GIBIER && nombreAnimauxTotal > 0) {
+                              setNombreAnimauxAcceptes(0);
+                              updateNombreAnimauxAcceptes(0);
+                            }
+                          }}
+                          disabled={!canEdit}
+                        />
+                        <label
+                          className="fr-label"
+                          htmlFor="carcasse-status-refus"
+                        >
+                          {carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse refusée' : 'Lot refusé'}
+                        </label>
+                        {carcasse.type === CarcasseType.PETIT_GIBIER && (
+                          <p className="fr-hint-text">
+                            Si vous refusez seulement quelques animaux, utilisez plutôt l'option "Lot
+                            partiellement accepté"
+                          </p>
+                        )}
+                      </div>
+                      {!!carcasseRefusCheckbox && (
+                        <div className="mb-4">
+                          <InputMultiSelect
+                            label="Motif de refus *"
+                            isMulti={false}
+                            canEdit
+                            data={refusIntermedaire[carcasse.type || CarcasseType.GROS_GIBIER]}
+                            placeholder="Tapez un motif de refus"
+                            onChange={([refus]) => {
+                              setRefus(refus);
+                              submitCarcasseRefus(refus);
+                            }}
+                            values={[refus]}
+                            creatable
+                          />
+                        </div>
+                      )}
+
+                      {/* Radio: Lot manquant / Carcasse manquante */}
+                      <div className="fr-radio-group">
+                        <input
+                          type="radio"
+                          id="carcasse-status-manquante"
+                          name="carcasse-status"
+                          required
+                          checked={carcasseManquante && !refus}
+                          onChange={() => {
+                            refusIntermediaireModal.close();
+                            submitCarcasseManquante();
+                          }}
+                          disabled={!canEdit}
+                        />
+                        <label
+                          className="fr-label"
+                          htmlFor="carcasse-status-manquante"
+                        >
+                          {carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse manquante' : 'Lot manquant'}
+                        </label>
+                      </div>
+
+                      {/* Corriger le numéro de marquage : la correction est appliquée tout de suite,
+                          l'examinateur initial en est seulement informé. */}
+                      <div className="fr-mt-2w">
+                        <RequestBraceletRenameButton
+                          carcasse={carcasse}
+                          requestedByEntityId={intermediaire.intermediaire_entity_id}
+                          onSubmitted={() => refusIntermediaireModal.close()}
                         />
                       </div>
-                    )}
-
-                    {/* Radio: Lot manquant / Carcasse manquante */}
-                    <div className="fr-radio-group">
-                      <input
-                        type="radio"
-                        id="carcasse-status-manquante"
-                        name="carcasse-status"
-                        required
-                        checked={carcasseManquante && !refus}
-                        onChange={() => {
-                          refusIntermediaireModal.close();
-                          submitCarcasseManquante();
-                        }}
-                        disabled={!canEdit}
-                      />
-                      <label
-                        className="fr-label"
-                        htmlFor="carcasse-status-manquante"
-                      >
-                        {carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse manquante' : 'Lot manquant'}
-                      </label>
                     </div>
+                  </fieldset>
+                </div>
 
-                    {/* Corriger le numéro de marquage : la correction est appliquée tout de suite,
-                        l'examinateur initial en est seulement informé. */}
-                    <div className="fr-mt-2w">
-                      <RequestBraceletRenameButton
-                        carcasse={carcasse}
-                        requestedByEntityId={intermediaire.intermediaire_entity_id}
-                        onSubmitted={() => refusIntermediaireModal.close()}
-                      />
-                    </div>
-                  </div>
-                </fieldset>
-              </div>
+                <Input
+                  label="Poids"
+                  hintText="En kg, facultatif"
+                  nativeInputProps={{
+                    type: 'number',
+                    min: 0,
+                    name: Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_poids,
+                    form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
+                    value: poids || '',
+                    onChange: (e) => {
+                      if (!canEdit) return;
+                      setPoids(e.currentTarget.value);
+                    },
+                  }}
+                />
 
-              <Input
-                label="Poids"
-                hintText="En kg, facultatif"
-                nativeInputProps={{
-                  type: 'number',
-                  min: 0,
-                  name: Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_poids,
-                  form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
-                  value: poids || '',
-                  onChange: (e) => {
-                    if (!canEdit) return;
-                    setPoids(e.currentTarget.value);
-                  },
-                }}
-              />
+                <Input
+                  label="Votre commentaire"
+                  className="mt-2"
+                  hintText={
+                    <>
+                      {commentaireHint.map((sentence) => (
+                        <Fragment key={sentence}>
+                          {sentence}
+                          <br />
+                        </Fragment>
+                      ))}
+                    </>
+                  }
+                  textArea
+                  nativeTextAreaProps={{
+                    name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
+                    form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
+                    value: commentaire,
+                    disabled: !canEdit,
+                    onChange: (e) => {
+                      if (!canEdit) return;
+                      setCommentaire(e.currentTarget.value);
+                    },
+                  }}
+                />
 
-              <Input
-                label="Votre commentaire"
-                className="mt-2"
-                hintText={
-                  <>
-                    {commentaireHint.map((sentence) => (
-                      <Fragment key={sentence}>
-                        {sentence}
-                        <br />
-                      </Fragment>
-                    ))}
-                  </>
-                }
-                textArea
-                nativeTextAreaProps={{
-                  name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
-                  form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
-                  value: commentaire,
-                  disabled: !canEdit,
-                  onChange: (e) => {
-                    if (!canEdit) return;
-                    setCommentaire(e.currentTarget.value);
-                  },
-                }}
-              />
-
-              <div className="mt-8 flex flex-col items-start bg-white md:[&_ul]:min-w-96">
-                <ButtonsGroup
-                  buttons={
-                    carcasseIntermediaire.refus
-                      ? [
-                          {
-                            children: 'Enregistrer',
-                            type: 'submit',
-                            disabled: !canEdit,
-                            nativeButtonProps: {
-                              onClick: (e) => {
-                                e.preventDefault();
-                                refusIntermediaireModal.close();
-                                submitCarcasseRefus();
-                              },
-                            },
-                          },
-                          {
-                            children: 'Annuler',
-                            priority: 'secondary',
-                            type: 'button',
-                            disabled: !canEdit,
-                            nativeButtonProps: {
-                              onClick: (e) => {
-                                e.preventDefault();
-                                refusIntermediaireModal.close();
-                                submitCarcasseAccept();
-                              },
-                            },
-                          },
-                        ]
-                      : carcasseAcceptPartielCheckbox
+                <div className="mt-8 flex flex-col items-start bg-white md:[&_ul]:min-w-96">
+                  <ButtonsGroup
+                    buttons={
+                      carcasseIntermediaire.refus
                         ? [
                             {
                               children: 'Enregistrer',
                               type: 'submit',
-                              disabled:
-                                !canEdit ||
-                                nombreAnimauxAcceptes === null ||
-                                nombreAnimauxAcceptes < 0 ||
-                                nombreAnimauxAcceptes > nombreAnimauxTotal,
+                              disabled: !canEdit,
                               nativeButtonProps: {
                                 onClick: (e) => {
                                   e.preventDefault();
-                                  submitCarcasseAcceptPartiel();
                                   refusIntermediaireModal.close();
+                                  submitCarcasseRefus();
                                 },
                               },
                             },
@@ -714,40 +680,73 @@ export default function CarcasseIntermediaireComp({
                                 onClick: (e) => {
                                   e.preventDefault();
                                   refusIntermediaireModal.close();
+                                  submitCarcasseAccept();
                                 },
                               },
                             },
                           ]
-                        : [
-                            {
-                              children: carcasseRefusCheckbox ? 'Refuser' : 'Enregistrer',
-                              type: 'submit',
-                              disabled: !canEdit,
-                              nativeButtonProps: {
-                                form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
-                                disabled: carcasseRefusCheckbox && !refus,
-                                onClick: (e) => {
-                                  e.preventDefault();
-                                  if (carcasseRefusCheckbox) {
-                                    submitCarcasseRefus();
-                                  } else if (carcasseAcceptPartielCheckbox) {
+                        : carcasseAcceptPartielCheckbox
+                          ? [
+                              {
+                                children: 'Enregistrer',
+                                type: 'submit',
+                                disabled:
+                                  !canEdit ||
+                                  nombreAnimauxAcceptes === null ||
+                                  nombreAnimauxAcceptes < 0 ||
+                                  nombreAnimauxAcceptes > nombreAnimauxTotal,
+                                nativeButtonProps: {
+                                  onClick: (e) => {
+                                    e.preventDefault();
                                     submitCarcasseAcceptPartiel();
-                                  } else if (carcasseManquante) {
-                                    submitCarcasseManquante();
-                                  } else {
-                                    submitCarcasseAccept();
-                                  }
-                                  refusIntermediaireModal.close();
+                                    refusIntermediaireModal.close();
+                                  },
                                 },
                               },
-                            },
-                          ]
-                  }
-                />
-              </div>
-            </form>
-          )}
-        </refusIntermediaireModal.Component>
+                              {
+                                children: 'Annuler',
+                                priority: 'secondary',
+                                type: 'button',
+                                disabled: !canEdit,
+                                nativeButtonProps: {
+                                  onClick: (e) => {
+                                    e.preventDefault();
+                                    refusIntermediaireModal.close();
+                                  },
+                                },
+                              },
+                            ]
+                          : [
+                              {
+                                children: carcasseRefusCheckbox ? 'Refuser' : 'Enregistrer',
+                                type: 'submit',
+                                disabled: !canEdit,
+                                nativeButtonProps: {
+                                  form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
+                                  disabled: carcasseRefusCheckbox && !refus,
+                                  onClick: (e) => {
+                                    e.preventDefault();
+                                    if (carcasseRefusCheckbox) {
+                                      submitCarcasseRefus();
+                                    } else if (carcasseAcceptPartielCheckbox) {
+                                      submitCarcasseAcceptPartiel();
+                                    } else if (carcasseManquante) {
+                                      submitCarcasseManquante();
+                                    } else {
+                                      submitCarcasseAccept();
+                                    }
+                                    refusIntermediaireModal.close();
+                                  },
+                                },
+                              },
+                            ]
+                    }
+                  />
+                </div>
+              </form>
+            )
+          }
+        </LazyModal>
       )}
     </>
   );

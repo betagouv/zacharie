@@ -15,6 +15,12 @@ const JWT = /eyJ[\w-]+\.[\w-]+\.[\w-]+/g;
 const BEARER = /Bearer\s+[\w.~+/=-]+/gi;
 const JETON_PUSH_EXPO = /Expo(nent)?PushToken\[[^\]]*\]/g;
 const ADRESSE_EMAIL = /[\w.+-]+@[\w-]+(\.[\w-]+)+/g;
+// Contenu d'un fichier déposé (base64) sous sa forme JSON : Sentry sérialise le body en chaîne
+const CONTENU_FICHIER_JSON = /"content"\s*:\s*"([^"]*)"/g;
+
+function contenuMasque(contenu: string): string {
+  return `[contenu masqué : ${contenu.length} caractères]`;
+}
 
 const PROFONDEUR_MAX = 10;
 
@@ -24,6 +30,7 @@ export function scrubString(value: string): string {
     .replace(BEARER, `Bearer ${VALEUR_MASQUEE}`)
     .replace(JWT, VALEUR_MASQUEE)
     .replace(JETON_PUSH_EXPO, VALEUR_MASQUEE)
+    .replace(CONTENU_FICHIER_JSON, (_match, contenu: string) => `"content":"${contenuMasque(contenu)}"`)
     .replace(ADRESSE_EMAIL, VALEUR_MASQUEE);
 }
 
@@ -40,7 +47,14 @@ export function scrubSensitive(value: unknown, depth = 0, seen = new WeakSet<obj
   } else {
     const scrubbedObject: Record<string, unknown> = {};
     for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
-      if (item !== null && item !== undefined && (CLES_SECRETES.test(key) || CLES_IDENTITE.test(key))) {
+      // Contenu d'un fichier déposé : seule sa taille sert au diagnostic
+      if (key === 'content' && typeof item === 'string') {
+        scrubbedObject[key] = contenuMasque(item);
+      } else if (
+        item !== null &&
+        item !== undefined &&
+        (CLES_SECRETES.test(key) || CLES_IDENTITE.test(key))
+      ) {
         scrubbedObject[key] = VALEUR_MASQUEE;
       } else {
         scrubbedObject[key] = scrubSensitive(item, depth + 1, seen);

@@ -45,9 +45,9 @@ export async function populateDb(role?: FeiOwnerRole) {
   await prisma.$executeRaw`TRUNCATE
     "AdminAuditLog", "SecurityLog", "Log", "CarcasseIntermediaire", "Carcasse", "Fei",
     "EntityAndUserRelations", "UserRelations", "ApiKeyLog", "ApiKeyApprovalByUserOrEntity", "ApiKey",
-    "Password", "Entity", "User",
+    "Password", "Entity", "User", "OfficialCfei",
     "FeiHistory", "CarcasseHistory", "CarcasseIntermediaireHistory", "UserHistory", "EntityHistory",
-    "EntityAndUserRelationsHistory"
+    "EntityAndUserRelationsHistory", "stats_ref_national"
     RESTART IDENTITY CASCADE`;
 
   /* 
@@ -85,6 +85,14 @@ Julie
 Thomas
 Christine
 */
+  // Liste officielle des CFEI : Martin et Petit y figurent, Moreau (CFEI-075-25-003) non → « CFEI introuvable »
+  await prisma.officialCfei.createMany({
+    data: [
+      { numero_cfei: 'CFEI-075-25-001', nom: 'Martin', prenom: 'Marie', departement: '75' },
+      { numero_cfei: 'CFEI-075-25-002', nom: 'Petit', prenom: 'Pierre', departement: '75' },
+    ],
+  });
+
   await prisma.user.createMany({
     data: [
       {

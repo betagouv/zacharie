@@ -147,3 +147,40 @@ describe('loadCarcasses — version de rechargement', () => {
     expect(mocks.state.lastUpdateFromServer).toBe(1000);
   });
 });
+
+describe('loadCarcasses — carcasses sorties du périmètre', () => {
+  // Le contrôle d'intégrité n'a lieu qu'une fois toutes les 6 heures : on avance l'horloge à chaque test.
+  let now = Date.now();
+  beforeEach(() => {
+    now += 7 * 60 * 60 * 1000;
+    vi.spyOn(Date, 'now').mockReturnValue(now);
+    for (const carcasse of Object.values(mocks.state.carcasses)) carcasse.is_synced = true;
+  });
+
+  function mockServerWithCount(count: number) {
+    mocks.get.mockImplementation(({ path }: { path: string }) => {
+      if (path === 'now') return Promise.resolve({ ok: true, data: 2000 });
+      if (path === '/carcasse/count') return Promise.resolve({ ok: true, data: { count } });
+      return Promise.resolve(serverResponse(false));
+    });
+  }
+  const carcasseCalls = () => mocks.get.mock.calls.filter(([arg]) => arg.path === '/carcasse');
+
+  it('plus de carcasses en local que sur le serveur : recharge tout le périmètre', async () => {
+    mockServerWithCount(2); // 3 en local après le delta, dont C-SORTIE sortie du périmètre
+    await loadCarcasses();
+    await vi.waitFor(() => expect(carcasseCalls()).toHaveLength(2));
+    expect(carcasseCalls()[0][0].query.reloadVersion).toBe('3');
+    expect(carcasseCalls()[1][0].query.reloadVersion).toBe('-1');
+  });
+
+  it('autant de carcasses en local que sur le serveur : pas de rechargement', async () => {
+    mockServerWithCount(3);
+    await loadCarcasses();
+    await vi.waitFor(() =>
+      expect(mocks.get.mock.calls.some(([arg]) => arg.path === '/carcasse/count')).toBe(true)
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(carcasseCalls()).toHaveLength(1);
+  });
+});

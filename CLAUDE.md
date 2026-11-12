@@ -219,7 +219,7 @@ Local-first sync and the disconnect/logout flow are deep topics — see @app-loc
 GitHub Actions (`.github/workflows/`):
 
 - `format.yml`: Prettier check per package (`cd <pkg> && npx prettier --check .`)
-- `tests.yml`: typecheck → build → vitest → Playwright (sharded 4-way)
+- `tests.yml`: typecheck → build → vitest → Playwright (sharded 6-way)
 - `shai-hulud-check.yml`: security scanning
 
 ## Environment Variables

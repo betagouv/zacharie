@@ -155,7 +155,7 @@ export default function AdminUser() {
       body,
     }).then((res) => {
       if (!res.ok) {
-        return toast.error("Une erreur est survenue lors de la mise à jour de l'utilisateur");
+        return toast.error(res.error || "Une erreur est survenue lors de la mise à jour de l'utilisateur");
       }
 
       loadData(params.userId!).then((res) => {

@@ -295,6 +295,7 @@ model SecurityLog {
   created_at DateTime @default(now())
 
   @@index([email, action, created_at])
+  @@index([created_at])
 }
 
 // Journal des écritures faites depuis /admin (POST, PUT, DELETE), écrit par le middleware admin-audit-log.
@@ -1792,4 +1793,46 @@ model MatomoReferrersDaily {
 
   @@id([date, referrer_type])
   @@map("matomo_referrers_daily")
+}
+
+enum StatsRefCircuit {
+  LONG
+  COURT
+}
+
+enum StatsRefIndicateur {
+  VOLUME_GLOBAL
+  OBJECTIF_PART_TRACEE
+  TAUX_SAISIE
+  TAUX_SAISIE_BPH_HORS_ZACHARIE
+}
+
+// Références nationales des KPI (volumes, objectifs, taux), saisies dans /app/admin/stats-ref, lues par Metabase.
+// `saison` au format « 2025-2026 ». `valeur` : volumes en carcasses, taux et objectifs en pourcentage (45 = 45 %).
+model StatsRefNational {
+  id          String             @id @default(uuid())
+  saison      String
+  circuit     StatsRefCircuit
+  type_gibier CarcasseType
+  indicateur  StatsRefIndicateur
+  valeur      Float
+  source      String?
+  created_at  DateTime           @default(now())
+  updated_at  DateTime           @default(now()) @updatedAt
+
+  @@unique([saison, circuit, type_gibier, indicateur])
+  @@map("stats_ref_national")
+}
+
+// Tableaux de chasse OFB par département, importés par scripts/20261110_import_ofb_tableau_chasse.sql, lus par Metabase.
+// `departement` au format « 01 », « 2A », « 971 ».
+model StatsRefOfbTableauChasse {
+  saison      String
+  departement String
+  espece      String
+  nombre      Int
+  updated_at  DateTime @default(now()) @updatedAt
+
+  @@id([saison, departement, espece])
+  @@map("stats_ref_ofb_tableau_chasse")
 }

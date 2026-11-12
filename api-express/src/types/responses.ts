@@ -16,6 +16,7 @@ import type {
   TrichineResultatAnalyse,
   BugInvestigation,
   AdminAuditLog,
+  StatsRefNational,
 } from '@prisma/client';
 import type { UserForFei, UserForAdmin } from './user';
 import type { BugInvestigationMessage } from './bug-investigation';
@@ -221,6 +222,23 @@ export interface AdminUserLockoutInfo {
   last_failure_at: string | null;
 }
 
+export interface AdminInboxResponse {
+  ok: boolean;
+  data: null | {
+    en_attente_activation: number;
+    cfei_introuvable: number;
+    onboarding_incomplet: number;
+    comptes_bloques: Array<{
+      id: string;
+      prenom: string | null;
+      nom_de_famille: string | null;
+      email: string;
+    }>;
+    entites_non_pretes: number;
+  };
+  error: string;
+}
+
 export interface AdminUserDataResponse {
   ok: boolean;
   data: null | {
@@ -388,6 +406,22 @@ export interface AdminApiKeyResponse {
   ok: boolean;
   data: {
     apiKey: ApiKey;
+  };
+  error: string;
+}
+
+export interface AdminStatsRefsResponse {
+  ok: boolean;
+  data: {
+    statsRefs: Array<StatsRefNational>;
+  };
+  error: string;
+}
+
+export interface AdminStatsRefResponse {
+  ok: boolean;
+  data: {
+    statsRef: StatsRefNational | null;
   };
   error: string;
 }
