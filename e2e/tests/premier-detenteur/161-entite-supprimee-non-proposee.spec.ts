@@ -68,22 +68,16 @@ test("161 - une entité supprimée par l'admin n'est plus proposée comme destin
 
   await supprimerCommerceDepuisAdmin(browser);
 
-  // Recharger garde la copie locale (IndexedDB) : seul le chargement des relations peut la purger.
-  // On attend sa réponse : avant, la recherche peut tomber sur un store vide (« Créer » affiché)
-  // puis sur la copie locale réhydratée qui contient encore le commerce.
-  const relationsChargees = page.waitForResponse(
-    (res) => res.url().includes('/user/my-relations') && res.ok(),
-    { timeout: 15000 }
-  );
+  // Recharger garde la copie locale (IndexedDB) : seul le chargement des relations peut la purger
   await page.reload();
-  await relationsChargees;
   await rechercherDestinataire(page, 'Commerce de Détail 1');
   await expect(
     venteDonModal(page).getByRole('button', { name: 'Créer « Commerce de Détail 1 »' })
   ).toBeVisible({
     timeout: 10000,
   });
-  await expect(venteDonModal(page).getByRole('button', { name: commerceNom })).toHaveCount(0, {
+  // ancré au début : « Créer « Commerce de Détail 1 » » contient aussi le nom
+  await expect(venteDonModal(page).getByRole('button', { name: /^Commerce de Détail 1/i })).toHaveCount(0, {
     timeout: 10000,
   });
 });
