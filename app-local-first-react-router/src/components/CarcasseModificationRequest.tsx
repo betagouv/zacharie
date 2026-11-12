@@ -235,6 +235,10 @@ export function RequestBraceletRenameButton({
             La correction est appliquée immédiatement. L'examinateur initial en est informé et peut la
             contester, mais la carcasse continue son parcours normalement.
           </p>
+          <p className="mt-2 text-sm font-semibold">
+            En corrigeant ce numéro, vous attestez l'avoir relu sur la carcasse. Vous êtes responsable de
+            cette correction ; l'examinateur initial reste responsable de son examen initial.
+          </p>
           <div className="mt-4 flex gap-2">
             <Button
               priority="primary"
