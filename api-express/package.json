@@ -4,7 +4,7 @@
   "license": "MIT",
   "type": "module",
   "engines": {
-    "node": ">=26.13.0"
+    "node": "26.13.1"
   },
   "scripts": {
     "pre:dev": "npm run prisma-setup && cross-env NODE_ENV=development npx prisma db push && node ./scripts/copy-schema-to-app-side.js && npm run format && npm run typecheck",
