@@ -84,13 +84,53 @@ export async function remettreCarcasse(page: Page, nom: string) {
   await tag.click();
 }
 
+// Étape « Destinataire » : les destinataires habituels (enregistrés par le chasseur) sont des boutons
+// radio ; les autres se cherchent dans le champ texte, ouvert par « Envoyer à un autre destinataire »
+// (directement affiché quand le chasseur n'a aucun destinataire habituel).
 export async function selectDestinataire(page: Page, optionName: string | RegExp) {
-  const select = venteDonModal(page).locator(
-    "[class*='select-prochain-detenteur'][class*='input-container']"
-  );
-  await select.scrollIntoViewIfNeeded();
-  await select.click();
-  await page.getByRole('option', { name: optionName }).click();
+  const modal = venteDonModal(page);
+  await expect(modal.getByText('Prochain détenteur des carcasses').first()).toBeVisible({ timeout: 10000 });
+
+  const radio = modal.getByRole('radio', { name: optionName });
+  if ((await radio.count()) > 0) {
+    const label = modal.locator(`label[for="${await radio.first().getAttribute('id')}"]`);
+    await label.scrollIntoViewIfNeeded();
+    await label.click();
+    await expect(radio.first()).toBeChecked();
+    return;
+  }
+
+  const recherche = await ouvrirRechercheDestinataire(page);
+  // la recherche ignore la casse et les accents : le libellé attendu, sans échappement, suffit
+  await recherche.fill(typeof optionName === 'string' ? optionName : optionName.source.replace(/\\/g, ''));
+  const resultat = modal.getByRole('button', { name: optionName }).first();
+  await resultat.scrollIntoViewIfNeeded();
+  await resultat.click();
+}
+
+export async function ouvrirRechercheDestinataire(page: Page) {
+  const modal = venteDonModal(page);
+  const autreDestinataire = modal.getByRole('button', { name: 'Envoyer à un autre destinataire' });
+  if (await autreDestinataire.isVisible()) {
+    await autreDestinataire.scrollIntoViewIfNeeded();
+    await autreDestinataire.click();
+  }
+  const recherche = modal.getByPlaceholder('Tapez le nom du destinataire');
+  await recherche.scrollIntoViewIfNeeded();
+  return recherche;
+}
+
+// Un nom introuvable dans la recherche propose « Créer « nom » », qui ouvre le formulaire d'ajout
+// d'un destinataire avec la raison sociale préremplie.
+export async function creerDestinataire(page: Page, nom: string) {
+  const modal = venteDonModal(page);
+  await expect(modal.getByText('Prochain détenteur des carcasses').first()).toBeVisible({ timeout: 10000 });
+  const recherche = await ouvrirRechercheDestinataire(page);
+  await recherche.fill(nom);
+  const creer = modal.getByRole('button', { name: `Créer « ${nom} »` });
+  await creer.scrollIntoViewIfNeeded();
+  await creer.click();
+  await expect(modal.getByText('Ajouter un destinataire')).toBeVisible({ timeout: 10000 });
 }
 
 export async function selectCcg(page: Page, optionName: string | RegExp) {

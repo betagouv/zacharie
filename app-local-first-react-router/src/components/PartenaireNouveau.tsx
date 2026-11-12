@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@app/components/Input';
@@ -21,6 +21,7 @@ import {
 import { track } from '@app/services/matomo';
 
 interface PartenaireNouveauProps {
+  defaultRaisonSociale?: string;
   onFinish: (entity: UserEntityResponse['data']['entity']) => void;
 }
 // une même page peut afficher plusieurs formulaires d'entité : on préfixe les id des champs
@@ -34,13 +35,33 @@ const ANNUAIRE_OPTION_PREFIX = 'annuaire-';
 
 type SelectOption = EntitiesById[string];
 
+function toAnnuaireOption(etablissement: EtablissementTrouve) {
+  return {
+    id: `${ANNUAIRE_OPTION_PREFIX}${etablissement.siret}`,
+    nom_d_usage: etablissement.raison_sociale,
+    raison_sociale: etablissement.raison_sociale,
+    siret: etablissement.siret,
+    address_ligne_1: etablissement.address_ligne_1,
+    address_ligne_2: etablissement.address_ligne_2,
+    code_postal: etablissement.code_postal,
+    ville: etablissement.ville,
+  } as unknown as SelectOption;
+}
+
+function toAnnuaireGroups(etablissements: Array<EtablissementTrouve>) {
+  if (!etablissements.length) return [];
+  return [{ label: 'Annuaire des entreprises', options: etablissements.map(toAnnuaireOption) }];
+}
+
 // Le chasseur ne voit jamais les partenaires enregistrés par d'autres chasseurs : un commerce ne veut pas
 // que ses concurrents sachent qu'il est livré via Zacharie. Il saisit toujours le partenaire en entier
 // (aidé par l'annuaire des entreprises) et c'est le serveur qui le rattache à une fiche existante ou en crée une.
-export default function PartenaireNouveau({ onFinish }: PartenaireNouveauProps) {
+export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: PartenaireNouveauProps) {
   const entities = useZustandStore((state) => state.entities);
 
-  const [newEntityNomDUsage, setNewEntityNomDUsage] = useState<string | undefined>(undefined);
+  const [newEntityNomDUsage, setNewEntityNomDUsage] = useState<string | undefined>(
+    defaultRaisonSociale || undefined
+  );
   const [entityType, setEntityType] = useState<EntityTypes | undefined>(undefined);
   const [annuairePrefill, setAnnuairePrefill] = useState<EtablissementTrouve | null>(null);
 
@@ -64,7 +85,6 @@ export default function PartenaireNouveau({ onFinish }: PartenaireNouveauProps) 
 
   function clearSelection() {
     setNewEntityNomDUsage('');
-    setEntityType(undefined);
     setAnnuairePrefill(null);
   }
 
@@ -85,24 +105,26 @@ export default function PartenaireNouveau({ onFinish }: PartenaireNouveauProps) 
     });
   }
 
-  function toAnnuaireOption(etablissement: EtablissementTrouve) {
-    return {
-      id: `${ANNUAIRE_OPTION_PREFIX}${etablissement.siret}`,
-      nom_d_usage: etablissement.raison_sociale,
-      raison_sociale: etablissement.raison_sociale,
-      siret: etablissement.siret,
-      address_ligne_1: etablissement.address_ligne_1,
-      address_ligne_2: etablissement.address_ligne_2,
-      code_postal: etablissement.code_postal,
-      ville: etablissement.ville,
-    } as unknown as SelectOption;
+  async function loadRaisonSocialeOptions(inputValue: string) {
+    return toAnnuaireGroups(await searchAnnuaire(inputValue));
   }
 
-  async function loadRaisonSocialeOptions(inputValue: string) {
-    const etablissements = await searchAnnuaire(inputValue);
-    if (!etablissements.length) return [];
-    return [{ label: 'Annuaire des entreprises', options: etablissements.map(toAnnuaireOption) }];
-  }
+  // la raison sociale arrive préremplie depuis la recherche de destinataire : on interroge l'annuaire
+  // tout de suite, et le menu s'ouvre sur ses résultats
+  const [annuaireInitial, setAnnuaireInitial] = useState<ReturnType<typeof toAnnuaireGroups>>();
+  const [chargementAnnuaireInitial, setChargementAnnuaireInitial] = useState(!!defaultRaisonSociale);
+  useEffect(() => {
+    if (!defaultRaisonSociale) return;
+    const controller = new AbortController();
+    searchEntreprises(defaultRaisonSociale, controller.signal)
+      .then((etablissements) => {
+        if (controller.signal.aborted) return;
+        setAnnuaireInitial(toAnnuaireGroups(etablissements));
+        setChargementAnnuaireInitial(false);
+      })
+      .catch(() => setChargementAnnuaireInitial(false));
+    return () => controller.abort();
+  }, [defaultRaisonSociale]);
 
   function handleSiretBlur(siretSaisi: string) {
     if (!isSiret(siretSaisi)) return;
@@ -169,13 +191,67 @@ export default function PartenaireNouveau({ onFinish }: PartenaireNouveauProps) 
         method="POST"
         onSubmit={handleEntitySubmit}
       >
-        <Alert
-          closable
-          className="mb-8 bg-white"
-          small
-          severity="info"
-          description="Attention : les établissements de traitement du gibier et la plupart des collecteurs professionnels sont déjà enregistrés sur Zacharie, choisissez-les dans la liste. Ce formulaire sert à enregistrer les autres destinataires (collecteurs professionnels absents de la liste, commerces de détail, associations, particuliers…)."
-        />
+        {hasSiret && (
+          <SelectCustom
+            getOptionLabel={(entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`}
+            getOptionValue={(entity) => entity.id}
+            formatOptionLabel={(entity, options) => {
+              if (options.context === 'menu') {
+                // @ts-expect-error - __isNew__ and value are not typed
+                if (entity.__isNew__) return entity.value;
+                if (!entity.code_postal) return entity.nom_d_usage;
+                return `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`;
+              }
+              return entity.nom_d_usage;
+            }}
+            // @ts-expect-error - onCreateOption is not typed
+            onCreateOption={async (raison_sociale) => {
+              setNewEntityNomDUsage(raison_sociale);
+              setAnnuairePrefill(null);
+            }}
+            label="Raison Sociale *"
+            hint="Recherchez l'entreprise par son nom : le SIRET et l'adresse se remplissent automatiquement."
+            name={Prisma.EntityScalarFieldEnum.raison_sociale}
+            placeholder=""
+            creatable={true}
+            async={true}
+            loadOptions={loadRaisonSocialeOptions}
+            defaultOptions={annuaireInitial}
+            isLoading={chargementAnnuaireInitial}
+            // le nom est dans le champ de saisie (et non comme valeur choisie) pour que le curseur soit à la fin
+            defaultInputValue={defaultRaisonSociale}
+            autoFocus={!!defaultRaisonSociale}
+            openMenuOnFocus
+            loadingMessage={() => "Recherche dans l'annuaire des entreprises..."}
+            value={newEntity}
+            // la saisie devient la raison sociale au fil de la frappe : sur mobile, react-select quitte le
+            // champ juste après le choix d'un résultat, un onBlur écraserait ce choix par le texte tapé
+            onInputChange={(inputValue, { action }) => {
+              if (action === 'input-change') setNewEntityNomDUsage(inputValue);
+            }}
+            onChange={(option) => {
+              if (option?.id?.startsWith(ANNUAIRE_OPTION_PREFIX)) {
+                selectAnnuaireEtablissement({
+                  siret: option.siret!,
+                  raison_sociale: option.nom_d_usage ?? '',
+                  address_ligne_1: option.address_ligne_1 ?? '',
+                  address_ligne_2: option.address_ligne_2 ?? '',
+                  code_postal: option.code_postal ?? '',
+                  ville: option.ville ?? '',
+                });
+                return;
+              }
+              if (!option) {
+                clearSelection();
+              }
+            }}
+            isClearable={!!newEntityNomDUsage}
+            required={true}
+            inputId={Prisma.EntityScalarFieldEnum.raison_sociale}
+            classNamePrefix={Prisma.EntityScalarFieldEnum.raison_sociale}
+            className="mb-6"
+          />
+        )}
         <RadioButtons
           legend="Qualité du destinataire *"
           hintText="Est-ce un commerce de détail, repas de chasse ou associatif, un consommateur final, ou encore un collecteur professionnel ?"
@@ -243,62 +319,6 @@ export default function PartenaireNouveau({ onFinish }: PartenaireNouveauProps) 
             },
           ]}
         />
-        {hasSiret && (
-          <SelectCustom
-            getOptionLabel={(entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`}
-            getOptionValue={(entity) => entity.id}
-            formatOptionLabel={(entity, options) => {
-              if (options.context === 'menu') {
-                // @ts-expect-error - __isNew__ and value are not typed
-                if (entity.__isNew__) return entity.value;
-                if (!entity.code_postal) return entity.nom_d_usage;
-                return `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`;
-              }
-              return entity.nom_d_usage;
-            }}
-            // @ts-expect-error - onCreateOption is not typed
-            onCreateOption={async (raison_sociale) => {
-              setNewEntityNomDUsage(raison_sociale);
-              setEntityType(undefined);
-              setAnnuairePrefill(null);
-            }}
-            label="Raison Sociale *"
-            hint="Recherchez l'entreprise par son nom : le SIRET et l'adresse se remplissent automatiquement."
-            name={Prisma.EntityScalarFieldEnum.raison_sociale}
-            placeholder=""
-            creatable={true}
-            async={true}
-            loadOptions={loadRaisonSocialeOptions}
-            loadingMessage={() => "Recherche dans l'annuaire des entreprises..."}
-            value={newEntity}
-            onBlur={(event) => {
-              if (event.target.value) {
-                setNewEntityNomDUsage(event.target.value);
-              }
-            }}
-            onChange={(option) => {
-              if (option?.id?.startsWith(ANNUAIRE_OPTION_PREFIX)) {
-                selectAnnuaireEtablissement({
-                  siret: option.siret!,
-                  raison_sociale: option.nom_d_usage ?? '',
-                  address_ligne_1: option.address_ligne_1 ?? '',
-                  address_ligne_2: option.address_ligne_2 ?? '',
-                  code_postal: option.code_postal ?? '',
-                  ville: option.ville ?? '',
-                });
-                return;
-              }
-              if (!option) {
-                clearSelection();
-              }
-            }}
-            isClearable={!!newEntityNomDUsage}
-            required={true}
-            inputId={Prisma.EntityScalarFieldEnum.raison_sociale}
-            classNamePrefix={Prisma.EntityScalarFieldEnum.raison_sociale}
-            className="mb-6"
-          />
-        )}
         {hasSiret && (
           <Input
             label="SIRET"
@@ -375,6 +395,13 @@ export default function PartenaireNouveau({ onFinish }: PartenaireNouveauProps) 
           required
           defaultCodePostal={annuairePrefill?.code_postal ?? ''}
           defaultVille={annuairePrefill?.ville ?? ''}
+        />
+        <Alert
+          closable
+          className="mb-6 bg-white"
+          small
+          severity="info"
+          description="Attention : les établissements de traitement du gibier et la plupart des collecteurs professionnels sont déjà enregistrés sur Zacharie, choisissez-les dans la liste. Ce formulaire sert à enregistrer les autres destinataires (collecteurs professionnels absents de la liste, commerces de détail, associations, particuliers…)."
         />
         <Button
           type="submit"
