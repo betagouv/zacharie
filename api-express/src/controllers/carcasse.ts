@@ -134,26 +134,30 @@ router.get(
     if (!includeDeleted) emptyFeisWhere.deleted_at = null;
     if (afterDate) emptyFeisWhere.updated_at = { gte: afterDate };
 
-    const [users, feisWithCarcasses, emptyFeis, carcassesIntermediaires, carcasseModifRequests] =
-      await Promise.all([
-        prisma.user.findMany({ where: { id: { in: [...userIds].filter(Boolean) } }, select: userFeiSelect }),
-        prisma.fei.findMany({ where: { numero: { in: [...feiNumeros].filter(Boolean) } } }),
-        parsedPage === 0 ? prisma.fei.findMany({ where: emptyFeisWhere }) : [],
-        prisma.carcasseIntermediaire.findMany({
-          where: { zacharie_carcasse_id: { in: [...carcassesIds].filter(Boolean) } },
-        }),
-        prisma.carcasseModificationRequest.findMany({
-          where: { zacharie_carcasse_id: { in: [...carcassesIds].filter(Boolean) } },
-        }),
-      ]);
+    const [feisWithCarcasses, emptyFeis, carcassesIntermediaires, carcasseModifRequests] = await Promise.all([
+      prisma.fei.findMany({ where: { numero: { in: [...feiNumeros].filter(Boolean) } } }),
+      parsedPage === 0 ? prisma.fei.findMany({ where: emptyFeisWhere }) : [],
+      prisma.carcasseIntermediaire.findMany({
+        where: { zacharie_carcasse_id: { in: [...carcassesIds].filter(Boolean) } },
+      }),
+      prisma.carcasseModificationRequest.findMany({
+        where: { zacharie_carcasse_id: { in: [...carcassesIds].filter(Boolean) } },
+      }),
+    ]);
     const feis = [...feisWithCarcasses, ...emptyFeis];
 
     for (const intermediaire of carcassesIntermediaires) {
+      // affiché dans le parcours de la fiche et le motif de refus : qui, au sein de l'entité, a pris en charge
+      userIds.add(intermediaire.intermediaire_user_id);
       entityIds.add(intermediaire.intermediaire_entity_id!);
       if (intermediaire.intermediaire_depot_entity_id) {
         entityIds.add(intermediaire.intermediaire_depot_entity_id);
       }
     }
+    const users = await prisma.user.findMany({
+      where: { id: { in: [...userIds].filter(Boolean) } },
+      select: userFeiSelect,
+    });
     const entities = await prisma.entity
       .findMany({ where: { id: { in: [...entityIds].filter(Boolean) } } })
       .then((entitiesFromFeis) =>
