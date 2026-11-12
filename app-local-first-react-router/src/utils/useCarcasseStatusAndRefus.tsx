@@ -8,6 +8,7 @@ import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from './get-carcasse
 export function useCarcasseStatusAndRefus(carcasse: Carcasse) {
   const entities = useZustandStore((state) => state.entities);
   const carcassesIntermediaires = useZustandStore((state) => state.carcassesIntermediaireById);
+  const users = useZustandStore((state) => state.users);
 
   const status:
     | 'en cours de création'
@@ -40,7 +41,7 @@ export function useCarcasseStatusAndRefus(carcasse: Carcasse) {
         const carcasseIntermediaire = carcassesIntermediaires[id];
         const entity = entities[carcasseIntermediaire?.intermediaire_entity_id!];
         const manquant = carcasse.type === CarcasseType.PETIT_GIBIER ? 'Manquant' : 'Manquante';
-        return `${manquant} au moment de la collecte par ${entity?.nom_d_usage}`;
+        return `${manquant} au moment de la collecte par ${entity?.nom_d_usage}${getUserSuffix(users[carcasseIntermediaire?.intermediaire_user_id])}`;
       }
       case CarcasseStatus.MANQUANTE_SVI:
         return "Manquant(e) au moment de l'inspection par le service vétérinaire";
@@ -52,7 +53,7 @@ export function useCarcasseStatusAndRefus(carcasse: Carcasse) {
         const carcasseIntermediaire = carcassesIntermediaires[id];
         const entity = entities[carcasseIntermediaire?.intermediaire_entity_id!];
         const refusé = carcasse.type === CarcasseType.PETIT_GIBIER ? 'Refusé' : 'Refusée';
-        let refus = `${refusé} par ${entity?.nom_d_usage}`;
+        let refus = `${refusé} par ${entity?.nom_d_usage}${getUserSuffix(users[carcasseIntermediaire?.intermediaire_user_id])}`;
         if (carcasse.intermediaire_carcasse_refus_motif) {
           refus += `\u00A0: ${carcasse.intermediaire_carcasse_refus_motif}`;
         }
@@ -66,7 +67,7 @@ export function useCarcasseStatusAndRefus(carcasse: Carcasse) {
           .join(', ')}`;
       }
     }
-  }, [carcasse, carcassesIntermediaires, entities]);
+  }, [carcasse, carcassesIntermediaires, entities, users]);
 
   const statusNewCard: string = useMemo(() => {
     if (status !== 'refusé') {
@@ -103,4 +104,10 @@ export function useCarcasseStatusAndRefus(carcasse: Carcasse) {
   }, [status, carcasse, carcassesIntermediaires, entities]);
 
   return { status, motifRefus, statusNewCard };
+}
+
+// « (Prénom Nom) » : qui, au sein de l'entité, a pris en charge les carcasses
+function getUserSuffix(user?: { prenom: string | null; nom_de_famille: string | null }) {
+  const name = [user?.prenom, user?.nom_de_famille].filter(Boolean).join(' ');
+  return name ? ` (${name})` : '';
 }

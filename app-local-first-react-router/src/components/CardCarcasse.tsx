@@ -395,8 +395,9 @@ function buildModalTimeline(args: {
   intermediaires: ReadonlyArray<any>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   entities: Record<string, any>;
+  users: Record<string, { prenom: string | null; nom_de_famille: string | null }>;
 }): Array<ModalTimelineEvent> {
-  const { fei, carcasse, intermediaires, entities } = args;
+  const { fei, carcasse, intermediaires, entities, users } = args;
   const events: Array<ModalTimelineEvent> = [];
 
   if (fei?.date_mise_a_mort) {
@@ -423,10 +424,13 @@ function buildModalTimeline(args: {
   for (const ci of intermediaires) {
     if (!ci.prise_en_charge_at) continue;
     const entityName = entities[ci.intermediaire_entity_id]?.nom_d_usage ?? '';
+    const user = users[ci.intermediaire_user_id];
+    const userName = [user?.prenom, user?.nom_de_famille].filter(Boolean).join(' ');
+    const by = userName ? `${entityName} (${userName})` : entityName;
     const isEtg = ci.intermediaire_role === UserRoles.ETG;
     events.push({
       date: new Date(ci.prise_en_charge_at),
-      label: isEtg ? `Prise en charge par ETG ${entityName}` : `Carcasses prise en charge par ${entityName}`,
+      label: isEtg ? `Prise en charge par ETG ${by}` : `Carcasses prise en charge par ${by}`,
       withTime: true,
     });
   }
@@ -644,8 +648,8 @@ function CarcasseDetails({
   }, [carcassesIntermediaires, entities]);
 
   const timelineEvents = useMemo(
-    () => buildModalTimeline({ fei, carcasse, intermediaires: carcassesIntermediaires, entities }),
-    [fei, carcasse, carcassesIntermediaires, entities]
+    () => buildModalTimeline({ fei, carcasse, intermediaires: carcassesIntermediaires, entities, users }),
+    [fei, carcasse, carcassesIntermediaires, entities, users]
   );
 
   const ipm1 = useMemo(() => {

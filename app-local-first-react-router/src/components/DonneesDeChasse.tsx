@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router';
-import { Carcasse, CarcasseType, DepotType, EntityTypes, FeiOwnerRole } from '@prisma/client';
+import { Carcasse, CarcasseType, DepotType, FeiOwnerRole } from '@prisma/client';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
@@ -113,13 +113,14 @@ export default function FEIDonneesDeChasse({
     for (let i = intermediaires.length - 1; i >= 0; i--) {
       const intermediaire = intermediaires[i];
       const entity = entities[intermediaire.intermediaire_entity_id!];
-      if (
-        entity?.type === EntityTypes.ETG &&
-        intermediaire.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO
-      ) {
-        continue;
-      }
       const details: Array<StepDetail> = entityLocation(entity ?? {});
+      const intermediaireUser = users[intermediaire.intermediaire_user_id];
+      const intermediaireUserName = [intermediaireUser?.prenom, intermediaireUser?.nom_de_famille]
+        .filter(Boolean)
+        .join(' ');
+      if (intermediaireUserName) {
+        details.push({ icon: 'fr-icon-user-line', text: `Prise en charge par ${intermediaireUserName}` });
+      }
       if (intermediaire.prise_en_charge_at) {
         details.push({
           icon: 'fr-icon-calendar-line',
@@ -208,6 +209,7 @@ export default function FEIDonneesDeChasse({
     premierDetenteurUser,
     intermediaires,
     entities,
+    users,
     transmission?.content?.svi_entity_id,
     transmission?.content?.next_owner_role,
     transmission?.content?.next_owner_entity_id,
