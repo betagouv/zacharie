@@ -1,3 +1,4 @@
+import { useLayoutEffect } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { createModal as createDsfrModal, type ModalProps } from '@codegouvfr/react-dsfr/Modal';
 import { capture } from '@app/services/sentry';
@@ -6,7 +7,7 @@ export type { ModalProps };
 
 const MAX_ATTEMPTS = 10;
 
-type DsfrModalInstance = { disclose: () => void; conceal: () => void };
+type DsfrModalInstance = { disclose: () => void; conceal: () => void; isDisclosed: boolean };
 
 function getDsfrModal(id: string): DsfrModalInstance | null {
   const element = document.getElementById(id);
@@ -34,8 +35,22 @@ function runWhenReady(id: string, action: 'disclose' | 'conceal', attempt = 0) {
 
 export function createModal(params: Parameters<typeof createDsfrModal>[0]) {
   const modal = createDsfrModal(params);
+  // Une modale retirée de la page encore ouverte (ex. bouton « retour » d'Android) reste « ouverte » pour
+  // DSFR : son piège à focus s'accroche à la modale détachée et plante sur ses boutons radio
+  // (« Cannot read properties of undefined (reading 'keep') »), puis à chaque modale ajoutée ou retirée.
+  // On la ferme au démontage, tant qu'elle est encore dans la page (cleanup de layout effect).
+  function Component(props: Parameters<typeof modal.Component>[0]) {
+    useLayoutEffect(() => {
+      return () => {
+        const dsfrModal = getDsfrModal(modal.id);
+        if (dsfrModal?.isDisclosed) dsfrModal.conceal();
+      };
+    }, []);
+    return <modal.Component {...props} />;
+  }
   return {
     ...modal,
+    Component,
     open: () => runWhenReady(modal.id, 'disclose'),
     close: () => runWhenReady(modal.id, 'conceal'),
   };
