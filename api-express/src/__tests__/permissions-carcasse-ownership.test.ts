@@ -63,7 +63,7 @@ app.use(express.json());
 app.use('/carcasse', carcasseRouter);
 
 // Default required query params (zod schema rejects requests missing any of them)
-const DEFAULT_QS = 'page=0&after=0&limit=100&withDeleted=false';
+const DEFAULT_QS = 'after=0&limit=100&withDeleted=false';
 
 function authed(req: request.Test, user: object) {
   return req.set('x-test-user', JSON.stringify(user));
@@ -217,18 +217,79 @@ describe('Role branching — where clause shape', () => {
 });
 
 describe('Pagination + delta-fetch contract', () => {
-  test('page/limit map to skip/take', async () => {
-    await authed(request(app).get('/carcasse?page=2&after=0&limit=50&withDeleted=false'), sviUser);
+  test('première page : tri (updated_at, id) décroissant, take = limit, sans curseur ni skip', async () => {
+    await authed(request(app).get('/carcasse?after=0&limit=50&withDeleted=false'), sviUser);
 
     const args = vi.mocked(prisma.carcasse.findMany).mock.calls[0][0]!;
-    expect(args.skip).toBe(100); // page=2 * limit=50
     expect(args.take).toBe(50);
+    expect(args.skip).toBeUndefined();
+    expect(args.orderBy).toEqual([{ updated_at: 'desc' }, { zacharie_carcasse_id: 'desc' }]);
+    expect((args.where as any).AND).toBeUndefined();
+  });
+
+  test('page suivante : strictement après le curseur (updated_at, id), périmètre conservé', async () => {
+    const cursorDate = new Date('2026-11-01T10:00:00.123Z');
+    await authed(
+      request(app).get(
+        `/carcasse?after=0&limit=50&withDeleted=false&cursorUpdatedAt=${cursorDate.getTime()}&cursorId=ZACH-1_MM-002`
+      ),
+      sviUser
+    );
+
+    const where: any = vi.mocked(prisma.carcasse.findMany).mock.calls[0][0]!.where;
+    expect(where.AND).toEqual([
+      {
+        OR: [
+          { updated_at: { lt: cursorDate } },
+          { updated_at: cursorDate, zacharie_carcasse_id: { lt: 'ZACH-1_MM-002' } },
+        ],
+      },
+    ]);
+    expect(where.OR).toEqual([
+      { svi_entity_id: { in: ['entity-1', 'entity-2'] } },
+      { next_owner_entity_id: { in: ['entity-1', 'entity-2'] } },
+    ]);
+  });
+
+  test('ancien bundle : page=0 servie, page>0 refusée en 400 (sinon même page en boucle)', async () => {
+    const first = await authed(
+      request(app).get('/carcasse?page=0&after=0&limit=50&withDeleted=false'),
+      sviUser
+    );
+    expect(first.status).toBe(200);
+    vi.mocked(prisma.carcasse.findMany).mockClear();
+
+    const next = await authed(
+      request(app).get('/carcasse?page=1&after=0&limit=50&withDeleted=false'),
+      sviUser
+    );
+    expect(next.status).toBe(400);
+    expect(prisma.carcasse.findMany).not.toHaveBeenCalled();
+  });
+
+  test('curseur incomplet → 400', async () => {
+    const res = await authed(
+      request(app).get(`/carcasse?after=0&limit=50&withDeleted=false&cursorUpdatedAt=${Date.now()}`),
+      sviUser
+    );
+    expect(res.status).toBe(400);
+  });
+
+  test('pas de count() par page : hasMore = page pleine', async () => {
+    vi.mocked(prisma.carcasse.findMany).mockResolvedValueOnce([
+      { zacharie_carcasse_id: 'a' },
+      { zacharie_carcasse_id: 'b' },
+    ] as any);
+    const res = await authed(request(app).get('/carcasse?after=0&limit=2&withDeleted=false'), sviUser);
+    expect(res.body.data.hasMore).toBe(true);
+    expect(res.body.data.total).toBeUndefined();
+    expect(prisma.carcasse.count).not.toHaveBeenCalled();
   });
 
   test('after=<timestamp> with withDeleted=false → where.updated_at = { gte: Date(after) }', async () => {
     // postérieur à FORCE_FULL_RELOAD_AFTER, sinon le serveur force un rechargement complet
     const cutoff = FORCE_FULL_RELOAD_AFTER.getTime() + 1;
-    await authed(request(app).get(`/carcasse?page=0&after=${cutoff}&limit=100&withDeleted=false`), sviUser);
+    await authed(request(app).get(`/carcasse?after=${cutoff}&limit=100&withDeleted=false`), sviUser);
 
     const where: any = vi.mocked(prisma.carcasse.findMany).mock.calls[0][0]!.where;
     expect(where.updated_at).toEqual({ gte: new Date(cutoff) });
@@ -238,7 +299,7 @@ describe('Pagination + delta-fetch contract', () => {
   test('withDeleted=true → deleted_at is NOT forced to null; updated_at gates the delta', async () => {
     // postérieur à FORCE_FULL_RELOAD_AFTER, sinon le serveur force un rechargement complet
     const cutoff = FORCE_FULL_RELOAD_AFTER.getTime() + 1;
-    await authed(request(app).get(`/carcasse?page=0&after=${cutoff}&limit=100&withDeleted=true`), sviUser);
+    await authed(request(app).get(`/carcasse?after=${cutoff}&limit=100&withDeleted=true`), sviUser);
 
     const where: any = vi.mocked(prisma.carcasse.findMany).mock.calls[0][0]!.where;
     expect(where.updated_at).toEqual({ gte: new Date(cutoff) });

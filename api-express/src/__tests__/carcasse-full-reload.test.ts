@@ -39,7 +39,6 @@ function getCarcasses(after: number, user: object = etgUser, reloadVersion?: num
     .query({
       after: `${after}`,
       withDeleted: 'true',
-      page: '0',
       limit: '5000',
       ...(reloadVersion === undefined ? {} : { reloadVersion: `${reloadVersion}` }),
     })

@@ -938,6 +938,8 @@ model Carcasse {
   @@index([deleted_at, created_at])
   @@index([numero_bracelet])
   @@index([deleted_at, updated_at])
+  // pagination par curseur du pull GET /carcasse (synchro avec withDeleted : pas de filtre deleted_at)
+  @@index([updated_at(sort: Desc), zacharie_carcasse_id(sort: Desc)])
   @@index([intermediaire_carcasse_refus_intermediaire_id])
   @@index([intermediaire_carcasse_manquante])
   // Colonnes de propriété utilisées dans le OR de GET /carcasse (cf carcasse.ts).

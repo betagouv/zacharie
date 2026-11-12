@@ -127,6 +127,34 @@ describe('loadCarcasses — rechargement complet', () => {
   });
 });
 
+describe('loadCarcasses — pagination par curseur', () => {
+  it('demande la page suivante après la dernière carcasse reçue, et garde les carcasses des deux pages', async () => {
+    const page1 = serverResponse(false);
+    page1.data.carcasses = [
+      { ...base(), updated_at: new Date(900), zacharie_carcasse_id: 'C-2', fei_numero: 'FEI-SERVEUR' },
+      { ...base(), updated_at: new Date(800), zacharie_carcasse_id: 'C-1', fei_numero: 'FEI-SERVEUR' },
+    ];
+    page1.data.hasMore = true;
+    const page2 = serverResponse(false);
+    mocks.get.mockImplementation(({ path, query }: { path: string; query?: Record<string, string> }) => {
+      if (path === 'now') return Promise.resolve({ ok: true, data: 2000 });
+      if (path === '/carcasse/count') return Promise.resolve({ ok: false });
+      return Promise.resolve(query?.cursorId ? page2 : page1);
+    });
+
+    await loadCarcasses();
+
+    const queries = mocks.get.mock.calls
+      .filter(([arg]) => arg.path === '/carcasse')
+      .map(([arg]) => arg.query);
+    expect(queries).toHaveLength(2);
+    expect(queries[0].cursorId).toBeUndefined();
+    expect(queries[0].page).toBeUndefined();
+    expect(queries[1]).toMatchObject({ cursorUpdatedAt: '800', cursorId: 'C-1' });
+    expect(Object.keys(mocks.state.carcasses)).toEqual(expect.arrayContaining(['C-1', 'C-2', 'C-SERVEUR']));
+  });
+});
+
 describe('loadCarcasses — version de rechargement', () => {
   it('envoie la version stockée et stocke la version reçue', async () => {
     mockServer(true);
