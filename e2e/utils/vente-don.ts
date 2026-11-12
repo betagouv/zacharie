@@ -108,7 +108,7 @@ export async function selectDestinataire(page: Page, optionName: string | RegExp
   await resultat.click();
 }
 
-async function ouvrirRechercheDestinataire(page: Page) {
+export async function ouvrirRechercheDestinataire(page: Page) {
   const modal = venteDonModal(page);
   const autreDestinataire = modal.getByRole('button', { name: 'Envoyer à un autre destinataire' });
   if (await autreDestinataire.isVisible()) {

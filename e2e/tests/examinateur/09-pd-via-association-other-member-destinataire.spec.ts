@@ -14,6 +14,7 @@ import {
   choisirStockage,
   choisirTransport,
   enregistrerVenteDon,
+  selectDestinataire,
   venteDonModal,
 } from '../../utils/vente-don';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
@@ -92,10 +93,7 @@ test("Autre membre de l'Association voit le bloc Vente / don sur la fiche", asyn
 
   // Sélection ETG 1 puis dispatch.
   await openVenteDon(page);
-  const etg1Pill = venteDonModal(page).getByRole('button', { name: /^ETG 1$/ });
-  await expect(etg1Pill).toBeVisible({ timeout: 15000 });
-  await etg1Pill.scrollIntoViewIfNeeded();
-  await etg1Pill.click();
+  await selectDestinataire(page, 'ETG 1 - 75000 Paris (');
 
   // On ne transmet que le Daim : on retire le Cerf de la vente / du don.
   await allerAEtape(page, 'Carcasses');

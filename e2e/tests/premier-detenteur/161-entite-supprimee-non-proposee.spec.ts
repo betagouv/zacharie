@@ -2,7 +2,12 @@ import { test, expect } from '../../utils/test';
 import type { Browser, Page } from '@playwright/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
-import { ajouterVenteDon, openVenteDon, venteDonModal } from '../../utils/vente-don';
+import {
+  ajouterVenteDon,
+  openVenteDon,
+  ouvrirRechercheDestinataire,
+  venteDonModal,
+} from '../../utils/vente-don';
 
 // Scenario 161 — Un admin supprime une entité que le premier détenteur a dans sa copie locale.
 // En ligne, elle disparaît de la liste des destinataires au prochain chargement. Hors ligne, il peut
@@ -41,13 +46,13 @@ async function supprimerCommerceDepuisAdmin(browser: Browser) {
   await adminContext.close();
 }
 
-async function ouvrirListeDestinataires(page: Page) {
+async function rechercherDestinataire(page: Page, nom: string) {
   await openVenteDon(page);
-  const select = venteDonModal(page).locator(
-    "[class*='select-prochain-detenteur'][class*='input-container']"
-  );
-  await select.scrollIntoViewIfNeeded();
-  await select.click();
+  await expect(venteDonModal(page).getByText('Prochain détenteur des carcasses').first()).toBeVisible({
+    timeout: 10000,
+  });
+  const recherche = await ouvrirRechercheDestinataire(page);
+  await recherche.fill(nom);
 }
 
 test("161 - une entité supprimée par l'admin n'est plus proposée comme destinataire", async ({
@@ -56,16 +61,22 @@ test("161 - une entité supprimée par l'admin n'est plus proposée comme destin
 }) => {
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await ouvrirListeDestinataires(page);
-  await expect(page.getByRole('option', { name: commerceNom })).toBeVisible({ timeout: 10000 });
+  await rechercherDestinataire(page, 'Commerce de Détail 1');
+  await expect(venteDonModal(page).getByRole('button', { name: commerceNom })).toBeVisible({
+    timeout: 10000,
+  });
 
   await supprimerCommerceDepuisAdmin(browser);
 
   // Recharger garde la copie locale (IndexedDB) : seul le chargement des relations peut la purger
   await page.reload();
-  await ouvrirListeDestinataires(page);
-  await expect(page.getByRole('option', { name: /ETG 1/i }).first()).toBeVisible({ timeout: 10000 });
-  await expect(page.getByRole('option', { name: commerceNom })).toHaveCount(0, { timeout: 10000 });
+  await rechercherDestinataire(page, 'Commerce de Détail 1');
+  await expect(
+    venteDonModal(page).getByRole('button', { name: 'Créer « Commerce de Détail 1 »' })
+  ).toBeVisible({
+    timeout: 10000,
+  });
+  await expect(venteDonModal(page).getByRole('button', { name: commerceNom })).toHaveCount(0);
 });
 
 test('161 - une transmission hors ligne vers une entité supprimée est refusée', async ({

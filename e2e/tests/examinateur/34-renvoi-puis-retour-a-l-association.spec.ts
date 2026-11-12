@@ -15,7 +15,7 @@ import {
   choisirStockage,
   choisirTransport,
   enregistrerVenteDon,
-  venteDonModal,
+  selectDestinataire,
 } from '../../utils/vente-don';
 
 test.use({ launchOptions: { slowMo: 100 } });
@@ -75,10 +75,7 @@ test("Renvoi par l'ETG puis retour à l'association : aucune vente fantôme, la 
   await page.getByRole('button', { name: 'Transmettre', exact: true }).click();
 
   await openVenteDon(page);
-  const etg1Pill = venteDonModal(page).getByRole('button', { name: /^ETG 1$/ });
-  await expect(etg1Pill).toBeVisible({ timeout: 15000 });
-  await etg1Pill.scrollIntoViewIfNeeded();
-  await etg1Pill.click();
+  await selectDestinataire(page, 'ETG 1 - 75000 Paris (');
   await allerAEtape(page, 'Stockage');
   await choisirStockage(page, 'aucun');
   await allerAEtape(page, 'Transport');

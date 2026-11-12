@@ -13,7 +13,7 @@ import {
   choisirStockage,
   choisirTransport,
   enregistrerVenteDon,
-  venteDonModal,
+  selectDestinataire,
 } from '../../utils/vente-don';
 
 test.use({
@@ -72,10 +72,7 @@ test('Examinateur == PD via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY — self-hando
 
   // Form transitions inline to the PD « vente / don » view.
   await openVenteDon(page);
-  const etg1Pill = venteDonModal(page).getByRole('button', { name: /^ETG 1$/ });
-  await expect(etg1Pill).toBeVisible({ timeout: 15000 });
-  await etg1Pill.scrollIntoViewIfNeeded();
-  await etg1Pill.click();
+  await selectDestinataire(page, 'ETG 1 - 75000 Paris (');
 
   await allerAEtape(page, 'Stockage');
   await choisirStockage(page, 'aucun');
