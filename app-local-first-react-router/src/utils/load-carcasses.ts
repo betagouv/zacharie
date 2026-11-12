@@ -3,13 +3,15 @@ import useZustandStore from '@app/zustand/store';
 import { mergeItems } from './merge-fetched-items';
 import API from '@app/services/api';
 import { getFeiAndCarcasseAndIntermediaireIds } from './get-carcasse-intermediaire-id';
-import type { CarcasseModificationRequest } from '@prisma/client';
+import { UserRoles, type CarcasseModificationRequest } from '@prisma/client';
 import useUser from '@app/zustand/user';
 import { capture } from '@app/services/sentry';
 import { isLocalTeardownInProgress } from '@app/zustand/idb-sliced-storage';
 import { dropMarginOverwrites, getDeltaAfter } from './delta-margin';
 
 let loadCarcassesAbortController: AbortController | null = null;
+
+const ROLES_WITHOUT_CARCASSES: UserRoles[] = [UserRoles.FEDERATION, UserRoles.LABORATOIRE];
 
 // Contrôle d'intégrité store local / serveur : au plus une fois par utilisateur toutes les 6 heures.
 const INTEGRITY_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
@@ -76,6 +78,9 @@ export async function loadCarcasses() {
     console.log('not loading carcasses because not online');
     return;
   }
+  // ces rôles n'ont pas de périmètre carcasses : l'API répondrait 403
+  const roles = useUser.getState().user?.roles ?? [];
+  if (roles.some((role) => ROLES_WITHOUT_CARCASSES.includes(role))) return;
 
   if (loadCarcassesAbortController && !loadCarcassesAbortController.signal.aborted) {
     loadCarcassesAbortController.abort('new load requested');
