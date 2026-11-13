@@ -89,6 +89,7 @@ Le rôle est porté par une dimension, **jamais par le nom de l'événement** : 
 | `carcasse-ouvrir-ajout`               | carte « Ajouter une carcasse » |
 | `fiche-attribuer-carcasses-restantes` | page de confirmation d'envoi   |
 | `fiche-voir-toutes-les-fiches`        | page de confirmation d'envoi   |
+| `fiche-telecharger-pdf`               | page fiche SVI et ETG          |
 
 ### Événements antérieurs à cette taxonomie
 
@@ -150,3 +151,4 @@ Un événement déclenché hors ligne est perdu : le tracker Matomo n'a pas de f
 - 2026-10 : création de la taxonomie, parcours de création de fiche chasseur, dimension Rôle.
 - 2026-10 : export quotidien des statistiques Matomo vers Postgres pour Metabase.
 - 2026-10 : les jetons et emails en paramètre d'URL sont masqués avant l'envoi à Matomo.
+- 2026-11 : clic `fiche-telecharger-pdf` (extrait PDF de la fiche, SVI et ETG).
