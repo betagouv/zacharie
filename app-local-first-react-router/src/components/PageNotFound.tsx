@@ -5,41 +5,25 @@ import artworkDarkSvgUrl from '@codegouvfr/react-dsfr/dsfr/artwork/background/ov
 import { trackEvent } from '@app/services/matomo';
 import { capture } from '@app/services/sentry';
 import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
+import { getPathWithoutTrailingPunctuation, isBotPath } from '@app/utils/page-not-found-path';
 import useUser from '@app/zustand/user';
-
-// Chemins sondés par des robots (scanners de failles, crawlers) : on ne les
-// envoie pas à Sentry. Liste à compléter quand de nouveaux chemins apparaissent.
-const BOT_PATH_PATTERNS: RegExp[] = [
-  /^\/index(\.\w+)?\/?$/i,
-  /^\/assets\//i,
-  /^\/beta-testeurs/i,
-  /^\/\./, // .env, .git, .aws, .well-known, .DS_Store...
-  /^\/(wp-|wordpress|wp\/)/i,
-  /^\/(xmlrpc|phpinfo|info|test|shell|config|setup|install)\.php/i,
-  /^\/(phpmyadmin|pma|myadmin|mysql|adminer)/i,
-  /^\/(cgi-bin|vendor|node_modules|backup|backups|old|bak|tmp|temp)\b/i,
-  /^\/(owa|ecp|autodiscover|remote|boaform|hnap1|actuator|server-status|solr|telescope|console)\b/i,
-  /^\/(api|graphql|v1|v2)\b/i,
-  /^\/(administrator|admin\.php|login\.php|user\/login)/i,
-  /^\/(sitemap|feed|rss|ads\.txt|app-ads\.txt|security\.txt|humans\.txt)/i,
-  /^\/apple-touch-icon/i,
-  /\.(php\d?|asp|aspx|jsp|cgi|pl|env|sql|bak|old|zip|tar|gz|rar|7z|ini|conf|cfg|yml|yaml|log|swp)$/i,
-];
-
-function isBotPath(pathname: string) {
-  return BOT_PATH_PATTERNS.some((pattern) => pattern.test(pathname));
-}
 
 export default function PageNotFound() {
   const navigate = useNavigate();
   const user = useUser((state) => state.user);
+  const pathWithoutTrailingPunctuation = getPathWithoutTrailingPunctuation(window.location.pathname);
 
   // Ce 404 est un rendu silencieux : sans report explicite il est invisible
   // dans Sentry et noyé dans Matomo. On logge le chemin + la plateforme pour
   // identifier les URLs fautives (initial-path périmé côté natif vs liens
   // d'email ouverts dans le navigateur).
   useEffect(() => {
-    const { pathname, search } = window.location;
+    const { pathname, search, hash } = window.location;
+    // Lien suivi de sa ponctuation (`/)`) : on corrige l'URL sans rien remonter.
+    if (pathWithoutTrailingPunctuation) {
+      navigate(pathWithoutTrailingPunctuation + search + hash, { replace: true });
+      return;
+    }
     const platform = window.ReactNativeWebView ? 'native' : 'web';
     // navigation.type distingue un cold-start (`navigate`) d'un reload ou d'un
     // back/forward : un `navigate` + `referrer` vide en natif = signature d'un
@@ -65,7 +49,7 @@ export default function PageNotFound() {
         userAgent: navigator.userAgent,
       },
     });
-  }, [user]);
+  }, [user, navigate, pathWithoutTrailingPunctuation]);
 
   // Auto-réparation côté natif : l'app Expo rejoue au démarrage un `initial-path`
   // figé en AsyncStorage qui peut pointer vers une route supprimée (ex.
@@ -74,6 +58,7 @@ export default function PageNotFound() {
   // réécrit le `initial-path` stocké pour que le bug ne se reproduise plus.
   useEffect(() => {
     if (!window.ReactNativeWebView) return;
+    if (pathWithoutTrailingPunctuation) return;
     let target = '/';
     try {
       if (user) target = getUserOnboardingRoute(user);
@@ -84,7 +69,7 @@ export default function PageNotFound() {
       JSON.stringify({ event: 'save-initial-path', initialPath: target })
     );
     navigate(target, { replace: true });
-  }, [user, navigate]);
+  }, [user, navigate, pathWithoutTrailingPunctuation]);
 
   return (
     <main
