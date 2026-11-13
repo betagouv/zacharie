@@ -101,4 +101,9 @@ const sendError = (
   });
 };
 
-export { catchErrors, notFound, sendError };
+// Pas de Sentry.Handlers.errorHandler() : il lit le code HTTP sur err.status uniquement, et les
+// contrôleurs le posent via res.status() avant next(error) : il enverrait chaque refus 4xx
+// (API v1 notamment) comme une erreur 500. sendError capture lui-même les vraies erreurs serveur.
+const errorHandlers = [sendError];
+
+export { catchErrors, notFound, sendError, errorHandlers };
