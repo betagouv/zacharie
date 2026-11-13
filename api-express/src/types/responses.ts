@@ -295,6 +295,7 @@ export interface CarcassesCountResponse {
   ok: boolean;
   data: {
     count: number;
+    refuseesHorsPerimetreIds: string[];
   } | null;
   error: string;
 }

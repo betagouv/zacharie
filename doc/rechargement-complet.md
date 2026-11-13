@@ -10,9 +10,10 @@ Trois déclencheurs forcent un rechargement complet du périmètre de carcasses 
   nombre de carcasses synchronisées du store diffère de `GET /carcasse/count`, l'appareil envoie
   `reloadVersion=-1` à son pull suivant. Cas typique : une carcasse sortie du périmètre (renvoi fait
   sur un autre appareil, destinataire changé par l'expéditeur) que le delta ne retire jamais. Les
-  carcasses refusées ou manquantes ne sont comptées d'aucun côté : `GET /carcasse/refusees/:fei_numero`
-  en ajoute au store à l'ouverture d'une fiche, hors du périmètre du pull, et un rechargement complet
-  ne ferait que les retirer jusqu'à la prochaine ouverture.
+  carcasses refusées ou manquantes hors périmètre que `GET /carcasse/refusees/:fei_numero` ajoute au
+  store à l'ouverture d'une fiche ne sont pas comptées : `GET /carcasse/count` en renvoie la liste
+  (`refuseesHorsPerimetreIds`) et le client les exclut, car un rechargement complet ne ferait que les
+  retirer jusqu'à la prochaine ouverture. Les refusées du périmètre restent comptées.
 
 Hors contrôle d'intégrité, le serveur décide, le client obéit : il ne compare jamais lui-même les dates
 ni les versions.

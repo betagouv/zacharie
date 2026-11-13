@@ -51,28 +51,66 @@ describe('GET /carcasse/count', () => {
     expect(prisma.carcasse.count).not.toHaveBeenCalled();
   });
 
-  test('compte les carcasses non supprimées du périmètre du pull delta, hors refusées et manquantes', async () => {
+  test('compte les carcasses non supprimées du périmètre du pull delta, refusées comprises', async () => {
     vi.mocked(prisma.carcasse.count).mockResolvedValueOnce(42);
 
     const res = await request(app).get('/carcasse/count').set('x-test-user', JSON.stringify(etgUser));
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ ok: true, data: { count: 42 }, error: '' });
+    expect(res.body.data.count).toBe(42);
     expect(prisma.carcasse.count).toHaveBeenCalledWith({
       where: {
-        AND: [
-          {
-            OR: [
-              { CarcasseIntermediaire: { some: { intermediaire_entity_id: { in: ENTITY_IDS } } } },
-              { next_owner_entity_id: { in: ENTITY_IDS } },
-              { current_owner_entity_id: { in: ENTITY_IDS } },
-            ],
-          },
-          {
-            deleted_at: null,
-            intermediaire_carcasse_refus_intermediaire_id: null,
-            OR: [{ intermediaire_carcasse_manquante: null }, { intermediaire_carcasse_manquante: false }],
-          },
+        OR: [
+          { CarcasseIntermediaire: { some: { intermediaire_entity_id: { in: ENTITY_IDS } } } },
+          { next_owner_entity_id: { in: ENTITY_IDS } },
+          { current_owner_entity_id: { in: ENTITY_IDS } },
+        ],
+        deleted_at: null,
+      },
+    });
+  });
+
+  test('renvoie les carcasses refusées hors périmètre que GET /refusees/:fei_numero peut ajouter au store', async () => {
+    vi.mocked(prisma.carcasse.count).mockResolvedValueOnce(2);
+    // groupes de dispatch du périmètre : (FEI-1, dispatch-A) et (FEI-2, sans dispatch)
+    vi.mocked(prisma.carcasse.findMany)
+      .mockResolvedValueOnce([
+        { fei_numero: 'FEI-1', premier_detenteur_prochain_detenteur_id_cache: 'dispatch-A' },
+        { fei_numero: 'FEI-2', premier_detenteur_prochain_detenteur_id_cache: null },
+      ] as any)
+      // refusées / manquantes hors périmètre de ces fiches
+      .mockResolvedValueOnce([
+        {
+          zacharie_carcasse_id: 'C-REFUSEE-A',
+          fei_numero: 'FEI-1',
+          premier_detenteur_prochain_detenteur_id_cache: 'dispatch-A',
+        },
+        {
+          zacharie_carcasse_id: 'C-AUTRE-DESTINATAIRE',
+          fei_numero: 'FEI-1',
+          premier_detenteur_prochain_detenteur_id_cache: 'dispatch-B',
+        },
+        {
+          zacharie_carcasse_id: 'C-MANQUANTE-SANS-DISPATCH',
+          fei_numero: 'FEI-2',
+          premier_detenteur_prochain_detenteur_id_cache: null,
+        },
+      ] as any);
+
+    const res = await request(app).get('/carcasse/count').set('x-test-user', JSON.stringify(etgUser));
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      ok: true,
+      data: { count: 2, refuseesHorsPerimetreIds: ['C-REFUSEE-A', 'C-MANQUANTE-SANS-DISPATCH'] },
+      error: '',
+    });
+    expect(vi.mocked(prisma.carcasse.findMany).mock.calls[1][0]).toMatchObject({
+      where: {
+        fei_numero: { in: ['FEI-1', 'FEI-2'] },
+        OR: [
+          { intermediaire_carcasse_refus_intermediaire_id: { not: null } },
+          { intermediaire_carcasse_manquante: true },
         ],
       },
     });

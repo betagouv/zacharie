@@ -23,9 +23,9 @@ let fullReloadRequested = false;
 // supprimées synchronisées du store. Le pull delta ne renvoie que le périmètre actuel : une carcasse
 // qui en est sortie (renvoi fait sur un autre appareil, destinataire changé par l'expéditeur) reste en
 // local. En cas d'écart, on remonte à Sentry et on recharge tout le périmètre, ce qui retire ces copies.
-// Les carcasses refusées ou manquantes ne sont comptées ni ici ni par le serveur : celles chargées à
-// l'ouverture d'une fiche (loadCarcassesRefusees) sont hors du périmètre du pull, et l'ouverture de la
-// fiche les remet après chaque rechargement complet.
+// Les carcasses refusées hors périmètre chargées à l'ouverture d'une fiche (loadCarcassesRefusees) ne
+// sont pas comptées : le serveur en donne la liste, car un rechargement complet les retirerait et
+// l'ouverture de la fiche les remettrait.
 async function checkLocalCarcassesIntegrity(signal: AbortSignal) {
   const user = useUser.getState().user;
   if (!user) return;
@@ -43,9 +43,9 @@ async function checkLocalCarcassesIntegrity(signal: AbortSignal) {
   const state = useZustandStore.getState();
   // des modifications locales en attente fausseraient la comparaison
   if (Object.values(state.carcasses).some((c) => !c.deleted_at && !c.is_synced)) return;
+  const refuseesHorsPerimetre = new Set(res.data.refuseesHorsPerimetreIds);
   const localCarcasses = Object.values(state.carcasses).filter(
-    (c) =>
-      !c.deleted_at && !c.intermediaire_carcasse_refus_intermediaire_id && !c.intermediaire_carcasse_manquante
+    (c) => !c.deleted_at && !refuseesHorsPerimetre.has(c.zacharie_carcasse_id)
   );
 
   const serverCount = res.data.count;

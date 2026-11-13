@@ -189,10 +189,18 @@ router.get(
   })
 );
 
+// Une carcasse refusée ou manquante en amont sort du périmètre de synchro des détenteurs suivants.
+const REFUSEE_OU_MANQUANTE: Prisma.CarcasseWhereInput = {
+  OR: [
+    { intermediaire_carcasse_refus_intermediaire_id: { not: null } },
+    { intermediaire_carcasse_manquante: true },
+  ],
+};
+
 // Nombre de carcasses non supprimées du périmètre de synchro (même périmètre que GET /, sans filtre
 // updated_at). Le client le compare à son store local pour remonter les écarts à Sentry.
-// Les carcasses refusées ou manquantes sont exclues des deux côtés : GET /refusees/:fei_numero en
-// ajoute au store qui sont hors de ce périmètre, et le client ne peut pas les distinguer des autres.
+// On renvoie aussi les carcasses refusées hors périmètre que GET /refusees/:fei_numero peut ajouter au
+// store (mêmes règles : fiches et groupes de dispatch du périmètre) : le client les exclut de son compte.
 router.get(
   '/count',
   passport.authenticate('user', { session: false }),
@@ -210,19 +218,37 @@ router.get(
       return;
     }
 
-    const count = await prisma.carcasse.count({
-      where: {
-        AND: [
-          accessWhere,
-          {
-            deleted_at: null,
-            intermediaire_carcasse_refus_intermediaire_id: null,
-            OR: [{ intermediaire_carcasse_manquante: null }, { intermediaire_carcasse_manquante: false }],
-          },
-        ],
-      },
+    const count = await prisma.carcasse.count({ where: { ...accessWhere, deleted_at: null } });
+
+    const groupesDuPerimetre = await prisma.carcasse.findMany({
+      where: accessWhere,
+      select: { fei_numero: true, premier_detenteur_prochain_detenteur_id_cache: true },
+      distinct: ['fei_numero', 'premier_detenteur_prochain_detenteur_id_cache'],
     });
-    res.status(200).send({ ok: true, data: { count }, error: '' });
+    const groupeKey = (c: {
+      fei_numero: string;
+      premier_detenteur_prochain_detenteur_id_cache: string | null;
+    }) => JSON.stringify([c.fei_numero, c.premier_detenteur_prochain_detenteur_id_cache]);
+    const groupes = new Set(groupesDuPerimetre.map(groupeKey));
+    const refuseesHorsPerimetre = groupesDuPerimetre.length
+      ? await prisma.carcasse.findMany({
+          where: {
+            fei_numero: { in: [...new Set(groupesDuPerimetre.map((c) => c.fei_numero))] },
+            NOT: accessWhere,
+            ...REFUSEE_OU_MANQUANTE,
+          },
+          select: {
+            zacharie_carcasse_id: true,
+            fei_numero: true,
+            premier_detenteur_prochain_detenteur_id_cache: true,
+          },
+        })
+      : [];
+    const refuseesHorsPerimetreIds = refuseesHorsPerimetre
+      .filter((c) => groupes.has(groupeKey(c)))
+      .map((c) => c.zacharie_carcasse_id);
+
+    res.status(200).send({ ok: true, data: { count, refuseesHorsPerimetreIds }, error: '' });
   })
 );
 
@@ -284,12 +310,7 @@ router.get(
                 : []),
             ],
           },
-          {
-            OR: [
-              { intermediaire_carcasse_refus_intermediaire_id: { not: null } },
-              { intermediaire_carcasse_manquante: true },
-            ],
-          },
+          REFUSEE_OU_MANQUANTE,
         ],
       },
     });
