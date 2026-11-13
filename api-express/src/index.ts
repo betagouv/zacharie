@@ -30,7 +30,7 @@ import {
   VERSION,
   VITE_APP_URL,
 } from './config.ts';
-import { sendError } from './middlewares/errors.ts';
+import { errorHandlers } from './middlewares/errors.ts';
 import { capture, SENTRY_SCRUB_OPTIONS } from './third-parties/sentry.ts';
 
 import userRouter from './controllers/user.ts';
@@ -279,8 +279,7 @@ app.use('/stats', passport.initialize(), statsRouter);
 app.use('/api-key-approval', passport.initialize(), apiKeyApprovalRouter);
 app.use('/', passport.initialize(), utilsRouter);
 
-app.use(Sentry.Handlers.errorHandler());
-app.use(sendError);
+app.use(errorHandlers);
 
 // Start the server
 app.listen(PORT, () => {
