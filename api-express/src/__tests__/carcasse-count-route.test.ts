@@ -51,7 +51,7 @@ describe('GET /carcasse/count', () => {
     expect(prisma.carcasse.count).not.toHaveBeenCalled();
   });
 
-  test('compte les carcasses non supprimées du périmètre du pull delta, sans filtre updated_at', async () => {
+  test('compte les carcasses non supprimées du périmètre du pull delta, hors refusées et manquantes', async () => {
     vi.mocked(prisma.carcasse.count).mockResolvedValueOnce(42);
 
     const res = await request(app).get('/carcasse/count').set('x-test-user', JSON.stringify(etgUser));
@@ -60,12 +60,20 @@ describe('GET /carcasse/count', () => {
     expect(res.body).toEqual({ ok: true, data: { count: 42 }, error: '' });
     expect(prisma.carcasse.count).toHaveBeenCalledWith({
       where: {
-        OR: [
-          { CarcasseIntermediaire: { some: { intermediaire_entity_id: { in: ENTITY_IDS } } } },
-          { next_owner_entity_id: { in: ENTITY_IDS } },
-          { current_owner_entity_id: { in: ENTITY_IDS } },
+        AND: [
+          {
+            OR: [
+              { CarcasseIntermediaire: { some: { intermediaire_entity_id: { in: ENTITY_IDS } } } },
+              { next_owner_entity_id: { in: ENTITY_IDS } },
+              { current_owner_entity_id: { in: ENTITY_IDS } },
+            ],
+          },
+          {
+            deleted_at: null,
+            intermediaire_carcasse_refus_intermediaire_id: null,
+            OR: [{ intermediaire_carcasse_manquante: null }, { intermediaire_carcasse_manquante: false }],
+          },
         ],
-        deleted_at: null,
       },
     });
   });

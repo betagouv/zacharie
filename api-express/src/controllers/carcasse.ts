@@ -191,6 +191,8 @@ router.get(
 
 // Nombre de carcasses non supprimées du périmètre de synchro (même périmètre que GET /, sans filtre
 // updated_at). Le client le compare à son store local pour remonter les écarts à Sentry.
+// Les carcasses refusées ou manquantes sont exclues des deux côtés : GET /refusees/:fei_numero en
+// ajoute au store qui sont hors de ce périmètre, et le client ne peut pas les distinguer des autres.
 router.get(
   '/count',
   passport.authenticate('user', { session: false }),
@@ -208,7 +210,18 @@ router.get(
       return;
     }
 
-    const count = await prisma.carcasse.count({ where: { ...accessWhere, deleted_at: null } });
+    const count = await prisma.carcasse.count({
+      where: {
+        AND: [
+          accessWhere,
+          {
+            deleted_at: null,
+            intermediaire_carcasse_refus_intermediaire_id: null,
+            OR: [{ intermediaire_carcasse_manquante: null }, { intermediaire_carcasse_manquante: false }],
+          },
+        ],
+      },
+    });
     res.status(200).send({ ok: true, data: { count }, error: '' });
   })
 );

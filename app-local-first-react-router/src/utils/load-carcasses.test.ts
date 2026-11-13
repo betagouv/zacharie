@@ -183,4 +183,30 @@ describe('loadCarcasses — carcasses sorties du périmètre', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(carcasseCalls()).toHaveLength(1);
   });
+
+  it("carcasses refusées ou manquantes chargées à l'ouverture d'une fiche : hors du compte, pas de rechargement", async () => {
+    // GET /carcasse/refusees/:fei_numero les ajoute au store alors qu'elles sont hors du périmètre
+    // du pull : un rechargement complet les retirerait, puis l'ouverture de la fiche les remettrait.
+    Object.assign(mocks.state.carcasses, {
+      'C-REFUSEE': {
+        ...base(),
+        zacharie_carcasse_id: 'C-REFUSEE',
+        fei_numero: 'FEI-SORTIE',
+        intermediaire_carcasse_refus_intermediaire_id: 'INTERMEDIAIRE-AMONT',
+      },
+      'C-MANQUANTE': {
+        ...base(),
+        zacharie_carcasse_id: 'C-MANQUANTE',
+        fei_numero: 'FEI-SORTIE',
+        intermediaire_carcasse_manquante: true,
+      },
+    });
+    mockServerWithCount(3);
+    await loadCarcasses();
+    await vi.waitFor(() =>
+      expect(mocks.get.mock.calls.some(([arg]) => arg.path === '/carcasse/count')).toBe(true)
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(carcasseCalls()).toHaveLength(1);
+  });
 });
