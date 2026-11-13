@@ -18,6 +18,10 @@ const compteBloque = {
   email: 'locked@example.fr',
 };
 
+function isSqlFragment(value: unknown): value is { sql: string; values: Array<unknown> } {
+  return typeof value === 'object' && value !== null && typeof (value as { sql?: unknown }).sql === 'string';
+}
+
 describe('GET /inbox', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -77,13 +81,16 @@ describe('GET /inbox', () => {
   test('la requête des comptes bloqués applique le seuil d’échecs de connexion', async () => {
     await request(app).get('/inbox');
 
+    // la sous-requête des emails bloqués est un fragment Prisma.Sql passé en valeur de la requête
     const lockoutCall = (
       (prisma as any).$queryRaw.mock.calls as Array<[TemplateStringsArray, ...unknown[]]>
-    ).find(([strings]) => strings.join('?').includes('"SecurityLog"'));
+    ).find(([, ...values]) => values.some(isSqlFragment));
     expect(lockoutCall).toBeDefined();
     const [strings, ...values] = lockoutCall!;
-    expect(strings.join('?')).toContain("LIKE 'LOGIN_FAILED%'");
+    const lockedEmails = values.find(isSqlFragment)!;
+    expect(lockedEmails.sql).toContain('"SecurityLog"');
+    expect(lockedEmails.sql).toContain("LIKE 'LOGIN_FAILED%'");
     expect(strings.join('?')).toContain('u.deleted_at IS NULL');
-    expect(values).toContain(5);
+    expect(lockedEmails.values).toContain(5);
   });
 });

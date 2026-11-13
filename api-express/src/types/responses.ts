@@ -205,11 +205,23 @@ export interface AdminEntitiesResponse {
   error: string;
 }
 
+export type AdminUserCfeiValidation = 'valid' | 'invalid' | 'missing';
+
+export type AdminUserRow = User & {
+  // carcasses et fiches non supprimées où l'utilisateur apparaît à une étape du circuit
+  nb_carcasses: number;
+  nb_fiches: number;
+  cfei_validation: AdminUserCfeiValidation;
+  official_cfei: Omit<OfficialCfei, 'numero_cfei'> | null;
+  is_blocked: boolean;
+};
+
 export interface AdminUsersResponse {
   ok: boolean;
   data: {
-    users: Array<User>;
-    counts: Record<User['id'], { carcasses: number; fiches: number }>;
+    users: Array<AdminUserRow>;
+    total: number;
+    has_official_cfeis: boolean;
   };
   error: string;
 }
@@ -495,14 +507,6 @@ export interface OfficialCfei {
   nom: string | null;
   prenom: string | null;
   departement: string | null;
-}
-
-export interface AdminOfficialCfeisResponse {
-  ok: boolean;
-  data: {
-    officialCfeis: Array<OfficialCfei>;
-  };
-  error: string;
 }
 
 export interface AdminCarcassesIntermediairesResponse {
