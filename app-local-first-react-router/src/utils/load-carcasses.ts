@@ -116,8 +116,10 @@ export async function loadCarcasses() {
     let hasMore = true;
     let fullReload = false;
     let receivedReloadVersion = 0;
+    let pageCount = 0;
 
     while (hasMore) {
+      pageCount++;
       const query: Record<string, string> = { after, withDeleted: 'true', limit: '5000', reloadVersion };
       if (cursor) {
         query.cursorUpdatedAt = cursor.updatedAt;
@@ -253,6 +255,13 @@ export async function loadCarcasses() {
       lastUpdateFromServer: serverDate,
       carcassesReloadVersion: receivedReloadVersion,
     }));
+    // Rechargement complet sur plusieurs pages : une carcasse modifiée pendant la boucle est passée
+    // au-dessus du curseur et n'est revenue dans aucune page, keepLocal vient donc de la retirer.
+    // Un pull delta immédiat (after = serverDate) la ramène.
+    if (fullReload && pageCount > 1) {
+      loadCarcasses();
+      return;
+    }
     checkLocalCarcassesIntegrity(signal);
   } finally {
     if (loadCarcassesAbortController?.signal === signal) {

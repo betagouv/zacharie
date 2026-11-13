@@ -3,7 +3,7 @@ import request from 'supertest';
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import carcasseRouter from '~/controllers/carcasse';
 import prisma from '~/prisma';
-import { EntityRelationStatus, EntityRelationType, UserRoles } from '@prisma/client';
+import { EntityRelationStatus, EntityRelationType, Prisma, UserRoles } from '@prisma/client';
 import { FORCE_FULL_RELOAD_AFTER } from '~/utils/force-full-reload';
 
 // Permissions for the unified GET /carcasse/ endpoint. After the carcasse-first
@@ -162,50 +162,44 @@ describe('Role branching — where clause shape', () => {
     expect(where.deleted_at).toBeNull();
   });
 
-  test('ETG user → OR over CarcasseIntermediaire + next_owner + current_owner entity ids', async () => {
+  // ETG, collecteur, circuit court : périmètre en SQL brut (une requête par branche du OR, cf
+  // findIntermediaireScopeCarcassesPage). Son équivalence avec getCarcasseAccessWhere est vérifiée
+  // sur une vraie base dans carcasse-intermediaire-scope.db.test.ts.
+  test.each([
+    ['ETG', etgUser],
+    ['COLLECTEUR_PRO', collecteurUser],
+    ['COMMERCE_DE_DETAIL', commerceUser],
+  ])(
+    '%s → périmètre CarcasseIntermediaire + next_owner + current_owner, en SQL brut',
+    async (_label, user) => {
+      vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([{ zacharie_carcasse_id: 'C-1' }] as any);
+      const res = await authed(request(app).get(`/carcasse?${DEFAULT_QS}`), user);
+      expect(res.status).toBe(200);
+
+      const [strings, ...values] = vi.mocked(prisma.$queryRaw).mock.calls[0] as [
+        TemplateStringsArray,
+        ...any[],
+      ];
+      const query = Prisma.sql(strings, ...values);
+      expect(query.sql).toContain('"CarcasseIntermediaire" ci');
+      expect(query.sql).toContain('c.next_owner_entity_id IN');
+      expect(query.sql).toContain('c.current_owner_entity_id IN');
+      expect(query.sql).toContain('c.deleted_at IS NULL');
+      expect(query.sql).not.toContain('fei_current_owner');
+      expect(query.values.filter((value) => value === 'entity-1' || value === 'entity-2')).toHaveLength(6);
+
+      // les carcasses de la page sont relues par id, pas par un where de périmètre
+      const findManyArgs = vi.mocked(prisma.carcasse.findMany).mock.calls[0][0]!;
+      expect(findManyArgs.where).toEqual({ zacharie_carcasse_id: { in: ['C-1'] } });
+    }
+  );
+
+  test('ETG sans entité → aucune requête de carcasses', async () => {
+    vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValueOnce([]);
     const res = await authed(request(app).get(`/carcasse?${DEFAULT_QS}`), etgUser);
     expect(res.status).toBe(200);
-
-    const where: any = vi.mocked(prisma.carcasse.findMany).mock.calls[0][0]!.where;
-    expect(where.OR).toEqual([
-      {
-        CarcasseIntermediaire: {
-          some: { intermediaire_entity_id: { in: ['entity-1', 'entity-2'] } },
-        },
-      },
-      { next_owner_entity_id: { in: ['entity-1', 'entity-2'] } },
-      { current_owner_entity_id: { in: ['entity-1', 'entity-2'] } },
-    ]);
-    expect(where.deleted_at).toBeNull();
-
-    // No FEI-based shortcut allowed
-    expect(where).not.toHaveProperty('fei_current_owner_user_id');
-    expect(where).not.toHaveProperty('fei_current_owner_entity_id');
-  });
-
-  test('COLLECTEUR_PRO user → same intermediaire-style OR as ETG', async () => {
-    const res = await authed(request(app).get(`/carcasse?${DEFAULT_QS}`), collecteurUser);
-    expect(res.status).toBe(200);
-
-    const where: any = vi.mocked(prisma.carcasse.findMany).mock.calls[0][0]!.where;
-    expect(where.OR[0]).toEqual({
-      CarcasseIntermediaire: {
-        some: { intermediaire_entity_id: { in: ['entity-1', 'entity-2'] } },
-      },
-    });
-    expect(where.OR[1]).toEqual({ next_owner_entity_id: { in: ['entity-1', 'entity-2'] } });
-    expect(where.OR[2]).toEqual({ current_owner_entity_id: { in: ['entity-1', 'entity-2'] } });
-  });
-
-  test('COMMERCE_DE_DETAIL user → same intermediaire-style OR (circuit court)', async () => {
-    const res = await authed(request(app).get(`/carcasse?${DEFAULT_QS}`), commerceUser);
-    expect(res.status).toBe(200);
-
-    const where: any = vi.mocked(prisma.carcasse.findMany).mock.calls[0][0]!.where;
-    expect(where.OR).toHaveLength(3);
-    expect(where.OR[0].CarcasseIntermediaire.some.intermediaire_entity_id).toEqual({
-      in: ['entity-1', 'entity-2'],
-    });
+    expect(prisma.$queryRaw).not.toHaveBeenCalled();
+    expect(prisma.carcasse.findMany).not.toHaveBeenCalled();
   });
 
   test('user with no matching role → 403, no carcasse query', async () => {
@@ -267,12 +261,35 @@ describe('Pagination + delta-fetch contract', () => {
     expect(prisma.carcasse.findMany).not.toHaveBeenCalled();
   });
 
-  test('curseur incomplet → 400', async () => {
+  test('ancien bundle : page=0 pleine → 400 sans charger fiches ni intermédiaires', async () => {
+    vi.mocked(prisma.carcasse.findMany).mockResolvedValueOnce([
+      { zacharie_carcasse_id: 'a' },
+      { zacharie_carcasse_id: 'b' },
+    ] as any);
+    const res = await authed(request(app).get('/carcasse?page=0&after=0&limit=2&withDeleted=false'), sviUser);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("Mise à jour de l'application requise");
+    expect(prisma.fei.findMany).not.toHaveBeenCalled();
+    expect(prisma.carcasseIntermediaire.findMany).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ['curseur incomplet', `cursorUpdatedAt=${Date.now()}`],
+    ['cursorId vide', `cursorUpdatedAt=${Date.now()}&cursorId=`],
+    ['cursorUpdatedAt non numérique', 'cursorUpdatedAt=abc&cursorId=x'],
+  ])('%s → 400', async (_label, cursorQs) => {
     const res = await authed(
-      request(app).get(`/carcasse?after=0&limit=50&withDeleted=false&cursorUpdatedAt=${Date.now()}`),
+      request(app).get(`/carcasse?after=0&limit=50&withDeleted=false&${cursorQs}`),
       sviUser
     );
     expect(res.status).toBe(400);
+    expect(prisma.carcasse.findMany).not.toHaveBeenCalled();
+  });
+
+  test.each(['0', 'abc', '-1', '1.5', '100000'])('limit=%s → 400', async (limit) => {
+    const res = await authed(request(app).get(`/carcasse?after=0&limit=${limit}&withDeleted=false`), sviUser);
+    expect(res.status).toBe(400);
+    expect(prisma.carcasse.findMany).not.toHaveBeenCalled();
   });
 
   test('pas de count() par page : hasMore = page pleine', async () => {

@@ -14,17 +14,22 @@ import type { EntityWithUserRelation } from '~/types/entity';
 import z from 'zod';
 import { capture } from '~/third-parties/sentry';
 import { userFeiSelect } from '~/types/user';
-import { getCarcasseAccessWhere } from '~/utils/carcasse-access';
+import {
+  findIntermediaireScopeCarcassesPage,
+  getCarcasseAccessWhere,
+  hasIntermediaireCarcasseScope,
+} from '~/utils/carcasse-access';
+import { getUserCarcasseEntityIds } from '~/utils/user-entities';
 import { FORCE_FULL_RELOAD_AFTER } from '~/utils/force-full-reload';
 
 const zodQuerySchema = z.object({
   // pagination par curseur : updated_at (ms) et id de la dernière carcasse reçue, absents en première page
-  cursorUpdatedAt: z.string().optional(),
-  cursorId: z.string().optional(),
+  cursorUpdatedAt: z.string().regex(/^\d+$/).optional(),
+  cursorId: z.string().min(1).optional(),
   // envoyé seulement par un bundle antérieur à la pagination par curseur
   page: z.string().optional(),
   after: z.string(),
-  limit: z.string(),
+  limit: z.coerce.number().int().min(1).max(10000),
   withDeleted: z.string(),
   reloadVersion: z.string().optional(),
 });
@@ -53,22 +58,18 @@ router.get(
     }
     const { cursorUpdatedAt, cursorId, page, after, limit, withDeleted, reloadVersion } = queryResult.data;
 
-    // Un bundle resté sur la pagination par page recevrait la première page en boucle : on la lui sert,
-    // puis on refuse la suite. Il abandonne ce chargement et recharge tout au prochain démarrage.
+    // Un bundle resté sur la pagination par page recevrait la première page en boucle : on la lui sert
+    // seulement si elle tient en une page (cf plus bas), et on refuse toujours la suite.
     if (page !== undefined && page !== '0') {
       res.status(400).send({ ok: false, data: null, error: 'Pagination par page abandonnée' });
       return;
     }
     const cursorDate = cursorUpdatedAt ? new Date(Number(cursorUpdatedAt)) : undefined;
-    if (
-      (cursorDate === undefined) !== (cursorId === undefined) ||
-      (cursorDate && isNaN(cursorDate.getTime()))
-    ) {
+    if ((cursorDate === undefined) !== (cursorId === undefined)) {
       res.status(400).send({ ok: false, data: null, error: 'Invalid query parameters' });
       return;
     }
     const isFirstPage = !cursorDate;
-    const parsedLimit = parseInt(limit, 10);
     const includeDeleted = withDeleted === 'true';
     const requestedAfterDate = Number(after) ? new Date(Number(after)) : undefined;
     // dernier pull antérieur à une correction de données, ou rechargement demandé pour cet utilisateur
@@ -79,7 +80,8 @@ router.get(
     const afterDate = fullReload ? undefined : requestedAfterDate;
 
     // Base query conditions : périmètre d'accès role-aware (partagé avec /refusees/:fei_numero).
-    const accessWhere = await getCarcasseAccessWhere(req.user);
+    const userEntityIds = await getUserCarcasseEntityIds(req.user.id);
+    const accessWhere = await getCarcasseAccessWhere(req.user, userEntityIds);
     if (!accessWhere) {
       capture(`User role not supported: ${req.user.roles.join(', ')}`, { user: req.user });
       res.status(403).send({
@@ -104,6 +106,7 @@ router.get(
     // lit seulement la page, sans trier ni sauter tout le périmètre (cf e2e/load/README.md).
     if (cursorDate && cursorId) {
       where.AND = [
+        ...(where.AND ? [where.AND].flat() : []),
         {
           OR: [
             { updated_at: { lt: cursorDate } },
@@ -113,11 +116,27 @@ router.get(
       ];
     }
 
-    const carcasses = await prisma.carcasse.findMany({
-      where,
-      orderBy: [{ updated_at: 'desc' }, { zacharie_carcasse_id: 'desc' }],
-      take: parsedLimit,
-    });
+    const carcasses = hasIntermediaireCarcasseScope(req.user)
+      ? await findIntermediaireScopeCarcassesPage({
+          entityIds: userEntityIds,
+          includeDeleted,
+          afterDate,
+          cursor: cursorDate && cursorId ? { updatedAt: cursorDate, id: cursorId } : undefined,
+          limit,
+        })
+      : await prisma.carcasse.findMany({
+          where,
+          orderBy: [{ updated_at: 'desc' }, { zacharie_carcasse_id: 'desc' }],
+          take: limit,
+        });
+    const hasMore = carcasses.length === limit;
+
+    // Ancien bundle dont le pull dépasse une page : il ne peut pas lire la suite. On refuse avant de
+    // charger fiches, intermédiaires et utilisateurs, pour ne pas les renvoyer à chaque synchro.
+    if (page !== undefined && hasMore) {
+      res.status(400).send({ ok: false, data: null, error: "Mise à jour de l'application requise" });
+      return;
+    }
 
     const feiNumeros = new Set<string>();
     const carcassesIds = new Set<string>();
@@ -206,7 +225,7 @@ router.get(
         entities,
         carcassesIntermediaires,
         carcasseModifRequests,
-        hasMore: carcasses.length === parsedLimit,
+        hasMore,
         fullReload,
         reloadVersion: req.user.carcasses_reload_version,
       },

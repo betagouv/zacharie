@@ -153,6 +153,50 @@ describe('loadCarcasses — pagination par curseur', () => {
     expect(queries[1]).toMatchObject({ cursorUpdatedAt: '800', cursorId: 'C-1' });
     expect(Object.keys(mocks.state.carcasses)).toEqual(expect.arrayContaining(['C-1', 'C-2', 'C-SERVEUR']));
   });
+
+  it('rechargement complet sur plusieurs pages : relance un pull delta pour les carcasses modifiées pendant la boucle', async () => {
+    const page1 = serverResponse(true);
+    page1.data.carcasses = [
+      { ...base(), updated_at: new Date(900), zacharie_carcasse_id: 'C-1', fei_numero: 'FEI-SERVEUR' },
+    ];
+    page1.data.hasMore = true;
+    const page2 = serverResponse(true);
+    const delta = serverResponse(false);
+    delta.data.carcasses = [
+      {
+        ...base(),
+        updated_at: new Date(2100),
+        zacharie_carcasse_id: 'C-MODIFIEE',
+        fei_numero: 'FEI-SERVEUR',
+      },
+    ];
+    let carcasseCalls = 0;
+    mocks.get.mockImplementation(({ path, query }: { path: string; query?: Record<string, string> }) => {
+      if (path === 'now') return Promise.resolve({ ok: true, data: 2000 });
+      if (path === '/carcasse/count') return Promise.resolve({ ok: false });
+      carcasseCalls++;
+      if (carcasseCalls > 2) return Promise.resolve(delta);
+      return Promise.resolve(query?.cursorId ? page2 : page1);
+    });
+
+    await loadCarcasses();
+
+    await vi.waitFor(() => expect(mocks.state.carcasses['C-MODIFIEE']).toBeDefined());
+    const queries = mocks.get.mock.calls
+      .filter(([arg]) => arg.path === '/carcasse')
+      .map(([arg]) => arg.query);
+    expect(queries).toHaveLength(3);
+    expect(queries[2].cursorId).toBeUndefined();
+    expect(queries[2].reloadVersion).toBe('4');
+    expect(Object.keys(mocks.state.carcasses)).toEqual(expect.arrayContaining(['C-1', 'C-SERVEUR']));
+  });
+
+  it('rechargement complet sur une seule page : pas de pull supplémentaire', async () => {
+    mockServer(true);
+    await loadCarcasses();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(mocks.get.mock.calls.filter(([arg]) => arg.path === '/carcasse')).toHaveLength(1);
+  });
 });
 
 describe('loadCarcasses — version de rechargement', () => {

@@ -10,9 +10,11 @@ import { FORCE_FULL_RELOAD_AFTER } from '~/utils/force-full-reload';
 // son périmètre (pas de filtre updated_at) avec fullReload: true, pour remplacer ses copies locales
 // des carcasses sorties de son périmètre.
 
-const etgUser = {
-  id: 'user-etg',
-  roles: [UserRoles.ETG],
+// SVI : son pull passe par prisma.carcasse.findMany, dont on lit le where (les ETG passent par
+// findIntermediaireScopeCarcassesPage, cf carcasse-intermediaire-scope.db.test.ts).
+const sviUser = {
+  id: 'user-svi',
+  roles: [UserRoles.SVI],
   activated: true,
   isZacharieAdmin: false,
   carcasses_reload_version: 0,
@@ -33,7 +35,7 @@ beforeEach(() => {
   vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValue([{ entity_id: 'entity-1' } as any]);
 });
 
-function getCarcasses(after: number, user: object = etgUser, reloadVersion?: number) {
+function getCarcasses(after: number, user: object = sviUser, reloadVersion?: number) {
   return request(app)
     .get('/carcasse')
     .query({
@@ -74,7 +76,7 @@ describe('GET /carcasse — rechargement complet forcé', () => {
 });
 
 describe('GET /carcasse — rechargement complet demandé pour un utilisateur', () => {
-  const userWithReload = { ...etgUser, carcasses_reload_version: 3 };
+  const userWithReload = { ...sviUser, carcasses_reload_version: 3 };
   const after = FORCE_FULL_RELOAD_AFTER.getTime() + 1;
 
   test('même version → pull delta, fullReload: false', async () => {
