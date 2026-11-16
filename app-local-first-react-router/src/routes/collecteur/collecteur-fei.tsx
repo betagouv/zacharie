@@ -104,12 +104,11 @@ function CollecteurFeiLoader(props: Props) {
     )?.id ?? null;
   const [selectedIntermediaireId, setSelectedIntermediaireId] = useState<string | null>(myIntermediaireId);
 
-  // Update when intermediaires change (e.g., after take-charge creates new intermediaire)
+  // une prise en charge crée un intermédiaire plus récent : on le sélectionne, sinon la transmission
+  // s'appliquerait à l'ancien (ex. le transport fait par un collègue de l'ETG)
   useEffect(() => {
-    if (!selectedIntermediaireId && myIntermediaireId) {
-      setSelectedIntermediaireId(myIntermediaireId);
-    }
-  }, [myIntermediaireId, selectedIntermediaireId]);
+    if (myIntermediaireId) setSelectedIntermediaireId(myIntermediaireId);
+  }, [myIntermediaireId]);
 
   const intermediaire = intermediaires.find((i) => i.id === selectedIntermediaireId);
 
