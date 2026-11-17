@@ -250,7 +250,7 @@
             "items": {
               "$ref": "#/components/schemas/Carcasse"
             },
-            "description": "Liste des carcasses associées à cette FEI"
+            "description": "Carcasses de cette FEI dans le périmètre de la clé, plus les carcasses refusées ou manquantes du même lot (même premier détenteur, même destinataire). Les carcasses de la fiche envoyées à un autre destinataire ne sont pas renvoyées."
           }
         }
       },
