@@ -1249,11 +1249,16 @@ export default function DestinataireSelectPremierDetenteur({
   const openAddDispatchGroup = useCallback(() => {
     const isFirst = dispatchGroups.length === 0;
     const libresIds = getCarcassesLibresIds(null);
+    // on ne reprend le destinataire d'une fiche précédente que s'il fait partie des destinataires proposés
+    // (pas l'association propriétaire initiale par exemple)
+    const prefilledRecipientId = prefilledInfos?.premier_detenteur_prochain_detenteur_id_cache;
     const nextDraft: DispatchGroup = {
       id: `group-${Date.now()}`,
       recipientEntityId:
-        isFirst && prefilledInfos?.premier_detenteur_prochain_detenteur_id_cache
-          ? prefilledInfos.premier_detenteur_prochain_detenteur_id_cache
+        isFirst &&
+        prefilledRecipientId &&
+        prochainsDetenteurs.some((entity) => entity.id === prefilledRecipientId)
+          ? prefilledRecipientId
           : null,
       // On part de toutes les carcasses encore libres : le chasseur n'a qu'à retirer ce qui ne
       // part pas chez ce destinataire.
@@ -1280,7 +1285,7 @@ export default function DestinataireSelectPremierDetenteur({
     setShowModalErrors(false);
     setCurrentStep(1);
     dispatchModal.open();
-  }, [dispatchGroups.length, prefilledInfos, getCarcassesLibresIds]);
+  }, [dispatchGroups.length, prefilledInfos, prochainsDetenteurs, getCarcassesLibresIds]);
 
   // L'état initial des lots est figé au montage. Une carcasse créée après coup rejoint donc le lot
   // par défaut, sinon elle reste en arrière : la fiche part sans elle et elle devient orpheline,
