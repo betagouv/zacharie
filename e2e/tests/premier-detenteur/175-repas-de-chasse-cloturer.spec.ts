@@ -26,6 +26,14 @@ function boutonFiche(page: Page, action: 'Transmettre' | 'Clôturer') {
   return page.getByRole('button', { name: new RegExp(`^${action}`) });
 }
 
+// La page de confirmation ne parle pas de transmission : personne n'est notifié.
+async function expectFicheCloturee(page: Page) {
+  await expect(page.getByRole('heading', { name: 'Votre fiche est clôturée' })).toBeVisible({
+    timeout: 10000,
+  });
+  await expect(page.getByText(/notifié|transmise/)).toHaveCount(0);
+}
+
 test.describe('Premier détenteur = association', () => {
   // Seed PREMIER_DETENTEUR_ASSOCIATION : premier-detenteur@ est admin de « Association de chasseurs »,
   // premier détenteur de la fiche (daims uniquement : pas de rappel trichine).
@@ -62,6 +70,7 @@ test.describe('Premier détenteur = association', () => {
     await cloturer.scrollIntoViewIfNeeded();
     await cloturer.click();
     await expect(page).toHaveURL(new RegExp(`/app/chasseur/fei/${feiId}/envoy`), { timeout: 10000 });
+    await expectFicheCloturee(page);
   });
 });
 
@@ -82,8 +91,14 @@ test.describe('Premier détenteur = moi-même', () => {
     await allerAEtape(page, 'Carcasses');
     await enregistrerVenteDon(page);
 
-    await expect(boutonFiche(page, 'Clôturer')).toBeVisible({ timeout: 10000 });
+    const cloturer = boutonFiche(page, 'Clôturer');
+    await expect(cloturer).toBeVisible({ timeout: 10000 });
     await expect(boutonFiche(page, 'Transmettre')).toHaveCount(0);
+
+    await cloturer.scrollIntoViewIfNeeded();
+    await cloturer.click();
+    await expect(page).toHaveURL(new RegExp(`/app/chasseur/fei/${feiId}/envoy`), { timeout: 10000 });
+    await expectFicheCloturee(page);
   });
 
   test('Un autre destinataire garde « Transmettre »', async ({ page }) => {
