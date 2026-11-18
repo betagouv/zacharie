@@ -240,7 +240,7 @@ carcasses AS (
       AND c.zacharie_carcasse_id NOT IN (SELECT zacharie_carcasse_id FROM etapes_etg)
       AND COALESCE(c.next_owner_role, c.current_owner_role) IN (
           'COMMERCE_DE_DETAIL', 'REPAS_DE_CHASSE_OU_ASSOCIATIF', 'CANTINE_OU_RESTAURATION_COLLECTIVE',
-          'ASSOCIATION_CARITATIVE', 'CONSOMMATEUR_FINAL'
+          'ASSOCIATION_CARITATIVE', 'CONSOMMATEUR_FINAL', 'CIRCUIT_COURT'
       )
 ),
 saisons AS (
@@ -291,7 +291,7 @@ carcasses AS (
       AND c.zacharie_carcasse_id NOT IN (SELECT zacharie_carcasse_id FROM etapes_etg)
       AND COALESCE(c.next_owner_role, c.current_owner_role) IN (
           'COMMERCE_DE_DETAIL', 'REPAS_DE_CHASSE_OU_ASSOCIATIF', 'CANTINE_OU_RESTAURATION_COLLECTIVE',
-          'ASSOCIATION_CARITATIVE', 'CONSOMMATEUR_FINAL'
+          'ASSOCIATION_CARITATIVE', 'CONSOMMATEUR_FINAL', 'CIRCUIT_COURT'
       )
 )
 -- part_tracee_pct en première colonne : la jauge Metabase affiche la première valeur de la première ligne

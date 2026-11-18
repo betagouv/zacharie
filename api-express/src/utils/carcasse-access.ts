@@ -61,6 +61,7 @@ const INTERMEDIAIRE_SCOPE_ROLES: Array<UserRoles> = [
   UserRoles.ASSOCIATION_CARITATIVE,
   UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF,
   UserRoles.CONSOMMATEUR_FINAL,
+  UserRoles.CIRCUIT_COURT,
 ];
 
 // Rôles dont le périmètre passe par CarcasseIntermediaire (SVI et chasseur ont leur propre périmètre,

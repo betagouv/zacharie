@@ -24,6 +24,8 @@ export function getUserRoleLabel(role: UserRoles | FeiOwnerRole | EntityTypes | 
       return 'Repas de Chasse ou Associatif';
     case FeiOwnerRole.CONSOMMATEUR_FINAL:
       return 'Consommateur Final';
+    case FeiOwnerRole.CIRCUIT_COURT:
+      return 'Circuit Court';
     case FeiOwnerRole.EXAMINATEUR_INITIAL:
       return 'Examinateur Initial';
     case EntityTypes.CCG:
