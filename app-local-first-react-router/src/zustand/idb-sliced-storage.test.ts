@@ -3,7 +3,17 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 type Batch = { puts: Array<[IDBValidKey, unknown]>; deletes: IDBValidKey[] };
 
 const idb = new Map<IDBValidKey, unknown>();
-const failures = { read: false, write: false, abortsWithoutError: 0 };
+const failures = { read: false, write: false, abortsWithoutError: 0, connectionClosing: 0 };
+// iOS WebKit : connexion IndexedDB fermée par le système
+const throwIfConnectionClosing = () => {
+  if (failures.connectionClosing > 0) {
+    failures.connectionClosing--;
+    throw new DOMException(
+      "Failed to execute 'transaction' on 'IDBDatabase': The database connection is closing.",
+      'InvalidStateError'
+    );
+  }
+};
 // transactions d'écriture validées, dans l'ordre
 const batches: Batch[] = [];
 
@@ -13,6 +23,7 @@ vi.mock('idb-keyval', () => ({
     return idb.get(key);
   }),
   entries: vi.fn(async () => {
+    throwIfConnectionClosing();
     if (failures.read) throw new Error('read failed');
     return [...idb.entries()];
   }),
@@ -30,6 +41,7 @@ vi.mock('idb-keyval', () => ({
     });
   }),
   promisifyRequest: vi.fn(async (batch: Batch) => {
+    throwIfConnectionClosing();
     if (failures.write) throw new Error('QuotaExceededError');
     // transaction annulée par WebKit (app iOS en arrière-plan) : rejet avec null
     if (failures.abortsWithoutError > 0) {
@@ -45,7 +57,7 @@ vi.mock('idb-keyval', () => ({
 vi.mock('react-toastify', () => ({ toast: { error: vi.fn() } }));
 vi.mock('@app/services/sentry', () => ({ capture: vi.fn() }));
 
-import { promisifyRequest } from 'idb-keyval';
+import { createStore, promisifyRequest } from 'idb-keyval';
 import { toast } from 'react-toastify';
 import { capture } from '@app/services/sentry';
 import { createSlicedIDBStorage, setLocalTeardownInProgress } from './idb-sliced-storage';
@@ -72,6 +84,7 @@ beforeEach(() => {
   failures.read = false;
   failures.write = false;
   failures.abortsWithoutError = 0;
+  failures.connectionClosing = 0;
   fakeDocument.visibilityState = 'visible';
   vi.clearAllMocks();
   setLocalTeardownInProgress(false);
@@ -298,5 +311,47 @@ describe('createSlicedIDBStorage', () => {
     expect(capture).toHaveBeenCalledTimes(1);
     expect(vi.mocked(capture).mock.calls[0][0]).toBeInstanceOf(Error);
     expect(vi.mocked(capture).mock.calls[0][1]).toMatchObject({ extra: { visibilityState: 'visible' } });
+  });
+
+  it('rouvre la connexion et relit les données quand iOS a fermé la connexion IndexedDB', async () => {
+    idb.set('zs:__meta__', { version: 11 });
+    idb.set('zs:feis/A', 1);
+    idb.set('zs:logs', [1]);
+    const storage = createSlicedIDBStorage<State>(KEYS, RECORD_KEYS);
+    failures.connectionClosing = 1;
+    const createStoreCalls = vi.mocked(createStore).mock.calls.length;
+
+    expect(await storage.getItem('x')).toEqual({ state: { feis: { A: 1 }, logs: [1] }, version: 11 });
+    expect(vi.mocked(createStore).mock.calls.length).toBeGreaterThan(createStoreCalls);
+    expect(capture).not.toHaveBeenCalled();
+    expect(toast.error).not.toHaveBeenCalled();
+
+    // les écritures ne sont pas bloquées
+    await storage.setItem('x', { state: { feis: { A: 1, B: 2 }, logs: [1] }, version: 11 });
+    expect(idb.get('zs:feis/B')).toBe(2);
+  });
+
+  it('bloque les écritures et alerte si la lecture échoue encore avec une connexion neuve', async () => {
+    const storage = createSlicedIDBStorage<State>(KEYS, RECORD_KEYS);
+    failures.connectionClosing = 2;
+
+    expect(await storage.getItem('x')).toBeNull();
+    expect(capture).toHaveBeenCalledTimes(1);
+    expect(toast.error).toHaveBeenCalledTimes(1);
+    await storage.setItem('x', { state: { feis: { A: 1 }, logs: [] }, version: 11 });
+    expect(batches).toHaveLength(0);
+  });
+
+  it('rouvre la connexion et réécrit sans alerter quand iOS a fermé la connexion IndexedDB', async () => {
+    const storage = createSlicedIDBStorage<State>(KEYS, RECORD_KEYS);
+    await storage.getItem('x');
+    failures.connectionClosing = 1;
+    const createStoreCalls = vi.mocked(createStore).mock.calls.length;
+
+    await storage.setItem('x', { state: { feis: { A: 1 }, logs: [] }, version: 11 });
+    expect(idb.get('zs:feis/A')).toBe(1);
+    expect(vi.mocked(createStore).mock.calls.length).toBeGreaterThan(createStoreCalls);
+    expect(capture).not.toHaveBeenCalled();
+    expect(toast.error).not.toHaveBeenCalled();
   });
 });

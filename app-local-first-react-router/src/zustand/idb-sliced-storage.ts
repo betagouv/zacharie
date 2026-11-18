@@ -28,6 +28,17 @@ function getKeyvalStore() {
   return keyvalStore;
 }
 
+// iOS WKWebView : le système peut fermer la connexion IndexedDB (app reprise depuis l'arrière-plan,
+// process IndexedDB tué). idb-keyval garde la connexion en cache, donc toute transaction échoue
+// ensuite avec « The database connection is closing ». On jette le store pour rouvrir une connexion.
+function resetKeyvalStoreIfConnectionClosed(error: unknown): boolean {
+  const closed =
+    error instanceof Error &&
+    (error.name === 'InvalidStateError' || error.message.includes('connection is closing'));
+  if (closed) keyvalStore = null;
+  return closed;
+}
+
 // écritures et suppressions dans une seule transaction : tout est écrit, ou rien
 function writeBatch(puts: Array<[IDBValidKey, unknown]>, deletes: Array<IDBValidKey>): Promise<void> {
   return getKeyvalStore()('readwrite', (store) => {
@@ -58,6 +69,7 @@ async function writeBatchWithRetry(
   try {
     await writeBatch(puts, deletes);
   } catch (error) {
+    if (resetKeyvalStoreIfConnectionClosed(error)) return writeBatch(puts, deletes);
     if (error != null) throw error;
     await waitUntilVisible();
     if (localTeardownInProgress) return;
@@ -178,7 +190,7 @@ export function createSlicedIDBStorage<S extends Record<string, unknown>>(
     }
 
     // ── Migrate from old single-key format (JSON string → native objects) ──
-    const oldData = await get<string>(OLD_KEY);
+    const oldData = await get<string>(OLD_KEY, getKeyvalStore());
     if (oldData != null) {
       try {
         const parsed = JSON.parse(oldData);
@@ -253,7 +265,12 @@ export function createSlicedIDBStorage<S extends Record<string, unknown>>(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     getItem: async (_name): Promise<StorageValue<S> | null> => {
       try {
-        return await readFromIDB();
+        try {
+          return await readFromIDB();
+        } catch (error) {
+          if (!resetKeyvalStoreIfConnectionClosed(error)) throw error;
+          return await readFromIDB();
+        }
       } catch (error) {
         capture(error as Error, { extra: { context: 'idb-sliced getItem' } });
         warnUserDataNotSaved();
