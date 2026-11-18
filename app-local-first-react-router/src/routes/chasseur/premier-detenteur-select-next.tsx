@@ -579,6 +579,7 @@ function DispatchGroupForm({
   entities,
   prochainsDetenteursOptions,
   destinatairesEnregistres,
+  destinataireDuPremierDetenteur,
   ccgsOptions,
   ccgsWorkingWith,
   allCarcassesRestantes,
@@ -602,6 +603,7 @@ function DispatchGroupForm({
   entities: Record<string, EntityWithUserRelation>;
   prochainsDetenteursOptions: Array<{ label: string | null; value: string }>;
   destinatairesEnregistres: EntityWithUserRelation[];
+  destinataireDuPremierDetenteur: { label: string; value: string };
   ccgsOptions: Array<{ label: string | null; value: string; isLink?: boolean }>;
   ccgsWorkingWith: EntityWithUserRelation[];
   allCarcassesRestantes: Carcasse[];
@@ -635,19 +637,16 @@ function DispatchGroupForm({
     () =>
       destinatairesEnregistres.length === 0 ||
       (!!group.recipientEntityId &&
-        !usageDomestique &&
+        group.recipientEntityId !== destinataireDuPremierDetenteur.value &&
         !destinatairesEnregistres.some((entity) => entity.id === group.recipientEntityId))
   );
-  // « Moi-même » est toujours proposé, après les destinataires enregistrés
+  // « Moi-même » ou « Repas de chasse » est toujours proposé, après les destinataires enregistrés
   const destinatairesAffiches = [
     ...(showAllDestinataires
       ? destinatairesEnregistres
       : destinatairesEnregistres.slice(0, NB_DESTINATAIRES_AFFICHES)
     ).map((entity) => ({ id: entity.id, label: getEntityDisplay(entity) })),
-    {
-      id: USAGE_DOMESTIQUE_ID,
-      label: prochainsDetenteursOptions.find((option) => option.value === USAGE_DOMESTIQUE_ID)?.label,
-    },
+    { id: destinataireDuPremierDetenteur.value, label: destinataireDuPremierDetenteur.label },
   ];
 
   // Le raccourci de date affiche l'heure qu'il va renseigner, on la garde à jour tant que la modale est ouverte.
@@ -1054,7 +1053,7 @@ export default function DestinataireSelectPremierDetenteur({
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const addLog = useZustandStore((state) => state.addLog);
   const feis = useZustandStore((state) => state.feis);
-  const entities = useZustandStore((state) => state.entities);
+  const storeEntities = useZustandStore((state) => state.entities);
   const allStoreCarcasses = useZustandStore((state) => state.carcasses);
   const ccgsIds = useCcgIds();
   const etgsIds = useEtgIds();
@@ -1077,6 +1076,25 @@ export default function DestinataireSelectPremierDetenteur({
   const [showErrors, setShowErrors] = useState(false);
 
   const fei = feis[params.fei_numero!];
+
+  // Quand le premier détenteur est une association, elle peut garder les carcasses pour un repas de
+  // chasse : c'est elle le destinataire, mais avec le rôle « repas de chasse ou associatif ».
+  // On présente donc l'association sous ce type dans tout le wizard (étapes, trichine, transmission).
+  const repasDeChasseEntityId = fei.premier_detenteur_entity_id;
+  const entities = useMemo(() => {
+    if (!repasDeChasseEntityId || !storeEntities[repasDeChasseEntityId]) return storeEntities;
+    const association = storeEntities[repasDeChasseEntityId];
+    return {
+      ...storeEntities,
+      [repasDeChasseEntityId]: {
+        ...association,
+        type: EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
+        nom_d_usage: `Repas de chasse – ${association.nom_d_usage}`,
+        // l'association utilise déjà Zacharie : pas d'alerte « pas prêt pour Zacharie »
+        zacharie_compatible: true,
+      },
+    };
+  }, [storeEntities, repasDeChasseEntityId]);
   const prefilledInfos = usePrefillPremierDétenteurInfos();
 
   const allCarcasses = useCarcassesForFei(params.fei_numero);
@@ -1143,18 +1161,30 @@ export default function DestinataireSelectPremierDetenteur({
     return ccgs.filter((entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY);
   }, [ccgs]);
 
+  // Toujours proposé : « moi-même » si le premier détenteur est le chasseur, « repas de chasse »
+  // si c'est son association.
+  const destinataireDuPremierDetenteur = useMemo(() => {
+    if (repasDeChasseEntityId) {
+      return {
+        label: entities[repasDeChasseEntityId]?.nom_d_usage ?? 'Repas de chasse',
+        value: repasDeChasseEntityId,
+      };
+    }
+    return {
+      label: `Moi-même — ${user.prenom} ${user.nom_de_famille} (usage domestique privé)`,
+      value: USAGE_DOMESTIQUE_ID,
+    };
+  }, [repasDeChasseEntityId, entities, user.prenom, user.nom_de_famille]);
+
   const prochainsDetenteursOptions = useMemo(() => {
     return [
-      {
-        label: `Moi-même — ${user.prenom} ${user.nom_de_famille} (usage domestique privé)`,
-        value: USAGE_DOMESTIQUE_ID,
-      },
+      destinataireDuPremierDetenteur,
       ...prochainsDetenteurs.map((entity) => ({
         label: getEntityDisplay(entity),
         value: entity.id,
       })),
     ];
-  }, [prochainsDetenteurs, user.prenom, user.nom_de_famille]);
+  }, [prochainsDetenteurs, destinataireDuPremierDetenteur]);
 
   // Ventes / dons déjà transmis. La transmission est portée par les carcasses, pas par un lot en base :
   // on les regroupe par destinataire + stockage + transport pour reconstituer les cartes en revenant
@@ -1915,6 +1945,7 @@ export default function DestinataireSelectPremierDetenteur({
             entities={entities}
             prochainsDetenteursOptions={prochainsDetenteursOptions}
             destinatairesEnregistres={destinatairesEnregistres}
+            destinataireDuPremierDetenteur={destinataireDuPremierDetenteur}
             ccgsOptions={ccgsOptions}
             ccgsWorkingWith={ccgsWorkingWith}
             allCarcassesRestantes={carcassesRestantes}
