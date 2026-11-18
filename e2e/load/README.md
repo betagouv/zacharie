@@ -32,7 +32,10 @@ ETG seul sur 100 000 carcasses, avant la pagination par curseur :
 La pagination par curseur avec l'index `Carcasse(updated_at desc, zacharie_carcasse_id desc)` ramène une page à
 environ 0,1 s, quelle que soit sa position.
 
-Pour les ETG, collecteurs et circuits courts, le périmètre (`CarcasseIntermediaire` OU `next_owner` OU `current_owner`)
-est lu en trois requêtes, une par branche et chacune servie par son index, fusionnées par un `UNION`
-(`findIntermediaireScopeCarcassesPage`). Mesuré sur 1 000 000 de carcasses : une petite ETG passe de 0,6 s à 0,1 s
+Le périmètre d'accès est un OR sur plusieurs colonnes, qu'aucun index ne sert. Il est lu en une requête par branche,
+chacune servie par son index `(colonne, updated_at desc)` et limitée à une page, fusionnées par un `UNION`
+(`getCarcasseScopeBranches` + `findScopeCarcassesPage`), pour tous les rôles. La branche `CarcasseIntermediaire`
+lit l'index `(intermediaire_entity_id, carcasse_updated_at desc, zacharie_carcasse_id desc)` :
+`carcasse_updated_at` est une copie de `Carcasse.updated_at`, posée par trigger. Pour les ETG, collecteurs et circuits
+courts (`CarcasseIntermediaire` OU `next_owner` OU `current_owner`), mesuré sur 1 000 000 de carcasses : une petite ETG passe de 0,6 s à 0,1 s
 pour la première page et de 0,8 s à 15 ms pour les suivantes ; la grosse ETG de 1,1 s à 0,3 s par page suivante.

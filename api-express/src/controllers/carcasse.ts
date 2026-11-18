@@ -15,9 +15,9 @@ import z from 'zod';
 import { capture } from '~/third-parties/sentry';
 import { userFeiSelect } from '~/types/user';
 import {
-  findIntermediaireScopeCarcassesPage,
+  findScopeCarcassesPage,
   getCarcasseAccessWhere,
-  hasIntermediaireCarcasseScope,
+  getCarcasseScopeBranches,
 } from '~/utils/carcasse-access';
 import { getUserCarcasseEntityIds } from '~/utils/user-entities';
 import { FORCE_FULL_RELOAD_AFTER } from '~/utils/force-full-reload';
@@ -65,13 +65,17 @@ router.get(
       return;
     }
     const cursorDate = cursorUpdatedAt ? new Date(Number(cursorUpdatedAt)) : undefined;
-    if ((cursorDate === undefined) !== (cursorId === undefined)) {
+    const requestedAfterDate = Number(after) ? new Date(Number(after)) : undefined;
+    if (
+      (cursorDate === undefined) !== (cursorId === undefined) ||
+      (cursorDate && isNaN(cursorDate.getTime())) ||
+      (requestedAfterDate && isNaN(requestedAfterDate.getTime()))
+    ) {
       res.status(400).send({ ok: false, data: null, error: 'Invalid query parameters' });
       return;
     }
     const isFirstPage = !cursorDate;
     const includeDeleted = withDeleted === 'true';
-    const requestedAfterDate = Number(after) ? new Date(Number(after)) : undefined;
     // dernier pull antérieur à une correction de données, ou rechargement demandé pour cet utilisateur
     // depuis le dernier pull de l'appareil : on renvoie tout le périmètre
     const fullReload =
@@ -79,10 +83,10 @@ router.get(
       (reloadVersion !== undefined && Number(reloadVersion) < req.user.carcasses_reload_version);
     const afterDate = fullReload ? undefined : requestedAfterDate;
 
-    // Base query conditions : périmètre d'accès role-aware (partagé avec /refusees/:fei_numero).
+    // Périmètre d'accès role-aware, le même que getCarcasseAccessWhere (partagé avec /refusees/:fei_numero).
     const userEntityIds = await getUserCarcasseEntityIds(req.user.id);
-    const accessWhere = await getCarcasseAccessWhere(req.user, userEntityIds);
-    if (!accessWhere) {
+    const scopeBranches = getCarcasseScopeBranches(req.user, userEntityIds);
+    if (!scopeBranches) {
       capture(`User role not supported: ${req.user.roles.join(', ')}`, { user: req.user });
       res.status(403).send({
         ok: false,
@@ -91,45 +95,16 @@ router.get(
       });
       return;
     }
-    const where: Prisma.CarcasseWhereInput = { ...accessWhere };
-
-    if (!includeDeleted) {
-      where.deleted_at = null;
-    }
-
-    if (afterDate) {
-      where.updated_at = { gte: afterDate };
-    }
 
     // Page suivante : strictement après la dernière carcasse reçue, dans l'ordre (updated_at, id)
-    // décroissant. L'index Carcasse(updated_at desc, zacharie_carcasse_id desc) sert ce tri : la base
-    // lit seulement la page, sans trier ni sauter tout le périmètre (cf e2e/load/README.md).
-    if (cursorDate && cursorId) {
-      where.AND = [
-        ...(where.AND ? [where.AND].flat() : []),
-        {
-          OR: [
-            { updated_at: { lt: cursorDate } },
-            { updated_at: cursorDate, zacharie_carcasse_id: { lt: cursorId } },
-          ],
-        },
-      ];
-    }
-
-    const carcasses = hasIntermediaireCarcasseScope(req.user)
-      ? await findIntermediaireScopeCarcassesPage({
-          entityIds: userEntityIds,
-          includeDeleted,
-          afterDate,
-          cursor: cursorDate && cursorId ? { updatedAt: cursorDate, id: cursorId } : undefined,
-          limit,
-        })
-      : await prisma.carcasse.findMany({
-          where,
-          orderBy: [{ updated_at: 'desc' }, { zacharie_carcasse_id: 'desc' }],
-          take: limit,
-        });
-    const hasMore = carcasses.length === limit;
+    // décroissant (cf e2e/load/README.md).
+    const { carcasses, hasMore } = await findScopeCarcassesPage({
+      branches: scopeBranches,
+      includeDeleted,
+      afterDate,
+      cursor: cursorDate && cursorId ? { updatedAt: cursorDate, id: cursorId } : undefined,
+      limit,
+    });
 
     // Ancien bundle dont le pull dépasse une page : il ne peut pas lire la suite. On refuse avant de
     // charger fiches, intermédiaires et utilisateurs, pour ne pas les renvoyer à chaque synchro.

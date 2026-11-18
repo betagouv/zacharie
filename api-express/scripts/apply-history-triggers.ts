@@ -3,12 +3,12 @@ import path from 'path';
 import prisma from '~/prisma';
 
 // La base e2e est créée par `prisma db push`, qui ignore le SQL des migrations : les fonctions et triggers
-// d'historique (migration history_tables et suivantes) n'y existent pas. On les rejoue ici, dans l'ordre des
-// migrations, pour que les tables <Table>History se remplissent en e2e comme en production.
+// (historique, copie de Carcasse.updated_at sur CarcasseIntermediaire) n'y existent pas. On les rejoue ici,
+// dans l'ordre des migrations, pour que la base e2e se comporte comme la production.
 // lancé depuis api-express/, comme populate-test-db.ts
 const MIGRATIONS_DIR = path.join(process.cwd(), 'prisma/migrations');
-const FONCTION = /CREATE OR REPLACE FUNCTION history_trigger_\w+\(\)[\s\S]*?\$\$;/g;
-const TRIGGER = /CREATE TRIGGER (\w+) AFTER [\s\S]*? ON ("\w+")[\s\S]*?;/g;
+const FONCTION = /CREATE OR REPLACE FUNCTION \w+\(\) RETURNS trigger[\s\S]*?\$\$;/g;
+const TRIGGER = /CREATE TRIGGER (\w+) (?:AFTER|BEFORE) [\s\S]*? ON ("\w+")[\s\S]*?;/g;
 
 export async function applyHistoryTriggers() {
   const migrations = fs

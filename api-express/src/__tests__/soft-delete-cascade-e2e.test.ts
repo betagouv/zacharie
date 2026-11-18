@@ -4,7 +4,7 @@ import { describe, test, expect, vi, beforeEach } from 'vitest';
 import syncRouter from '~/controllers/sync';
 import carcasseRouter from '~/controllers/carcasse';
 import prisma from '~/prisma';
-import { UserRoles } from '@prisma/client';
+import { Prisma, UserRoles } from '@prisma/client';
 import { FORCE_FULL_RELOAD_AFTER } from '~/utils/force-full-reload';
 
 // Goes through the real /sync orchestrator (sync-fei, sync-carcasse,
@@ -69,6 +69,12 @@ app.use('/carcasse', carcasseRouter);
 
 // Default required query params for GET /carcasse/ (zod-validated)
 const CARCASSE_QS = 'after=0&limit=100&withDeleted=false';
+
+// requête SQL de la page de GET /carcasse (findScopeCarcassesPage)
+function carcassePageQuery() {
+  const [strings, ...values] = vi.mocked(prisma.$queryRaw).mock.calls[0] as [TemplateStringsArray, ...any[]];
+  return Prisma.sql(strings, ...values);
+}
 
 function authed(req: request.Test, user: object = examinateurInitial) {
   return req.set('x-test-user', JSON.stringify(user));
@@ -217,8 +223,7 @@ describe('GET /carcasse/ after soft-delete', () => {
   test('GET /carcasse/ default (withDeleted=false) → excludes deleted_at != null rows', async () => {
     await authed(request(app).get(`/carcasse?${CARCASSE_QS}`), sviUser);
 
-    const where: any = vi.mocked(prisma.carcasse.findMany).mock.calls[0][0]!.where;
-    expect(where.deleted_at).toBeNull();
+    expect(carcassePageQuery().sql).toContain('c.deleted_at IS NULL');
   });
 
   test('GET /carcasse/?withDeleted=true&after=... → updated_at gates the delta; deleted_at is not forced null', async () => {
@@ -226,10 +231,11 @@ describe('GET /carcasse/ after soft-delete', () => {
     const cutoff = FORCE_FULL_RELOAD_AFTER.getTime() + 1;
     await authed(request(app).get(`/carcasse?after=${cutoff}&limit=100&withDeleted=true`), sviUser);
 
-    const where: any = vi.mocked(prisma.carcasse.findMany).mock.calls[0][0]!.where;
-    expect(where.updated_at).toEqual({ gte: new Date(cutoff) });
+    const query = carcassePageQuery();
+    expect(query.sql).toContain('c.updated_at >=');
+    expect(query.values).toContain(new Date(cutoff).toISOString());
     // withDeleted=true ⇒ controller does NOT filter on deleted_at, so soft-deleted
     // rows whose updated_at >= cutoff (deleted_at write also bumps updated_at) are visible.
-    expect(where.deleted_at).toBeUndefined();
+    expect(query.sql).not.toContain('deleted_at');
   });
 });
