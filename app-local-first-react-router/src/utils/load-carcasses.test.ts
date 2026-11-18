@@ -157,10 +157,11 @@ describe('loadCarcasses — carcasses sorties du périmètre', () => {
     for (const carcasse of Object.values(mocks.state.carcasses)) carcasse.is_synced = true;
   });
 
-  function mockServerWithCount(count: number) {
+  function mockServerWithCount(count: number, refuseesHorsPerimetreIds: string[] = []) {
     mocks.get.mockImplementation(({ path }: { path: string }) => {
       if (path === 'now') return Promise.resolve({ ok: true, data: 2000 });
-      if (path === '/carcasse/count') return Promise.resolve({ ok: true, data: { count } });
+      if (path === '/carcasse/count')
+        return Promise.resolve({ ok: true, data: { count, refuseesHorsPerimetreIds } });
       return Promise.resolve(serverResponse(false));
     });
   }
@@ -176,6 +177,52 @@ describe('loadCarcasses — carcasses sorties du périmètre', () => {
 
   it('autant de carcasses en local que sur le serveur : pas de rechargement', async () => {
     mockServerWithCount(3);
+    await loadCarcasses();
+    await vi.waitFor(() =>
+      expect(mocks.get.mock.calls.some(([arg]) => arg.path === '/carcasse/count')).toBe(true)
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(carcasseCalls()).toHaveLength(1);
+  });
+
+  it("carcasses refusées hors périmètre chargées à l'ouverture d'une fiche : hors du compte, pas de rechargement", async () => {
+    // GET /carcasse/refusees/:fei_numero les ajoute au store alors qu'elles sont hors du périmètre
+    // du pull : un rechargement complet les retirerait, puis l'ouverture de la fiche les remettrait.
+    Object.assign(mocks.state.carcasses, {
+      'C-REFUSEE': {
+        ...base(),
+        zacharie_carcasse_id: 'C-REFUSEE',
+        fei_numero: 'FEI-SORTIE',
+        intermediaire_carcasse_refus_intermediaire_id: 'INTERMEDIAIRE-AMONT',
+      },
+      'C-MANQUANTE': {
+        ...base(),
+        zacharie_carcasse_id: 'C-MANQUANTE',
+        fei_numero: 'FEI-SORTIE',
+        intermediaire_carcasse_manquante: true,
+      },
+    });
+    mockServerWithCount(3, ['C-REFUSEE', 'C-MANQUANTE']);
+    await loadCarcasses();
+    await vi.waitFor(() =>
+      expect(mocks.get.mock.calls.some(([arg]) => arg.path === '/carcasse/count')).toBe(true)
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(carcasseCalls()).toHaveLength(1);
+  });
+
+  it('carcasse refusée du périmètre : comptée comme les autres', async () => {
+    // Le serveur la compte (elle est dans le périmètre) et ne la signale pas hors périmètre : le client
+    // doit la compter aussi, sinon un écart sur les carcasses refusées passerait inaperçu.
+    Object.assign(mocks.state.carcasses, {
+      'C-REFUSEE': {
+        ...base(),
+        zacharie_carcasse_id: 'C-REFUSEE',
+        fei_numero: 'FEI-SORTIE',
+        intermediaire_carcasse_refus_intermediaire_id: 'INTERMEDIAIRE-AMONT',
+      },
+    });
+    mockServerWithCount(4);
     await loadCarcasses();
     await vi.waitFor(() =>
       expect(mocks.get.mock.calls.some(([arg]) => arg.path === '/carcasse/count')).toBe(true)
