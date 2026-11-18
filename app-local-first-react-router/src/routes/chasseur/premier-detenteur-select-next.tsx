@@ -1039,12 +1039,16 @@ export default function DestinataireSelectPremierDetenteur({
   disabled,
   submitRef,
   hideSubmitButton,
+  onClotureChange,
 }: {
   className?: string;
   canEdit: boolean;
   disabled?: boolean;
   submitRef?: MutableRefObject<DestinatairePremierDetenteurHandle | null>;
   hideSubmitButton?: boolean;
+  // true quand les carcasses restent toutes chez le premier détenteur (usage domestique, repas de
+  // chasse) : la fiche est clôturée, pas transmise.
+  onClotureChange?: (cloture: boolean) => void;
 }) {
   const params = useParams();
   const navigate = useNavigate();
@@ -1598,12 +1602,23 @@ export default function DestinataireSelectPremierDetenteur({
     [allCarcasses, assignedCarcasseIds]
   );
 
+  const cloture =
+    dispatchGroups.length > 0 &&
+    dispatchGroups.every(
+      (group) => isUsageDomestique(group) || group.recipientEntityId === repasDeChasseEntityId
+    );
+  useEffect(() => {
+    onClotureChange?.(cloture);
+    return () => onClotureChange?.(false);
+  }, [cloture, onClotureChange]);
+
   const submitLabel = useMemo(() => {
+    if (cloture) return 'Clôturer la fiche';
     if (carcassesDejaEnvoyees.length === 0 && totalCarcassesToSend === allCarcasses.length) {
       return 'Transmettre la fiche';
     }
     return `Transmettre ${formatCarcasseLotCount(carcassesToSend)} sur ${formatCarcasseLotCount(allCarcasses)}`;
-  }, [carcassesDejaEnvoyees.length, totalCarcassesToSend, allCarcasses, carcassesToSend]);
+  }, [cloture, carcassesDejaEnvoyees.length, totalCarcassesToSend, allCarcasses, carcassesToSend]);
 
   const notActivated = !user.activated;
 
