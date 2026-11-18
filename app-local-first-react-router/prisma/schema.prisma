@@ -19,6 +19,7 @@ enum UserRoles {
   ASSOCIATION_CARITATIVE // Repas de chasse ou associatif
   REPAS_DE_CHASSE_OU_ASSOCIATIF // Repas de chasse ou associatif
   CONSOMMATEUR_FINAL // Je suis consommateur final
+  CIRCUIT_COURT // Circuit court sans catégorie plus précise (destinataire créé par un chasseur, non classé)
   LABORATOIRE // Laboratoire d'analyses trichine (LVD agréé ou LNR)
   FEDERATION // Membre d'une fédération (FDC / FRC / FNC) sans être chasseur : tableau de bord uniquement
 }
@@ -121,6 +122,7 @@ enum EntityTypes {
   ASSOCIATION_CARITATIVE
   REPAS_DE_CHASSE_OU_ASSOCIATIF
   CONSOMMATEUR_FINAL
+  CIRCUIT_COURT // Circuit court sans catégorie plus précise (destinataire créé par un chasseur, non classé)
   LABORATOIRE // Laboratoire d'analyses trichine (LVD agréé ou LNR)
   FDC // Fédération Départementale des Chasseurs
   FRC // Fédération Régionale des Chasseurs
@@ -137,6 +139,8 @@ model Entity {
   code_postal                           String?
   ville                                 String?
   siret                                 String?
+  // saisie libre du chasseur à la création du destinataire (ex. « boucherie », « mon asso ») : sert à classer son type
+  qualite_du_destinataire               String?
   nom_prenom_responsable                String?
   prefecture_svi                        String?
   ccg_status                            String?
@@ -578,6 +582,7 @@ model EntityHistory {
   code_postal                      String?
   ville                            String?
   siret                            String?
+  qualite_du_destinataire          String?
   nom_prenom_responsable           String?
   prefecture_svi                   String?
   ccg_status                       String?
@@ -652,6 +657,7 @@ enum FeiOwnerRole {
   ASSOCIATION_CARITATIVE
   REPAS_DE_CHASSE_OU_ASSOCIATIF
   CONSOMMATEUR_FINAL
+  CIRCUIT_COURT
 }
 
 // Fiche d'Examen Initial

@@ -11,6 +11,7 @@ import { z } from 'zod';
 import prisma from '~/prisma';
 import {
   createBrevoContact,
+  updateBrevoContact,
   linkBrevoCompanyToContact,
   sendEmail,
   updateOrCreateBrevoCompany,
@@ -18,11 +19,13 @@ import {
 import createUserId from '~/utils/createUserId';
 import { inviteUser } from '~/utils/invite-user';
 import { sanitize } from '~/utils/sanitize';
+import { classifyDestinataire } from '~/utils/classify-destinataire';
+import { capture } from '~/third-parties/sentry';
 
 // un destinataire ne s'inscrit pas lui-même sur Zacharie : un chasseur, un ETG ou un admin
 // le pré-enregistre avec le compte de son représentant, qui reçoit une invitation.
 // Le collecteur pro n'est pas du circuit court, mais un chasseur peut le pré-enregistrer de la même façon.
-export const destinataireSchema = z.object({
+const destinataireBaseSchema = z.object({
   raison_sociale: z.string().trim().min(1),
   address_ligne_1: z.string(),
   address_ligne_2: z.string(),
@@ -33,6 +36,10 @@ export const destinataireSchema = z.object({
   ville: z.string(),
   siret: z.string().optional(),
   zacharie_compatible: z.boolean().optional(),
+});
+
+export const destinataireSchema = destinataireBaseSchema.extend({
+  qualite_du_destinataire: z.string().trim().optional(),
   type: z.enum([
     EntityTypes.COLLECTEUR_PRO,
     EntityTypes.COMMERCE_DE_DETAIL,
@@ -40,8 +47,26 @@ export const destinataireSchema = z.object({
     EntityTypes.ASSOCIATION_CARITATIVE,
     EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
     EntityTypes.CONSOMMATEUR_FINAL,
+    EntityTypes.CIRCUIT_COURT,
   ]),
 });
+
+// le chasseur ne choisit pas le type du destinataire : il dit s'il est particulier ou professionnel,
+// et décrit librement le professionnel. Le type est déduit ensuite (cf. classifyDestinataire)
+export const chasseurDestinataireSchema = z.discriminatedUnion('particulier', [
+  destinataireBaseSchema.extend({ particulier: z.literal(true) }),
+  destinataireBaseSchema.extend({
+    particulier: z.literal(false),
+    qualite_du_destinataire: z.string().trim().min(1),
+  }),
+]);
+
+export function chasseurDestinataireToInput(
+  body: z.infer<typeof chasseurDestinataireSchema>
+): DestinataireInput {
+  const { particulier, ...rest } = body;
+  return { ...rest, type: particulier ? EntityTypes.CONSOMMATEUR_FINAL : EntityTypes.CIRCUIT_COURT };
+}
 
 // les entités auxquelles un chasseur transmet des carcasses
 const RECIPIENT_TYPES: Array<EntityTypes> = [
@@ -52,6 +77,7 @@ const RECIPIENT_TYPES: Array<EntityTypes> = [
   EntityTypes.ASSOCIATION_CARITATIVE,
   EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
   EntityTypes.CONSOMMATEUR_FINAL,
+  EntityTypes.CIRCUIT_COURT,
 ];
 
 export type DestinataireInput = z.infer<typeof destinataireSchema>;
@@ -78,6 +104,7 @@ export async function createDestinataire(
     code_postal: sanitize(body.code_postal).trim(),
     ville: sanitize(body.ville),
     siret: sanitize(body.siret ?? '').replace(/\s/g, '') || null,
+    qualite_du_destinataire: sanitize(body.qualite_du_destinataire ?? '').trim() || null,
     zacharie_compatible: true,
   };
 
@@ -168,16 +195,56 @@ export async function createDestinataire(
     },
   });
 
-  await sendEmail({
-    emails: ['contact@zacharie.beta.gouv.fr'],
-    subject: `Nouveau partenaire pré-enregistré dans Zacharie`,
-    text: `Un nouveau partenaire a été pré-enregistré dans Zacharie : ${createdEntity.nom_d_usage}`,
-  });
-
   ownerUser = await createBrevoContact(ownerUser, 'USER');
   await linkBrevoCompanyToContact(createdEntity, ownerUser);
 
   await inviteUser(ownerUser, invitedBy);
 
+  // le chasseur n'attend pas la classification par Albert : elle tourne après la réponse,
+  // et l'équipe Zacharie est prévenue une fois le type connu
+  if (createdEntity.type === EntityTypes.CIRCUIT_COURT && createdEntity.qualite_du_destinataire) {
+    void classifyAndNotify(createdEntity, ownerUser);
+  } else {
+    await notifyNewPartenaire(createdEntity);
+  }
+
   return { entity: createdEntity, status: 200, error: '' };
+}
+
+async function notifyNewPartenaire(entity: Entity) {
+  await sendEmail({
+    emails: ['contact@zacharie.beta.gouv.fr'],
+    subject: `Nouveau partenaire pré-enregistré dans Zacharie`,
+    text: [
+      `Un nouveau partenaire a été pré-enregistré dans Zacharie : ${entity.nom_d_usage}`,
+      ...(entity.qualite_du_destinataire
+        ? [`Qualité du destinataire saisie par le chasseur : ${entity.qualite_du_destinataire}`]
+        : []),
+      `Type attribué : ${entity.type}`,
+    ].join('\n\n'),
+  });
+}
+
+// Albert range le destinataire dans une catégorie précise ; en cas de doute il reste CIRCUIT_COURT.
+// Le représentant a un seul rôle, toujours égal au type de son entité : on change les deux.
+export async function classifyAndNotify(entity: Entity, ownerUser: User) {
+  try {
+    const type = await classifyDestinataire({
+      raisonSociale: entity.raison_sociale ?? '',
+      qualiteDuDestinataire: entity.qualite_du_destinataire ?? '',
+    });
+    let classifiedEntity = entity;
+    if (type !== EntityTypes.CIRCUIT_COURT) {
+      classifiedEntity = await prisma.entity.update({ where: { id: entity.id }, data: { type } });
+      const classifiedUser = await prisma.user.update({
+        where: { id: ownerUser.id },
+        data: { roles: [type as unknown as UserRoles] },
+      });
+      await updateBrevoContact(classifiedUser, 'USER');
+      classifiedEntity = await updateOrCreateBrevoCompany(classifiedEntity);
+    }
+    await notifyNewPartenaire(classifiedEntity);
+  } catch (error) {
+    capture(error as Error, { extra: { entityId: entity.id } });
+  }
 }

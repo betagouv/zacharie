@@ -10,6 +10,7 @@ const circuitCourtTypes: EntityTypes[] = [
   EntityTypes.ASSOCIATION_CARITATIVE,
   EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
   EntityTypes.CONSOMMATEUR_FINAL,
+  EntityTypes.CIRCUIT_COURT,
 ];
 
 // Plain filter functions (for non-hook contexts like get-fei-sorted.ts)

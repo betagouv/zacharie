@@ -273,7 +273,8 @@ router.get(
               'REPAS_DE_CHASSE_OU_ASSOCIATIF'::"FeiOwnerRole",
               'CANTINE_OU_RESTAURATION_COLLECTIVE'::"FeiOwnerRole",
               'ASSOCIATION_CARITATIVE'::"FeiOwnerRole",
-              'CONSOMMATEUR_FINAL'::"FeiOwnerRole"
+              'CONSOMMATEUR_FINAL'::"FeiOwnerRole",
+              'CIRCUIT_COURT'::"FeiOwnerRole"
             ))
             AND c.svi_carcasse_status IS NOT NULL
             AND NOT (f.created_by_user_id LIKE '%GLOP%')

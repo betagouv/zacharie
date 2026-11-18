@@ -42,6 +42,7 @@ const initialData: State = {
     nom_d_usage: '',
     raison_sociale: '',
     siret: '',
+    qualite_du_destinataire: null,
     numero_ddecpp: '',
     address_ligne_1: '',
     address_ligne_2: '',
@@ -253,6 +254,7 @@ export default function AdminEntity() {
                 )}
               </div>
               <p className="mt-3 mb-0 text-xs text-gray-500">
+                {entity.qualite_du_destinataire && <>Qualité saisie : {entity.qualite_du_destinataire} · </>}
                 {entity.siret && <>SIRET {entity.siret} · </>}
                 {entity.numero_ddecpp && <>N° DD(ec)PP {entity.numero_ddecpp} · </>}
                 {(entity.code_postal || entity.ville) && (
