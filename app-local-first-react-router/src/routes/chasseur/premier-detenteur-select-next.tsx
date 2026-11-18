@@ -624,9 +624,9 @@ function DispatchGroupForm({
   // le nom tapé dans la recherche préremplit la raison sociale du destinataire à créer
   const [nomPartenaireACreer, setNomPartenaireACreer] = useState('');
 
-  // Sans destinataire enregistré, on cherche directement. Sinon on propose d'abord les plus récents,
-  // la recherche restant accessible via « Envoyer à un autre destinataire ». Un destinataire déjà
-  // choisi hors de ces boutons (via la recherche) s'affiche dans la recherche.
+  // On propose d'abord « Moi-même » ou « Repas de chasse » et les destinataires les plus récents,
+  // même sur la première fiche, la recherche restant accessible via « Envoyer à un autre destinataire ».
+  // Un destinataire déjà choisi hors de ces boutons (via la recherche) s'affiche dans la recherche.
   const [showAllDestinataires, setShowAllDestinataires] = useState(
     () =>
       !!group.recipientEntityId &&
@@ -635,10 +635,9 @@ function DispatchGroupForm({
   );
   const [showSearch, setShowSearch] = useState(
     () =>
-      destinatairesEnregistres.length === 0 ||
-      (!!group.recipientEntityId &&
-        group.recipientEntityId !== destinataireDuPremierDetenteur.value &&
-        !destinatairesEnregistres.some((entity) => entity.id === group.recipientEntityId))
+      !!group.recipientEntityId &&
+      group.recipientEntityId !== destinataireDuPremierDetenteur.value &&
+      !destinatairesEnregistres.some((entity) => entity.id === group.recipientEntityId)
   );
   // « Moi-même » ou « Repas de chasse » est toujours proposé, après les destinataires enregistrés
   const destinatairesAffiches = [
