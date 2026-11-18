@@ -354,8 +354,8 @@ export default function SelectNextForExaminateur({
             </option>
           </Select>
           {(!nextOwnerUserOrEntityId ||
-            (nextOwnerUserOrEntityId !== fei.premier_detenteur_user_id &&
-              nextOwnerUserOrEntityId !== fei.premier_detenteur_entity_id)) && (
+            nextOwnerUserOrEntityId !==
+              (fei.premier_detenteur_entity_id ?? fei.premier_detenteur_user_id)) && (
             <>
               <Button
                 type="button"
