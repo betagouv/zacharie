@@ -315,18 +315,20 @@ LEFT JOIN stats_ref_national obj
 
 
 -- 7. Tableaux de chasse OFB — grand gibier par département
--- Libellés d'espèces repris de app-local-first-react-router/src/data/grand-gibier.json : à ajuster
--- sur les libellés du premier CSV OFB importé.
+-- Une saison à la fois : la table couvre toutes les saisons depuis 1973, et Metabase tronque à 2 000 lignes.
+-- Variable Metabase `saison` (texte, optionnelle, ex. « 2025-2026 ») ; sans valeur, dernière saison importée.
+-- Libellés d'espèces repris de app-local-first-react-router/src/data/grand-gibier.json, mêmes libellés
+-- que le CSV d'import (jeu OFB « Tableaux de chasse départementaux du Grand Gibier » sur data.gouv.fr).
 SELECT
-    saison,
     departement,
     SUM(nombre) AS nombre
 FROM stats_ref_ofb_tableau_chasse
 WHERE espece IN (
     'Cerf élaphe', 'Cerf sika', 'Chevreuil', 'Daim', 'Sanglier', 'Chamois', 'Isard', 'Mouflon méditerranéen'
 )
-GROUP BY saison, departement
-ORDER BY saison, departement;
+  AND saison = COALESCE([[{{saison}},]] (SELECT MAX(saison) FROM stats_ref_ofb_tableau_chasse))
+GROUP BY departement
+ORDER BY departement;
 
 
 -- 8. Taux de saisie : Zacharie vs national
