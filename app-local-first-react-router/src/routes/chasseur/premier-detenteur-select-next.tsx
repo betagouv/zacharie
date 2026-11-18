@@ -622,9 +622,10 @@ function DispatchGroupForm({
   // le nom tapé dans la recherche préremplit la raison sociale du destinataire à créer
   const [nomPartenaireACreer, setNomPartenaireACreer] = useState('');
 
-  // Sans destinataire enregistré, on cherche directement. Sinon on propose d'abord les plus récents,
-  // la recherche restant accessible via « Envoyer à un autre destinataire ». Un destinataire déjà
-  // choisi hors de ces boutons (via la recherche) s'affiche dans la recherche.
+  // On propose d'abord les destinataires enregistrés les plus récents et « Moi-même » (seul choix
+  // proposé tant que le chasseur n'a enregistré aucun destinataire), la recherche restant accessible
+  // via « Envoyer à un autre destinataire ». Un destinataire déjà choisi hors de ces boutons
+  // (via la recherche) s'affiche dans la recherche.
   const [showAllDestinataires, setShowAllDestinataires] = useState(
     () =>
       !!group.recipientEntityId &&
@@ -633,10 +634,9 @@ function DispatchGroupForm({
   );
   const [showSearch, setShowSearch] = useState(
     () =>
-      destinatairesEnregistres.length === 0 ||
-      (!!group.recipientEntityId &&
-        !usageDomestique &&
-        !destinatairesEnregistres.some((entity) => entity.id === group.recipientEntityId))
+      !!group.recipientEntityId &&
+      !usageDomestique &&
+      !destinatairesEnregistres.some((entity) => entity.id === group.recipientEntityId)
   );
   // « Moi-même » est toujours proposé, après les destinataires enregistrés
   const destinatairesAffiches = [
@@ -714,7 +714,11 @@ function DispatchGroupForm({
                     className="mb-0 w-full"
                     classes={richRadioClasses}
                     legend="Prochain détenteur des carcasses"
-                    hintText="Choisissez parmi vos destinataires habituels."
+                    hintText={
+                      destinatairesEnregistres.length > 0
+                        ? 'Choisissez parmi vos destinataires habituels.'
+                        : undefined
+                    }
                     options={destinatairesAffiches.map((destinataire) => ({
                       label: destinataire.label,
                       nativeInputProps: {
