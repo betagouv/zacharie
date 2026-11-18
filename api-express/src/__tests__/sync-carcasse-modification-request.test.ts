@@ -12,6 +12,7 @@ import {
   type User,
 } from '@prisma/client';
 import { fakeSyncScope } from './fake-sync-scope';
+import { SyncRejectedError } from '~/utils/sync-errors';
 
 vi.mock('~/service/notifications', () => ({
   default: vi.fn().mockResolvedValue(undefined),
@@ -142,7 +143,10 @@ describe('syncCarcasseModifRequest — create', () => {
 
   test('NEW_CARCASSE créé → pas de renommage, seulement le bump updated_at', async () => {
     vi.mocked(prisma.carcasseModificationRequest.findUnique).mockResolvedValueOnce(null);
-    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
+    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce({
+      ...baseCarcasse,
+      created_by_user_id: requester.id,
+    });
     vi.mocked(prisma.carcasseModificationRequest.create).mockResolvedValueOnce(newPending);
 
     await syncCarcasseModifRequest({ ...newPending } as any, requester, scope);
@@ -150,6 +154,30 @@ describe('syncCarcasseModifRequest — create', () => {
     const call = vi.mocked(prisma.carcasse.update).mock.calls[0][0] as any;
     expect(call.data.numero_bracelet).toBeUndefined();
     expect(call.data.updated_at).toBeInstanceOf(Date);
+  });
+
+  test("NEW_CARCASSE sur une carcasse ajoutée par quelqu'un d'autre → refusé, rien n'est écrit", async () => {
+    vi.mocked(prisma.carcasseModificationRequest.findUnique).mockResolvedValueOnce(null);
+    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce({
+      ...baseCarcasse,
+      created_by_user_id: examinateur.id,
+    });
+
+    await expect(syncCarcasseModifRequest({ ...newPending } as any, requester, scope)).rejects.toBeInstanceOf(
+      SyncRejectedError
+    );
+    expect(prisma.carcasseModificationRequest.create).not.toHaveBeenCalled();
+    expect(prisma.carcasse.update).not.toHaveBeenCalled();
+  });
+
+  test('type de demande inconnu → refusé, rien n’est écrit', async () => {
+    vi.mocked(prisma.carcasseModificationRequest.findUnique).mockResolvedValueOnce(null);
+
+    await expect(
+      syncCarcasseModifRequest({ ...renamePending, type: 'DELETE_CARCASSE' } as any, requester, scope)
+    ).rejects.toBeInstanceOf(SyncRejectedError);
+    expect(prisma.carcasseModificationRequest.create).not.toHaveBeenCalled();
+    expect(prisma.carcasse.update).not.toHaveBeenCalled();
   });
 
   test('RENAME créé sur une carcasse inspectée par le SVI → la carcasse est renommée', async () => {

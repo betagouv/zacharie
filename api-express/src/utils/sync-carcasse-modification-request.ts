@@ -58,6 +58,9 @@ export async function syncCarcasseModifRequest(
 
   // -- CREATE -------------------------------------------------------------
   if (!existing) {
+    if (!Object.values(CarcasseModificationRequestType).includes(body.type)) {
+      throw new SyncRejectedError('Type de demande inconnu');
+    }
     const carcasse = await prisma.carcasse.findUnique({
       where: { zacharie_carcasse_id: zacharieCarcasseId },
       select: { fei_numero: true, numero_bracelet: true, created_by_user_id: true },
@@ -68,6 +71,17 @@ export async function syncCarcasseModifRequest(
     if (!body.requested_by_entity_id || !scope.entityIds.includes(body.requested_by_entity_id)) {
       // Cette ligne ne devrait jamais arriver, puisqu'elle est interdite par le périmètre de l'utilisateur.
       throw new SyncRejectedError('Vous ne pouvez pas agir au nom de cette entité');
+    }
+    // Une demande « carcasse ajoutée » accompagne la carcasse que le demandeur vient de créer : son
+    // annulation ou son refus supprime la carcasse. Sur la carcasse d'un autre, elle servirait à
+    // supprimer une carcasse qu'on n'a pas le droit de supprimer.
+    if (
+      body.type === CarcasseModificationRequestType.NEW_CARCASSE &&
+      carcasse.created_by_user_id !== user.id
+    ) {
+      throw new SyncRejectedError(
+        "Vous ne pouvez déclarer comme ajoutée qu'une carcasse que vous avez créée"
+      );
     }
     const isRename = body.type === CarcasseModificationRequestType.BRACELET_RENAME;
     // Le numéro d'origine est lu sur la carcasse : c'est lui que l'annulation rétablit. Sauf pour
