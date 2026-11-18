@@ -41,7 +41,7 @@ test("Vente d'une partie des carcasses au commerce de détail : le reste peut en
   await expect(page.getByTitle('Supprimer la carcasse')).toHaveCount(3, { timeout: 10000 });
 
   // Les 3 carcasses restantes partent à l'ETG 1.
-  await ajouterVenteDon(page, { destinataire: /ETG 1 - 75000 Paris \(/ });
+  await ajouterVenteDon(page, { destinataire: /ETG 1 - 75000 Paris/ });
   await transmettre.scrollIntoViewIfNeeded();
   await transmettre.click();
   await expect(page.getByText(/Votre fiche a été transmise aux 2 destinataires/i).first()).toBeVisible({

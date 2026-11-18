@@ -643,7 +643,7 @@ function DispatchGroupForm({
     ...(showAllDestinataires
       ? destinatairesEnregistres
       : destinatairesEnregistres.slice(0, NB_DESTINATAIRES_AFFICHES)
-    ).map((entity) => ({ id: entity.id, label: getEntityDisplay(entity) })),
+    ).map((entity) => ({ id: entity.id, label: getEntityDisplay(entity, { withType: false }) })),
     {
       id: USAGE_DOMESTIQUE_ID,
       label: prochainsDetenteursOptions.find((option) => option.value === USAGE_DOMESTIQUE_ID)?.label,
@@ -1128,7 +1128,7 @@ export default function DestinataireSelectPremierDetenteur({
   const ccgsOptions = useMemo(() => {
     return [
       ...ccgs.map((entity) => ({
-        label: getEntityDisplay(entity),
+        label: getEntityDisplay(entity, { withType: false }),
         value: entity.id,
       })),
       {
@@ -1146,11 +1146,11 @@ export default function DestinataireSelectPremierDetenteur({
   const prochainsDetenteursOptions = useMemo(() => {
     return [
       {
-        label: `Moi-même — ${user.prenom} ${user.nom_de_famille} (usage domestique privé)`,
+        label: `Moi-même — ${user.prenom} ${user.nom_de_famille}`,
         value: USAGE_DOMESTIQUE_ID,
       },
       ...prochainsDetenteurs.map((entity) => ({
-        label: getEntityDisplay(entity),
+        label: getEntityDisplay(entity, { withType: false }),
         value: entity.id,
       })),
     ];

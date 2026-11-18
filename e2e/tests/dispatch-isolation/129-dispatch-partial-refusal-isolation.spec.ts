@@ -34,10 +34,10 @@ test("Le refus d'une carcasse par ETG 1 reste invisible pour ETG 2", async ({ pa
   await page.getByRole('link', { name: feiId }).click();
 
   // Group 1 → ETG 1 (defaults to the first 2 carcasses MM-001-003/004)
-  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris' });
 
   // Group 2 → ETG 2 (manually pick the remaining 2)
-  await ajouterVenteDon(page, { destinataire: 'ETG 2 - 75000 Paris (', carcasses: [0, 1] });
+  await ajouterVenteDon(page, { destinataire: 'ETG 2 - 75000 Paris', carcasses: [0, 1] });
   const transmettre = page.getByRole('button', { name: /Transmettre/ });
   await transmettre.scrollIntoViewIfNeeded();
   await transmettre.click();

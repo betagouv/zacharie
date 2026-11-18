@@ -35,7 +35,7 @@ test('PD supprime une carcasse avant transmission — ETG reçoit N-1', async ({
   await expect(trashIcons).toHaveCount(3, { timeout: 10000 });
 
   // 3. Dispatch remaining 3 carcasses to ETG 1
-  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris' });
 
   // 4. Transmettre
   const transmettreBtn = page.getByRole('button', { name: /^Transmettre/ });

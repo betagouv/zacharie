@@ -23,7 +23,7 @@ test('Dispatch PD → ETG 1 + Collecteur Pro 1 puis chacun → SVI', async ({ pa
   await page.getByRole('link', { name: feiId }).click();
 
   // Groupe 1 : ETG 1
-  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris' });
 
   // Ajouter groupe 2
   // Groupe 2 : Collecteur Pro 1

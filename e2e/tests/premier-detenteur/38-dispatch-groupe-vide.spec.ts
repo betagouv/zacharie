@@ -32,11 +32,11 @@ test('Vente / don sans carcasse — « Suivant » reste désactivé', async ({ p
   await page.getByRole('link', { name: feiId }).click();
 
   // Vente / don 1 : ETG 1, toutes les carcasses.
-  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris' });
 
   // Vente / don 2 : aucune carcasse reprise à l'ETG 1.
   await openVenteDon(page);
-  await selectDestinataire(page, 'ETG 2 - 75000 Paris (');
+  await selectDestinataire(page, 'ETG 2 - 75000 Paris');
   await allerAEtape(page, 'Carcasses');
 
   await expect(carcassesRetenues(page)).toHaveCount(0);
@@ -50,11 +50,11 @@ test('Une vente / un don vidé par une autre reste visible et bloque la transmis
   await page.getByRole('link', { name: feiId }).click();
 
   // Vente / don 1 : ETG 1, toutes les carcasses.
-  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris' });
 
   // Vente / don 2 : ETG 2 les reprend toutes — l'ETG 1 se retrouve sans carcasse.
   await openVenteDon(page);
-  await selectDestinataire(page, 'ETG 2 - 75000 Paris (');
+  await selectDestinataire(page, 'ETG 2 - 75000 Paris');
   await allerAEtape(page, 'Carcasses');
   // « Toutes les carcasses restantes » ne prend rien à l'ETG 1 : pour le vider il faut reprendre
   // explicitement ses carcasses dans « Part ailleurs ».
