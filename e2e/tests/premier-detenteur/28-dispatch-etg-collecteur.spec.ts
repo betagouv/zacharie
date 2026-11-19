@@ -21,7 +21,7 @@ test('Dispatch mixte ETG + collecteur : chacun reçoit sa part', async ({ page }
   await page.getByRole('link', { name: feiId }).click();
 
   // Vente / don 1 : ETG 1, toutes les carcasses par défaut.
-  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris' });
 
   // Vente / don 2 : collecteur, qui reprend 2 carcasses à l'ETG 1.
   // Pas d'étape Transport pour un collecteur : il vient chercher les carcasses lui-même.

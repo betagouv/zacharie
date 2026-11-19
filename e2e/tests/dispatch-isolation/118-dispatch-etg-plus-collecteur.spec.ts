@@ -23,7 +23,7 @@ test('ETG et collecteur ne voient que leur branche', async ({ page }) => {
   await page.getByRole('link', { name: feiId }).click();
 
   // Group 1 : ETG 1
-  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris' });
 
   // Ajouter group 2
   // Move MM-001-001 and MM-001-002 to group 2

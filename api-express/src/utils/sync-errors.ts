@@ -9,6 +9,8 @@ export type SyncRejectedErrorMessage =
   | 'Vous ne pouvez pas agir au nom de cette entité'
   | "Seul l'examinateur initial peut approuver ou refuser une demande"
   | "Seul l'auteur de la demande peut l'annuler"
+  | 'Type de demande inconnu'
+  | "Vous ne pouvez déclarer comme ajoutée qu'une carcasse que vous avez créée"
   | 'Seul un examinateur initial peut créer une fiche'
   | 'Vous ne pouvez pas supprimer cette fiche'
   | 'Vous ne pouvez pas supprimer cette carcasse'

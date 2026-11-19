@@ -6,6 +6,7 @@ import { apiRateLimit } from '~/middlewares/rate-limit.ts';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import { ApiKeyScope, Prisma } from '@prisma/client';
+import type { Carcasse } from '@prisma/client';
 import { RequestWithApiKey } from '~/types/request';
 import {
   checkApiKeyIsValidMiddleware,
@@ -43,12 +44,47 @@ const CONTACT_SUFFIX =
 const CONTACT_MESSAGE =
   'Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.';
 
+type DispatchGroup = Pick<Carcasse, 'fei_numero' | 'premier_detenteur_prochain_detenteur_id_cache'>;
+
+// Carcasses des fiches renvoyées à la clé : celles du périmètre, plus les refusées ou manquantes des
+// mêmes groupes de dispatch (premier détenteur → prochain détenteur), comme /carcasse/refusees côté
+// app. Jamais les carcasses de la fiche parties chez un autre destinataire.
+function carcassesInScopeWhere(
+  accessWhere: Prisma.CarcasseWhereInput,
+  dispatchGroups: Array<DispatchGroup>
+): Prisma.CarcasseWhereInput {
+  return {
+    fei_numero: { in: [...new Set(dispatchGroups.map((group) => group.fei_numero))] },
+    deleted_at: null,
+    OR: [
+      accessWhere,
+      {
+        AND: [
+          {
+            OR: dispatchGroups.map((group) => ({
+              fei_numero: group.fei_numero,
+              premier_detenteur_prochain_detenteur_id_cache:
+                group.premier_detenteur_prochain_detenteur_id_cache,
+            })),
+          },
+          {
+            OR: [
+              { intermediaire_carcasse_refus_intermediaire_id: { not: null } },
+              { intermediaire_carcasse_manquante: true },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+}
+
 // À partir d'un périmètre d'accès carcasse (role/entity-aware) et d'une plage de dates, retourne
 // les FEI accessibles (en-tête + carcasses mappées). L'ownership vit sur les carcasses : on part
-// donc des carcasses accessibles, on remonte à leurs FEI, puis on reccharge toutes les carcasses
-// de ces FEI pour un rendu complet.
+// donc des carcasses accessibles, on remonte à leurs FEI, puis on charge les carcasses de ces FEI
+// qui sont dans le périmètre.
 async function buildFeisResponse(accessWhere: Prisma.CarcasseWhereInput, dateFrom: string, dateTo: string) {
-  const accessibleCarcasses = await prisma.carcasse.findMany({
+  const dispatchGroups = await prisma.carcasse.findMany({
     where: {
       AND: [
         accessWhere,
@@ -61,10 +97,11 @@ async function buildFeisResponse(accessWhere: Prisma.CarcasseWhereInput, dateFro
         },
       ],
     },
-    select: { fei_numero: true },
+    select: { fei_numero: true, premier_detenteur_prochain_detenteur_id_cache: true },
+    distinct: ['fei_numero', 'premier_detenteur_prochain_detenteur_id_cache'],
   });
 
-  const feiNumeros = [...new Set(accessibleCarcasses.map((c) => c.fei_numero))];
+  const feiNumeros = [...new Set(dispatchGroups.map((c) => c.fei_numero))];
   if (feiNumeros.length === 0) return [];
 
   const [feis, carcasses] = await Promise.all([
@@ -75,7 +112,7 @@ async function buildFeisResponse(accessWhere: Prisma.CarcasseWhereInput, dateFro
       orderBy: [{ date_mise_a_mort: 'desc' }, { created_at: 'desc' }],
     }),
     prisma.carcasse.findMany({
-      where: { fei_numero: { in: feiNumeros }, deleted_at: null },
+      where: carcassesInScopeWhere(accessWhere, dispatchGroups),
       select: carcasseForApiSelect,
     }),
   ]);
@@ -170,11 +207,12 @@ router.get(
       }
 
       // Accès autorisé si au moins une carcasse de la fiche est dans le périmètre du user.
-      const accessibleCarcasse = await prisma.carcasse.findFirst({
+      const dispatchGroups = await prisma.carcasse.findMany({
         where: { AND: [accessWhere, { fei_numero, deleted_at: null }] },
-        select: { zacharie_carcasse_id: true },
+        select: { fei_numero: true, premier_detenteur_prochain_detenteur_id_cache: true },
+        distinct: ['fei_numero', 'premier_detenteur_prochain_detenteur_id_cache'],
       });
-      if (!accessibleCarcasse) {
+      if (dispatchGroups.length === 0) {
         res.status(404);
         return next(new Error("Fiche d'examen initial non trouvée"));
       }
@@ -182,7 +220,7 @@ router.get(
       const [fei, carcasses] = await Promise.all([
         prisma.fei.findFirst({ where: { numero: fei_numero, deleted_at: null }, select: feiForApiSelect }),
         prisma.carcasse.findMany({
-          where: { fei_numero, deleted_at: null },
+          where: carcassesInScopeWhere(accessWhere, dispatchGroups),
           select: carcasseForApiSelect,
         }),
       ]);

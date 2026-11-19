@@ -68,13 +68,13 @@ test("Écriture /sync sur une carcasse d'une autre branche → refusée et repor
   await page.getByRole('link', { name: feiId }).click();
 
   // Select ETG 1 for group 1
-  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris' });
 
   // Add second group
   // Move 2 carcasses to group 2
   // Select ETG 2 for group 2
   // Transmettre
-  await ajouterVenteDon(page, { destinataire: 'ETG 2 - 75000 Paris (', carcasses: [0, 1] });
+  await ajouterVenteDon(page, { destinataire: 'ETG 2 - 75000 Paris', carcasses: [0, 1] });
   const transmettreBtn = page.getByRole('button', { name: /Transmettre/ });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();

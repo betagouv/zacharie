@@ -24,9 +24,9 @@ test('PD voit la fiche avec les 2 groupes clairement identifiés après dispatch
   await page.getByRole('link', { name: feiId }).click();
 
   // Groupe 1 : ETG 1
-  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris' });
 
-  await ajouterVenteDon(page, { destinataire: 'ETG 2 - 75000 Paris (', carcasses: [0, 1] });
+  await ajouterVenteDon(page, { destinataire: 'ETG 2 - 75000 Paris', carcasses: [0, 1] });
   const transmettre = page.getByRole('button', { name: /Transmettre/ });
   await transmettre.scrollIntoViewIfNeeded();
   await transmettre.click();

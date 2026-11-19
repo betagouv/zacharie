@@ -26,11 +26,11 @@ test('Split 4 carcasses entre ETG 1 / ETG 2 / Collecteur Pro 1', async ({ page }
   await page.getByRole('link', { name: feiId }).click();
 
   // Group 1 : ETG 1 (starts with all 4 carcasses)
-  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris' });
 
   // Ajouter group 2 : ETG 2
   // Move 1 carcasse (MM-001-001) to group 2
-  await ajouterVenteDon(page, { destinataire: 'ETG 2 - 75000 Paris (', carcasses: [0] });
+  await ajouterVenteDon(page, { destinataire: 'ETG 2 - 75000 Paris', carcasses: [0] });
 
   // Ajouter group 3 : Collecteur Pro 1
   // Move 1 carcasse (MM-001-002, which is nth(1)) to group 3

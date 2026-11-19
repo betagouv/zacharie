@@ -837,6 +837,34 @@ Christine
         `Fei ${fei.numero} created with ${carcasses.count} carcasses (premier détenteur = association)`
       );
     }
+    // Même fiche que PREMIER_DETENTEUR, mais premier-detenteur@ n'a encore enregistré aucun destinataire
+    if ((role as string) === 'PREMIER_DETENTEUR_SANS_DESTINATAIRE') {
+      const fei = await prisma.fei.create({ data: feiValidatedByExaminateur });
+      const carcasses = await prisma.carcasse.createMany({
+        data: getCarcasses(fei, ownershipValidatedByExaminateur),
+      });
+      // Fiche précédente dont les carcasses gardent l'association (son propriétaire initial) en
+      // prochain détenteur : elle ne doit pas être reprise comme destinataire de la nouvelle vente / don.
+      const feiPrecedente = await prisma.fei.create({
+        data: { ...feiValidatedByExaminateur, numero: 'ZACH-20250706-QZ6E0-155242' },
+      });
+      await prisma.carcasse.createMany({
+        data: getCarcasses(feiPrecedente, {
+          ...ownershipValidatedByExaminateur,
+          premier_detenteur_prochain_detenteur_id_cache: '5b916331-632e-4c29-be2e-12a834e92688',
+          premier_detenteur_prochain_detenteur_role_cache: FeiOwnerRole.PREMIER_DETENTEUR,
+        }),
+      });
+      await prisma.entityAndUserRelations.deleteMany({
+        where: {
+          owner_id: users.find((user) => user.email === 'premier-detenteur@example.fr')?.id,
+          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        },
+      });
+      console.log(
+        `Fei ${fei.numero} created with ${carcasses.count} carcasses (premier détenteur sans destinataire)`
+      );
+    }
     if ((role as string) === 'ETG_PD_EXAMINATEUR') {
       const fei = await prisma.fei.create({ data: feiPremierDetenteurEstExaminateur });
       const carcasses = await prisma.carcasse.createMany({

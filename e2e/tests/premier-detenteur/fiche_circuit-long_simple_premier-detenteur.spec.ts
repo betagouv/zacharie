@@ -55,7 +55,7 @@ test('Pas de stockage - Transporter les carcasses soi-même', async ({ page }) =
 
   await expect(page.getByText('Validation par le premier détenteur')).toBeVisible();
   await openVenteDon(page);
-  await selectDestinataire(page, 'ETG 1 - 75000 Paris (');
+  await selectDestinataire(page, 'ETG 1 - 75000 Paris');
   await allerAEtape(page, 'Stockage');
   await choisirStockage(page, 'aucun');
   await allerAEtape(page, 'Transport');
@@ -77,7 +77,7 @@ test('Stockage - Transporter les carcasses soi-même', async ({ page }) => {
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
   await page.getByRole('link', { name: feiId }).click();
   await openVenteDon(page);
-  await selectDestinataire(page, 'ETG 1 - 75000 Paris (');
+  await selectDestinataire(page, 'ETG 1 - 75000 Paris');
   await allerAEtape(page, 'Stockage');
   await choisirStockage(page, 'ccg');
   await venteDonModal(page).getByRole('button', { name: 'Renseigner ma chambre froide' }).click();
@@ -104,7 +104,7 @@ test('Stockage - Le transport est réalisé par un collecteur professionnel', as
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
   await page.getByRole('link', { name: feiId }).click();
   await openVenteDon(page);
-  await selectDestinataire(page, 'ETG 1 - 75000 Paris (');
+  await selectDestinataire(page, 'ETG 1 - 75000 Paris');
   await allerAEtape(page, 'Stockage');
   await choisirStockage(page, 'ccg');
   await venteDonModal(page).getByRole('button', { name: 'Renseigner ma chambre froide' }).click();
