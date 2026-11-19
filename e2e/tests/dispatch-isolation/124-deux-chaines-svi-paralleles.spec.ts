@@ -30,10 +30,10 @@ test('SVI 1 et SVI 2 voient chacun leur branche seulement', async ({ page }) => 
   await page.getByRole('link', { name: feiId }).click();
 
   // Group 1 → ETG 1 (keeps MM-001-003 + MM-001-004 by default)
-  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris' });
 
   // Add group 2 → moves MM-001-001 + MM-001-002 to ETG 2
-  await ajouterVenteDon(page, { destinataire: 'ETG 2 - 75000 Paris (', carcasses: [0, 1] });
+  await ajouterVenteDon(page, { destinataire: 'ETG 2 - 75000 Paris', carcasses: [0, 1] });
   const transmettreBtn = page.getByRole('button', { name: /Transmettre/ });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();

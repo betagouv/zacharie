@@ -26,7 +26,7 @@ test('SVI rend des décisions divergentes → chasseur voit chaque décision', a
   await connectWith(page, 'premier-detenteur@example.fr');
   await expect(page.getByRole('link', { name: feiId })).toBeVisible({ timeout: 15000 });
   await page.getByRole('link', { name: feiId }).click();
-  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris' });
   const transmettreBtn = page.getByRole('button', { name: 'Transmettre' });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();

@@ -93,7 +93,7 @@ test("Autre membre de l'Association voit le bloc Vente / don sur la fiche", asyn
 
   // Sélection ETG 1 puis dispatch.
   await openVenteDon(page);
-  await selectDestinataire(page, 'ETG 1 - 75000 Paris (');
+  await selectDestinataire(page, 'ETG 1 - 75000 Paris');
 
   // On ne transmet que le Daim : on retire le Cerf de la vente / du don.
   await allerAEtape(page, 'Carcasses');

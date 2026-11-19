@@ -20,7 +20,7 @@ test('Transmission hors-ligne — sync auto au retour en ligne', async ({ page, 
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
 
-  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris' });
 
   // Hors-ligne
   await context.setOffline(true);

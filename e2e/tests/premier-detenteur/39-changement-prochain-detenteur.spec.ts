@@ -29,7 +29,7 @@ test('Changement de prochain détenteur après sélection — cohérence du form
   await page.getByRole('link', { name: feiId }).click();
 
   await openVenteDon(page);
-  await selectDestinataire(page, 'ETG 1 - 75000 Paris (');
+  await selectDestinataire(page, 'ETG 1 - 75000 Paris');
   await allerAEtape(page, 'Stockage');
   await choisirStockage(page, 'aucun');
 
@@ -37,7 +37,7 @@ test('Changement de prochain détenteur après sélection — cohérence du form
   await etapePrecedente(page);
   await etapePrecedente(page);
   await expect(etapeCourante(page)).toContainText('Destinataire');
-  await selectDestinataire(page, 'ETG 2 - 75000 Paris (');
+  await selectDestinataire(page, 'ETG 2 - 75000 Paris');
 
   await allerAEtape(page, 'Stockage');
   await expect(etapeCourante(page)).toContainText('Stockage');

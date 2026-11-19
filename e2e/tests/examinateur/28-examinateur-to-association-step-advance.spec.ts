@@ -77,7 +77,7 @@ test('Examinateur → Association → ETG : step ladder advances based on per-ca
 
   // Inline transition → vente / don. Une seule carcasse : pas d'étape « Carcasses ».
   await openVenteDon(page);
-  await selectDestinataire(page, 'ETG 1 - 75000 Paris (');
+  await selectDestinataire(page, 'ETG 1 - 75000 Paris');
   await allerAEtape(page, 'Stockage');
   await choisirStockage(page, 'aucun');
   await allerAEtape(page, 'Transport');

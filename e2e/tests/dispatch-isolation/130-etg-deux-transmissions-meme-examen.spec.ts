@@ -29,7 +29,7 @@ test('ETG 1 voit 2 transmissions isolées pour le même examen initial', async (
   await page.getByRole('link', { name: feiId }).click();
 
   // Groupe 1 (branche directe) → ETG 1, garde MM-001-003 / MM-001-004.
-  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris' });
 
   // Ajouter le groupe 2.
   // Déplacer MM-001-001 / MM-001-002 dans le groupe 2.
