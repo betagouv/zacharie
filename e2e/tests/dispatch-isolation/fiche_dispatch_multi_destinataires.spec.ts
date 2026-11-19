@@ -23,10 +23,10 @@ test('Dispatch 4 carcasses vers 2 destinataires ETG', async ({ page, context }) 
   await page.getByRole('link', { name: feiId }).click();
 
   // 2. Vente / don 1 : ETG 1 (toutes les carcasses par défaut)
-  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris' });
 
   // 3. Vente / don 2 : ETG 2, qui reprend 2 carcasses à l'ETG 1
-  await ajouterVenteDon(page, { destinataire: 'ETG 2 - 75000 Paris (', carcasses: [0, 1] });
+  await ajouterVenteDon(page, { destinataire: 'ETG 2 - 75000 Paris', carcasses: [0, 1] });
 
   // 4. Vérifier les compteurs de chaque carte
   await expect(page.getByText('1 carcasse + 1 lot')).toBeVisible();

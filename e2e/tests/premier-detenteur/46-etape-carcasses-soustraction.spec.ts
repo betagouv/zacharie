@@ -48,7 +48,7 @@ async function ouvrirEtapeCarcasses(page: Page, destinataire: string) {
 }
 
 test('Par défaut toutes les carcasses partent chez le destinataire', async ({ page }) => {
-  await ouvrirEtapeCarcasses(page, 'ETG 1 - 75000 Paris (');
+  await ouvrirEtapeCarcasses(page, 'ETG 1 - 75000 Paris');
 
   await expect(venteDonModal(page).getByRole('radio').first()).toBeChecked();
   await expect(venteDonModal(page).getByText('Toutes les carcasses restantes (4)')).toBeVisible();
@@ -61,7 +61,7 @@ test('Par défaut toutes les carcasses partent chez le destinataire', async ({ p
 });
 
 test('Retirer puis remettre une carcasse', async ({ page }) => {
-  await ouvrirEtapeCarcasses(page, 'ETG 1 - 75000 Paris (');
+  await ouvrirEtapeCarcasses(page, 'ETG 1 - 75000 Paris');
   await choisirRepartition(page, 'partie');
 
   await expect(carcassesRetenues(page)).toHaveCount(4);
@@ -82,11 +82,11 @@ test('Retirer puis remettre une carcasse', async ({ page }) => {
 test('Reprendre une carcasse attribuée à un autre destinataire', async ({ page }) => {
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris' });
 
   // ETG 2 : plus rien de libre, les 4 carcasses sont chez ETG 1.
   await openVenteDon(page);
-  await selectDestinataire(page, 'ETG 2 - 75000 Paris (');
+  await selectDestinataire(page, 'ETG 2 - 75000 Paris');
   await allerAEtape(page, 'Carcasses');
   await expect(carcassesRetenues(page)).toHaveCount(0);
   await expect(carcassesRetirees(page)).toHaveCount(4);
@@ -100,7 +100,7 @@ test('Reprendre une carcasse attribuée à un autre destinataire', async ({ page
 });
 
 test('« Suivant » est désactivé quand plus aucune carcasse n’est retenue', async ({ page }) => {
-  await ouvrirEtapeCarcasses(page, 'ETG 1 - 75000 Paris (');
+  await ouvrirEtapeCarcasses(page, 'ETG 1 - 75000 Paris');
   await choisirRepartition(page, 'partie');
 
   const suivant = venteDonModal(page).getByRole('button', { name: 'Suivant', exact: true });
@@ -120,14 +120,14 @@ test('« Suivant » est désactivé quand plus aucune carcasse n’est retenue',
 });
 
 test('Changer de destinataire réinitialise la répartition', async ({ page }) => {
-  await ouvrirEtapeCarcasses(page, 'ETG 1 - 75000 Paris (');
+  await ouvrirEtapeCarcasses(page, 'ETG 1 - 75000 Paris');
   await choisirRepartition(page, 'partie');
   await retirerCarcasse(page, 'Daim N° MM-001-002');
   await expect(carcassesRetirees(page)).toHaveCount(1);
 
   await etapePrecedente(page);
   await expect(etapeCourante(page)).toContainText('Destinataire');
-  await selectDestinataire(page, 'ETG 2 - 75000 Paris (');
+  await selectDestinataire(page, 'ETG 2 - 75000 Paris');
 
   await allerAEtape(page, 'Carcasses');
   await expect(venteDonModal(page).getByRole('radio').first()).toBeChecked();
@@ -135,7 +135,7 @@ test('Changer de destinataire réinitialise la répartition', async ({ page }) =
 });
 
 test('Les carcasses retirées restent à attribuer après validation', async ({ page }) => {
-  await ouvrirEtapeCarcasses(page, 'ETG 1 - 75000 Paris (');
+  await ouvrirEtapeCarcasses(page, 'ETG 1 - 75000 Paris');
   await choisirRepartition(page, 'partie');
   await retirerCarcasse(page, 'Pigeons N° MM-001-003');
 

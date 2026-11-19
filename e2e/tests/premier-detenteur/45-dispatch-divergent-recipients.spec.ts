@@ -28,10 +28,10 @@ test('Dispatch to two ETGs : each receives a disjoint subset of carcasses', asyn
   await page.getByRole('link', { name: feiId }).click();
 
   // Vente / don 1 : ETG 1, toutes les carcasses par défaut.
-  await ajouterVenteDon(page, { destinataire: /ETG 1 - 75000 Paris \(/ });
+  await ajouterVenteDon(page, { destinataire: /ETG 1 - 75000 Paris/ });
 
   // Vente / don 2 : ETG 2, qui reprend 2 carcasses à l'ETG 1.
-  await ajouterVenteDon(page, { destinataire: /ETG 2 - 75000 Paris \(/, carcasses: [0, 1] });
+  await ajouterVenteDon(page, { destinataire: /ETG 2 - 75000 Paris/, carcasses: [0, 1] });
 
   const transmettre = page.getByRole('button', { name: /^Transmettre/ });
   await transmettre.scrollIntoViewIfNeeded();

@@ -98,7 +98,7 @@ test("Un autre membre de l'association transmet la fiche certifiée par l'examin
 
   // ETG 1 n'est pas un partenaire de User B : pas de raccourci, on passe par la liste.
   await openVenteDon(page);
-  await selectDestinataire(page, 'ETG 1 - 75000 Paris (');
+  await selectDestinataire(page, 'ETG 1 - 75000 Paris');
   await allerAEtape(page, 'Stockage');
   await choisirStockage(page, 'aucun');
   await allerAEtape(page, 'Transport');

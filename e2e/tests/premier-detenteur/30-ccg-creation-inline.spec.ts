@@ -29,7 +29,7 @@ test('Création CCG inline depuis le formulaire de transmission', async ({ page 
   await page.getByRole('link', { name: feiId }).click();
 
   await openVenteDon(page);
-  await selectDestinataire(page, 'ETG 1 - 75000 Paris (');
+  await selectDestinataire(page, 'ETG 1 - 75000 Paris');
   await allerAEtape(page, 'Stockage');
   await choisirStockage(page, 'ccg');
 

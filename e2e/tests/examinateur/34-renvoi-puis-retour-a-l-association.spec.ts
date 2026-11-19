@@ -75,7 +75,7 @@ test("Renvoi par l'ETG puis retour à l'association : aucune vente fantôme, la 
   await page.getByRole('button', { name: 'Transmettre', exact: true }).click();
 
   await openVenteDon(page);
-  await selectDestinataire(page, 'ETG 1 - 75000 Paris (');
+  await selectDestinataire(page, 'ETG 1 - 75000 Paris');
   await allerAEtape(page, 'Stockage');
   await choisirStockage(page, 'aucun');
   await allerAEtape(page, 'Transport');
