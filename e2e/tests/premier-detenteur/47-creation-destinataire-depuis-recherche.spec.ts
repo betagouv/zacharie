@@ -51,9 +51,14 @@ test("« Créer « … » » depuis la recherche ouvre l'ajout d'un destinataire
   await openVenteDon(page);
   await creerDestinataire(page, 'Ma Boucherie Test');
 
-  // La raison sociale, en tête du formulaire, reprend le nom tapé dans la recherche, et l'annuaire
-  // des entreprises est interrogé tout de suite : ses résultats s'affichent sans rien retaper
+  // Le chasseur dit d'abord si le destinataire est un professionnel ou un particulier
   const modal = venteDonModal(page);
+  const professionnel = modal.getByText('Un professionnel', { exact: true });
+  await professionnel.scrollIntoViewIfNeeded();
+  await professionnel.click();
+
+  // La raison sociale reprend le nom tapé dans la recherche, et l'annuaire
+  // des entreprises est interrogé tout de suite : ses résultats s'affichent sans rien retaper
   // le nom est dans le champ de saisie, curseur à la fin : on peut continuer à taper
   const raisonSociale = modal.locator('#raison_sociale');
   await expect(raisonSociale).toBeFocused();
@@ -65,15 +70,17 @@ test("« Créer « … » » depuis la recherche ouvre l'ajout d'un destinataire
   await expect(resultatAnnuaire).toBeVisible({ timeout: 10000 });
   await resultatAnnuaire.click();
 
-  // Choisir le résultat de l'annuaire remplit le SIRET et l'adresse
+  // Choisir le résultat de l'annuaire remplit l'adresse ; le SIRET n'est plus affiché mais reste envoyé
   await expect(modal.locator("[class*='raison_sociale__single-value']")).toHaveText('MA BOUCHERIE TEST SARL');
-  await expect(modal.locator('#partenaire-nouveau-siret')).toHaveValue('12345678900012');
+  await expect(modal.getByRole('textbox', { name: 'SIRET' })).toHaveCount(0);
+  await expect(modal.locator('#partenaire_data_form input[name="siret"]')).toHaveValue('12345678900012');
   await expect(modal.locator('#partenaire-nouveau-address_ligne_1')).toHaveValue('12 RUE DU COMMERCE');
 
-  // La qualité du destinataire vient sous la raison sociale
-  const commerceDeDetail = modal.getByText('Commerce de détail (boucherie, restaurant, etc.)');
-  await commerceDeDetail.scrollIntoViewIfNeeded();
-  await commerceDeDetail.click();
+  // La qualité du destinataire est un champ libre : plus de liste de types à cocher
+  await expect(modal.getByText('Commerce de détail (boucherie, restaurant, etc.)')).toHaveCount(0);
+  const qualite = modal.locator('#partenaire-nouveau-qualite_du_destinataire');
+  await qualite.scrollIntoViewIfNeeded();
+  await qualite.fill('boucherie');
 
   // Remplir les champs obligatoires — scrollIntoViewIfNeeded sur mobile viewport
   const email = modal.locator('#partenaire-nouveau-email');

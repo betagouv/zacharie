@@ -47,7 +47,8 @@ export async function getCarcasseAccessWhere(
     user.roles.includes(UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE) ||
     user.roles.includes(UserRoles.ASSOCIATION_CARITATIVE) ||
     user.roles.includes(UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF) ||
-    user.roles.includes(UserRoles.CONSOMMATEUR_FINAL)
+    user.roles.includes(UserRoles.CONSOMMATEUR_FINAL) ||
+    user.roles.includes(UserRoles.CIRCUIT_COURT)
   ) {
     return {
       OR: [

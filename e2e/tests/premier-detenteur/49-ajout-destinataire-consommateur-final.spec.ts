@@ -54,16 +54,17 @@ async function enregistrerPartenaire(page: Page) {
   await submit.click();
 }
 
-test('Un consommateur final ajouté comme destinataire est nommé par son représentant', async ({ page }) => {
+test('Un particulier ajouté comme destinataire est nommé par son représentant', async ({ page }) => {
   const modal = venteDonModal(page);
 
-  const consommateurFinal = modal.getByText('Consommateur final', { exact: true });
-  await consommateurFinal.scrollIntoViewIfNeeded();
-  await consommateurFinal.click();
+  const particulier = modal.getByText('Un particulier', { exact: true });
+  await particulier.scrollIntoViewIfNeeded();
+  await particulier.click();
 
-  // Pas de raison sociale ni de SIRET pour un consommateur final
+  // Pas de raison sociale, ni de qualité, ni de SIRET pour un particulier
   await expect(modal.locator("[class*='raison_sociale'] input")).toHaveCount(0);
-  await expect(modal.locator('#partenaire-nouveau-siret')).toHaveCount(0);
+  await expect(modal.locator('#partenaire-nouveau-qualite_du_destinataire')).toHaveCount(0);
+  await expect(modal.locator('#partenaire_data_form input[name="siret"]')).toHaveCount(0);
 
   await remplirRepresentantEtAdresse(page);
   await enregistrerPartenaire(page);
@@ -75,12 +76,16 @@ test('Un consommateur final ajouté comme destinataire est nommé par son repré
   });
 });
 
-test("Un destinataire autre qu'un consommateur final exige une raison sociale", async ({ page }) => {
+test('Un destinataire professionnel exige une raison sociale', async ({ page }) => {
   const modal = venteDonModal(page);
 
-  const commerceDeDetail = modal.getByText('Commerce de détail (boucherie, restaurant, etc.)');
-  await commerceDeDetail.scrollIntoViewIfNeeded();
-  await commerceDeDetail.click();
+  const professionnel = modal.getByText('Un professionnel', { exact: true });
+  await professionnel.scrollIntoViewIfNeeded();
+  await professionnel.click();
+
+  const qualite = modal.locator('#partenaire-nouveau-qualite_du_destinataire');
+  await qualite.scrollIntoViewIfNeeded();
+  await qualite.fill('boucherie');
 
   // La raison sociale est préremplie avec le nom tapé dans la recherche : on la vide
   const effacerRaisonSociale = modal.locator("[class*='raison_sociale__clear-indicator']");

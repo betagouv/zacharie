@@ -1716,6 +1716,7 @@ router.get(
                 EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
                 EntityTypes.ASSOCIATION_CARITATIVE,
                 EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
+                EntityTypes.CIRCUIT_COURT,
                 ...FEDERATION_ENTITY_TYPES,
               ],
             },
@@ -1791,7 +1792,8 @@ router.get(
           entity.type === EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE ||
           entity.type === EntityTypes.ASSOCIATION_CARITATIVE ||
           entity.type === EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF ||
-          entity.type === EntityTypes.CONSOMMATEUR_FINAL
+          entity.type === EntityTypes.CONSOMMATEUR_FINAL ||
+          entity.type === EntityTypes.CIRCUIT_COURT
       );
 
       res.status(200).send({

@@ -25,6 +25,7 @@ const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
   [EntityTypes.ASSOCIATION_CARITATIVE]: {},
   [EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF]: {},
   [EntityTypes.CONSOMMATEUR_FINAL]: {},
+  [EntityTypes.CIRCUIT_COURT]: {},
   [EntityTypes.LABORATOIRE]: {},
   [EntityTypes.FDC]: {},
   [EntityTypes.FRC]: {},

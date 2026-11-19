@@ -481,6 +481,7 @@ export async function notifyCircuitCourt(
     FeiOwnerRole.ASSOCIATION_CARITATIVE,
     FeiOwnerRole.REPAS_DE_CHASSE_OU_ASSOCIATIF,
     FeiOwnerRole.CONSOMMATEUR_FINAL,
+    FeiOwnerRole.CIRCUIT_COURT,
   ];
   if (!circuitCourtRoles.includes(updatedCarcasse.next_owner_role)) {
     return false;

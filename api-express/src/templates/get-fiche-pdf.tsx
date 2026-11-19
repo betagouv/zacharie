@@ -225,6 +225,8 @@ function getEntityDisplay(role: UserRoles | FeiOwnerRole | EntityTypes | '') {
       return 'Repas de Chasse ou Associatif';
     case FeiOwnerRole.CONSOMMATEUR_FINAL:
       return 'Consommateur Final';
+    case FeiOwnerRole.CIRCUIT_COURT:
+      return 'Circuit Court';
     default:
       return 'Inconnu';
   }
