@@ -133,10 +133,12 @@ const GROUPS: Group[] = [
   },
 ];
 
+// Pas de total : un examinateur actif dans plusieurs départements compterait plusieurs fois.
+// Le total dédoublonné est la tuile « Examinateurs actifs » en haut du tableau de bord.
 const EXAMINATEURS_COLUMN: Column = {
   key: 'examinateursActifs',
   label: 'Examinateurs actifs',
-  summable: true,
+  summable: false,
 };
 
 type SortKey = 'code' | NumericKey;
@@ -323,7 +325,7 @@ export default function DepartementsTable({ valorisation, formation, showSearch 
             <tr className="border-t-2 border-gray-400 bg-gray-100 font-semibold">
               <td className="border-r px-3 py-2">Total</td>
               <td className="border-r px-2 py-2 text-right tabular-nums">
-                {totals.get(EXAMINATEURS_COLUMN.key)}
+                {EXAMINATEURS_COLUMN.summable ? totals.get(EXAMINATEURS_COLUMN.key) : '—'}
               </td>
               {GROUPS.map((group) =>
                 group.columns.map((col, index) => (
