@@ -80,3 +80,10 @@ export function toggleAnomalie(list: string[], value: string): string[] {
 export function normalizeText(value: string): string {
   return value.normalize('NFD').replace(new RegExp('[\\u0300-\\u036f]', 'g'), '').toLowerCase();
 }
+
+// Une anomalie est grave à partir du niveau 2 (« ne pas commercialiser »). Par prudence, une anomalie
+// sans niveau (tout le référentiel petit gibier) ou hors référentiel est aussi considérée grave.
+export function isAnomalieGrave(canonical: string): boolean {
+  const alertLevel = lookupAnomalie(canonical)?.item.alert_level ?? null;
+  return alertLevel === null || alertLevel >= 2;
+}
