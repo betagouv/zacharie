@@ -743,7 +743,11 @@ router.get(
       })
       .sort((a, b) => a.code.localeCompare(b.code));
 
-    const totalExaminateurs = Array.from(examinateursByDept.values()).reduce((s, set) => s + set.size, 0);
+    // Un examinateur actif dans plusieurs départements du périmètre ne compte qu'une fois.
+    const examinateursDuPerimetre = new Set(
+      Array.from(examinateursByDept.values()).flatMap((set) => [...set])
+    );
+    const totalExaminateurs = examinateursDuPerimetre.size;
     const nationalScoreBph = computeScore(nationalBphRate);
 
     res.status(200).send({

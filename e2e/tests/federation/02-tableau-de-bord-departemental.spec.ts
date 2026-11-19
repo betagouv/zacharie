@@ -22,8 +22,9 @@ test('FDC — tableau de bord départemental affiche les sections sans le détai
   // Season badge
   await expect(page.getByText(/Saison \d{2}-\d{2}/)).toBeVisible();
 
-  // Section: Carcasses prélevées
-  await expect(page.getByRole('heading', { name: 'Carcasses prélevées' })).toBeVisible();
+  // Section: Activité de la saison
+  await expect(page.getByRole('heading', { name: 'Activité de la saison' })).toBeVisible();
+  await expect(page.getByText('Examinateurs actifs').first()).toBeVisible();
 
   // Section: Circuits de valorisation — pie charts, not the old table card
   await expect(page.getByRole('heading', { name: 'Circuits de valorisation' })).toBeVisible();

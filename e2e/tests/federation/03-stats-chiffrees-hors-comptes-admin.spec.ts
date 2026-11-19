@@ -56,14 +56,16 @@ test('FNC — chiffres nationaux, fiches du compte admin exclues', async ({ page
   await expect(page.getByText(/^Saison \d{2}-\d{2}$/)).toBeVisible();
 
   // Allier + Ardèche, sans la fiche admin : 2 × 3 carcasses GG et 2 × 10 animaux de petit gibier.
-  const prelevees = section(page, 'Carcasses prélevées');
-  await expect(kpi(prelevees, 'Grand gibier')).toHaveText('6');
-  await expect(kpi(prelevees, 'Petit gibier')).toHaveText('20');
+  // Marie Martin examine dans les deux départements : elle ne compte qu'une fois.
+  const activite = section(page, 'Activité de la saison');
+  await expect(kpi(activite, 'Examinateurs actifs')).toHaveText('1');
+  await expect(kpi(activite, 'Grand gibier')).toHaveText('6');
+  await expect(kpi(activite, 'Petit gibier')).toHaveText('20');
 
   // La fiche admin porte 3 saisies GG de plus : sans l'exclusion le taux de saisie serait
   // de 44,4 % (4/9) au lieu de 16,7 % (1/6), et les anomalies passeraient de 4 à 6.
   const sanitaire = section(page, 'Suivi sanitaire grand gibier');
-  await expect(kpi(sanitaire, 'Examinateurs actifs')).toHaveText('2');
+  await expect(kpi(sanitaire, 'Examinateurs actifs')).toHaveCount(0);
   await expect(kpiFromSublabel(sanitaire, "Anomalies signalées lors de l'examen initial")).toHaveText('4');
   await expect(kpi(sanitaire, /^Taux de saisie national saison \d{2}-\d{2}$/)).toHaveText('16.7%');
   await expect(kpi(sanitaire, 'Taux de saisie national 25-26')).toHaveText('23.9%');
@@ -110,9 +112,10 @@ test('FNC — chiffres nationaux, fiches du compte admin exclues', async ({ page
   await expect(ain).toHaveCount(1);
   expect((await rowCells(ain))[1]).toBe('0');
 
-  // Ligne Total : un taux ne se somme pas, il vaut « — ».
+  // Ligne Total : un taux ne se somme pas, il vaut « — ». Les examinateurs non plus : Marie Martin,
+  // active dans deux départements, compterait deux fois.
   const total = page.getByRole('table').locator('tfoot').getByRole('row');
-  expect(await rowCells(total)).toEqual(['Total', '2', '6', '0', '0', '6', '—', '20', '0', '0', '20', '']);
+  expect(await rowCells(total)).toEqual(['Total', '—', '6', '0', '0', '6', '—', '20', '0', '0', '20', '']);
 
   // La FNC accède au tableau de bord de chaque département.
   await allier.getByRole('link', { name: 'Accéder au tableau de bord' }).click();
@@ -120,7 +123,7 @@ test('FNC — chiffres nationaux, fiches du compte admin exclues', async ({ page
   await expect(page.getByRole('heading', { level: 1, name: 'Tableau de bord FDC Allier (03)' })).toBeVisible({
     timeout: 15000,
   });
-  await expect(kpi(section(page, 'Carcasses prélevées'), 'Grand gibier')).toHaveText('3');
+  await expect(kpi(section(page, 'Activité de la saison'), 'Grand gibier')).toHaveText('3');
   await page.getByRole('link', { name: 'Retour à mon tableau de bord' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Tableau de bord national' })).toBeVisible({
     timeout: 15000,
@@ -137,12 +140,12 @@ test("FDC — chiffres limités à son département, fiche admin de l'Allier exc
   // L'Allier porte deux fiches de forme identique : celle de Marie Martin et celle du compte
   // admin. Sans l'exclusion on verrait 6 carcasses GG, 20 animaux de petit gibier,
   // 2 examinateurs actifs et 4 anomalies.
-  const prelevees = section(page, 'Carcasses prélevées');
-  await expect(kpi(prelevees, 'Grand gibier')).toHaveText('3');
-  await expect(kpi(prelevees, 'Petit gibier')).toHaveText('10');
+  const activite = section(page, 'Activité de la saison');
+  await expect(kpi(activite, 'Examinateurs actifs')).toHaveText('1');
+  await expect(kpi(activite, 'Grand gibier')).toHaveText('3');
+  await expect(kpi(activite, 'Petit gibier')).toHaveText('10');
 
   const sanitaire = section(page, 'Suivi sanitaire grand gibier');
-  await expect(kpi(sanitaire, 'Examinateurs actifs')).toHaveText('1');
   await expect(kpiFromSublabel(sanitaire, "Anomalies signalées lors de l'examen initial")).toHaveText('2');
   await expect(kpi(sanitaire, /^Taux de saisie départemental saison \d{2}-\d{2}$/)).toHaveText('33.3%');
 
@@ -159,15 +162,16 @@ test('FRC — chiffres limités aux départements de sa région', async ({ page 
 
   // Auvergne-Rhône-Alpes couvre l'Allier et l'Ardèche : mêmes chiffres qu'au national,
   // fiche admin toujours exclue. Tous les départements de la région ont une ligne, même sans carcasse.
-  const prelevees = section(page, 'Carcasses prélevées');
-  await expect(kpi(prelevees, 'Grand gibier')).toHaveText('6');
-  await expect(kpi(prelevees, 'Petit gibier')).toHaveText('20');
+  // Marie Martin examine dans l'Allier et l'Ardèche : elle ne compte qu'une fois.
+  const activite = section(page, 'Activité de la saison');
+  await expect(kpi(activite, 'Examinateurs actifs')).toHaveText('1');
+  await expect(kpi(activite, 'Grand gibier')).toHaveText('6');
+  await expect(kpi(activite, 'Petit gibier')).toHaveText('20');
 
   const sanitaire = section(page, 'Suivi sanitaire grand gibier');
-  await expect(kpi(sanitaire, 'Examinateurs actifs')).toHaveText('2');
   await expect(kpi(sanitaire, /^Taux de saisie régional saison \d{2}-\d{2}$/)).toHaveText('16.7%');
 
-  // L'Ain est dans la région, mais sa fiche n'a jamais été transmise : 2 examinateurs actifs, pas 3.
+  // L'Ain est dans la région, mais sa fiche n'a jamais été transmise : Pierre Petit n'est pas compté.
   const ain = page.getByRole('row').filter({ hasText: '01 Ain' });
   await expect(ain).toHaveCount(1);
   expect((await rowCells(ain))[1]).toBe('0');

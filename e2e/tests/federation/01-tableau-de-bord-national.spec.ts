@@ -22,8 +22,9 @@ test('FNC — tableau de bord national affiche toutes les sections', async ({ pa
   // Info banner
   await expect(page.getByText('Statistiques anonymes agrégées par département')).toBeVisible();
 
-  // Section: Carcasses prélevées
-  await expect(page.getByRole('heading', { name: 'Carcasses prélevées' })).toBeVisible();
+  // Section: Activité de la saison
+  await expect(page.getByRole('heading', { name: 'Activité de la saison' })).toBeVisible();
+  await expect(page.getByText('Examinateurs actifs').first()).toBeVisible();
   await expect(page.getByText('Grand gibier').first()).toBeVisible();
   await expect(page.getByText('Petit gibier').first()).toBeVisible();
 
@@ -35,7 +36,6 @@ test('FNC — tableau de bord national affiche toutes les sections', async ({ pa
   // Section: Suivi sanitaire grand gibier
   await expect(page.getByRole('heading', { name: 'Suivi sanitaire grand gibier' })).toBeVisible();
   await expect(page.getByText('Examens initiaux chasseurs')).toBeVisible();
-  await expect(page.getByText('Examinateurs actifs').first()).toBeVisible();
   await expect(page.getByText('Anomalies signalées').first()).toBeVisible();
   await expect(page.getByText('Inspections services vétérinaires')).toBeVisible();
 

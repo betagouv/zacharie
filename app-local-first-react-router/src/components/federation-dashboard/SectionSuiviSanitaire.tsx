@@ -22,7 +22,6 @@ interface SviMotif {
 
 interface Props {
   valoScope: FederationScope;
-  examinateursActifs: number;
   anomalies: AnomaliesData;
   sviMotifs: SviMotif[];
   ggTauxSaisie: number | null;
@@ -40,7 +39,6 @@ function buildPieData(items: Array<{ motif: string; count: number }>, max: numbe
 
 export default function SectionSuiviSanitaire({
   valoScope,
-  examinateursActifs,
   anomalies,
   sviMotifs,
   ggTauxSaisie,
@@ -55,12 +53,6 @@ export default function SectionSuiviSanitaire({
       <div className="space-y-6">
         <h3 className="text-2xl font-normal">Examens initiaux chasseurs</h3>
         <div className="grid grid-cols-2 gap-4">
-          <KpiTile
-            label="Examinateurs actifs"
-            value={examinateursActifs}
-            sublabel="Examinateurs initiaux ayant envoyé ≥ 1 FEI"
-            accent="blue"
-          />
           <KpiTile
             label="Anomalies signalées"
             value={anomalies.total}

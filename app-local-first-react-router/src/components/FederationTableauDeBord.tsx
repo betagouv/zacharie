@@ -195,8 +195,16 @@ export default function FederationTableauDeBord({ basePath }: Props) {
 
           <div className="mt-8 space-y-10">
             <section className="px-2 md:px-0">
-              <h2 className="mb-4 text-3xl font-medium">Carcasses prélevées</h2>
-              <div className="grid grid-cols-2 gap-4">
+              <h2 className="mb-4 text-3xl font-medium">Activité de la saison</h2>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <KpiTile
+                  label="Examinateurs actifs"
+                  value={form.data?.totals.examinateursActifs ?? '—'}
+                  sublabel={
+                    form.error ?? 'Examinateurs ayant transmis au moins une fiche, tout gibier confondu'
+                  }
+                  accent="green"
+                />
                 <KpiTile
                   label="Grand gibier"
                   value={valo.data?.totals.ggTotal ?? '—'}
@@ -227,16 +235,15 @@ export default function FederationTableauDeBord({ basePath }: Props) {
 
             <section className="px-2 md:px-0">
               <h2 className="mb-4 text-3xl font-medium">Suivi sanitaire grand gibier</h2>
-              {sani.error || !sani.data || form.error || !form.data || !valo.data ? (
+              {sani.error || !sani.data || !valo.data ? (
                 <Alert
                   severity="error"
                   title="Erreur"
-                  description={sani.error || form.error || 'Aucune donnée disponible'}
+                  description={sani.error || 'Aucune donnée disponible'}
                 />
               ) : (
                 <SectionSuiviSanitaire
                   valoScope={valo.data.scope}
-                  examinateursActifs={form.data.totals.examinateursActifs}
                   anomalies={sani.data.anomalies}
                   sviMotifs={sani.data.sviMotifs}
                   ggTauxSaisie={valo.data.totals.ggTauxSaisie}
