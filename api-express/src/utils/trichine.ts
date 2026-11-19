@@ -11,6 +11,7 @@ import {
 } from '@prisma/client';
 import prisma from '~/prisma';
 import queueSendNotificationToUser from '~/service/notifications';
+import { capture } from '~/third-parties/sentry';
 import { buildTrichineEmail, type TrichineEmailContent } from '~/templates/trichine-email';
 
 /**
@@ -383,7 +384,8 @@ export async function carcasseHasResultatTrichineNegatif(zacharieCarcasseId: str
 }
 
 /**
- * Persiste une TrichineNotification par utilisateur + push/email immédiat.
+ * Persiste une TrichineNotification par utilisateur, puis met le push/email dans la file d'envoi
+ * sans attendre qu'il parte.
  * `notificationLogAction` doit être unique par évènement (la table notificationLog
  * déduplique par user + action).
  */
@@ -426,7 +428,9 @@ export async function notifyTrichineUsers({
         message,
       },
     });
-    await queueSendNotificationToUser({
+    // Pas d'await : la file d'envoi est commune au serveur et limitée à un envoi par seconde,
+    // l'attendre bloquerait la réponse au laboratoire autant de secondes qu'il y a d'envois en attente
+    void queueSendNotificationToUser({
       user: user as User,
       push: { title, body: message },
       title: builtEmail.subject,
@@ -434,7 +438,7 @@ export async function notifyTrichineUsers({
       emailHtml: builtEmail.html,
       notificationLogAction,
       attachments,
-    });
+    }).catch((error) => capture(error, { extra: { userId: user.id, notificationLogAction } }));
   }
 }
 
