@@ -29,6 +29,7 @@ import { track } from '@app/services/matomo';
 import type { MatomoName } from '@app/services/matomo-events';
 import { CompteEnAttenteValidationAlert } from '@app/components/CompteEnAttenteValidation';
 import { useGetTransmissionsForFei } from '@app/utils/get-transmissions-sorted';
+import { isAnomalieGrave } from '@app/utils/anomalies-referentiel';
 import {
   isCarcasseDejaEnvoyee,
   isCarcassePriseEnChargeEnAval,
@@ -127,18 +128,26 @@ function FEIChasseurLoaded() {
   const [showBloc2Errors, setShowBloc2Errors] = useState(false);
   const destinataireRef = useRef<DestinatairePremierDetenteurHandle | null>(null);
 
-  const [carcassesNotReady, atLeastOneCarcasseWithAnomalie] = useMemo(() => {
+  const [carcassesNotReady, atLeastOneCarcasseWithAnomalie, atLeastOneAnomalieGrave] = useMemo(() => {
     const notReady = [];
     let _atLeastOneCarcasseWithAnomalie = false;
+    let _atLeastOneAnomalieGrave = false;
     for (const carcasse of carcasses.filter((c) => c !== null)) {
       if (!carcasse.examinateur_signed_at || !carcasse.espece) {
         notReady.push(carcasse);
       }
-      if (carcasse.examinateur_anomalies_abats?.length || carcasse.examinateur_anomalies_carcasse?.length) {
+      const anomalies = [
+        ...(carcasse.examinateur_anomalies_carcasse ?? []),
+        ...(carcasse.examinateur_anomalies_abats ?? []),
+      ];
+      if (anomalies.length) {
         _atLeastOneCarcasseWithAnomalie = true;
       }
+      if (anomalies.some(isAnomalieGrave)) {
+        _atLeastOneAnomalieGrave = true;
+      }
     }
-    return [notReady, _atLeastOneCarcasseWithAnomalie];
+    return [notReady, _atLeastOneCarcasseWithAnomalie, _atLeastOneAnomalieGrave];
   }, [carcasses]);
 
   const onlyPetitGibier = useMemo(() => {
@@ -335,9 +344,15 @@ function FEIChasseurLoaded() {
         label += '.';
       }
       return label;
+    }
+    label += ' que les carcasses en peau examinées ce jour présentent au moins une anomalie';
+    // Une anomalie grave interdit la commercialisation : la décision revient au premier détenteur.
+    if (atLeastOneAnomalieGrave) {
+      label += ', renseignée sur cette fiche.';
+    } else if (!fei.consommateur_final_usage_domestique) {
+      label += '. Toutefois, elles peuvent être mises sur le marché.';
     } else {
-      label +=
-        ' que les carcasses en peau examinées ce jour présentent au moins une anomalie. Toutefois, elles peuvent être mises sur le marché.';
+      label += '.';
     }
     return label;
   }, [
@@ -345,6 +360,7 @@ function FEIChasseurLoaded() {
     examinateurInitialUser?.nom_de_famille,
     examinateurInitialUser?.prenom,
     atLeastOneCarcasseWithAnomalie,
+    atLeastOneAnomalieGrave,
     fei.consommateur_final_usage_domestique,
     user.id,
     fei.examinateur_initial_user_id,
