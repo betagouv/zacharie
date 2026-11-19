@@ -16,6 +16,7 @@ import 'dayjs/locale/fr';
 dayjs.locale('fr');
 import path from 'path';
 import prisma from '~/prisma';
+import { hasAnomalieGrave } from '~/utils/anomalies-graves';
 
 Font.register({
   family: 'Marianne',
@@ -228,6 +229,19 @@ function getEntityDisplay(role: UserRoles | FeiOwnerRole | EntityTypes | '') {
     default:
       return 'Inconnu';
   }
+}
+
+// Une anomalie grave interdit la commercialisation : le PDF n'affirme alors plus la mise sur le marché,
+// comme la case de certification de l'examen initial côté app.
+export function getCertificationExamenInitialText(
+  dateApprobation: Date | null,
+  carcasses: Array<Pick<Carcasse, 'examinateur_anomalies_carcasse' | 'examinateur_anomalies_abats'>>
+): string {
+  const debut = `L’examinateur initial susnommé a certifié le ${dayjs(dateApprobation).format('DD MMMM YYYY')} que les carcasses en peau examinées`;
+  if (hasAnomalieGrave(carcasses)) {
+    return `${debut} présentent au moins une anomalie, renseignée sur cette fiche.`;
+  }
+  return `${debut} peuvent être mises sur le marché (sous réserve de résultats trichine négatifs).`;
 }
 
 export async function getFichePdf(carcasse: Carcasse, carcasses: Array<Carcasse>) {
@@ -494,10 +508,10 @@ export async function getFichePdf(carcasse: Carcasse, carcasses: Array<Carcasse>
           </View>
         </View>
         <Text style={styles.footer}>
-          L’examinateur initial susnommé a certifié le{' '}
-          {dayjs(fei.examinateur_initial_date_approbation_mise_sur_le_marche).format('DD MMMM YYYY')} que les
-          carcasses en peau examinées peuvent être mises sur le marché (sous réserve de résultats trichine
-          négatifs).
+          {getCertificationExamenInitialText(
+            fei.examinateur_initial_date_approbation_mise_sur_le_marche,
+            carcasses
+          )}
         </Text>
         <Text style={styles.footer}>
           Validée le{' '}
