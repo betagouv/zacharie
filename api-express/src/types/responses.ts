@@ -280,7 +280,6 @@ export interface CarcassesGetResponse {
     carcassesIntermediaires: Array<CarcasseIntermediaire>;
     carcasseModifRequests: Array<CarcasseModificationRequest>;
     hasMore: boolean;
-    total: number;
     // le client remplace ses carcasses locales au lieu de les merger (voir FORCE_FULL_RELOAD_AFTER)
     fullReload: boolean;
     // User.carcasses_reload_version : le client la renvoie à son prochain pull (voir doc/rechargement-complet.md)

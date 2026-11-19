@@ -400,6 +400,7 @@ const useZustandStore = create<State & Actions>()(
                     newIntermediaire.intermediaire_prochain_detenteur_id_cache,
                   intermediaire_poids: null,
                   numero_bon_reception: newIntermediaire.numero_bon_reception,
+                  carcasse_updated_at: null, // posé par trigger côté serveur
                   created_at: newIntermediaire.created_at,
                   updated_at: newIntermediaire.created_at,
                   deleted_at: null,

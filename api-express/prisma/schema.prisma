@@ -509,6 +509,7 @@ model CarcasseIntermediaireHistory {
   intermediaire_prochain_detenteur_id_cache   String?
   created_at                                  DateTime?
   updated_at                                  DateTime?
+  carcasse_updated_at                         DateTime?
   deleted_at                                  DateTime?
   is_synced                                   Boolean?
   version                                     Int?
@@ -938,6 +939,8 @@ model Carcasse {
   @@index([deleted_at, created_at])
   @@index([numero_bracelet])
   @@index([deleted_at, updated_at])
+  // pagination par curseur du pull GET /carcasse (synchro avec withDeleted : pas de filtre deleted_at)
+  @@index([updated_at(sort: Desc), zacharie_carcasse_id(sort: Desc)])
   @@index([intermediaire_carcasse_refus_intermediaire_id])
   @@index([intermediaire_carcasse_manquante])
   // Colonnes de propriété utilisées dans le OR de GET /carcasse (cf carcasse.ts).
@@ -1035,6 +1038,9 @@ model CarcasseIntermediaire {
   intermediaire_prochain_detenteur_id_cache   String?
   created_at                                  DateTime      @default(now())
   updated_at                                  DateTime      @default(now()) @updatedAt
+  // copie de Carcasse.updated_at, posée par trigger (cf migration carcasse_intermediaire_carcasse_updated_at) :
+  // sert la branche CarcasseIntermediaire du pull GET /carcasse, triée par date de carcasse
+  carcasse_updated_at                         DateTime?
   deleted_at                                  DateTime?
   is_synced                                   Boolean       @default(true) // just for typing purppose with zustand frontend
   // verrou optimiste du /sync, incrémenté par le serveur à chaque écriture (voir utils/sync-version.ts)
@@ -1049,6 +1055,7 @@ model CarcasseIntermediaire {
   @@index([commentaire])
   @@index([created_at])
   @@index([intermediaire_entity_id])
+  @@index([intermediaire_entity_id, carcasse_updated_at(sort: Desc), zacharie_carcasse_id(sort: Desc)])
   @@index([intermediaire_user_id])
   @@index([fei_numero, prise_en_charge_at, created_at])
   // Chargement des intermédiaires par carcasse dans GET /carcasse (zacharie_carcasse_id IN [...]).
