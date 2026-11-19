@@ -521,57 +521,63 @@ export async function notifyCircuitCourt(
     },
   });
 
-  // Le PDF récapitule toute la fiche : un seul rendu pour tous les destinataires.
-  const fichePdf = await getFichePdf(updatedCarcasse, carcasses);
+  // Repas de chasse de l'association premier détenteur : elle garde ses propres carcasses,
+  // il n'y a personne à prévenir.
+  const repasDeChasseDuPremierDetenteur =
+    updatedCarcasse.next_owner_entity_id === updatedCarcasse.premier_detenteur_entity_id;
+  if (!repasDeChasseDuPremierDetenteur) {
+    // Le PDF récapitule toute la fiche : un seul rendu pour tous les destinataires.
+    const fichePdf = await getFichePdf(updatedCarcasse, carcasses);
 
-  const circuitCourtUrl = getCircuitCourtFeiUrl(
-    updatedCarcasse.fei_numero,
-    updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache
-  );
+    const circuitCourtUrl = getCircuitCourtFeiUrl(
+      updatedCarcasse.fei_numero,
+      updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache
+    );
 
-  const recipients = usersWorkingForEntity.filter((nextOwner) => nextOwner.id !== user.id);
-  // L'expéditeur est en copie d'un seul email (le premier destinataire qui reçoit les emails), pour
-  // ne pas recevoir une copie par membre de l'entité.
-  const copyRecipient = recipients.find((nextOwner) =>
-    nextOwner.notifications.includes(UserNotifications.EMAIL)
-  );
-  if (!copyRecipient) {
-    await alertSenderCircuitCourtNotReached(updatedCarcasse, user, 'NO_RECIPIENT');
-  }
+    const recipients = usersWorkingForEntity.filter((nextOwner) => nextOwner.id !== user.id);
+    // L'expéditeur est en copie d'un seul email (le premier destinataire qui reçoit les emails), pour
+    // ne pas recevoir une copie par membre de l'entité.
+    const copyRecipient = recipients.find((nextOwner) =>
+      nextOwner.notifications.includes(UserNotifications.EMAIL)
+    );
+    if (!copyRecipient) {
+      await alertSenderCircuitCourtNotReached(updatedCarcasse, user, 'NO_RECIPIENT');
+    }
 
-  for (const nextOwner of recipients) {
-    const email = [
-      `Bonjour,`,
-      `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Vous trouverez un résumé en pièce jointe, à conserver pour votre enregistrement.`,
-      `Pour consulter la fiche, rendez-vous sur Zacharie avec votre email ${nextOwner.email} : ${circuitCourtUrl}`,
-      `Ce message a été généré automatiquement par l'application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
-    ].join('\n\n');
-    const emailResult = await sendNotificationToUser({
-      user: nextOwner as User,
-      title: `${user.prenom} ${user.nom_de_famille} vous a attribué une fiche d'examen initial du gibier sauvage n° ${updatedCarcasse?.fei_numero}`,
-      email: email,
-      push: {
-        title: 'Nouvelle fiche reçue',
-        body: `${user.prenom} ${user.nom_de_famille} vous a attribué la fiche ${updatedCarcasse.fei_numero}.`,
-      },
-      emailTemplateId: BrevoTemplateId.FEI_ASSIGNED_CIRCUIT_COURT,
-      emailTemplateParams: formatCircuitCourtAssignedTemplateEmail(updatedCarcasse, user, nextOwner.email),
-      notificationLogAction: `FEI_ASSIGNED_TO_${updatedCarcasse.next_owner_role}_${updatedCarcasse.fei_numero}_${updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache}`,
-      attachments: [
-        {
-          content: fichePdf,
-          name: `${updatedCarcasse.fei_numero}.pdf`,
+    for (const nextOwner of recipients) {
+      const email = [
+        `Bonjour,`,
+        `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Vous trouverez un résumé en pièce jointe, à conserver pour votre enregistrement.`,
+        `Pour consulter la fiche, rendez-vous sur Zacharie avec votre email ${nextOwner.email} : ${circuitCourtUrl}`,
+        `Ce message a été généré automatiquement par l'application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
+      ].join('\n\n');
+      const emailResult = await sendNotificationToUser({
+        user: nextOwner as User,
+        title: `${user.prenom} ${user.nom_de_famille} vous a attribué une fiche d'examen initial du gibier sauvage n° ${updatedCarcasse?.fei_numero}`,
+        email: email,
+        push: {
+          title: 'Nouvelle fiche reçue',
+          body: `${user.prenom} ${user.nom_de_famille} vous a attribué la fiche ${updatedCarcasse.fei_numero}.`,
         },
-      ],
-      cc: nextOwner === copyRecipient && user.email ? [user.email] : undefined,
-    });
-    if (nextOwner === copyRecipient) {
-      if (emailResult.status === 'FAILED') {
-        await alertSenderCircuitCourtNotReached(updatedCarcasse, user, 'SEND_FAILED');
-      }
-      if (emailResult.status === 'SENT' && emailResult.messageId) {
-        // Pas d'await : la vérification ne doit pas retarder la synchronisation.
-        scheduleCircuitCourtDeliveryCheck(emailResult.messageId, nextOwner.email, updatedCarcasse, user);
+        emailTemplateId: BrevoTemplateId.FEI_ASSIGNED_CIRCUIT_COURT,
+        emailTemplateParams: formatCircuitCourtAssignedTemplateEmail(updatedCarcasse, user, nextOwner.email),
+        notificationLogAction: `FEI_ASSIGNED_TO_${updatedCarcasse.next_owner_role}_${updatedCarcasse.fei_numero}_${updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache}`,
+        attachments: [
+          {
+            content: fichePdf,
+            name: `${updatedCarcasse.fei_numero}.pdf`,
+          },
+        ],
+        cc: nextOwner === copyRecipient && user.email ? [user.email] : undefined,
+      });
+      if (nextOwner === copyRecipient) {
+        if (emailResult.status === 'FAILED') {
+          await alertSenderCircuitCourtNotReached(updatedCarcasse, user, 'SEND_FAILED');
+        }
+        if (emailResult.status === 'SENT' && emailResult.messageId) {
+          // Pas d'await : la vérification ne doit pas retarder la synchronisation.
+          scheduleCircuitCourtDeliveryCheck(emailResult.messageId, nextOwner.email, updatedCarcasse, user);
+        }
       }
     }
   }
