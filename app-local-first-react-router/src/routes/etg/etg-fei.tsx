@@ -49,6 +49,7 @@ import { loadData, useLoaderEffect } from '@app/utils/load-data';
 import { loadCarcassesRefusees } from '@app/utils/load-carcasses-refusees';
 import { CarcasseTransmission } from '@app/types/carcasse';
 import { useGetTransmissionFromURLParams } from '@app/utils/get-transmissions-sorted';
+import TelechargerFichePdf from '@app/components/TelechargerFichePdf';
 
 interface Props {
   readOnly?: boolean;
@@ -88,6 +89,7 @@ export default function EtgFei(props: Props) {
 }
 
 function EtgFeiLoader(props: Props) {
+  const params = useParams();
   const user = useUser((state) => state.user)!;
   const entities = useZustandStore((state) => state.entities);
   const etgsIds = useEtgIds();
@@ -233,6 +235,12 @@ function EtgFeiLoader(props: Props) {
           title="Données de traçabilité"
         >
           <FEIDonneesDeChasse intermediaires={intermediaires} />
+          <div className="mt-4">
+            <TelechargerFichePdf
+              feiNumero={transmissionWithMetadata.fei.numero}
+              premierDetenteurProchainDetenteurId={params.premier_detenteur_prochain_detenteur_id_cache!}
+            />
+          </div>
         </Section>
       </EtgFeiContent>
     </Fragment>

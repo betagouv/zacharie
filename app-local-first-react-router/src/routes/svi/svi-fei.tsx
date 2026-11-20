@@ -31,6 +31,7 @@ import { loadData, useLoaderEffect } from '@app/utils/load-data';
 import { loadCarcassesRefusees } from '@app/utils/load-carcasses-refusees';
 import { useGetTransmissionFromURLParams } from '@app/utils/get-transmissions-sorted';
 import { CarcasseTransmission } from '@app/types/carcasse';
+import TelechargerFichePdf from '@app/components/TelechargerFichePdf';
 
 export default function SviFeiLoader() {
   const params = useParams();
@@ -70,6 +71,10 @@ function SviFei() {
             <SviHeaderFiche />
             <FEI_SVI />
             <div className="m-8 flex flex-col justify-start gap-4">
+              <TelechargerFichePdf
+                feiNumero={fei.numero}
+                premierDetenteurProchainDetenteurId={params.premier_detenteur_prochain_detenteur_id_cache!}
+              />
               <Button
                 priority="secondary"
                 linkProps={{
