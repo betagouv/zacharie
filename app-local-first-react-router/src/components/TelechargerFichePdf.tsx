@@ -4,8 +4,14 @@ import useZustandStore from '@app/zustand/store';
 import downloadApiFile from '@app/utils/download-api-file';
 import { matomoClickId } from '@app/services/matomo';
 
-// Extrait PDF de la fiche (SVI et ETG), généré par le serveur : nécessite d'être en ligne.
-export default function TelechargerFichePdf({ feiNumero }: { feiNumero: string }) {
+// Extrait PDF d'une transmission de la fiche (SVI et ETG), généré par le serveur : nécessite d'être en ligne.
+export default function TelechargerFichePdf({
+  feiNumero,
+  premierDetenteurProchainDetenteurId,
+}: {
+  feiNumero: string;
+  premierDetenteurProchainDetenteurId: string;
+}) {
   const isOnline = useZustandStore((state) => state.isOnline);
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -23,7 +29,7 @@ export default function TelechargerFichePdf({ feiNumero }: { feiNumero: string }
         setIsDownloading(true);
         try {
           await downloadApiFile({
-            path: `fiche-pdf/${feiNumero}`,
+            path: `fiche-pdf/${encodeURIComponent(feiNumero)}/${encodeURIComponent(premierDetenteurProchainDetenteurId)}`,
             filename: `fiche-${feiNumero}.pdf`,
             accept: 'application/pdf',
             erreur: 'Impossible de télécharger la fiche',

@@ -3,7 +3,7 @@ import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Scenario 167 — Le SVI et l'ETG téléchargent un extrait PDF de la fiche depuis sa page.
+// Scenario 176 — Le SVI et l'ETG téléchargent un extrait PDF de la fiche depuis sa page.
 
 test.use({ launchOptions: { slowMo: 100 } });
 
@@ -25,7 +25,11 @@ test('SVI : télécharger la fiche en PDF', async ({ page }) => {
   const download = await downloadPromise;
 
   expect(download.suggestedFilename()).toBe(`fiche-${feiId}.pdf`);
-  expect(readFileSync(await download.path()).subarray(0, 4).toString()).toBe('%PDF');
+  expect(
+    readFileSync(await download.path())
+      .subarray(0, 4)
+      .toString()
+  ).toBe('%PDF');
 });
 
 test('ETG : télécharger la fiche en PDF', async ({ page }) => {
@@ -46,5 +50,9 @@ test('ETG : télécharger la fiche en PDF', async ({ page }) => {
   const download = await downloadPromise;
 
   expect(download.suggestedFilename()).toBe(`fiche-${feiId}.pdf`);
-  expect(readFileSync(await download.path()).subarray(0, 4).toString()).toBe('%PDF');
+  expect(
+    readFileSync(await download.path())
+      .subarray(0, 4)
+      .toString()
+  ).toBe('%PDF');
 });

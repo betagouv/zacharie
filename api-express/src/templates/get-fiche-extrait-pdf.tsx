@@ -1,6 +1,6 @@
 import { Document, Image, Page, renderToStream, StyleSheet, Text, View } from '@react-pdf/renderer';
-import dayjs from 'dayjs';
 import path from 'path';
+import { formatDateJour, formatDateTimeParis } from '~/utils/format-date-paris';
 
 // Extrait de fiche téléchargé par le SVI ou l'ETG pour le joindre à un courrier : simple copie de ce
 // que Zacharie affiche, sans valeur de document officiel (pas de bloc-marque de l'État).
@@ -45,10 +45,6 @@ const styles = StyleSheet.create({
   footer: { position: 'absolute', bottom: 20, left: 32, right: 32, fontSize: 8, color: '#666666' },
 });
 
-function formatDate(date: Date | null) {
-  return date ? dayjs(date).format('DD/MM/YYYY') : '-';
-}
-
 function Ligne({ label, value }: { label: string; value: string | null }) {
   return (
     <View style={styles.line}>
@@ -74,35 +70,20 @@ export function FicheExtraitDocument({ fiche }: { fiche: FicheExtraitData }) {
         </View>
 
         <Text style={styles.sectionTitle}>Données de chasse</Text>
-        <Ligne
-          label="Date de mise à mort"
-          value={formatDate(fiche.dateMiseAMort)}
-        />
-        <Ligne
-          label="Commune de mise à mort"
-          value={fiche.communeMiseAMort}
-        />
-        <Ligne
-          label="Examinateur initial"
-          value={fiche.examinateur}
-        />
-        <Ligne
-          label="Premier détenteur"
-          value={fiche.premierDetenteur}
-        />
+        <Ligne label="Date de mise à mort" value={formatDateJour(fiche.dateMiseAMort)} />
+        <Ligne label="Commune de mise à mort" value={fiche.communeMiseAMort} />
+        <Ligne label="Examinateur initial" value={fiche.examinateur} />
+        <Ligne label="Premier détenteur" value={fiche.premierDetenteur} />
 
         <Text style={styles.sectionTitle}>Traçabilité</Text>
         {fiche.intermediaires.map((intermediaire, index) => (
           <Ligne
             key={index}
             label={intermediaire.role}
-            value={`${intermediaire.nom} (pris en charge le ${formatDate(intermediaire.priseEnChargeAt)})`}
+            value={`${intermediaire.nom} (pris en charge le ${formatDateTimeParis(intermediaire.priseEnChargeAt)})`}
           />
         ))}
-        <Ligne
-          label="Service vétérinaire"
-          value={fiche.svi}
-        />
+        <Ligne label="Service vétérinaire" value={fiche.svi} />
 
         <Text style={styles.sectionTitle}>Carcasses ({fiche.carcasses.length})</Text>
         <View style={styles.tableHeader}>
@@ -112,11 +93,7 @@ export function FicheExtraitDocument({ fiche }: { fiche: FicheExtraitData }) {
           <Text style={styles.colStatut}>Statut</Text>
         </View>
         {fiche.carcasses.map((carcasse, index) => (
-          <View
-            key={index}
-            style={styles.tableRow}
-            wrap={false}
-          >
+          <View key={index} style={styles.tableRow} wrap={false}>
             <Text style={styles.colBracelet}>{carcasse.numeroBracelet}</Text>
             <Text style={styles.colEspece}>{carcasse.espece || '-'}</Text>
             <Text style={styles.colNombre}>{carcasse.nombreAnimaux ?? '-'}</Text>
@@ -128,7 +105,7 @@ export function FicheExtraitDocument({ fiche }: { fiche: FicheExtraitData }) {
           style={styles.footer}
           fixed
           render={({ pageNumber, totalPages }) =>
-            `Extrait généré le ${dayjs(fiche.genereLe).format('DD/MM/YYYY à HH:mm')} — page ${pageNumber}/${totalPages}`
+            `Extrait généré le ${formatDateTimeParis(fiche.genereLe, 'DD/MM/YYYY à HH:mm')} — page ${pageNumber}/${totalPages}`
           }
         />
       </Page>

@@ -89,6 +89,7 @@ export default function EtgFei(props: Props) {
 }
 
 function EtgFeiLoader(props: Props) {
+  const params = useParams();
   const user = useUser((state) => state.user)!;
   const entities = useZustandStore((state) => state.entities);
   const etgsIds = useEtgIds();
@@ -236,7 +237,10 @@ function EtgFeiLoader(props: Props) {
         >
           <FEIDonneesDeChasse intermediaires={intermediaires} />
           <div className="mt-4">
-            <TelechargerFichePdf feiNumero={transmissionWithMetadata.fei.numero} />
+            <TelechargerFichePdf
+              feiNumero={transmissionWithMetadata.fei.numero}
+              premierDetenteurProchainDetenteurId={params.premier_detenteur_prochain_detenteur_id_cache!}
+            />
           </div>
         </Section>
       </EtgFeiContent>

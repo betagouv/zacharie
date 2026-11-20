@@ -8,6 +8,7 @@ import { RequestWithUser } from '~/types/request';
 import { getCarcasseAccessWhere } from '~/utils/carcasse-access';
 import { getCarcasseStatusLabelForEmail } from '~/utils/get-carcasse-status';
 import { getFicheExtraitPdfBuffer } from '~/templates/get-fiche-extrait-pdf';
+import { fichePdfRateLimit } from '~/middlewares/fiche-pdf-rate-limit';
 
 const router: express.Router = express.Router();
 
@@ -22,14 +23,20 @@ function getStatutLabel(carcasse: Carcasse) {
   return getCarcasseStatusLabelForEmail(carcasse);
 }
 
+export function getFichePdfFilename(numero: string) {
+  return `fiche-${numero.replace(/[^\w-]/g, '_')}.pdf`;
+}
+
 function getIntermediaireRoleLabel(role: FeiOwnerRole | null) {
   return role === FeiOwnerRole.COLLECTEUR_PRO ? 'Collecteur' : 'ETG';
 }
 
-// Extrait PDF de la fiche pour le SVI et l'ETG : seulement les carcasses de leur périmètre de lecture.
+// Extrait PDF d'une transmission de la fiche pour le SVI et l'ETG : seulement les carcasses de cette
+// transmission (premier détenteur → prochain détenteur) qui sont dans leur périmètre de lecture.
 router.get(
-  '/:fei_numero',
+  '/:fei_numero/:premier_detenteur_prochain_detenteur_id_cache',
   passport.authenticate('user', { session: false }),
+  fichePdfRateLimit,
   catchErrors(async (req: RequestWithUser, res: express.Response) => {
     if (!req.user.activated) {
       res.status(400).send({ ok: false, data: null, error: "Le compte n'est pas activé" });
@@ -50,7 +57,13 @@ router.get(
     }
     const feiNumero = req.params.fei_numero;
     const carcasses = await prisma.carcasse.findMany({
-      where: { fei_numero: feiNumero, deleted_at: null, ...accessWhere },
+      where: {
+        fei_numero: feiNumero,
+        premier_detenteur_prochain_detenteur_id_cache:
+          req.params.premier_detenteur_prochain_detenteur_id_cache,
+        deleted_at: null,
+        ...accessWhere,
+      },
       orderBy: { numero_bracelet: 'asc' },
     });
     const fei = carcasses.length
@@ -65,7 +78,12 @@ router.get(
     const intermediaires = await prisma.carcasseIntermediaire.findMany({
       where: { zacharie_carcasse_id: { in: carcasseIds }, deleted_at: null },
       orderBy: { prise_en_charge_at: 'asc' },
-      select: { intermediaire_id: true, intermediaire_entity_id: true, intermediaire_role: true, prise_en_charge_at: true },
+      select: {
+        intermediaire_id: true,
+        intermediaire_entity_id: true,
+        intermediaire_role: true,
+        prise_en_charge_at: true,
+      },
       distinct: ['intermediaire_id'],
     });
     const sviEntityId = carcasses.find((carcasse) => carcasse.svi_entity_id)?.svi_entity_id ?? null;
@@ -104,7 +122,8 @@ router.get(
       genereLe: new Date(),
     });
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="fiche-${fei.numero}.pdf"`);
+    // le numéro de fiche est créé par le client : on n'en garde que des caractères sûrs pour l'en-tête
+    res.setHeader('Content-Disposition', `attachment; filename="${getFichePdfFilename(fei.numero)}"`);
     res.status(200).send(pdf);
   })
 );

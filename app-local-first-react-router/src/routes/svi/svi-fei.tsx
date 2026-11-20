@@ -71,7 +71,10 @@ function SviFei() {
             <SviHeaderFiche />
             <FEI_SVI />
             <div className="m-8 flex flex-col justify-start gap-4">
-              <TelechargerFichePdf feiNumero={fei.numero} />
+              <TelechargerFichePdf
+                feiNumero={fei.numero}
+                premierDetenteurProchainDetenteurId={params.premier_detenteur_prochain_detenteur_id_cache!}
+              />
               <Button
                 priority="secondary"
                 linkProps={{
