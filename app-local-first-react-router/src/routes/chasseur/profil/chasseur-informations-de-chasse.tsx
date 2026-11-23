@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Input } from '@app/components/Input';
+import { isNumeroCfeiHorsFormat, NUMERO_CFEI_FORMAT_MESSAGE_CHASSEUR } from '@app/utils/numero-cfei';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { UserRoles, Prisma } from '@prisma/client';
@@ -176,6 +177,8 @@ export default function MesInformationsDeChasse({
                       <Input
                         label="Numéro d'attestation de Chasseur Formé à l'Examen Initial *"
                         hintText="De la forme CFEI-DEP-AA-123"
+                        state={isNumeroCfeiHorsFormat(numeroCfei) ? 'info' : 'default'}
+                        stateRelatedMessage={NUMERO_CFEI_FORMAT_MESSAGE_CHASSEUR}
                         key={isExaminateurInitial ? 'true' : 'false'}
                         nativeInputProps={{
                           id: Prisma.UserScalarFieldEnum.numero_cfei,
