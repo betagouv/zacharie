@@ -8,7 +8,6 @@ import type { SyncScope } from '~/utils/sync-scope';
 import { SyncRejectedError } from '~/utils/sync-errors';
 import { assertNoNewDeletedEntity } from '~/utils/deleted-entities';
 import { isStaleWrite, nextVersion } from '~/utils/sync-version';
-import { isAllowedExaminateurInitialUserId, isAllowedPremierDetenteurUserId } from '~/utils/fei-user-ids';
 
 export interface SaveFeiResult {
   savedFei: Fei;
@@ -199,15 +198,7 @@ export async function syncFei(
 
   */
 
-  if (
-    canWriteOwnership &&
-    body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id) &&
-    isAllowedExaminateurInitialUserId(
-      body.examinateur_initial_user_id,
-      [existingFei?.examinateur_initial_user_id],
-      user
-    )
-  ) {
+  if (canWriteOwnership && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id)) {
     nextFei.examinateur_initial_user_id = body.examinateur_initial_user_id
       ? sanitize(body.examinateur_initial_user_id as string)
       : null;
@@ -239,15 +230,7 @@ export async function syncFei(
 
   */
 
-  if (
-    canWriteOwnership &&
-    body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id) &&
-    (await isAllowedPremierDetenteurUserId(
-      body.premier_detenteur_user_id,
-      [existingFei?.premier_detenteur_user_id],
-      user
-    ))
-  ) {
+  if (canWriteOwnership && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id)) {
     nextFei.premier_detenteur_user_id = body.premier_detenteur_user_id
       ? sanitize(body.premier_detenteur_user_id as string)
       : null;
