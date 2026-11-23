@@ -212,69 +212,69 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
           ]}
         />
         {professionnel && (
-          <SelectCustom
-            getOptionLabel={(entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`}
-            getOptionValue={(entity) => entity.id}
-            formatOptionLabel={(entity, options) => {
-              if (options.context === 'menu') {
-                // @ts-expect-error - __isNew__ and value are not typed
-                if (entity.__isNew__) return entity.value;
-                if (!entity.code_postal) return entity.nom_d_usage;
-                return `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`;
-              }
-              return entity.nom_d_usage;
-            }}
-            // @ts-expect-error - onCreateOption is not typed
-            onCreateOption={async (raison_sociale) => {
-              setNewEntityNomDUsage(raison_sociale);
-              setAnnuairePrefill(null);
-            }}
-            label="Raison Sociale *"
-            hint={
-              annuairePrefill?.siret
-                ? `SIRET : ${annuairePrefill.siret}`
-                : "Recherchez l'entreprise par son nom"
-            }
-            name={Prisma.EntityScalarFieldEnum.raison_sociale}
-            placeholder=""
-            creatable={true}
-            async={true}
-            loadOptions={loadRaisonSocialeOptions}
-            defaultOptions={annuaireInitial}
-            isLoading={chargementAnnuaireInitial}
-            // le nom est dans le champ de saisie (et non comme valeur choisie) pour que le curseur soit à la fin
-            defaultInputValue={defaultRaisonSociale}
-            autoFocus={!!defaultRaisonSociale}
-            openMenuOnFocus
-            loadingMessage={() => "Recherche dans l'annuaire des entreprises..."}
-            value={newEntity}
-            // la saisie devient la raison sociale au fil de la frappe : sur mobile, react-select quitte le
-            // champ juste après le choix d'un résultat, un onBlur écraserait ce choix par le texte tapé
-            onInputChange={(inputValue, { action }) => {
-              if (action === 'input-change') setNewEntityNomDUsage(inputValue);
-            }}
-            onChange={(option) => {
-              if (option?.id?.startsWith(ANNUAIRE_OPTION_PREFIX)) {
-                selectAnnuaireEtablissement({
-                  siret: option.siret!,
-                  raison_sociale: option.nom_d_usage ?? '',
-                  address_ligne_1: option.address_ligne_1 ?? '',
-                  address_ligne_2: option.address_ligne_2 ?? '',
-                  code_postal: option.code_postal ?? '',
-                  ville: option.ville ?? '',
-                });
-                return;
-              }
-              if (!option) {
-                clearSelection();
-              }
-            }}
-            isClearable={!!newEntityNomDUsage}
-            required={true}
-            inputId={Prisma.EntityScalarFieldEnum.raison_sociale}
-            classNamePrefix={Prisma.EntityScalarFieldEnum.raison_sociale}
-            className="mb-6"
-          />
+          <div className="mb-6">
+            <SelectCustom
+              getOptionLabel={(entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`}
+              getOptionValue={(entity) => entity.id}
+              formatOptionLabel={(entity, options) => {
+                if (options.context === 'menu') {
+                  // @ts-expect-error - __isNew__ and value are not typed
+                  if (entity.__isNew__) return entity.value;
+                  if (!entity.code_postal) return entity.nom_d_usage;
+                  return `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`;
+                }
+                return entity.nom_d_usage;
+              }}
+              // @ts-expect-error - onCreateOption is not typed
+              onCreateOption={async (raison_sociale) => {
+                setNewEntityNomDUsage(raison_sociale);
+                setAnnuairePrefill(null);
+              }}
+              label="Raison Sociale *"
+              hint={annuairePrefill?.siret ? undefined : "Recherchez l'entreprise par son nom"}
+              name={Prisma.EntityScalarFieldEnum.raison_sociale}
+              placeholder=""
+              creatable={true}
+              async={true}
+              loadOptions={loadRaisonSocialeOptions}
+              defaultOptions={annuaireInitial}
+              isLoading={chargementAnnuaireInitial}
+              // le nom est dans le champ de saisie (et non comme valeur choisie) pour que le curseur soit à la fin
+              defaultInputValue={defaultRaisonSociale}
+              autoFocus={!!defaultRaisonSociale}
+              openMenuOnFocus
+              loadingMessage={() => "Recherche dans l'annuaire des entreprises..."}
+              value={newEntity}
+              // la saisie devient la raison sociale au fil de la frappe : sur mobile, react-select quitte le
+              // champ juste après le choix d'un résultat, un onBlur écraserait ce choix par le texte tapé
+              onInputChange={(inputValue, { action }) => {
+                if (action === 'input-change') setNewEntityNomDUsage(inputValue);
+              }}
+              onChange={(option) => {
+                if (option?.id?.startsWith(ANNUAIRE_OPTION_PREFIX)) {
+                  selectAnnuaireEtablissement({
+                    siret: option.siret!,
+                    raison_sociale: option.nom_d_usage ?? '',
+                    address_ligne_1: option.address_ligne_1 ?? '',
+                    address_ligne_2: option.address_ligne_2 ?? '',
+                    code_postal: option.code_postal ?? '',
+                    ville: option.ville ?? '',
+                  });
+                  return;
+                }
+                if (!option) {
+                  clearSelection();
+                }
+              }}
+              isClearable={!!newEntityNomDUsage}
+              required={true}
+              inputId={Prisma.EntityScalarFieldEnum.raison_sociale}
+              classNamePrefix={Prisma.EntityScalarFieldEnum.raison_sociale}
+            />
+            {annuairePrefill?.siret && (
+              <p className="mt-2 mb-0 text-sm text-gray-600">SIRET : {annuairePrefill.siret}</p>
+            )}
+          </div>
         )}
         {professionnel && (
           <>
@@ -297,6 +297,7 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
               nativeInputProps={{
                 id: fieldId(Prisma.EntityScalarFieldEnum.qualite_du_destinataire),
                 name: Prisma.EntityScalarFieldEnum.qualite_du_destinataire,
+                placeholder: 'Entrez la qualité du destinataire ou sélectionnez ci-dessus',
                 autoComplete: 'off',
                 required: true,
                 value: qualite,
