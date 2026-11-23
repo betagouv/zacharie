@@ -57,7 +57,6 @@ import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
 import { z } from 'zod';
 import { normalizeNumeroCfei, sanitize } from '~/utils/sanitize';
 import { inviteUser } from '~/utils/invite-user';
-import { requestCarcassesReload } from '~/utils/carcasses-reload';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
 // Schemas for validation
@@ -487,7 +486,9 @@ router.post(
         });
         return;
       }
-      const isOk = existingPassword.reset_password_token === invitationToken;
+      // un compte qui a déjà un mot de passe ne passe plus par l'invitation : le jeton présent en base
+      // est alors un jeton de réinitialisation, utilisable seulement sur /reset-password
+      const isOk = !existingPassword.password && existingPassword.reset_password_token === invitationToken;
       if (!isOk) {
         await prisma.securityLog.create({
           data: {
@@ -515,16 +516,6 @@ router.post(
             user_agent: req.headers['user-agent'],
           },
         });
-        await prisma.password.delete({
-          where: { id: existingPassword.id },
-        });
-        await prisma.entityAndUserRelations.deleteMany({
-          where: {
-            owner_id: user.id,
-            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-          },
-        });
-        await requestCarcassesReload(user.id);
         res.status(400).send({
           ok: false,
           data: { user: null },
