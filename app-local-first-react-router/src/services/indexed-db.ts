@@ -104,8 +104,8 @@ export async function setCacheItem(key: CacheKeys, value: unknown) {
         await set(key, value, customStore);
       } catch (error: any) {
         capture(error, { tags: { key } });
-        return;
       }
+      return;
     }
     capture(error, { tags: { key } });
   }
