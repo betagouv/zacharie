@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Input } from '@app/components/Input';
 import { Prisma, Entity, UserRoles, EntityTypes, FeiOwnerRole } from '@prisma/client';
-import type { UserForFeiResponse } from '@api/src/types/responses';
+import type { UserPartenaireResponse } from '@api/src/types/responses';
+import { mergeUserPartenaire } from '@app/utils/merge-user-partenaire';
 import type { UserForFei } from '~/src/types/user';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Select } from '@codegouvfr/react-dsfr/Select';
@@ -391,7 +392,7 @@ export default function SelectNextForExaminateur({
                   email: email,
                   numero: fei.numero,
                 },
-              }).then((response) => response as UserForFeiResponse);
+              }).then((response) => response as UserPartenaireResponse);
               setIsSearchingUser(false);
               if (userSearchResponse.ok) {
                 const nextPremierDetenteur = userSearchResponse.data?.user;
@@ -405,7 +406,10 @@ export default function SelectNextForExaminateur({
                     : [...state.detenteursInitiauxIds, nextPremierDetenteur.id],
                   users: {
                     ...state.users,
-                    [nextPremierDetenteur.id]: nextPremierDetenteur,
+                    [nextPremierDetenteur.id]: mergeUserPartenaire(
+                      state.users[nextPremierDetenteur.id],
+                      nextPremierDetenteur
+                    ),
                   },
                 }));
                 setShowSearchUserByEmail(false);

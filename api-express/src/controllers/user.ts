@@ -20,12 +20,13 @@ import { capture } from '~/third-parties/sentry';
 import createUserId from '~/utils/createUserId';
 import { LOCKOUT_DURATION_MINUTES, MAX_FAILED_ATTEMPTS } from '~/utils/login-lockout';
 import { comparePassword, hashPassword } from '~/service/crypto';
-import { userFeiSelect, type UserForFei } from '~/types/user';
+import { userPartenaireSelect, type UserPartenaire } from '~/types/user';
+import { trouverPremierDetenteurRateLimit } from '~/middlewares/auth-rate-limit';
 import { apiKeySafeSelect } from '~/types/api-key';
 import type {
   UserConnexionResponse,
   UserMyRelationsResponse,
-  UserForFeiResponse,
+  UserPartenaireResponse,
   UserEntityResponse,
 } from '~/types/responses';
 import type { EntityWithUserRelation } from '~/types/entity';
@@ -1071,8 +1072,13 @@ const trouverPremierDetenteurBodySchema = z.object({
 router.post(
   '/fei/trouver-premier-detenteur',
   passport.authenticate('user', { session: false, failWithError: true }),
+  trouverPremierDetenteurRateLimit,
   catchErrors(
-    async (req: RequestWithUser, res: express.Response<UserForFeiResponse>, next: express.NextFunction) => {
+    async (
+      req: RequestWithUser,
+      res: express.Response<UserPartenaireResponse>,
+      next: express.NextFunction
+    ) => {
       const user = req.user!;
       let result = trouverPremierDetenteurBodySchema.safeParse(req.body);
       if (!result.success) {
@@ -1124,19 +1130,12 @@ router.post(
           email: body[Prisma.UserScalarFieldEnum.email].toLowerCase(),
         },
       });
-      if (!nextPremierDetenteur) {
+      // même réponse pour un email inconnu et pour un non-chasseur : la route ne dit pas qui a un compte
+      if (!nextPremierDetenteur || !nextPremierDetenteur.roles.includes(UserRoles.CHASSEUR)) {
         res.status(400).send({
           ok: false,
           data: { user: null },
           error: "L'utilisateur n'existe pas",
-        });
-        return;
-      }
-      if (!nextPremierDetenteur.roles.includes(UserRoles.CHASSEUR)) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          error: "L'utilisateur n'est pas un chasseur",
         });
         return;
       }
@@ -1159,14 +1158,14 @@ router.post(
         });
       }
 
-      const nextPremierDetenteurForFei = await prisma.user.findUnique({
+      const nextPremierDetenteurPartenaire = await prisma.user.findUnique({
         where: {
           email: body[Prisma.UserScalarFieldEnum.email].toLowerCase(),
         },
-        select: userFeiSelect,
+        select: userPartenaireSelect,
       });
 
-      res.status(200).send({ ok: true, data: { user: nextPremierDetenteurForFei }, error: '' });
+      res.status(200).send({ ok: true, data: { user: nextPremierDetenteurPartenaire }, error: '' });
     }
   )
 );
@@ -1750,7 +1749,7 @@ router.get(
         },
         include: {
           UserRelatedOfUserRelation: {
-            select: userFeiSelect,
+            select: userPartenaireSelect,
           },
         },
         orderBy: {
@@ -1758,7 +1757,7 @@ router.get(
         },
       });
 
-      const detenteursInitiaux = userRelationsWithOtherUsers
+      const detenteursInitiaux: Array<UserPartenaire> = userRelationsWithOtherUsers
         .filter((userRelation) => userRelation.relation === UserRelationType.PREMIER_DETENTEUR)
         .map((userRelation) => userRelation.UserRelatedOfUserRelation);
       if (user.roles.includes(UserRoles.CHASSEUR)) {
@@ -1802,7 +1801,7 @@ router.get(
         ok: true,
         data: {
           user: user satisfies User,
-          detenteursInitiaux: detenteursInitiaux satisfies Array<UserForFei>,
+          detenteursInitiaux: detenteursInitiaux satisfies Array<UserPartenaire>,
           // examinateursInitiaux: examinateursInitiaux satisfies Array<User>,
           associationsDeChasse: associationsDeChasse satisfies Array<EntityWithUserRelation>,
           ccgs: ccgs satisfies Array<EntityWithUserRelation>,

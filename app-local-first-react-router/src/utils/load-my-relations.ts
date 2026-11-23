@@ -5,6 +5,7 @@ import useZustandStore, { hydrationPromise } from '@app/zustand/store';
 import API from '@app/services/api';
 import useUser from '@app/zustand/user';
 import { isLocalTeardownInProgress } from '@app/zustand/idb-sliced-storage';
+import { mergeUserPartenaire } from '@app/utils/merge-user-partenaire';
 
 let loadMyRelationsAbortController: AbortController | null = null;
 
@@ -69,7 +70,7 @@ export async function loadMyRelations() {
     const detenteursInitiauxIds: string[] = [];
     for (const detenteurInitial of myRelationsData.data?.detenteursInitiaux || []) {
       detenteursInitiauxIds.push(detenteurInitial.id);
-      users[detenteurInitial.id] = detenteurInitial;
+      users[detenteurInitial.id] = mergeUserPartenaire(users[detenteurInitial.id], detenteurInitial);
     }
 
     if (signal.aborted || !useUser.getState().user) return;

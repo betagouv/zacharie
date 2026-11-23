@@ -1,4 +1,5 @@
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
+import type { RequestWithUser } from '~/types/request';
 
 // On compte les tentatives par email (ou par jeton de réinitialisation) : plusieurs utilisateurs
 // peuvent partager la même IP (réseau d'une administration, d'une entreprise)
@@ -34,5 +35,24 @@ export const adminRateLimit = rateLimit({
     ok: false,
     error: 'Trop de requêtes, veuillez réessayer dans une minute.',
     data: null,
+  },
+});
+
+// Recherche d'un propriétaire initial par email : on compte par utilisateur connecté, pour freiner
+// un balayage d'adresses mail
+export const trouverPremierDetenteurRateLimit = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 heure
+  max: process.env.NODE_ENV === 'production' ? 20 : 1000,
+  keyGenerator: (req) => {
+    const userId = (req as RequestWithUser).user?.id;
+    return userId ? `user:${userId}` : ipKeyGenerator(req.ip ?? '');
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === 'test',
+  message: {
+    ok: false,
+    error: 'Trop de recherches, veuillez réessayer dans une heure.',
+    data: { user: null },
   },
 });
