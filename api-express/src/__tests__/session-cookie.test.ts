@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { NextFunction, Request, Response } from 'express';
-import { migrateLegacySessionCookie } from '~/middlewares/migrate-legacy-session-cookie';
+import type { Request } from 'express';
 
 type Env = 'production' | 'staging' | 'review' | 'test';
 
@@ -23,13 +22,6 @@ vi.mock('~/config', () => ({
 
 function fakeReq(cookies: Record<string, string>, headers: Record<string, string> = {}) {
   return { cookies, headers } as unknown as Request;
-}
-
-function fakeRes() {
-  return { cookie: vi.fn(), clearCookie: vi.fn() } as unknown as Response & {
-    cookie: ReturnType<typeof vi.fn>;
-    clearCookie: ReturnType<typeof vi.fn>;
-  };
 }
 
 // réimporte le module pour recalculer `SESSION_COOKIE_NAME` avec l'env courant
@@ -71,65 +63,5 @@ describe('cookie de session', () => {
     const native = cookieOptions(fakeReq({}, { platform: 'native' }));
     expect(native.secure).toBe(true);
     expect(native.sameSite).toBe('none');
-  });
-});
-
-describe('migration de l’ancien cookie de session (temporaire)', () => {
-  it.each([
-    ['production', '.zacharie.beta.gouv.fr'],
-    ['staging', '.zacharie.incubateur.net'],
-  ] as const)('en %s : recopie l’ancien jeton dans le nouveau cookie et efface l’ancien', (e, domain) => {
-    env.current = e;
-    const req = fakeReq({ zacharie_express_jwt: 'old-token' });
-    const res = fakeRes();
-    const next = vi.fn() as NextFunction;
-    migrateLegacySessionCookie(req, res, next);
-    expect(res.clearCookie).toHaveBeenCalledWith(
-      'zacharie_express_jwt',
-      expect.objectContaining({ domain, secure: true, path: '/' })
-    );
-    expect(res.cookie).toHaveBeenCalledWith('__Host-zacharie_jwt', 'old-token', expect.anything());
-    expect(res.cookie.mock.calls[0][2]).not.toHaveProperty('domain');
-    // la requête en cours est authentifiée avec le jeton recopié
-    expect(req.cookies['__Host-zacharie_jwt']).toBe('old-token');
-    expect(next).toHaveBeenCalled();
-  });
-
-  it('garde le nouveau cookie quand les deux sont présents (ancien cookie d’un autre utilisateur)', () => {
-    env.current = 'production';
-    const req = fakeReq({ zacharie_express_jwt: 'old-token', '__Host-zacharie_jwt': 'new-token' });
-    const res = fakeRes();
-    migrateLegacySessionCookie(req, res, vi.fn());
-    expect(res.clearCookie).toHaveBeenCalledWith(
-      'zacharie_express_jwt',
-      expect.objectContaining({ domain: '.zacharie.beta.gouv.fr' })
-    );
-    expect(res.cookie).not.toHaveBeenCalled();
-    expect(req.cookies['__Host-zacharie_jwt']).toBe('new-token');
-  });
-
-  it('efface l’ancien cookie d’état ProConnect posé sur tout le domaine', () => {
-    env.current = 'production';
-    const req = fakeReq({ zacharie_proconnect: 'old-state' });
-    const res = fakeRes();
-    const next = vi.fn();
-    migrateLegacySessionCookie(req, res, next);
-    expect(res.clearCookie).toHaveBeenCalledWith(
-      'zacharie_proconnect',
-      expect.objectContaining({ domain: '.zacharie.beta.gouv.fr', secure: true, path: '/' })
-    );
-    expect(res.cookie).not.toHaveBeenCalled();
-    expect(next).toHaveBeenCalled();
-  });
-
-  it.each(['review', 'test'] as const)('en %s : ne fait rien', (e) => {
-    env.current = e;
-    const req = fakeReq({ zacharie_express_jwt: 'token', zacharie_proconnect: 'state' });
-    const res = fakeRes();
-    const next = vi.fn();
-    migrateLegacySessionCookie(req, res, next);
-    expect(res.clearCookie).not.toHaveBeenCalled();
-    expect(res.cookie).not.toHaveBeenCalled();
-    expect(next).toHaveBeenCalled();
   });
 });

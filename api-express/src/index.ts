@@ -31,7 +31,6 @@ import {
   VITE_APP_URL,
 } from './config.ts';
 import { errorHandlers } from './middlewares/errors.ts';
-import { migrateLegacySessionCookie } from './middlewares/migrate-legacy-session-cookie.ts';
 import { capture, SENTRY_SCRUB_OPTIONS } from './third-parties/sentry.ts';
 
 import userRouter from './controllers/user.ts';
@@ -187,7 +186,6 @@ app.use((_req, res, next) => {
   next();
 });
 app.use(cookieParser());
-app.use(migrateLegacySessionCookie);
 
 // Montées après helmet : même `/` doit porter les en-têtes de sécurité (c'est l'URL scannée par l'Observatory MDN)
 // kube probe
