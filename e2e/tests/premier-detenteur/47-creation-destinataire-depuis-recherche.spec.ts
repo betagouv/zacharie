@@ -68,8 +68,10 @@ test("« Créer « … » » depuis la recherche ouvre l'ajout d'un destinataire
   await expect(resultatAnnuaire).toBeVisible({ timeout: 10000 });
   await resultatAnnuaire.click();
 
-  // Choisir le résultat de l'annuaire remplit l'adresse ; le SIRET n'est plus affiché mais reste envoyé
+  // Choisir le résultat de l'annuaire remplit l'adresse ; le SIRET n'est plus saisi : il est affiché
+  // sous la raison sociale et envoyé en caché
   await expect(modal.locator("[class*='raison_sociale__single-value']")).toHaveText('MA BOUCHERIE TEST SARL');
+  await expect(modal.getByText('SIRET : 12345678900012')).toBeVisible();
   await expect(modal.getByRole('textbox', { name: 'SIRET' })).toHaveCount(0);
   await expect(modal.locator('#partenaire_data_form input[name="siret"]')).toHaveValue('12345678900012');
   await expect(modal.locator('#partenaire-nouveau-address_ligne_1')).toHaveValue('12 RUE DU COMMERCE');

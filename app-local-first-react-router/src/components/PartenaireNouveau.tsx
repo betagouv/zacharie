@@ -230,7 +230,11 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
               setAnnuairePrefill(null);
             }}
             label="Raison Sociale *"
-            hint="Recherchez l'entreprise par son nom : le SIRET et l'adresse se remplissent automatiquement."
+            hint={
+              annuairePrefill?.siret
+                ? `SIRET : ${annuairePrefill.siret}`
+                : "Recherchez l'entreprise par son nom"
+            }
             name={Prisma.EntityScalarFieldEnum.raison_sociale}
             placeholder=""
             creatable={true}
