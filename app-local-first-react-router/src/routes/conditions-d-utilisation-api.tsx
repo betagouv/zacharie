@@ -40,22 +40,22 @@ export default function ConditionsDUtilisationApi() {
           <h1 className="mt-0 mb-3 text-2xl font-bold">
             Conditions générales d'utilisation de l'API Zacharie
           </h1>
-          {/* ===================== TITRE I ===================== */}
-          <h2 className={h2}>Titre I — Dispositions générales</h2>
-
-          <h3 className={h3}>Article 1 — Objet</h3>
           <p>
             Zacharie est le service numérique de la Direction générale de l'alimentation (DGAL) du ministère
             de l'Agriculture, de la Souveraineté alimentaire et de la Forêt, qui dématérialise la fiche
             d'accompagnement du gibier sauvage et assure la traçabilité des carcasses de la mise à mort
             jusqu'à l'inspection sanitaire.
           </p>
+
+          {/* ===================== TITRE I ===================== */}
+          <h2 className={h2}>Titre I — Dispositions générales</h2>
+
+          <h3 className={h3}>Article 1 — Objet</h3>
           <p>
             Les présentes conditions fixent les règles d'accès et d'utilisation de l'interface de
-            programmation (« API ») de Zacharie par des logiciels tiers. Elles s'ajoutent aux{' '}
-            <a href="/modalites-d-utilisation">modalités d'utilisation</a> et à la{' '}
-            <a href="/politique-de-confidentialite">politique de confidentialité</a> de Zacharie, qui restent
-            applicables aux utilisateurs.
+            programmation (« API ») de Zacharie par des logiciels tiers. Les présentes CGU API Zacharie
+            s'appliquent sans préjudice des{' '}
+            <a href="/modalites-d-utilisation">CGU relatives à la plateforme Zacharie</a>.
           </p>
 
           <h3 className={h3}>Article 2 — Définitions</h3>
@@ -77,8 +77,8 @@ export default function ConditionsDUtilisationApi() {
               initial), identifiée par un numéro unique, qui regroupe une ou plusieurs carcasses.
             </li>
             <li>
-              <strong>Carcasse</strong>&nbsp;: un animal ou un lot de petit gibier, identifié par un numéro de
-              bracelet, avec ses données sanitaires et de traçabilité.
+              <strong>Carcasse</strong>&nbsp;: un animal ou un lot de petit gibier, identifié par un numéro
+              d'identification, avec ses données sanitaires et de traçabilité.
             </li>
             <li>
               <strong>Clé API</strong>&nbsp;: l'identifiant secret remis au Partenaire, qui l'authentifie
@@ -100,10 +100,7 @@ export default function ConditionsDUtilisationApi() {
           </ul>
 
           <h3 className={h3}>Article 3 — Acceptation et opposabilité</h3>
-          <p>
-            L'utilisation de l'API vaut acceptation sans réserve des présentes conditions. Le Partenaire les
-            accepte au moment de sa demande de clé, par une personne habilitée à l'engager.
-          </p>
+          <p>L'utilisation de l'API vaut acceptation sans réserve des présentes conditions.</p>
           <h3 className={h3}>Article 4 — Obtention d'une clé API</h3>
           <p>
             4.1. Le Partenaire fait sa demande par le <a href="/contact">formulaire de contact</a> de
@@ -111,11 +108,7 @@ export default function ConditionsDUtilisationApi() {
             l'accès, et le cas échéant l'adresse de son webhook et les domaines qui afficheront l'Interface
             Zacharie en iframe.
           </p>
-          <p>
-            4.2. L'Éditeur examine la demande et peut la refuser, notamment si la finalité ne correspond pas à
-            l'objet de Zacharie ou si le Partenaire ne présente pas de garanties suffisantes de protection des
-            données.
-          </p>
+          <p>4.2. L'Éditeur examine la demande et peut la refuser.</p>
           <p>
             4.3. La clé est remise par un lien à usage unique. Après une première ouverture, le lien n'est
             plus valide. Une clé perdue est remplacée sur demande, l'ancienne étant révoquée.
@@ -130,17 +123,17 @@ export default function ConditionsDUtilisationApi() {
           <p>4.5. L'accès à l'API est gratuit.</p>
 
           {/* ===================== TITRE II ===================== */}
-          <h2 className={h2}>Titre II — Accès en lecture pour les logiciels des chasseurs</h2>
+          <h2 className={h2}>Titre II — Accès en lecture pour les logiciels tiers</h2>
 
           <h3 className={h3}>Article 5 — Accès en lecture</h3>
           <p>
-            5.1. <strong>Bénéficiaires.</strong> L'accès s'adresse aux éditeurs de logiciels utilisés par les
-            chasseurs&nbsp;: carnets de chasse, outils de gestion de territoire, de plan de chasse ou
+            5.1. <strong>Bénéficiaires.</strong> L'accès s'adresse aux éditeurs de logiciels utilisés pour le
+            suivi de la chasse&nbsp;: carnets de chasse, outils de gestion de territoire, de plan de chasse ou
             d'association de chasse.
           </p>
           <p>
             5.2. <strong>Accord préalable de l'Utilisateur.</strong> Le Partenaire n'accède aux données d'un
-            Utilisateur qu'après l'Accord de partage de celui-ci, selon le parcours suivant&nbsp;:
+            Utilisateur qu'après l'accord de partage de celui-ci, selon le parcours suivant&nbsp;:
           </p>
           <ol className="mt-2 list-decimal pl-12">
             <li>L'Utilisateur demande, dans le logiciel du Partenaire, à relier son compte Zacharie.</li>
@@ -159,8 +152,7 @@ export default function ConditionsDUtilisationApi() {
           </ol>
           <p>
             5.3. <strong>Retrait.</strong> L'Utilisateur peut retirer son accord à tout moment depuis la même
-            page. Le retrait prend effet immédiatement&nbsp;: l'API cesse de renvoyer ses données et les
-            webhooks cessent.
+            page. Le retrait prend effet immédiatement.
           </p>
           <p>
             5.4. <strong>Périmètre.</strong> Le Partenaire accède aux fiches et carcasses que l'Utilisateur
@@ -168,11 +160,9 @@ export default function ConditionsDUtilisationApi() {
             autres données du compte (téléphone, adresse, numéro de formation…).
           </p>
           <p>
-            5.5. <strong>Finalité.</strong> Le Partenaire utilise ces données uniquement pour rendre à
-            l'Utilisateur le service qu'il a demandé (par exemple&nbsp;: afficher l'état de ses carcasses dans
-            son carnet de chasse). Toute autre utilisation est interdite, notamment la revente, la prospection
-            commerciale, la publicité ciblée, le profilage et la constitution de bases de données sur des
-            personnes autres que l'Utilisateur.
+            5.5. <strong>Finalité.</strong> Le Partenaire utilise ces données uniquement pour documenter et
+            assurer la traçabilité du gibier. Toute autre utilisation est interdite, notamment la revente, la
+            prospection commerciale, la publicité ciblée, le profilage et la constitution de bases de données.
           </p>
 
           <h3 className={h3}>Article 6 — Création des fiches dans l'interface Zacharie</h3>
@@ -182,13 +172,7 @@ export default function ConditionsDUtilisationApi() {
             . L'API ne permet pas de créer ni de modifier une fiche.
           </p>
           <p>
-            6.2. <strong>Raison.</strong> L'examinateur initial engage sa responsabilité personnelle en
-            attestant l'examen des carcasses et en approuvant leur mise sur le marché. L'Éditeur doit garantir
-            que cet engagement est pris par l'examinateur lui-même, dans un écran dont il maîtrise le contenu,
-            les mentions et les contrôles.
-          </p>
-          <p>
-            6.3. <strong>Modes d'intégration autorisés.</strong> Le Partenaire peut ouvrir l'Interface
+            6.2. <strong>Modes d'intégration autorisés.</strong> Le Partenaire peut ouvrir l'Interface
             Zacharie depuis son logiciel&nbsp;:
           </p>
           <ul className={ul}>
@@ -205,7 +189,7 @@ export default function ConditionsDUtilisationApi() {
             <DocLink href={DOC_TIERCES_PARTIES}>documentation</DocLink>).
           </p>
           <p>
-            6.4. <strong>Interdictions.</strong> Le Partenaire s'interdit&nbsp;:
+            6.3. <strong>Interdictions.</strong> Le Partenaire s'interdit&nbsp;:
           </p>
           <ul className={ul}>
             <li>de reproduire, d'imiter ou de simuler tout ou partie de l'Interface Zacharie ;</li>
@@ -218,8 +202,9 @@ export default function ConditionsDUtilisationApi() {
             <li>de laisser croire que la fiche est créée ou validée par son propre logiciel.</li>
           </ul>
           <p>
-            6.5. Chaque fiche créée depuis le logiciel d'un Partenaire porte un identifiant de contexte de
-            création, visible dans les données de la fiche, qui permet de connaître son origine.
+            6.4. Chaque fiche créée depuis le logiciel d'un Partenaire, via l'Interface Zacharie encapsulée,
+            porte un identifiant de contexte de création, visible dans les données de la fiche, qui permet de
+            connaître son origine.
           </p>
 
           <h3 className={h3}>Article 7 — Webhooks</h3>
@@ -240,40 +225,47 @@ export default function ConditionsDUtilisationApi() {
             Zacharie font foi.
           </p>
 
-          <h3 className={h3}>Article 8 — Accès de l'Éditeur au logiciel du Partenaire</h3>
+          <h3 className={h3}>Article 8 — Engagements et responsabilité du Partenaire</h3>
           <p>
-            8.1. Le Partenaire met à la disposition de l'Éditeur, en permanence et gratuitement, un accès à
-            son logiciel pour un administrateur de Zacharie.
+            8.1. Le Partenaire s'engage à fournir à la demande de l'Éditeur les éléments permettant de
+            vérifier le respect des présentes conditions, notamment les modalités d'intégration de l'API, les
+            catégories de données affichées et les finalités de leur utilisation.
           </p>
           <p>
-            8.2. Cet accès permet à l'Éditeur de constater en temps réel l'utilisation réelle de l'API&nbsp;:
-            l'intégration de l'Interface Zacharie (iframe ou fenêtre), les données issues de Zacharie qui sont
-            affichées et l'usage qui en est fait.
+            8.2. L'Éditeur peut demander au Partenaire tout justificatif utile à la vérification de la
+            conformité de son utilisation de l'API aux présentes conditions, notamment des éléments de
+            démonstration, des captures d'écran ou une documentation technique.
           </p>
           <p>
-            8.3. Le Partenaire remet les identifiants de cet accès à la mise en service de sa clé et les
-            maintient valides pendant toute la durée de son accès à l'API. L'absence ou l'indisponibilité de
-            cet accès peut entraîner la suspension de la clé (article 15.1).
+            8.3. En cas de suspicion de manquement ou de risque pour la sécurité des données, l'Éditeur peut
+            demander la réalisation d'un contrôle ou d'un audit ciblé, dans des conditions respectant la
+            confidentialité des informations propres au Partenaire et les droits des personnes concernées.
+          </p>
+          <p>
+            8.4. Le Partenaire s'engage à coopérer de bonne foi à ces opérations de contrôle et à mettre en
+            œuvre les mesures correctives nécessaires en cas de manquement constaté.
+          </p>
+          <p>
+            8.5. En cas de méconnaissance des présentes CGU, l'Éditeur se réserve le droit de suspendre ou
+            retirer l'accès à l'API sans renoncer à engager d'éventuelles poursuites à son encontre.
           </p>
 
           {/* ===================== TITRE III ===================== */}
-          <h2 className={h2}>Titre III — Données personnelles, sécurité, exploitation</h2>
+          <h2 className={h2}>Titre III — Données à caractère personnel et sécurité</h2>
 
           <h3 className={h3}>Article 9 — Protection des données personnelles</h3>
           <p>
-            9.1. <strong>Rôles.</strong> La DGAL est responsable du traitement des données dans Zacharie. Le
+            9.1. <strong>Rôles.</strong> L'Éditeur est responsable du traitement des données dans Zacharie. Le
             Partenaire est responsable des traitements qu'il fait des données reçues par l'API, pour ses
             propres finalités. Il n'agit pas comme sous-traitant de la DGAL.
           </p>
           <p>
-            9.2. <strong>Transmission de l'adresse email.</strong> Pour demander l'accès, le Partenaire
-            transmet à Zacharie l'adresse email de l'Utilisateur. Le Partenaire garantit&nbsp;:
+            9.2. <strong>Transmission de l'adresse email.</strong> Le Partenaire transmet à Zacharie l'adresse
+            email de l'Utilisateur concerné. Le Partenaire garantit&nbsp;:
           </p>
           <ul className={ul}>
             <li>que l'Utilisateur lui a lui-même demandé de relier son compte Zacharie ;</li>
-            <li>
-              qu'il a informé l'Utilisateur de cette transmission et de ce qui suit, avant de la faire ;
-            </li>
+            <li>qu'il a informé l'Utilisateur de cette transmission ;</li>
             <li>
               qu'il ne transmet pas d'adresse en masse ni d'adresse d'une personne qui ne l'a pas demandé.
             </li>
@@ -282,34 +274,36 @@ export default function ConditionsDUtilisationApi() {
             Zacharie utilise cette adresse uniquement pour retrouver le compte et créer la demande d'accès.
           </p>
           <p>
-            9.3. <strong>Base légale du partage.</strong> Le partage des données d'un Utilisateur vers le
-            Partenaire repose sur l'accord de l'Utilisateur, donné de façon libre, spécifique et éclairée dans
-            Zacharie, et révocable à tout moment (art. 6.1.a du RGPD).
+            9.3. <strong>Responsabilité.</strong> Le Partenaire s'engage à respecter la réglementation
+            applicable au droit des données à caractère personnel. En particulier, il adopte les mesures
+            techniques et organisationnelles (article 32 du RGPD) nécessaires pour garantir la confidentialité
+            des données (par exemple&nbsp;: gestion des habilitations, contrôle des authentifications, accord
+            de sous-traitance avec ses prestataires). Le Partenaire est seul responsable des failles de
+            sécurité de son système d'information et de toute violation de données susceptible de survenir sur
+            les données qu'il traite en tant que responsable de traitement.
           </p>
           <p>
             9.4. <strong>Obligations du Partenaire.</strong> Le Partenaire s'engage à&nbsp;:
           </p>
           <ul className={ul}>
-            <li>ne traiter les données que pour la finalité déclarée à l'article 4.1 ;</li>
-            <li>ne collecter que les données nécessaires à cette finalité ;</li>
+            <li>ne traiter les données que pour la finalité déclarée à l'article 5.5 ;</li>
             <li>
-              ne pas transmettre les données à des tiers, sauf à ses propres sous-traitants techniques liés
-              par un contrat conforme à l'article 28 du RGPD ;
+              ne pas transmettre les données à des tiers, sauf à ses propres sous-traitants liés par un
+              contrat conforme à l'article 28 du RGPD ;
             </li>
             <li>
               héberger les données dans l'Union européenne, ou à défaut appliquer les garanties du chapitre V
               du RGPD ;
             </li>
+            <li>mentionner Zacharie et l'origine des données dans ses documents de conformité au RGPD ;</li>
             <li>
-              mentionner Zacharie et l'origine des données dans sa propre politique de confidentialité ;
+              ne pas procéder à la diffusion, à la publication, à la commercialisation ou à la communication
+              de ces informations à des tiers non autorisés ;
             </li>
             <li>
-              répondre lui-même aux demandes d'exercice de droits sur ses traitements, et transmettre à
-              l'Éditeur celles qui concernent Zacharie ;
-            </li>
-            <li>
-              prévenir l'Éditeur dans les 48 heures de toute violation de données qui touche des données
-              issues de Zacharie.
+              ne procéder à aucun rapprochement, croisement ou enrichissement des données issues de Zacharie
+              avec d'autres sources de données lorsque cette opération n'est pas nécessaire à la finalité
+              autorisée ou ne repose pas sur une base légale appropriée.
             </li>
           </ul>
           <p>
