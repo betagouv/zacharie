@@ -303,3 +303,36 @@ describe('loadCarcasses — carcasses sorties du périmètre', () => {
     expect(carcasseCalls()).toHaveLength(1);
   });
 });
+
+describe('loadCarcasses — demandes de modification', () => {
+  const request = (id: string, value: string) => ({ ...base(), id, zacharie_carcasse_id: 'C-SORTIE', value });
+
+  function mockServerWithRequests(requests: Array<ReturnType<typeof request>>) {
+    mocks.get.mockImplementation(({ path }: { path: string }) => {
+      if (path === 'now') return Promise.resolve({ ok: true, data: 2000 });
+      if (path === '/carcasse/count') return Promise.resolve({ ok: false });
+      const response = serverResponse(false);
+      return Promise.resolve({ ...response, data: { ...response.data, carcasseModifRequests: requests } });
+    });
+  }
+
+  it("une carcasse dont aucune demande n'a changé garde son tableau", async () => {
+    const previous = [request('R-1', 'x'), request('R-2', 'y')];
+    mocks.state.modifRequestsByCarcasseId = { 'C-SORTIE': previous };
+    mockServerWithRequests([request('R-2', 'y')]);
+    await loadCarcasses();
+    expect((mocks.state.modifRequestsByCarcasseId as Record<string, unknown>)['C-SORTIE']).toBe(previous);
+  });
+
+  it('une carcasse dont une demande a changé reçoit un nouveau tableau', async () => {
+    const previous = [request('R-1', 'x'), request('R-2', 'y')];
+    mocks.state.modifRequestsByCarcasseId = { 'C-SORTIE': previous };
+    const changed = request('R-2', 'modifiée');
+    mockServerWithRequests([changed]);
+    await loadCarcasses();
+    const next = (mocks.state.modifRequestsByCarcasseId as Record<string, Array<unknown>>)['C-SORTIE'];
+    expect(next).not.toBe(previous);
+    expect(next).toContain(changed);
+    expect(next).toContain(previous[0]);
+  });
+});

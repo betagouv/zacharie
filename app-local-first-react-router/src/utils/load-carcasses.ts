@@ -235,6 +235,17 @@ export async function loadCarcasses() {
     for (const request of Object.values(mergedModifRequestsById) as Array<CarcasseModificationRequest>) {
       (nextModifRequestsByCarcasseId[request.zacharie_carcasse_id] ??= []).push(request);
     }
+    // Une carcasse dont aucune demande n'a changé garde son tableau : le stockage local n'écrit que
+    // les enregistrements dont la référence change.
+    for (const [carcasseId, requests] of Object.entries(nextModifRequestsByCarcasseId)) {
+      const previousRequests = localState.modifRequestsByCarcasseId[carcasseId];
+      if (
+        previousRequests?.length === requests.length &&
+        requests.every((request) => previousRequests.includes(request))
+      ) {
+        nextModifRequestsByCarcasseId[carcasseId] = previousRequests;
+      }
+    }
 
     if (signal.aborted || !useUser.getState().user) return;
 
