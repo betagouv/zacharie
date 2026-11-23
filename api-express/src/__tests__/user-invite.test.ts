@@ -193,9 +193,80 @@ describe('POST /user/invite-user — CHASSEUR guard and federations', () => {
     expect(res.body.ok).toBe(true);
     expect(inviteUser).toHaveBeenCalledOnce();
     expect(prisma.user.create).toHaveBeenCalledOnce();
-    // invited user inherits inviter's roles (not CHASSEUR)
+    // invited user inherits inviter's role (not CHASSEUR)
     const createCall = vi.mocked(prisma.user.create).mock.calls[0][0];
     expect((createCall.data as any).roles).toEqual([UserRoles.ETG]);
+    // the new relation triggers a full carcasses reload for the invitee
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'user-new' },
+      data: { carcasses_reload_version: { increment: 1 } },
+    });
+  });
+
+  test('invited user gets a single role even if the inviter has several', async () => {
+    vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
+    vi.mocked(prisma.entityAndUserRelations.findFirst)
+      .mockResolvedValueOnce({ status: EntityRelationStatus.ADMIN } as any)
+      .mockResolvedValueOnce(null);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.user.create).mockResolvedValue({ id: 'user-new', email: 'newbie@example.com' } as any);
+    vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue({} as any);
+
+    const res = await authed(
+      request(app).post(BASE).send({ email: 'newbie@example.com', entity_id: 'entity-1' }),
+      { id: 'user-multi', email: 'multi@example.com', roles: [UserRoles.ETG, UserRoles.SVI] }
+    );
+
+    expect(res.status).toBe(200);
+    const createCall = vi.mocked(prisma.user.create).mock.calls[0][0];
+    expect((createCall.data as any).roles).toEqual([UserRoles.ETG]);
+  });
+
+  test('existing account → response only exposes id and email, not the whole user', async () => {
+    vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
+    vi.mocked(prisma.entityAndUserRelations.findFirst)
+      .mockResolvedValueOnce({ status: EntityRelationStatus.ADMIN } as any)
+      .mockResolvedValueOnce(null);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: 'user-existing',
+      email: 'existing@example.com',
+      telephone: '0600000000',
+      addresse_ligne_1: '1 rue des Lilas',
+      roles: [UserRoles.CHASSEUR],
+      isZacharieAdmin: true,
+      numero_cfei: 'CFEI-123',
+      web_push_tokens: ['token'],
+    } as any);
+    vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue({} as any);
+
+    const res = await authed(
+      request(app).post(BASE).send({ email: 'existing@example.com', entity_id: 'entity-1' }),
+      etgUser
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ newUser: { id: 'user-existing', email: 'existing@example.com' } });
+    expect(prisma.user.create).not.toHaveBeenCalled();
+  });
+
+  test('invitee already in the entity → no new relation and no carcasses reload', async () => {
+    vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
+    vi.mocked(prisma.entityAndUserRelations.findFirst)
+      .mockResolvedValueOnce({ status: EntityRelationStatus.ADMIN } as any)
+      .mockResolvedValueOnce({ status: EntityRelationStatus.MEMBER } as any);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: 'user-existing',
+      email: 'existing@example.com',
+    } as any);
+
+    const res = await authed(
+      request(app).post(BASE).send({ email: 'existing@example.com', entity_id: 'entity-1' }),
+      etgUser
+    );
+
+    expect(res.status).toBe(200);
+    expect(prisma.entityAndUserRelations.create).not.toHaveBeenCalled();
+    expect(prisma.user.update).not.toHaveBeenCalled();
   });
 
   test('non-CHASSEUR but not admin of entity → 400 (different message)', async () => {
