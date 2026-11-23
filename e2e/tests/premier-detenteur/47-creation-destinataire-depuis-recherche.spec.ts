@@ -51,11 +51,9 @@ test("« Créer « … » » depuis la recherche ouvre l'ajout d'un destinataire
   await openVenteDon(page);
   await creerDestinataire(page, 'Ma Boucherie Test');
 
-  // Le chasseur dit d'abord si le destinataire est un professionnel ou un particulier
+  // Le destinataire est un professionnel par défaut
   const modal = venteDonModal(page);
-  const professionnel = modal.getByText('Un professionnel', { exact: true });
-  await professionnel.scrollIntoViewIfNeeded();
-  await professionnel.click();
+  await expect(modal.getByRole('radio', { name: 'Un professionnel' })).toBeChecked();
 
   // La raison sociale reprend le nom tapé dans la recherche, et l'annuaire
   // des entreprises est interrogé tout de suite : ses résultats s'affichent sans rien retaper
@@ -76,11 +74,13 @@ test("« Créer « … » » depuis la recherche ouvre l'ajout d'un destinataire
   await expect(modal.locator('#partenaire_data_form input[name="siret"]')).toHaveValue('12345678900012');
   await expect(modal.locator('#partenaire-nouveau-address_ligne_1')).toHaveValue('12 RUE DU COMMERCE');
 
-  // La qualité du destinataire est un champ libre : plus de liste de types à cocher
+  // La qualité du destinataire est un champ libre, avec des raccourcis qui le remplissent
   await expect(modal.getByText('Commerce de détail (boucherie, restaurant, etc.)')).toHaveCount(0);
   const qualite = modal.locator('#partenaire-nouveau-qualite_du_destinataire');
-  await qualite.scrollIntoViewIfNeeded();
-  await qualite.fill('boucherie');
+  const presetBoucherie = modal.getByRole('button', { name: 'Boucherie', exact: true });
+  await presetBoucherie.scrollIntoViewIfNeeded();
+  await presetBoucherie.click();
+  await expect(qualite).toHaveValue('Boucherie');
 
   // Remplir les champs obligatoires — scrollIntoViewIfNeeded sur mobile viewport
   const email = modal.locator('#partenaire-nouveau-email');

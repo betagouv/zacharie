@@ -79,10 +79,6 @@ test('Un particulier ajouté comme destinataire est nommé par son représentant
 test('Un destinataire professionnel exige une raison sociale', async ({ page }) => {
   const modal = venteDonModal(page);
 
-  const professionnel = modal.getByText('Un professionnel', { exact: true });
-  await professionnel.scrollIntoViewIfNeeded();
-  await professionnel.click();
-
   const qualite = modal.locator('#partenaire-nouveau-qualite_du_destinataire');
   await qualite.scrollIntoViewIfNeeded();
   await qualite.fill('boucherie');

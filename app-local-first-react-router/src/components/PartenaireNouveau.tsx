@@ -30,6 +30,17 @@ const ANNUAIRE_OPTION_PREFIX = 'annuaire-';
 
 type SelectOption = EntitiesById[string];
 
+// raccourcis pour remplir la qualité du destinataire, qui reste un champ libre
+const QUALITES_PRESETS = [
+  'Boucherie',
+  'Restaurant',
+  'Repas de chasse',
+  'Repas associatif',
+  'Cantine scolaire',
+  'Collecteur professionnel',
+  'Restauration collective',
+];
+
 function toAnnuaireOption(etablissement: EtablissementTrouve) {
   return {
     id: `${ANNUAIRE_OPTION_PREFIX}${etablissement.siret}`,
@@ -59,10 +70,11 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
   );
   // le chasseur dit seulement si le destinataire est un particulier ou un professionnel :
   // le type précis du professionnel est déduit côté serveur de la qualité qu'il saisit librement
-  const [particulier, setParticulier] = useState<boolean | undefined>(undefined);
+  const [particulier, setParticulier] = useState(false);
+  const [qualite, setQualite] = useState('');
   const [annuairePrefill, setAnnuairePrefill] = useState<EtablissementTrouve | null>(null);
 
-  const professionnel = particulier === false;
+  const professionnel = !particulier;
 
   const newEntity = newEntityNomDUsage
     ? ({
@@ -128,10 +140,6 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
       event.preventDefault();
       const formData = new FormData(event.currentTarget);
       const body: Partial<Entity> & { particulier?: boolean } = Object.fromEntries(formData.entries());
-      if (particulier === undefined) {
-        alert('Veuillez indiquer si le destinataire est un professionnel ou un particulier');
-        return;
-      }
       body.particulier = particulier;
       // le particulier n'a pas de raison sociale : on le nomme par son nom
       if (particulier) {
@@ -149,7 +157,8 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
         body,
       }).then((data) => data as UserEntityResponse);
       if (response.ok) {
-        setParticulier(undefined);
+        setParticulier(false);
+        setQualite('');
         setAnnuairePrefill(null);
         track('partenaire', 'creer');
         onFinish(response.data.entity!);
@@ -184,7 +193,7 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
           options={[
             {
               nativeInputProps: {
-                checked: particulier === false,
+                checked: !particulier,
                 name: 'particulier',
                 value: 'professionnel',
                 onChange: () => setParticulier(false),
@@ -193,7 +202,7 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
             },
             {
               nativeInputProps: {
-                checked: particulier === true,
+                checked: particulier,
                 name: 'particulier',
                 value: 'particulier',
                 onChange: () => setParticulier(true),
@@ -267,12 +276,27 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
           <>
             <Input
               label="Qualité du destinataire *"
-              hintText="Par exemple : boucherie, restaurant, repas de chasse, association, collecteur…"
+              hintText={
+                <>
+                  {QUALITES_PRESETS.map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      className="mr-1 mb-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-left text-sm text-[#000091]"
+                      onClick={() => setQualite(preset)}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </>
+              }
               nativeInputProps={{
                 id: fieldId(Prisma.EntityScalarFieldEnum.qualite_du_destinataire),
                 name: Prisma.EntityScalarFieldEnum.qualite_du_destinataire,
                 autoComplete: 'off',
                 required: true,
+                value: qualite,
+                onChange: (e) => setQualite(e.target.value),
               }}
             />
             {/* le SIRET n'est plus saisi : il vient de l'annuaire et sert au serveur à repérer les doublons */}
