@@ -34,7 +34,8 @@ export type SeedRole =
   | 'ETG_TABLEAU_DE_BORD'
   | 'LABORATOIRE_FTP_RECUE'
   | 'SVI_SANGLIERS'
-  | 'API_BAC_A_SABLE';
+  | 'API_BAC_A_SABLE'
+  | 'LIEN_ACCESS_TOKEN_AUTRE_COMPTE';
 
 export async function resetDb(role?: SeedRole) {
   const timer = `resetDb(${role ?? ''})`;

@@ -809,6 +809,16 @@ Christine
   }
 
   if (role) {
+    // La clé tierce partie a l'accord d'examinateur-premier-detenteur@ : elle peut lui créer un lien
+    // access_token (`/app/nouvelle-fiche?access_token=…`), ouvert sur l'appareil d'un autre compte.
+    if ((role as string) === 'LIEN_ACCESS_TOKEN_AUTRE_COMPTE') {
+      const autreCompte = users.find((u) => u.email === 'examinateur-premier-detenteur@example.fr');
+      await prisma.apiKeyApprovalByUserOrEntity.create({
+        data: { api_key_id: apiKeyUser.id, user_id: autreCompte!.id, status: 'APPROVED' },
+      });
+      await prisma.apiKey.update({ where: { id: apiKeyUser.id }, data: { slug_for_context: 'bac-a-sable' } });
+      console.log('LIEN_ACCESS_TOKEN_AUTRE_COMPTE: accord de la clé tierce partie');
+    }
     if (role === FeiOwnerRole.PREMIER_DETENTEUR) {
       const fei = await prisma.fei.create({ data: feiValidatedByExaminateur });
       const carcasses = await prisma.carcasse.createMany({
