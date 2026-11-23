@@ -561,12 +561,17 @@ export default function AdminUser() {
               <p className="mt-1 mb-0 text-sm">
                 {lockout.is_locked ? (
                   <>
-                    Cet utilisateur est bloqué suite à {lockout.recent_failures} tentatives échouées en moins
-                    de 15 minutes.
+                    Cet utilisateur est bloqué suite à 5 tentatives échouées en moins de 15 minutes.
                     {lockout.lockout_expires_at && (
                       <>
                         {' '}
                         Le blocage expire le {dayjs(lockout.lockout_expires_at).format('DD/MM/YYYY à HH:mm')}.
+                      </>
+                    )}
+                    {lockout.last_failure_at && (
+                      <>
+                        {' '}
+                        Dernière tentative le {dayjs(lockout.last_failure_at).format('DD/MM/YYYY à HH:mm')}.
                       </>
                     )}
                   </>

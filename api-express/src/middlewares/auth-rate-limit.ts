@@ -24,12 +24,22 @@ export const authRateLimit = rateLimit({
 
 // Second limiteur, par IP seule : sans lui, une IP peut essayer un mot de passe courant sur des milliers
 // d'emails (le limiteur par email ne la freine jamais). La limite est large car une administration
-// ou une entreprise peut faire passer beaucoup d'utilisateurs par la même IP
-export function createAuthIpRateLimit({ limit, skip }: { limit: number; skip: () => boolean }) {
+// ou une entreprise peut faire passer beaucoup d'utilisateurs par la même IP. Un compteur par route :
+// une rafale d'inscriptions ne doit pas bloquer les connexions de la même IP
+export function createAuthIpRateLimit({
+  limit,
+  skip,
+  skipSuccessfulRequests = false,
+}: {
+  limit: number;
+  skip: () => boolean;
+  skipSuccessfulRequests?: boolean;
+}) {
   return rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: limit,
     keyGenerator: (req) => ipKeyGenerator(req.ip ?? ''),
+    skipSuccessfulRequests,
     standardHeaders: true,
     legacyHeaders: false,
     skip,
@@ -41,10 +51,15 @@ export function createAuthIpRateLimit({ limit, skip }: { limit: number; skip: ()
   });
 }
 
-export const authIpRateLimit = createAuthIpRateLimit({
-  limit: process.env.NODE_ENV === 'production' ? 100 : 10000,
-  skip: () => process.env.NODE_ENV === 'test',
-});
+// à appeler une fois par route : chaque appel a son propre compteur
+// skipSuccessfulRequests : sur /user/login, seules les connexions échouées comptent
+export function authIpRateLimit({ skipSuccessfulRequests = false } = {}) {
+  return createAuthIpRateLimit({
+    limit: process.env.NODE_ENV === 'production' ? 100 : 10000,
+    skip: () => process.env.NODE_ENV === 'test',
+    skipSuccessfulRequests,
+  });
+}
 
 // Les routes /admin sont appelées en rafale par l'interface d'administration (listes, dashboard) :
 // la limite est large, elle sert seulement à freiner un balayage automatisé
