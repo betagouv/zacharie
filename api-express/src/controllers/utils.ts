@@ -5,6 +5,8 @@ const router: express.Router = express.Router();
 import { RequestWithUser } from '~/types/request';
 import { createBrevoContactFromContactForm, sendEmail } from '~/third-parties/brevo';
 import { sanitize } from '~/utils/sanitize';
+import { contactRateLimit } from '~/middlewares/contact-rate-limit';
+import z from 'zod';
 
 router.get(
   '/now',
@@ -15,15 +17,30 @@ router.get(
   })
 );
 
+const contactBodySchema = z.object({
+  nom_de_famille: z.string().trim().min(1).max(100),
+  prenom: z.string().trim().min(1).max(100),
+  email: z.string().trim().email().max(254),
+  telephone: z.string().trim().max(30).optional(),
+  object: z.string().trim().max(200).optional(),
+  message: z.string().trim().min(1).max(5000),
+});
+
 router.post(
   '/contact',
+  contactRateLimit,
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const { nom_de_famille, prenom, telephone, email, message, object, job } = req.body;
-    if (job) {
+    if (req.body?.job) {
       // honey pot
       res.status(200).send({ ok: true });
       return;
     }
+    const bodyResult = contactBodySchema.safeParse(req.body);
+    if (!bodyResult.success) {
+      res.status(400).send({ ok: false, data: null, error: 'Formulaire de contact invalide' });
+      return;
+    }
+    const { nom_de_famille, prenom, telephone = '', email, message, object = '' } = bodyResult.data;
     await createBrevoContactFromContactForm({
       nom_de_famille,
       prenom,
