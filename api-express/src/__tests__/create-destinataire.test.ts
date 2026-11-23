@@ -23,6 +23,10 @@ vi.mock('~/utils/invite-user', () => ({
   inviteUser: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock('~/utils/classify-destinataire', () => ({
+  classifyDestinataire: vi.fn().mockResolvedValue('CIRCUIT_COURT'),
+}));
+
 vi.mock('~/third-parties/sentry', () => ({
   capture: vi.fn(),
   captureException: vi.fn(),
@@ -80,6 +84,10 @@ const destinataireBody = {
   code_postal: '34000',
   ville: 'Montpellier',
 };
+
+// le chasseur ne choisit pas le type : il dit « professionnel » et décrit le destinataire
+const { type: _type, ...destinataireSansType } = destinataireBody;
+const chasseurBody = { ...destinataireSansType, particulier: false, qualite_du_destinataire: 'boucherie' };
 
 const createdEntity = {
   id: 'entity-new',
@@ -249,7 +257,7 @@ describe('POST /entite/partenaire (chasseur)', () => {
     const res = await request(entiteApp)
       .post('/entite/partenaire')
       .set('x-test-user', JSON.stringify(chasseurUser))
-      .send(destinataireBody);
+      .send(chasseurBody);
 
     expect(res.status).toBe(200);
     expect(prisma.entityAndUserRelations.create).toHaveBeenCalledTimes(2);
@@ -276,7 +284,7 @@ describe('POST /entite/partenaire (chasseur)', () => {
     const res = await request(entiteApp)
       .post('/entite/partenaire')
       .set('x-test-user', JSON.stringify(chasseurUser))
-      .send({ ...destinataireBody, email: '  Boucher@Example.fr ' });
+      .send({ ...chasseurBody, email: '  Boucher@Example.fr ' });
 
     expect(res.status).toBe(409);
     expect(prisma.entity.create).not.toHaveBeenCalled();
@@ -288,7 +296,7 @@ describe('POST /entite/partenaire (chasseur)', () => {
     await request(entiteApp)
       .post('/entite/partenaire')
       .set('x-test-user', JSON.stringify(chasseurUser))
-      .send({ ...destinataireBody, email: 'Boucher@Example.fr' });
+      .send({ ...chasseurBody, email: 'Boucher@Example.fr' });
 
     expect(prisma.user.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ email: 'boucher@example.fr' }) })
@@ -296,6 +304,6 @@ describe('POST /entite/partenaire (chasseur)', () => {
   });
 
   test('non authentifié → 401', async () => {
-    await request(entiteApp).post('/entite/partenaire').send(destinataireBody).expect(401);
+    await request(entiteApp).post('/entite/partenaire').send(chasseurBody).expect(401);
   });
 });

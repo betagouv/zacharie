@@ -8,7 +8,8 @@ export function isRoleCircuitCourt(role: UserRoles | FeiOwnerRole | null | undef
     role === UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF ||
     role === UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE ||
     role === UserRoles.ASSOCIATION_CARITATIVE ||
-    role === UserRoles.CONSOMMATEUR_FINAL
+    role === UserRoles.CONSOMMATEUR_FINAL ||
+    role === UserRoles.CIRCUIT_COURT
   );
 }
 
@@ -24,7 +25,8 @@ export function isEntityCircuitCourt(entity: Entity) {
     entity.type === EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF ||
     entity.type === EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE ||
     entity.type === EntityTypes.ASSOCIATION_CARITATIVE ||
-    entity.type === EntityTypes.CONSOMMATEUR_FINAL
+    entity.type === EntityTypes.CONSOMMATEUR_FINAL ||
+    entity.type === EntityTypes.CIRCUIT_COURT
   );
 }
 

@@ -38,7 +38,11 @@ import { sanitize } from '~/utils/sanitize';
 import { z } from 'zod';
 import createUserId from '~/utils/createUserId';
 import { inviteUser } from '~/utils/invite-user';
-import { createDestinataire, destinataireSchema } from '~/utils/create-destinataire';
+import {
+  chasseurDestinataireSchema,
+  chasseurDestinataireToInput,
+  createDestinataire,
+} from '~/utils/create-destinataire';
 import {
   hasReachedMaxAssociationsDeChasse,
   MAX_ASSOCIATIONS_DE_CHASSE_ERROR,
@@ -147,6 +151,7 @@ const PARTENAIRE_TYPES = [
   EntityTypes.ASSOCIATION_CARITATIVE,
   EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
   EntityTypes.CONSOMMATEUR_FINAL,
+  EntityTypes.CIRCUIT_COURT,
 ];
 
 router.get(
@@ -334,7 +339,7 @@ router.post(
         return next(new Error('Seulement un chasseur peut ajouter un destinataire'));
       }
 
-      const result = destinataireSchema.safeParse(req.body);
+      const result = chasseurDestinataireSchema.safeParse(req.body);
       if (!result.success) {
         const champs = result.error.issues.map((issue) => issue.path.join('.')).join(', ');
         res.status(400).send({
@@ -345,7 +350,7 @@ router.post(
         return;
       }
 
-      const body = result.data;
+      const body = chasseurDestinataireToInput(result.data);
       const created = await createDestinataire(body, user);
 
       if (created.existingEntity) {

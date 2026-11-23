@@ -51,6 +51,7 @@ const ROLE_OPTIONS: Array<{ value: UserRoles; label: string }> = [
   { value: UserRoles.ASSOCIATION_CARITATIVE, label: 'Association caritative' },
   { value: UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF, label: 'Repas de chasse ou associatif' },
   { value: UserRoles.CONSOMMATEUR_FINAL, label: 'Consommateur final' },
+  { value: UserRoles.CIRCUIT_COURT, label: 'Circuit court (non classé)' },
   { value: UserRoles.LABORATOIRE, label: 'Laboratoire' },
   { value: UserRoles.FEDERATION, label: 'Fédération (sans être chasseur)' },
 ];

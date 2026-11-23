@@ -124,7 +124,8 @@ function needTransportForType(type?: EntityTypes | null): boolean {
   if (
     type === EntityTypes.CONSOMMATEUR_FINAL ||
     type === EntityTypes.COMMERCE_DE_DETAIL ||
-    type === EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF
+    type === EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF ||
+    type === EntityTypes.CIRCUIT_COURT
   ) {
     return false;
   }
@@ -1529,7 +1530,8 @@ export default function DestinataireSelectPremierDetenteur({
         type === EntityTypes.COMMERCE_DE_DETAIL ||
         type === EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF ||
         type === EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE ||
-        type === EntityTypes.ASSOCIATION_CARITATIVE
+        type === EntityTypes.ASSOCIATION_CARITATIVE ||
+        type === EntityTypes.CIRCUIT_COURT
       ) {
         return {
           title: 'Rappel : test trichine obligatoire',

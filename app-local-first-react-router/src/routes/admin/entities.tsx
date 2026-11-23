@@ -22,6 +22,7 @@ const entityTypeLabels: Record<EntityTypes, string> = {
   [EntityTypes.ASSOCIATION_CARITATIVE]: 'Association caritative',
   [EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF]: 'Repas de chasse / Associatif',
   [EntityTypes.CONSOMMATEUR_FINAL]: 'Consommateur final',
+  [EntityTypes.CIRCUIT_COURT]: 'Circuit court (non classé)',
   [EntityTypes.LABORATOIRE]: 'Laboratoire (trichine)',
   [EntityTypes.FDC]: 'FDC',
   [EntityTypes.FRC]: 'FRC',

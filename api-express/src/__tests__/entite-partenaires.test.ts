@@ -5,6 +5,7 @@ import entiteRouter from '~/controllers/entite';
 import prisma from '~/prisma';
 import { sendEmail } from '~/third-parties/brevo';
 import { inviteUser } from '~/utils/invite-user';
+import { classifyDestinataire } from '~/utils/classify-destinataire';
 import { EntityRelationStatus, EntityRelationType, EntityTypes, UserRoles } from '@prisma/client';
 
 vi.mock('~/third-parties/brevo', () => ({
@@ -19,6 +20,10 @@ vi.mock('~/utils/invite-user', () => ({
   inviteUser: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock('~/utils/classify-destinataire', () => ({
+  classifyDestinataire: vi.fn().mockResolvedValue('CIRCUIT_COURT'),
+}));
+
 vi.mock('~/third-parties/sentry', () => ({
   capture: vi.fn(),
   captureException: vi.fn(),
@@ -27,6 +32,8 @@ vi.mock('~/third-parties/sentry', () => ({
 // vitest.setup.ts ne mocke pas entity.create ni user.create, utilisés par POST /partenaire
 (prisma.entity as any).create = vi.fn();
 (prisma.user as any).create = vi.fn();
+(prisma.entity as any).update = vi.fn();
+(prisma.user as any).update = vi.fn();
 
 const app = express();
 app.use(express.json());
@@ -52,6 +59,7 @@ const PARTENAIRE_TYPES = [
   EntityTypes.ASSOCIATION_CARITATIVE,
   EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
   EntityTypes.CONSOMMATEUR_FINAL,
+  EntityTypes.CIRCUIT_COURT,
 ];
 
 describe('GET /entite/partenaires', () => {
@@ -120,7 +128,8 @@ describe('GET /entite/partenaires', () => {
 describe('POST /entite/partenaire', () => {
   const validBody = {
     raison_sociale: 'Boucherie Martin',
-    type: EntityTypes.COMMERCE_DE_DETAIL,
+    particulier: false,
+    qualite_du_destinataire: 'boucherie',
     address_ligne_1: '12 rue du Commerce',
     address_ligne_2: '',
     code_postal: '75015',
@@ -170,6 +179,7 @@ describe('POST /entite/partenaire', () => {
           EntityTypes.ASSOCIATION_CARITATIVE,
           EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
           EntityTypes.CONSOMMATEUR_FINAL,
+          EntityTypes.CIRCUIT_COURT,
         ],
       },
       siret: '12345678900012',
@@ -237,6 +247,7 @@ describe('POST /entite/partenaire', () => {
           EntityTypes.ASSOCIATION_CARITATIVE,
           EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
           EntityTypes.CONSOMMATEUR_FINAL,
+          EntityTypes.CIRCUIT_COURT,
         ],
       },
       raison_sociale: { equals: 'boucherie MARTIN', mode: 'insensitive' },
@@ -340,37 +351,96 @@ describe('POST /entite/partenaire', () => {
     expect(inviteUser).not.toHaveBeenCalled();
   });
 
-  test('nouveau collecteur pro → entité COLLECTEUR_PRO et représentant avec le seul rôle COLLECTEUR_PRO', async () => {
+  function mockCreation(entityId: string) {
     vi.mocked(prisma.entity.findFirst).mockResolvedValueOnce(null).mockResolvedValueOnce(null);
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
     vi.mocked(prisma.entity.create).mockImplementation((async ({ data }: any) => ({
-      id: 'collecteur-created',
+      id: entityId,
       ...data,
     })) as any);
-    vi.mocked(prisma.user.create).mockImplementation((async ({ data }: any) => ({ ...data })) as any);
+    vi.mocked(prisma.user.create).mockImplementation((async ({ data }: any) => ({
+      ...data,
+      id: 'owner-1',
+    })) as any);
+    vi.mocked(prisma.entity.update).mockImplementation((async ({ data }: any) => ({
+      id: entityId,
+      nom_d_usage: 'Boucherie Martin',
+      qualite_du_destinataire: 'boucherie',
+      ...data,
+    })) as any);
+  }
 
+  test('professionnel → créé en CIRCUIT_COURT, puis classé par Albert sans faire attendre le chasseur', async () => {
+    mockCreation('pro-created');
+    vi.mocked(classifyDestinataire).mockResolvedValueOnce(EntityTypes.COMMERCE_DE_DETAIL);
+
+    const res = await authed(request(app).post('/entite/partenaire').send(validBody));
+
+    expect(res.status).toBe(200);
+    const created = vi.mocked(prisma.entity.create).mock.calls[0][0].data;
+    expect(created.type).toBe(EntityTypes.CIRCUIT_COURT);
+    expect(created.qualite_du_destinataire).toBe('boucherie');
+    expect(vi.mocked(prisma.user.create).mock.calls[0][0].data.roles).toEqual([UserRoles.CIRCUIT_COURT]);
+    expect(res.body.data.entity.type).toBe(EntityTypes.CIRCUIT_COURT);
+
+    await vi.waitFor(() => expect(sendEmail).toHaveBeenCalledTimes(1));
+    expect(classifyDestinataire).toHaveBeenCalledWith({
+      raisonSociale: 'Boucherie Martin',
+      qualiteDuDestinataire: 'boucherie',
+    });
+    expect(vi.mocked(prisma.entity.update).mock.calls[0][0]).toEqual({
+      where: { id: 'pro-created' },
+      data: { type: EntityTypes.COMMERCE_DE_DETAIL },
+    });
+    // le représentant garde un seul rôle, égal au type de son entité
+    expect(vi.mocked(prisma.user.update).mock.calls[0][0]).toEqual({
+      where: { id: 'owner-1' },
+      data: { roles: [UserRoles.COMMERCE_DE_DETAIL] },
+    });
+    const email = vi.mocked(sendEmail).mock.calls[0][0] as any;
+    expect(email.subject).toBe('Nouveau partenaire pré-enregistré dans Zacharie');
+    expect(email.text).toContain('boucherie');
+    expect(email.text).toContain(EntityTypes.COMMERCE_DE_DETAIL);
+  });
+
+  test('professionnel non classé par Albert → reste CIRCUIT_COURT, l’équipe est prévenue', async () => {
+    mockCreation('pro-created');
+    vi.mocked(classifyDestinataire).mockResolvedValueOnce(EntityTypes.CIRCUIT_COURT);
+
+    await authed(request(app).post('/entite/partenaire').send(validBody)).expect(200);
+
+    await vi.waitFor(() => expect(sendEmail).toHaveBeenCalledTimes(1));
+    expect(prisma.entity.update).not.toHaveBeenCalled();
+    expect(prisma.user.update).not.toHaveBeenCalled();
+    expect((vi.mocked(sendEmail).mock.calls[0][0] as any).text).toContain(EntityTypes.CIRCUIT_COURT);
+  });
+
+  test('professionnel sans qualité du destinataire → 400, rien n’est créé', async () => {
     const res = await authed(
       request(app)
         .post('/entite/partenaire')
-        .send({ ...validBody, type: EntityTypes.COLLECTEUR_PRO })
+        .send({ ...validBody, qualite_du_destinataire: '  ' })
     );
 
-    expect(res.status).toBe(200);
-    expect(vi.mocked(prisma.entity.create).mock.calls[0][0].data.type).toBe(EntityTypes.COLLECTEUR_PRO);
-    expect(vi.mocked(prisma.user.create).mock.calls[0][0].data.roles).toEqual([UserRoles.COLLECTEUR_PRO]);
-    expect(inviteUser).toHaveBeenCalledTimes(1);
-    const relations = vi.mocked(prisma.entityAndUserRelations.create).mock.calls.map((call) => call[0].data);
-    expect(relations).toEqual([
-      expect.objectContaining({
-        entity_id: 'collecteur-created',
-        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-        status: EntityRelationStatus.ADMIN,
-      }),
-      {
-        owner_id: regularUser.id,
-        entity_id: 'collecteur-created',
-        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-      },
-    ]);
+    expect(res.status).toBe(400);
+    expect(prisma.entity.create).not.toHaveBeenCalled();
+  });
+
+  test('particulier → CONSOMMATEUR_FINAL directement, sans passer par Albert', async () => {
+    mockCreation('particulier-created');
+    const { qualite_du_destinataire: _qualite, ...particulierBody } = validBody;
+
+    await authed(
+      request(app)
+        .post('/entite/partenaire')
+        .send({ ...particulierBody, particulier: true, siret: '', raison_sociale: 'Paul Martin' })
+    ).expect(200);
+
+    const created = vi.mocked(prisma.entity.create).mock.calls[0][0].data;
+    expect(created.type).toBe(EntityTypes.CONSOMMATEUR_FINAL);
+    expect(created.qualite_du_destinataire).toBeNull();
+    expect(vi.mocked(prisma.user.create).mock.calls[0][0].data.roles).toEqual([UserRoles.CONSOMMATEUR_FINAL]);
+    expect(classifyDestinataire).not.toHaveBeenCalled();
+    expect(sendEmail).toHaveBeenCalledTimes(1);
   });
 });

@@ -19,6 +19,7 @@ const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
   [EntityTypes.ASSOCIATION_CARITATIVE]: {},
   [EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF]: {},
   [EntityTypes.CONSOMMATEUR_FINAL]: {},
+  [EntityTypes.CIRCUIT_COURT]: {},
   [EntityTypes.ETG]: {},
   [EntityTypes.SVI]: {},
   [EntityTypes.LABORATOIRE]: {},
@@ -125,6 +126,17 @@ export default function CircuitCourtOnboardingEntreprise() {
                 selectLabel="Cherchez un autre Repas de Chasse ou Associatif"
                 allEntitiesById={allEntitiesByTypeAndId[EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF]}
                 userEntitiesById={userEntitiesByTypeAndId[EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF]}
+              />
+            )}
+            {user.roles.includes(UserRoles.CIRCUIT_COURT) && (
+              <ListAndSelectEntities
+                formId="onboarding-etape-2-circuit-court-data"
+                setRefreshKey={setRefreshKey}
+                refreshKey={refreshKey}
+                sectionLabel="Mon entreprise"
+                selectLabel="Cherchez une autre entreprise"
+                allEntitiesById={allEntitiesByTypeAndId[EntityTypes.CIRCUIT_COURT]}
+                userEntitiesById={userEntitiesByTypeAndId[EntityTypes.CIRCUIT_COURT]}
               />
             )}
             <div className="mb-6 bg-white md:shadow-sm">
