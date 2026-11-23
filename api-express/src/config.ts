@@ -44,7 +44,10 @@ const APP_URL = IS_TEST ? 'http://localhost:3290' : VITE_APP_URL;
 // En dev, le factice ne sert que sans PROCONNECT_ISSUER.
 // En dev, un admin peut désactiver ProConnect pour accéder aux routes /admin sans OIDC.
 // Ignoré en staging/production/test (le mock e2e reste actif indépendamment).
-const PROCONNECT_ADMIN_DISABLED = IS_DEV && process.env.PROCONNECT_ADMIN_DISABLED === 'true';
+// Branche du pentest EY uniquement (PR #940, à ne pas merger) : ProConnect désactivé sur la review app,
+// les pentesteurs n'ont pas de compte ProConnect.
+const PROCONNECT_ADMIN_DISABLED =
+  IS_REVIEW_APP || (IS_DEV && process.env.PROCONNECT_ADMIN_DISABLED === 'true');
 
 const PROCONNECT_MOCK_ENABLED = IS_TEST || (IS_DEV && !process.env.PROCONNECT_ISSUER);
 const PROCONNECT_ISSUER = PROCONNECT_MOCK_ENABLED
