@@ -268,7 +268,12 @@ function App() {
             originWhitelist={['*']}
             pullToRefreshEnabled
             allowsBackForwardNavigationGestures
-            onContentProcessDidTerminate={() => ref.current?.reload()}
+            // La page s'est arrêtée (mémoire) : aucun fichier n'est utilisé, on peut installer la nouvelle
+            // version avant de recharger. Sinon l'app, gardée en mémoire des semaines (iPad, Mac), recharge
+            // toujours la version téléchargée à son lancement.
+            onContentProcessDidTerminate={() => {
+              checkAndDownloadSpa().finally(() => ref.current?.reload());
+            }}
             onMessage={onMessage}
             onShouldStartLoadWithRequest={(request: any) => {
               const stayInWebView = request.url.startsWith(spaUrl);
