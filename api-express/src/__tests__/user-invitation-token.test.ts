@@ -6,7 +6,7 @@ import userRouter from '~/controllers/user';
 import { sendError } from '~/middlewares/errors';
 import prisma from '~/prisma';
 import { inviteUser } from '~/utils/invite-user';
-import { sendEmail } from '~/third-parties/brevo';
+import { sendEmail, sendTemplateEmail } from '~/third-parties/brevo';
 
 vi.mock('~/third-parties/brevo', () => ({
   createBrevoContact: vi.fn().mockResolvedValue(undefined),
@@ -133,5 +133,48 @@ describe('inviteUser', () => {
     await inviteUser(user as any, me as any);
     expect(prisma.password.upsert).not.toHaveBeenCalled();
     expect(vi.mocked(sendEmail).mock.calls[0][0].text).not.toContain('invitation-token=');
+  });
+});
+
+describe('POST /user/forget-password', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(user as any);
+  });
+
+  function forgetPassword() {
+    return request(app).post('/user/forget-password').send({ email });
+  }
+
+  test("n'envoie pas de lien et ne touche pas au jeton d'invitation d'un compte sans mot de passe", async () => {
+    vi.mocked(prisma.password.findUnique).mockResolvedValue(
+      passwordRow({ password: '', sentAt: new Date() }) as any
+    );
+    const res = await forgetPassword().expect(200);
+    expect(res.body.message).toContain('Si cet email existe');
+    expect(prisma.password.update).not.toHaveBeenCalled();
+    expect(prisma.password.upsert).not.toHaveBeenCalled();
+    expect(sendTemplateEmail).not.toHaveBeenCalled();
+  });
+
+  test("n'envoie pas de lien à un compte sans ligne de mot de passe", async () => {
+    vi.mocked(prisma.password.findUnique).mockResolvedValue(null);
+    await forgetPassword().expect(200);
+    expect(prisma.password.upsert).not.toHaveBeenCalled();
+    expect(sendTemplateEmail).not.toHaveBeenCalled();
+  });
+
+  test('envoie un lien de réinitialisation à un compte qui a un mot de passe', async () => {
+    vi.mocked(prisma.password.findUnique).mockResolvedValue(
+      passwordRow({ password: 'hash-existant', sentAt: new Date() }) as any
+    );
+    await forgetPassword().expect(200);
+    expect(prisma.password.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { user_id: user.id },
+        data: expect.objectContaining({ reset_password_token: expect.any(String) }),
+      })
+    );
+    expect(sendTemplateEmail).toHaveBeenCalledTimes(1);
   });
 });
