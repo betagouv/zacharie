@@ -2,6 +2,8 @@ import { describe, test, expect, vi, beforeEach } from 'vitest';
 import prisma from '~/prisma';
 import { sendEmail, sendTemplateEmail } from '~/third-parties/brevo';
 import { sendExpoPushNotification } from '~/third-parties/expo-push';
+import webpush from 'web-push';
+import * as Sentry from '@sentry/node';
 import queueSendNotificationToUser from '~/service/notifications';
 
 // IS_TEST court-circuite la branche EMAIL avant l'envoi : on le force à false pour tester le vrai chemin.
@@ -11,7 +13,16 @@ vi.mock('~/third-parties/brevo', () => ({
   sendEmail: vi.fn().mockResolvedValue({ messageId: 'msg-1' }),
   sendTemplateEmail: vi.fn().mockResolvedValue({ messageId: 'msg-1' }),
 }));
-vi.mock('web-push', () => ({ default: { sendNotification: vi.fn() } }));
+vi.mock('web-push', () => {
+  class WebPushError extends Error {
+    statusCode: number;
+    constructor(message: string, statusCode: number) {
+      super(message);
+      this.statusCode = statusCode;
+    }
+  }
+  return { default: { sendNotification: vi.fn(), WebPushError } };
+});
 vi.mock('~/third-parties/expo-push', () => ({
   sendExpoPushNotification: vi.fn().mockResolvedValue({ sent: 1, tokensToRemove: [] }),
 }));
@@ -224,5 +235,56 @@ describe('sendNotificationToUser — canaux push et email', () => {
 
     expect(prisma.$executeRaw).toHaveBeenCalled();
     expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+});
+
+describe('sendNotificationToUser — web push', () => {
+  const webPushUser = {
+    ...user,
+    notifications: ['PUSH'],
+    web_push_tokens: [
+      '{"endpoint":"https://push.example/expired"}',
+      '{"endpoint":"https://push.example/ok"}',
+    ],
+  } as any;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(prisma.notificationLog.findFirst).mockResolvedValue(null as any);
+    vi.mocked(prisma.notificationLog.create).mockResolvedValue({} as any);
+  });
+
+  // Un abonnement expiré (410) est retiré sans remonter d'erreur, l'autre reçoit le push.
+  test('retire un abonnement expiré sans remonter d’erreur à Sentry', async () => {
+    vi.mocked(webpush.sendNotification).mockImplementation((async (subscription: any) => {
+      if (subscription.endpoint.endsWith('expired')) {
+        throw new (webpush.WebPushError as any)('Received unexpected response code', 410);
+      }
+      return { statusCode: 201 };
+    }) as any);
+    const captureSpy = vi.spyOn(Sentry, 'captureException');
+
+    await queueSendNotificationToUser({ ...notification, user: webPushUser });
+
+    expect(webpush.sendNotification).toHaveBeenCalledTimes(2);
+    expect(prisma.$executeRaw).toHaveBeenCalledTimes(1);
+    expect(prisma.user.update).not.toHaveBeenCalled();
+    expect(prisma.notificationLog.create).toHaveBeenCalledTimes(1);
+    expect(captureSpy).not.toHaveBeenCalled();
+  });
+
+  test('remonte les autres erreurs à Sentry avec le statusCode, sans retirer l’abonnement', async () => {
+    vi.mocked(webpush.sendNotification).mockRejectedValue(
+      new (webpush.WebPushError as any)('Received unexpected response code', 500)
+    );
+    const captureSpy = vi.spyOn(Sentry, 'captureException');
+
+    await queueSendNotificationToUser({ ...notification, user: webPushUser });
+
+    expect(prisma.$executeRaw).not.toHaveBeenCalled();
+    expect(captureSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ extra: expect.objectContaining({ statusCode: 500 }) })
+    );
   });
 });
