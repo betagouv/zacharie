@@ -7,6 +7,9 @@ import { cookieOptions, logoutCookieOptions, SESSION_COOKIE_NAME } from '~/utils
 // donc envoyé à chaque sous-domaine. On recopie sa valeur dans le cookie host-only de l'API puis on l'efface :
 // l'utilisateur reste connecté et ne perd pas ses données locales non synchronisées.
 const LEGACY_COOKIE_NAME = 'zacharie_express_jwt';
+// Le cookie d'état ProConnect garde son nom mais devient host-only : une ancienne copie posée sur tout
+// le domaine serait lue avant la nouvelle au retour de ProConnect et ferait échouer la connexion admin.
+const LEGACY_PROCONNECT_STATE_COOKIE = 'zacharie_proconnect';
 
 function legacyCookieDomain() {
   if (IS_PRODUCTION) return '.zacharie.beta.gouv.fr';
@@ -16,8 +19,15 @@ function legacyCookieDomain() {
 
 export function migrateLegacySessionCookie(req: Request, res: Response, next: NextFunction) {
   const domain = legacyCookieDomain();
+  if (!domain) {
+    next();
+    return;
+  }
+  if (req.cookies?.[LEGACY_PROCONNECT_STATE_COOKIE]) {
+    res.clearCookie(LEGACY_PROCONNECT_STATE_COOKIE, { ...logoutCookieOptions(req), domain });
+  }
   const legacyToken = req.cookies?.[LEGACY_COOKIE_NAME];
-  if (!domain || !legacyToken) {
+  if (!legacyToken) {
     next();
     return;
   }
