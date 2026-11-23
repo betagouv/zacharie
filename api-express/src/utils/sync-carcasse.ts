@@ -153,11 +153,10 @@ export async function syncCarcasse(
     scope.grant(zacharie_carcasse_id);
   }
 
-  // L'examinateur initial et le premier détenteur portés par la carcasse sont des copies de la
-  // fiche. Pour un détenteur aval, on prend la valeur de la fiche plutôt que celle du corps de la
-  // requête : sinon il s'attribue l'examen initial et, avec lui, l'approbation des demandes de
-  // modification qui le désignent. Il peut toujours ajouter une carcasse manquante — elle hérite
-  // simplement de la fiche.
+  // Le premier détenteur porté par la carcasse est une copie de la fiche. Pour un détenteur aval, on
+  // prend la valeur de la fiche plutôt que celle du corps de la requête : sinon il s'inscrit comme
+  // premier détenteur. Il peut toujours ajouter une carcasse manquante — elle hérite simplement de la
+  // fiche. L'examinateur initial, lui, est toujours repris de la fiche, quel que soit l'auteur.
   const canWriteOwnership = scope.isFeiOwner(existingFei);
 
   // Chaque groupe de champs appartient à un rôle. Pour un autre utilisateur, la valeur du corps est
@@ -295,9 +294,8 @@ export async function syncCarcasse(
       : existingFei.examinateur_initial_offline;
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_initial_user_id)) {
-    nextCarcasse.examinateur_initial_user_id = canWriteOwnership
-      ? body[Prisma.CarcasseScalarFieldEnum.examinateur_initial_user_id]
-      : existingFei.examinateur_initial_user_id;
+    // Copie de la fiche, que la synchro ne modifie jamais (voir `sync-fei`).
+    nextCarcasse.examinateur_initial_user_id = existingFei.examinateur_initial_user_id;
   }
   if (
     canWriteApprobationExaminateur &&
