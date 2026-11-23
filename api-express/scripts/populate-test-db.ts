@@ -816,6 +816,27 @@ Christine
       });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for premier détenteur)`);
     }
+    // Même fiche que PREMIER_DETENTEUR, mais le premier détenteur est « Association de chasseurs »
+    // (dont premier-detenteur@ est admin) : l'association peut garder les carcasses pour un repas de chasse.
+    if ((role as string) === 'PREMIER_DETENTEUR_ASSOCIATION') {
+      const fei = await prisma.fei.create({
+        data: {
+          ...feiValidatedByExaminateur,
+          premier_detenteur_entity_id: '5b916331-632e-4c29-be2e-12a834e92688',
+          premier_detenteur_name_cache: 'Association de chasseurs',
+        },
+      });
+      const carcasses = await prisma.carcasse.createMany({
+        data: getCarcasses(fei, {
+          ...ownershipValidatedByExaminateur,
+          current_owner_entity_id: '5b916331-632e-4c29-be2e-12a834e92688',
+          current_owner_entity_name_cache: 'Association de chasseurs',
+        }),
+      });
+      console.log(
+        `Fei ${fei.numero} created with ${carcasses.count} carcasses (premier détenteur = association)`
+      );
+    }
     // Même fiche que PREMIER_DETENTEUR, mais premier-detenteur@ n'a encore enregistré aucun destinataire
     if ((role as string) === 'PREMIER_DETENTEUR_SANS_DESTINATAIRE') {
       const fei = await prisma.fei.create({ data: feiValidatedByExaminateur });

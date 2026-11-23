@@ -127,6 +127,7 @@ function FEIChasseurLoaded() {
   const [showBloc1Errors, setShowBloc1Errors] = useState(false);
   const [showBloc2Errors, setShowBloc2Errors] = useState(false);
   const destinataireRef = useRef<DestinatairePremierDetenteurHandle | null>(null);
+  const [cloture, setCloture] = useState(false);
 
   const [carcassesNotReady, atLeastOneCarcasseWithAnomalie, atLeastOneAnomalieGrave] = useMemo(() => {
     const notReady = [];
@@ -849,6 +850,7 @@ function FEIChasseurLoaded() {
                   <DestinataireSelectPremierDetenteur
                     canEdit={canEditAsPremierDetenteur}
                     submitRef={destinataireRef}
+                    onClotureChange={setCloture}
                     hideSubmitButton={canEdit}
                   />
                 </div>
@@ -875,14 +877,14 @@ function FEIChasseurLoaded() {
                   {canEdit && !fei.consommateur_final_usage_domestique && (
                     <div className="flex w-full justify-end">
                       <Button
-                        iconId="fr-icon-send-plane-line"
+                        iconId={cloture ? 'fr-icon-check-line' : 'fr-icon-send-plane-line'}
                         disabled={submitIsDisabled}
                         onClick={(e) => {
                           e.preventDefault();
                           handleTransmettre();
                         }}
                       >
-                        Transmettre
+                        {cloture ? 'Clôturer' : 'Transmettre'}
                       </Button>
                     </div>
                   )}
