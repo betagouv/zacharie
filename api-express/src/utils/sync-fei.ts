@@ -8,6 +8,7 @@ import type { SyncScope } from '~/utils/sync-scope';
 import { SyncRejectedError } from '~/utils/sync-errors';
 import { assertNoNewDeletedEntity } from '~/utils/deleted-entities';
 import { isStaleWrite, nextVersion } from '~/utils/sync-version';
+import { isAllowedPremierDetenteurUserId } from '~/utils/premier-detenteur-user-id';
 
 export interface SaveFeiResult {
   savedFei: Fei;
@@ -230,7 +231,15 @@ export async function syncFei(
 
   */
 
-  if (canWriteOwnership && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id)) {
+  if (
+    canWriteOwnership &&
+    body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id) &&
+    (await isAllowedPremierDetenteurUserId(
+      body.premier_detenteur_user_id,
+      [existingFei?.premier_detenteur_user_id],
+      user
+    ))
+  ) {
     nextFei.premier_detenteur_user_id = body.premier_detenteur_user_id
       ? sanitize(body.premier_detenteur_user_id as string)
       : null;

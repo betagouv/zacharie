@@ -21,6 +21,7 @@ import { SyncRejectedError } from '~/utils/sync-errors';
 import { assertNoNewDeletedEntity } from '~/utils/deleted-entities';
 import { carcasseHasResultatTrichineNegatif, TRICHINE_ESPECE_CONCERNEE } from '~/utils/trichine';
 import { isStaleWrite, nextVersion } from '~/utils/sync-version';
+import { isAllowedPremierDetenteurUserId } from '~/utils/premier-detenteur-user-id';
 import { capture } from '~/third-parties/sentry';
 
 export interface SaveCarcasseResult {
@@ -472,9 +473,16 @@ export async function syncCarcasse(
       : existingFei.premier_detenteur_offline;
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_user_id)) {
-    nextCarcasse.premier_detenteur_user_id = canWriteOwnership
-      ? body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_user_id]
-      : existingFei.premier_detenteur_user_id;
+    const value = body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_user_id];
+    nextCarcasse.premier_detenteur_user_id =
+      canWriteOwnership &&
+      (await isAllowedPremierDetenteurUserId(
+        value,
+        [existingFei.premier_detenteur_user_id, existingCarcasse.premier_detenteur_user_id],
+        user
+      ))
+        ? value
+        : existingFei.premier_detenteur_user_id;
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_entity_id)) {
     nextCarcasse.premier_detenteur_entity_id = canWriteOwnership

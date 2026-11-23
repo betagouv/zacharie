@@ -955,3 +955,44 @@ describe('syncCarcasse — transmission et décision réservées au détenteur e
     expect(data.prev_owner_role).toBe(FeiOwnerRole.PREMIER_DETENTEUR);
   });
 });
+
+describe('syncCarcasse — premier détenteur personne physique', () => {
+  test('un id arbitraire est remplacé par la valeur de la fiche', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
+    vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(baseCarcasse);
+    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(baseCarcasse);
+    vi.mocked(prisma.userRelations.findFirst).mockResolvedValueOnce(null);
+
+    await syncCarcasse(
+      'FEI-1',
+      'ZC-1',
+      { fei_numero: 'FEI-1', premier_detenteur_user_id: 'ARBIT' } as any,
+      chasseur,
+      scope
+    );
+
+    const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
+    expect(updateCall.data).toHaveProperty('premier_detenteur_user_id', 'user-chasseur');
+  });
+
+  test('la valeur de la fiche est acceptée', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce({
+      ...baseFei,
+      premier_detenteur_user_id: 'user-pd',
+    });
+    vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(baseCarcasse);
+    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(baseCarcasse);
+
+    await syncCarcasse(
+      'FEI-1',
+      'ZC-1',
+      { fei_numero: 'FEI-1', premier_detenteur_user_id: 'user-pd' } as any,
+      chasseur,
+      scope
+    );
+
+    const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
+    expect(updateCall.data).toHaveProperty('premier_detenteur_user_id', 'user-pd');
+    expect(prisma.userRelations.findFirst).not.toHaveBeenCalled();
+  });
+});
