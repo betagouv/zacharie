@@ -118,12 +118,11 @@ router.get(
     const userIds = new Set<string>();
     const entityIds = new Set<string>();
 
+    // Seulement les utilisateurs que le serveur a contrôlés : les colonnes current/next/prev_owner_user_id
+    // viennent du client sans contrôle, elles exposeraient les coordonnées de n'importe quel utilisateur.
     for (const carcasse of carcasses) {
       if (carcasse.examinateur_initial_user_id) userIds.add(carcasse.examinateur_initial_user_id);
       if (carcasse.premier_detenteur_user_id) userIds.add(carcasse.premier_detenteur_user_id);
-      if (carcasse.current_owner_user_id) userIds.add(carcasse.current_owner_user_id);
-      if (carcasse.next_owner_user_id) userIds.add(carcasse.next_owner_user_id);
-      if (carcasse.prev_owner_user_id) userIds.add(carcasse.prev_owner_user_id);
       if (carcasse.svi_user_id) userIds.add(carcasse.svi_user_id);
       if (carcasse.created_by_user_id) userIds.add(carcasse.created_by_user_id);
       if (carcasse.premier_detenteur_entity_id) entityIds.add(carcasse.premier_detenteur_entity_id);
