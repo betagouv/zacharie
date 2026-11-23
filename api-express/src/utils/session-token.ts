@@ -20,3 +20,14 @@ export function hasValidProConnect(payload: SessionTokenPayload) {
   const nowInSeconds = Math.floor(Date.now() / 1000);
   return nowInSeconds - payload.proconnect_at < PROCONNECT_MAX_AGE;
 }
+
+// Un jeton émis avant le dernier changement de mot de passe est refusé : changer son mot de passe coupe les autres sessions.
+// `iat` est en secondes : un jeton émis dans la même seconde que le changement (celui de la session courante) reste valide.
+export function isTokenRevokedByPasswordChange(
+  payload: { iat?: number },
+  passwordChangedAt: Date | null | undefined
+) {
+  if (!passwordChangedAt) return false;
+  if (!payload.iat) return true;
+  return payload.iat < Math.floor(passwordChangedAt.getTime() / 1000);
+}
