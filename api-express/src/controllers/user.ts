@@ -758,6 +758,7 @@ router.post(
         where: { user_id: password.user_id },
         data: {
           password: hashedPassword,
+          password_changed_at: new Date(),
           reset_password_token: null,
           reset_password_last_email_sent_at: null,
         },
@@ -858,6 +859,7 @@ router.post(
         where: { user_id: user.id },
         data: {
           password: await hashPassword(newPassword),
+          password_changed_at: new Date(),
           reset_password_token: null,
           reset_password_last_email_sent_at: null,
         },
@@ -878,7 +880,7 @@ router.post(
         text: `Bonjour, le mot de passe de votre compte Zacharie vient d'être modifié. Si vous n'êtes pas à l'origine de ce changement, réinitialisez votre mot de passe depuis ${VITE_APP_URL}/app/connexion/mot-de-passe-oublie et contactez-nous à contact@zacharie.beta.gouv.fr`,
       });
 
-      // on renouvelle le token de la session courante, l'ancien reste valide jusqu'à son expiration
+      // nouveau jeton pour la session courante : les jetons émis avant le changement sont refusés
       const token = jwt.sign({ userId: user.id }, SECRET, {
         expiresIn: JWT_MAX_AGE,
       });

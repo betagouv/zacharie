@@ -5,9 +5,13 @@ import prisma from '~/prisma';
 import { ApiKey, User } from '@prisma/client';
 import type { Request } from 'express';
 import { SECRET, PROCONNECT_ADMIN_DISABLED } from '~/config';
-import { hasValidProConnect, type SessionTokenPayload } from '~/utils/session-token';
+import {
+  hasValidProConnect,
+  isTokenRevokedByPasswordChange,
+  type SessionTokenPayload,
+} from '~/utils/session-token';
 
-type JwtPayload = SessionTokenPayload;
+type JwtPayload = SessionTokenPayload & { iat?: number };
 
 // Code renvoyé (403) quand un admin a une session valide mais pas d'authentification ProConnect récente
 export const PROCONNECT_REQUIRED = 'PROCONNECT_REQUIRED';
@@ -59,6 +63,7 @@ passport.use(
         // console.log('Attempting to find user with ID:', jwt_payload.userId);
         const user = await prisma.user.findUnique({
           where: { id: jwt_payload.userId },
+          include: { Password: { select: { password_changed_at: true } } },
         });
 
         if (user) {
@@ -68,8 +73,12 @@ passport.use(
             // console.log('User has been deleted');
             return done(null, null);
           }
+          const { Password, ...userWithoutPassword } = user;
+          if (isTokenRevokedByPasswordChange(jwt_payload, Password?.password_changed_at)) {
+            return done(null, null);
+          }
           // console.log('Authentication successful');
-          return done(null, user);
+          return done(null, userWithoutPassword);
         } else {
           // console.log('User not found in database');
           return done(null, null);
@@ -106,9 +115,15 @@ passport.use(
 
         const user = await prisma.user.findUnique({
           where: { id: jwt_payload.userId, isZacharieAdmin: true, deleted_at: null },
+          include: { Password: { select: { password_changed_at: true } } },
         });
 
         if (!user) {
+          return done(null, null);
+        }
+
+        const { Password, ...userWithoutPassword } = user;
+        if (isTokenRevokedByPasswordChange(jwt_payload, Password?.password_changed_at)) {
           return done(null, null);
         }
 
@@ -116,7 +131,7 @@ passport.use(
           return done(null, false, { code: PROCONNECT_REQUIRED });
         }
 
-        return done(null, user);
+        return done(null, userWithoutPassword);
       } catch (error) {
         // console.error('Error in Passport strategy:', error);
         return done(error as Error, null);

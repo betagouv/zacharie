@@ -205,6 +205,8 @@ model Password {
   password                          String
   reset_password_last_email_sent_at DateTime?
   reset_password_token              String?
+  // date du dernier changement ou de la dernière réinitialisation du mot de passe : tout jeton de session émis avant est refusé
+  password_changed_at               DateTime?
   created_at                        DateTime  @default(now())
   updated_at                        DateTime  @default(now()) @updatedAt
   deleted_at                        DateTime?
