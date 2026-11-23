@@ -349,3 +349,35 @@ describe('Pagination + delta-fetch contract', () => {
     expect(pageQuery().sql).toContain('c.deleted_at IS NULL');
   });
 });
+
+describe('users renvoyés', () => {
+  test('un id arbitraire dans current/next/prev_owner_user_id ne sort pas dans users', async () => {
+    vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([{ zacharie_carcasse_id: 'ZC-1' }] as any);
+    vi.mocked(prisma.carcasse.findMany).mockResolvedValueOnce([
+      {
+        zacharie_carcasse_id: 'ZC-1',
+        fei_numero: 'FEI-1',
+        examinateur_initial_user_id: chasseurUser.id,
+        premier_detenteur_user_id: 'user-pd',
+        created_by_user_id: chasseurUser.id,
+        svi_user_id: null,
+        current_owner_user_id: 'ARBI1',
+        next_owner_user_id: 'ARBI2',
+        prev_owner_user_id: 'ARBI3',
+      } as any,
+    ]);
+    (prisma.carcasseIntermediaire as any).findMany.mockResolvedValue([
+      { intermediaire_user_id: 'user-etg', intermediaire_entity_id: 'entity-1' },
+    ]);
+
+    const res = await authed(request(app).get(`/carcasse?${DEFAULT_QS}`), chasseurUser);
+    expect(res.status).toBe(200);
+
+    const userWhere: any = vi.mocked(prisma.user.findMany).mock.calls[0][0]!.where;
+    const ids: string[] = userWhere.id.in;
+    expect(ids).toEqual(expect.arrayContaining([chasseurUser.id, 'user-pd', 'user-etg']));
+    expect(ids).not.toContain('ARBI1');
+    expect(ids).not.toContain('ARBI2');
+    expect(ids).not.toContain('ARBI3');
+  });
+});

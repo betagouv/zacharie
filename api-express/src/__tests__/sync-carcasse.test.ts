@@ -832,3 +832,49 @@ describe('syncCarcasse — suppression', () => {
     expect(prisma.carcasse.update).not.toHaveBeenCalled();
   });
 });
+
+describe('syncCarcasse — ids utilisateur examinateur / premier détenteur', () => {
+  test('un id arbitraire est remplacé par la valeur de la fiche', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
+    vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(baseCarcasse);
+    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(baseCarcasse);
+    vi.mocked(prisma.userRelations.findFirst).mockResolvedValueOnce(null);
+
+    await syncCarcasse(
+      'FEI-1',
+      'ZC-1',
+      {
+        fei_numero: 'FEI-1',
+        examinateur_initial_user_id: 'ARBIT1',
+        premier_detenteur_user_id: 'ARBIT2',
+      } as any,
+      chasseur,
+      scope
+    );
+
+    const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
+    expect(updateCall.data).toHaveProperty('examinateur_initial_user_id', 'user-chasseur');
+    expect(updateCall.data).toHaveProperty('premier_detenteur_user_id', 'user-chasseur');
+  });
+
+  test('la valeur de la fiche est acceptée', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce({
+      ...baseFei,
+      premier_detenteur_user_id: 'user-pd',
+    });
+    vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(baseCarcasse);
+    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(baseCarcasse);
+
+    await syncCarcasse(
+      'FEI-1',
+      'ZC-1',
+      { fei_numero: 'FEI-1', premier_detenteur_user_id: 'user-pd' } as any,
+      chasseur,
+      scope
+    );
+
+    const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
+    expect(updateCall.data).toHaveProperty('premier_detenteur_user_id', 'user-pd');
+    expect(prisma.userRelations.findFirst).not.toHaveBeenCalled();
+  });
+});
