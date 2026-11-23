@@ -1583,23 +1583,26 @@ router.get(
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
     const user = req.user!;
-    const userCCGs = (
-      await prisma.entityAndUserRelations.findMany({
-        where: {
-          owner_id: user.id,
-          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-          EntityRelatedWithUser: {
-            type: EntityTypes.CCG,
-          },
-          deleted_at: null,
+    const relations = await prisma.entityAndUserRelations.findMany({
+      where: {
+        owner_id: user.id,
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        EntityRelatedWithUser: {
+          type: EntityTypes.CCG,
         },
-        include: {
-          EntityRelatedWithUser: true,
-        },
-      })
-    ).map((relation) => relation.EntityRelatedWithUser) satisfies Array<Entity>;
+        deleted_at: null,
+      },
+      include: {
+        EntityRelatedWithUser: true,
+      },
+    });
+    const userCCGs = relations.map((relation) => relation.EntityRelatedWithUser) satisfies Array<Entity>;
+    // seul le créateur d'un CCG pré-enregistré (ADMIN) peut le modifier
+    const userCCGsAdminIds = relations
+      .filter((relation) => relation.status === EntityRelationStatus.ADMIN)
+      .map((relation) => relation.entity_id);
 
-    res.status(200).send({ ok: true, data: { userCCGs }, error: null });
+    res.status(200).send({ ok: true, data: { userCCGs, userCCGsAdminIds }, error: null });
   })
 );
 

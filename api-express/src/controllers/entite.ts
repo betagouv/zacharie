@@ -544,7 +544,10 @@ router.get(
 
     res.status(200).send({
       ok: true,
-      data: { entity: relation.EntityRelatedWithUser },
+      data: {
+        entity: relation.EntityRelatedWithUser,
+        canEdit: relation.status === EntityRelationStatus.ADMIN,
+      },
       error: '',
     });
   })
@@ -562,6 +565,8 @@ router.put(
         owner_id: user.id,
         entity_id: entityId,
         relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        // seul le créateur du CCG (ADMIN) le modifie : les chasseurs rattachés par son numéro n'ont pas de statut
+        status: EntityRelationStatus.ADMIN,
         deleted_at: null,
         EntityRelatedWithUser: {
           type: EntityTypes.CCG,

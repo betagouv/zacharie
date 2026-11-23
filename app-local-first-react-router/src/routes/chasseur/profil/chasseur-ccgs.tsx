@@ -15,6 +15,7 @@ import type { UserCCGsResponse, UserEntityResponse } from '@api/src/types/respon
 
 export default function MesCCGs() {
   const [userCCGs, setUserCCGs] = useState<Array<Entity>>([]);
+  const [userCCGsAdminIds, setUserCCGsAdminIds] = useState<Array<string>>([]);
   const user = useUser((state) => state.user)!;
 
   // Add this handler for CCG radio buttons
@@ -39,6 +40,7 @@ export default function MesCCGs() {
       .then((res) => {
         if (res.ok && res.data) {
           setUserCCGs(res.data.userCCGs);
+          setUserCCGsAdminIds(res.data.userCCGsAdminIds);
         }
       });
   }
@@ -186,7 +188,7 @@ export default function MesCCGs() {
                           Démarrer la déclaration
                         </a>
                       )}
-                      {isPreregistered && (
+                      {isPreregistered && userCCGsAdminIds.includes(entity.id) && (
                         <Button
                           type="button"
                           priority="tertiary no outline"

@@ -153,3 +153,54 @@ describe('PUT /entite/ccg/:entityId avec un numéro déjà enregistré', () => {
     expect(prisma.entity.update).toHaveBeenCalled();
   });
 });
+
+describe('PUT /entite/ccg/:entityId réservé au créateur du CCG', () => {
+  // relations en base : le créateur (ADMIN) et un chasseur rattaché par le numéro (sans statut)
+  const relations = [
+    {
+      id: 'rel-admin',
+      owner_id: 'user-1',
+      entity_id: 'ccg-pre-enregistre',
+      status: EntityRelationStatus.ADMIN,
+    },
+    {
+      id: 'rel-rattache',
+      owner_id: 'user-2',
+      entity_id: 'ccg-pre-enregistre',
+      status: null as EntityRelationStatus | null,
+    },
+  ];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(prisma.entity.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.entity.update).mockResolvedValue({ id: 'ccg-pre-enregistre' } as any);
+    vi.mocked(prisma.entityAndUserRelations.findFirst).mockImplementation((async (args: any) => {
+      const where = args.where;
+      const relation = relations.find(
+        (r) =>
+          r.owner_id === where.owner_id &&
+          r.entity_id === where.entity_id &&
+          (!('status' in where) || r.status === where.status)
+      );
+      return relation ? { ...relation, EntityRelatedWithUser: { id: 'ccg-pre-enregistre' } } : null;
+    }) as any);
+  });
+
+  test('un chasseur rattaché sans statut ne peut pas renommer le CCG', async () => {
+    const res = await request(app)
+      .put('/entite/ccg/ccg-pre-enregistre')
+      .set('x-test-user', JSON.stringify({ ...chasseur, id: 'user-2' }))
+      .send({ ...body, nom_d_usage: 'Nom piraté' });
+
+    expect(res.status).toBe(403);
+    expect(prisma.entity.update).not.toHaveBeenCalled();
+  });
+
+  test('le créateur (ADMIN) peut toujours modifier le CCG', async () => {
+    const res = await authed(request(app).put('/entite/ccg/ccg-pre-enregistre')).send(body);
+
+    expect(res.status).toBe(200);
+    expect(prisma.entity.update).toHaveBeenCalled();
+  });
+});

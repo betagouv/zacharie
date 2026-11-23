@@ -79,6 +79,7 @@ export interface UserCCGsResponse {
   ok: boolean;
   data: {
     userCCGs: Array<Entity>;
+    userCCGsAdminIds: Array<string>;
   };
   error: string;
 }
