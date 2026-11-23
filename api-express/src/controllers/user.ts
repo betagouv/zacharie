@@ -18,7 +18,7 @@ import {
 import { BrevoTemplateId } from '~/third-parties/brevo-templates';
 import { capture } from '~/third-parties/sentry';
 import createUserId from '~/utils/createUserId';
-import { LOCKOUT_DURATION_MINUTES, MAX_FAILED_ATTEMPTS } from '~/utils/login-lockout';
+import { LOCKOUT_DURATION_MINUTES, LOCKOUT_FAILED_ACTIONS, MAX_FAILED_ATTEMPTS } from '~/utils/login-lockout';
 import { comparePassword, hashPassword } from '~/service/crypto';
 import { userFeiSelect, type UserForFei } from '~/types/user';
 import { apiKeySafeSelect } from '~/types/api-key';
@@ -149,7 +149,7 @@ router.post(
       const recentFailures = await prisma.securityLog.count({
         where: {
           email,
-          action: { startsWith: 'LOGIN_FAILED' },
+          action: LOCKOUT_FAILED_ACTIONS,
           created_at: { gte: lastUnlock ? lastUnlock.created_at : since },
         },
       });

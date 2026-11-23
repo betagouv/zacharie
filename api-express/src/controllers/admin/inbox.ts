@@ -42,6 +42,7 @@ router.get(
               SELECT f.email
               FROM "SecurityLog" f
               WHERE f.action LIKE 'LOGIN_FAILED%'
+                AND f.action <> 'LOGIN_FAILED_ALREADY_LOCKED'
                 AND f.created_at >= (now() AT TIME ZONE 'UTC') - make_interval(mins => ${LOCKOUT_DURATION_MINUTES}::int)
                 AND f.created_at >= COALESCE(
                   (

@@ -35,7 +35,7 @@ import {
 import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
 import { BrevoTemplateId } from '~/third-parties/brevo-templates';
 import { requestCarcassesReload } from '~/utils/carcasses-reload';
-import { LOCKOUT_DURATION_MINUTES, MAX_FAILED_ATTEMPTS } from '~/utils/login-lockout';
+import { LOCKOUT_DURATION_MINUTES, LOCKOUT_FAILED_ACTIONS, MAX_FAILED_ATTEMPTS } from '~/utils/login-lockout';
 
 async function getLockoutInfo(email: string): Promise<AdminUserLockoutInfo> {
   const since = dayjs().subtract(LOCKOUT_DURATION_MINUTES, 'minute').toDate();
@@ -45,10 +45,10 @@ async function getLockoutInfo(email: string): Promise<AdminUserLockoutInfo> {
   });
   const failureSince = lastUnlock ? lastUnlock.created_at : since;
   const recentFailures = await prisma.securityLog.count({
-    where: { email, action: { startsWith: 'LOGIN_FAILED' }, created_at: { gte: failureSince } },
+    where: { email, action: LOCKOUT_FAILED_ACTIONS, created_at: { gte: failureSince } },
   });
   const lastFailure = await prisma.securityLog.findFirst({
-    where: { email, action: { startsWith: 'LOGIN_FAILED' }, created_at: { gte: failureSince } },
+    where: { email, action: LOCKOUT_FAILED_ACTIONS, created_at: { gte: failureSince } },
     orderBy: { created_at: 'desc' },
   });
   const isLocked = recentFailures >= MAX_FAILED_ATTEMPTS;

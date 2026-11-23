@@ -22,6 +22,30 @@ export const authRateLimit = rateLimit({
   },
 });
 
+// Second limiteur, par IP seule : sans lui, une IP peut essayer un mot de passe courant sur des milliers
+// d'emails (le limiteur par email ne la freine jamais). La limite est large car une administration
+// ou une entreprise peut faire passer beaucoup d'utilisateurs par la même IP
+export function createAuthIpRateLimit({ limit, skip }: { limit: number; skip: () => boolean }) {
+  return rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: limit,
+    keyGenerator: (req) => ipKeyGenerator(req.ip ?? ''),
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip,
+    message: {
+      ok: false,
+      error: 'Trop de tentatives, veuillez réessayer dans 15 minutes.',
+      data: null,
+    },
+  });
+}
+
+export const authIpRateLimit = createAuthIpRateLimit({
+  limit: process.env.NODE_ENV === 'production' ? 100 : 10000,
+  skip: () => process.env.NODE_ENV === 'test',
+});
+
 // Les routes /admin sont appelées en rafale par l'interface d'administration (listes, dashboard) :
 // la limite est large, elle sert seulement à freiner un balayage automatisé
 export const adminRateLimit = rateLimit({

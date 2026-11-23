@@ -57,11 +57,16 @@ describe.skipIf(!VITEST_DB_URL)('GET /inbox sur une vraie base', () => {
     });
   }
 
-  async function logLoginFailures(email: string, count: number, at: Date) {
+  async function logLoginFailures(
+    email: string,
+    count: number,
+    at: Date,
+    action = 'LOGIN_FAILED_WRONG_PASSWORD'
+  ) {
     await prisma.securityLog.createMany({
       data: Array.from({ length: count }, () => ({
         email,
-        action: 'LOGIN_FAILED_WRONG_PASSWORD',
+        action,
         created_at: at,
       })),
     });
@@ -113,6 +118,14 @@ describe.skipIf(!VITEST_DB_URL)('GET /inbox sur une vraie base', () => {
     await logLoginFailures(rebloque.email!, MAX_FAILED_ATTEMPTS, minutesAgo(5));
 
     expect(await comptesBloquesIds()).toEqual([rebloque.id]);
+  });
+
+  test('les tentatives faites pendant le blocage ne prolongent pas le blocage', async () => {
+    const expire = await createUser('expire');
+    await logLoginFailures(expire.email!, MAX_FAILED_ATTEMPTS, minutesAgo(LOCKOUT_DURATION_MINUTES + 1));
+    await logLoginFailures(expire.email!, MAX_FAILED_ATTEMPTS, minutesAgo(1), 'LOGIN_FAILED_ALREADY_LOCKED');
+
+    expect(await comptesBloquesIds()).toEqual([]);
   });
 
   test('un compte supprimé n’apparaît pas parmi les comptes bloqués', async () => {

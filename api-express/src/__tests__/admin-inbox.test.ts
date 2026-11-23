@@ -83,6 +83,7 @@ describe('GET /inbox', () => {
     expect(lockoutCall).toBeDefined();
     const [strings, ...values] = lockoutCall!;
     expect(strings.join('?')).toContain("LIKE 'LOGIN_FAILED%'");
+    expect(strings.join('?')).toContain("<> 'LOGIN_FAILED_ALREADY_LOCKED'");
     expect(strings.join('?')).toContain('u.deleted_at IS NULL');
     expect(values).toContain(5);
   });
