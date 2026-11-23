@@ -5,6 +5,7 @@ import prisma from '~/prisma';
 import { ApiKey, User } from '@prisma/client';
 import type { Request } from 'express';
 import { SECRET, PROCONNECT_ADMIN_DISABLED } from '~/config';
+import { SESSION_COOKIE_NAME } from '~/utils/cookie';
 import {
   hasValidProConnect,
   isTokenRevokedByPasswordChange,
@@ -18,7 +19,7 @@ export const PROCONNECT_REQUIRED = 'PROCONNECT_REQUIRED';
 
 const cookieExtractor = (req: Request): string | null => {
   // console.log('Cookies extractor called', req.cookies);
-  const token = req && req.cookies ? req.cookies['zacharie_express_jwt'] : null;
+  const token = req && req.cookies ? req.cookies[SESSION_COOKIE_NAME] : null;
   // console.log('Extracted token:', token);
   // console.log('Secret key', SECRET);
   return token;

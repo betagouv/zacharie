@@ -31,6 +31,7 @@ import {
   VITE_APP_URL,
 } from './config.ts';
 import { errorHandlers } from './middlewares/errors.ts';
+import { migrateLegacySessionCookie } from './middlewares/migrate-legacy-session-cookie.ts';
 import { capture, SENTRY_SCRUB_OPTIONS } from './third-parties/sentry.ts';
 
 import userRouter from './controllers/user.ts';
@@ -112,7 +113,6 @@ if (IS_STAGING) {
       credentials: true,
       origin: [
         'https://zacharie.incubateur.net',
-        /\.zacharie\.incubateur\.net$/,
         // 'http://127.0.0.1:3000', // Expo WebView local SPA server
         ...(IS_REVIEW_APP ? [VITE_APP_URL] : []),
       ],
@@ -124,7 +124,6 @@ if (IS_STAGING) {
       credentials: true,
       origin: [
         'https://zacharie.beta.gouv.fr',
-        /\.zacharie\.beta\.gouv\.fr$/,
         'http://127.0.0.1:3000', // Expo WebView local SPA server
       ],
     })
@@ -188,6 +187,7 @@ app.use((_req, res, next) => {
   next();
 });
 app.use(cookieParser());
+app.use(migrateLegacySessionCookie);
 
 // Montées après helmet : même `/` doit porter les en-têtes de sécurité (c'est l'URL scannée par l'Observatory MDN)
 // kube probe

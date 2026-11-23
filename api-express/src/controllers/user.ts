@@ -48,6 +48,7 @@ import {
   cookieOptions,
   JWT_MAX_AGE,
   logoutCookieOptions,
+  SESSION_COOKIE_NAME,
 } from '~/utils/cookie';
 import { signSessionToken } from '~/utils/session-token';
 import { SECRET, VITE_APP_URL } from '~/config';
@@ -279,7 +280,7 @@ router.post(
         where: { id: user.id },
         data: { last_login_at: new Date() },
       });
-      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
+      res.cookie(SESSION_COOKIE_NAME, token, cookieOptions(req));
       res.status(200).send({ ok: true, data: { user, token }, message: '', error: '' });
     }
   )
@@ -382,7 +383,7 @@ router.post(
       const token = jwt.sign({ userId: user.id }, SECRET, {
         expiresIn: JWT_MAX_AGE,
       });
-      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
+      res.cookie(SESSION_COOKIE_NAME, token, cookieOptions(req));
       res.status(200).send({ ok: true, data: { user, token }, message: '', error: '' });
     }
   )
@@ -559,7 +560,7 @@ router.post(
         where: { id: user.id },
         data: { last_login_at: new Date() },
       });
-      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
+      res.cookie(SESSION_COOKIE_NAME, token, cookieOptions(req));
       res.status(200).send({ ok: true, data: { user, token }, message: '', error: '' });
     }
   )
@@ -782,7 +783,7 @@ router.post(
         where: { id: user.id },
         data: { last_login_at: new Date() },
       });
-      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
+      res.cookie(SESSION_COOKIE_NAME, token, cookieOptions(req));
       res.status(200).send({
         ok: true,
         data: { user: updatedUser, token },
@@ -884,7 +885,7 @@ router.post(
       const token = jwt.sign({ userId: user.id }, SECRET, {
         expiresIn: JWT_MAX_AGE,
       });
-      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
+      res.cookie(SESSION_COOKIE_NAME, token, cookieOptions(req));
       res.status(200).send({
         ok: true,
         data: { user, token },
@@ -1032,7 +1033,7 @@ router.post(
         data: { last_login_at: new Date() },
       });
       // refreshMaterializedViews();
-      res.cookie('zacharie_express_jwt', token, cookieOptions(req, ACCESS_TOKEN_SESSION_MAX_AGE));
+      res.cookie(SESSION_COOKIE_NAME, token, cookieOptions(req, ACCESS_TOKEN_SESSION_MAX_AGE));
       await prisma.apiKeyApprovalByUserOrEntity.update({
         where: { access_token: accessToken },
         data: { access_token: null, access_token_created_at: null },
@@ -1059,7 +1060,7 @@ router.post(
         user_agent: req.headers['user-agent'],
       },
     });
-    res.clearCookie('zacharie_express_jwt', logoutCookieOptions(req));
+    res.clearCookie(SESSION_COOKIE_NAME, logoutCookieOptions(req));
     res.status(200).send({ ok: true, data: { user: null, token: null } });
   })
 );
