@@ -1,5 +1,6 @@
 import { Input } from '@app/components/Input';
 import { useState, ChangeEvent, useEffect, useRef, useMemo, type ReactNode } from 'react';
+import { searchDestinataires } from '@app/utils/search-destinataire';
 
 type DestinataireOption = { label: string | null; value: string };
 
@@ -13,16 +14,8 @@ interface InputDestinataireProps {
   onCreate: (query: string) => void;
 }
 
-function normalize(value: string): string {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
-}
-
 // Même principe que InputVille : un champ texte DSFR et la liste des résultats en dessous.
-// Quand la recherche ne donne rien, on propose de créer le destinataire.
+// Quand la recherche ne donne rien de sûr, on propose de créer le destinataire.
 export default function InputDestinataire({
   label,
   hintText,
@@ -54,11 +47,10 @@ export default function InputDestinataire({
     return () => document.removeEventListener('pointerdown', dismissOnClickOutside);
   }, [isOpen]);
 
-  const results = useMemo(() => {
-    const query = normalize(search);
-    if (!query) return [];
-    return options.filter((option) => normalize(option.label ?? '').includes(query));
-  }, [options, search]);
+  const results = useMemo(() => searchDestinataires(options, search), [options, search]);
+  // une correspondance trouvée seulement grâce à une faute de frappe peut être fausse :
+  // on laisse alors la possibilité de créer le destinataire
+  const canCreate = results.every((result) => result.isFuzzy);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setIsOpen(true);
@@ -97,7 +89,7 @@ export default function InputDestinataire({
         }
       >
         {isVisible &&
-          results.map((option) => {
+          results.map(({ option }) => {
             return (
               <button
                 key={option.value}
@@ -112,7 +104,7 @@ export default function InputDestinataire({
               </button>
             );
           })}
-        {isVisible && results.length === 0 && (
+        {isVisible && canCreate && (
           <button
             onClick={() => {
               setIsOpen(false);
