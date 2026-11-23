@@ -18,7 +18,7 @@ import type {
   AdminAuditLog,
   StatsRefNational,
 } from '@prisma/client';
-import type { UserForFei, UserForAdmin } from './user';
+import type { UserForFei, UserForAdmin, UserPartenaire } from './user';
 import type { BugInvestigationMessage } from './bug-investigation';
 import type { EntityForAdmin, EntityWithUserRelation, EntitiesByTypeAndId, EntitiesById } from './entity';
 
@@ -58,10 +58,10 @@ export interface UserConnexionResponse {
   message: string;
 }
 
-export interface UserForFeiResponse {
+export interface UserPartenaireResponse {
   ok: boolean;
   data: {
-    user: UserForFei | null;
+    user: UserPartenaire | null;
   };
   error: string;
 }
@@ -87,7 +87,7 @@ export interface UserMyRelationsResponse {
   ok: true;
   data: {
     user: User;
-    detenteursInitiaux: Array<UserForFei>;
+    detenteursInitiaux: Array<UserPartenaire>;
     // examinateursInitiaux:  Array<User>,
     associationsDeChasse: Array<EntityWithUserRelation>;
     ccgs: Array<EntityWithUserRelation>;
