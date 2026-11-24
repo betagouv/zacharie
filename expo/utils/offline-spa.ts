@@ -5,7 +5,7 @@ import { Platform } from 'react-native';
 import Server, { STATES } from '@dr.pogodin/react-native-static-server';
 
 // EXPO_PUBLIC_APP_URL : posée par le profil EAS `pentest` pour viser la review app du pentest EY
-const APP_URL = process.env.EXPO_PUBLIC_APP_URL || 'https://zacharie.beta.gouv.fr/';
+const APP_URL = (process.env.EXPO_PUBLIC_APP_URL || 'https://zacharie.beta.gouv.fr/').replace(/\/?$/, '/');
 const SPA_DIR = new Directory(Paths.document, 'spa');
 
 let forceRefreshKey = '1';
