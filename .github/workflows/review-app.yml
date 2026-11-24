@@ -45,9 +45,10 @@ jobs:
       PLAYGROUND_NAME: pr-${{ github.event.pull_request.number }}-zacharie-api-playground
       PLAYGROUND_DB_NAME: pr-${{ github.event.pull_request.number }}-zacharie-api-playground-db
       # pas API_HOST / APP_HOST : clever-tools lit API_HOST comme l'URL de l'API Clever Cloud
-      REVIEW_API_HOST: pr-${{ github.event.pull_request.number }}-zacharie-api.cleverapps.io
-      REVIEW_APP_HOST: pr-${{ github.event.pull_request.number }}-zacharie.cleverapps.io
-      REVIEW_PLAYGROUND_HOST: pr-${{ github.event.pull_request.number }}-zacharie-api-playground.cleverapps.io
+      # domaines du pentest EY, déjà ajoutés aux apps
+      REVIEW_API_HOST: api.pentest.zacharie.incubateur.net
+      REVIEW_APP_HOST: pentest.zacharie.incubateur.net
+      REVIEW_PLAYGROUND_HOST: api-playground.pentest.zacharie.incubateur.net
       DB_PLAN: xxs_sml
     steps:
       - uses: actions/checkout@v4
@@ -175,6 +176,10 @@ jobs:
           clever env set ZACHARIE_API_URL "https://$REVIEW_API_HOST" --alias playground
           clever env set ZACHARIE_APP_URL "https://$REVIEW_APP_HOST" --alias playground
           clever env set VITE_BAC_A_SABLE_URL "https://$REVIEW_PLAYGROUND_HOST" --alias app
+          for alias in api app; do
+            clever env set VITE_API_URL "https://$REVIEW_API_HOST" --alias "$alias"
+            clever env set VITE_APP_URL "https://$REVIEW_APP_HOST" --alias "$alias"
+          done
 
       - name: Deploy
         if: github.event.action != 'closed'
