@@ -24,7 +24,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_APP_URL": "https://pr-940-zacharie.cleverapps.io/"
+        "EXPO_PUBLIC_APP_URL": "https://pentest.zacharie.incubateur.net/"
       }
     }
   },
