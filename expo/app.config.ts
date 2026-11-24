@@ -1,7 +1,7 @@
 import { ExpoConfig, ConfigContext } from 'expo/config';
 
-const version = '1.1.1';
-const buildNumber = '8';
+const version = '1.1.3';
+const buildNumber = '10';
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Zacharie',
@@ -10,12 +10,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   orientation: 'portrait',
   icon: './assets/icon.png',
   // userInterfaceStyle: 'light', // userInterfaceStyle: Install expo-system-ui in your project to enable this feature.
-  newArchEnabled: true,
-  splash: {
-    image: './assets/splash-icon.png',
-    resizeMode: 'contain',
-    backgroundColor: '#FFFFFF',
-  },
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'fr.gouv.zacharie.v1',
@@ -78,10 +72,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       {
         backgroundColor: '#FFFFFF',
         image: './assets/splash-icon.png',
+        resizeMode: 'contain',
       },
     ],
-    'react-native-edge-to-edge',
     'expo-notifications',
+    'expo-font',
+    'expo-status-bar',
     [
       'expo-build-properties',
       {
