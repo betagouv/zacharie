@@ -113,7 +113,8 @@ if (IS_STAGING) {
       origin: [
         'https://zacharie.incubateur.net',
         // 'http://127.0.0.1:3000', // Expo WebView local SPA server
-        ...(IS_REVIEW_APP ? [VITE_APP_URL] : []),
+        // l'APK du pentest EY sert l'app depuis le serveur local de la WebView
+        ...(IS_REVIEW_APP ? [VITE_APP_URL, 'http://127.0.0.1:3000'] : []),
       ],
     })
   );
