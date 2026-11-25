@@ -44,6 +44,7 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
         - paragraph: "/Mise à mort : \\\\d+ CHASSENARD, lundi 7 juillet \\\\d+/"
         - paragraph: "/Horaires : \\\\d+:\\\\d+ → \\\\d+:\\\\d+/"
         - paragraph: "/Dépôt CCG : CCG Chasseurs, lundi 7 juillet \\\\d+ à \\\\d+:\\\\d+/"
+        - paragraph: "Adresse CCG : 2 avenue du général de gaulle, 75000 Paris"
         - paragraph: Parcours de la fiche
         - text: Marie Martin
         - paragraph: Examinateur initial
@@ -184,6 +185,7 @@ test('Pas de stockage - Je transfère à un autre collecteur', async ({ page }) 
         - paragraph: "/Mise à mort : \\\\d+ CHASSENARD, lundi 7 juillet \\\\d+/"
         - paragraph: "/Horaires : \\\\d+:\\\\d+ → \\\\d+:\\\\d+/"
         - paragraph: "/Dépôt CCG : CCG Chasseurs, lundi 7 juillet \\\\d+ à \\\\d+:\\\\d+/"
+        - paragraph: "Adresse CCG : 2 avenue du général de gaulle, 75000 Paris"
         - paragraph: Parcours de la fiche
         - text: Marie Martin
         - paragraph: Examinateur initial
@@ -303,6 +305,7 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
         - paragraph: "/Mise à mort : \\\\d+ CHASSENARD, lundi 7 juillet \\\\d+/"
         - paragraph: "/Horaires : \\\\d+:\\\\d+ → \\\\d+:\\\\d+/"
         - paragraph: "/Dépôt CCG : CCG Chasseurs, lundi 7 juillet \\\\d+ à \\\\d+:\\\\d+/"
+        - paragraph: "Adresse CCG : 2 avenue du général de gaulle, 75000 Paris"
         - paragraph: Parcours de la fiche
         - text: Marie Martin
         - paragraph: Examinateur initial
