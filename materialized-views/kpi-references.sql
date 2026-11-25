@@ -315,106 +315,49 @@ LEFT JOIN stats_ref_national obj
 
 
 -- 7. Tableaux de chasse OFB — grand gibier par département
--- Libellés d'espèces repris de app-local-first-react-router/src/data/grand-gibier.json : à ajuster
--- sur les libellés du premier CSV OFB importé.
+-- Une saison à la fois : la table couvre toutes les saisons depuis 1973, et Metabase tronque à 2 000 lignes.
+-- Variable Metabase `saison` (texte, optionnelle, ex. « 2025-2026 ») ; sans valeur, dernière saison importée.
+-- Libellés d'espèces repris de app-local-first-react-router/src/data/grand-gibier.json, mêmes libellés
+-- que le CSV d'import (jeu OFB « Tableaux de chasse départementaux du Grand Gibier » sur data.gouv.fr).
 SELECT
-    saison,
     departement,
     SUM(nombre) AS nombre
 FROM stats_ref_ofb_tableau_chasse
 WHERE espece IN (
     'Cerf élaphe', 'Cerf sika', 'Chevreuil', 'Daim', 'Sanglier', 'Chamois', 'Isard', 'Mouflon méditerranéen'
 )
-GROUP BY saison, departement
-ORDER BY saison, departement;
+  AND saison = COALESCE([[{{saison}},]] (SELECT MAX(saison) FROM stats_ref_ofb_tableau_chasse))
+GROUP BY departement
+ORDER BY departement;
 
 
--- 8. Taux de saisie : Zacharie vs national
--- Base : carcasses inspectées par un SVI avec une décision finale (même filtre que carcasse_svi_stats),
--- pondérées en animaux.
-WITH carcasses AS (
-    SELECT
-        to_char(COALESCE(c.date_mise_a_mort, f.date_mise_a_mort) - interval '5 months', 'YYYY') || '-' ||
-            (extract(year FROM COALESCE(c.date_mise_a_mort, f.date_mise_a_mort) - interval '5 months')::int + 1) AS saison,
-        c.type AS type_gibier,
-        COALESCE(c.nombre_d_animaux, 1) AS animaux,
-        CASE
-            WHEN c.svi_carcasse_status IN ('SAISIE_TOTALE', 'SAISIE_PARTIELLE')
-                THEN COALESCE(c.svi_ipm2_nombre_animaux, c.nombre_d_animaux, 1)
-            ELSE 0
-        END AS animaux_saisis
-    FROM carcasse_view c
-    JOIN fei_view f ON f.numero = c.fei_numero
-    WHERE c.svi_assigned_at IS NOT NULL
-      AND c.type IS NOT NULL
-      AND COALESCE(c.date_mise_a_mort, f.date_mise_a_mort) IS NOT NULL
-      AND c.svi_carcasse_status NOT IN (
-          'MANQUANTE_ETG_COLLECTEUR', 'REFUS_ETG_COLLECTEUR', 'SANS_DECISION', 'CONSIGNE', 'MANQUANTE_SVI'
-      )
-),
-saisons AS (
-    SELECT saison, type_gibier, SUM(animaux) AS animaux, SUM(animaux_saisis) AS animaux_saisis
-    FROM carcasses
-    GROUP BY saison, type_gibier
-)
+-- 8. Taux de saisie national n-1 — grand gibier
+-- Chiffre affiché à côté du taux de saisie Zacharie (question #313) : taux national du circuit long de la
+-- saison précédente la plus récente saisie dans l'admin. En fraction (0,239 = 23,9 %), pour le format
+-- pourcentage du chiffre Metabase, comme les questions #313 et #328.
 SELECT
-    s.saison,
-    s.type_gibier,
-    s.animaux,
-    s.animaux_saisis,
-    ROUND((100.0 * s.animaux_saisis / NULLIF(s.animaux, 0))::numeric, 1) AS taux_saisie_zacharie_pct,
-    ref.valeur AS taux_saisie_national_pct
-FROM saisons s
-LEFT JOIN stats_ref_national ref
-    ON ref.saison = s.saison AND ref.circuit = 'LONG' AND ref.type_gibier = s.type_gibier
-    AND ref.indicateur = 'TAUX_SAISIE'
-ORDER BY s.saison, s.type_gibier;
+    r.valeur / 100 AS taux_saisie_national,
+    r.saison
+FROM stats_ref_national r
+WHERE r.circuit = 'LONG'
+  AND r.type_gibier = 'GROS_GIBIER'
+  AND r.indicateur = 'TAUX_SAISIE'
+  AND r.saison < to_char(now() - interval '5 months', 'YYYY') || '-' ||
+      (extract(year FROM now() - interval '5 months')::int + 1)
+ORDER BY r.saison DESC
+LIMIT 1;
 
 
--- 9. Taux de saisie BPH : dans et hors Zacharie
--- Motifs BPH : règle de la question Metabase #388. Libellés accentués, « œufs » en ligature
--- (cf app-local-first-react-router/src/utils/bph-motifs.ts). Même base et même pondération que le KPI 8.
-WITH carcasses AS (
-    SELECT
-        to_char(COALESCE(c.date_mise_a_mort, f.date_mise_a_mort) - interval '5 months', 'YYYY') || '-' ||
-            (extract(year FROM COALESCE(c.date_mise_a_mort, f.date_mise_a_mort) - interval '5 months')::int + 1) AS saison,
-        c.type AS type_gibier,
-        COALESCE(c.nombre_d_animaux, 1) AS animaux,
-        CASE
-            WHEN c.svi_carcasse_status IN ('SAISIE_TOTALE', 'SAISIE_PARTIELLE')
-                AND EXISTS (
-                    SELECT 1 FROM unnest(c.svi_ipm2_lesions_ou_motifs) m
-                    WHERE m ILIKE ANY (ARRAY[
-                        '%abdomen%', '%souillure%', '%douchage%', '%odeur%', '%putréfaction%', '%moisissure%',
-                        '%œuf%', '%oeuf%', '%larve%', '%morsure%', '%anormal%'
-                    ])
-                )
-                THEN COALESCE(c.svi_ipm2_nombre_animaux, c.nombre_d_animaux, 1)
-            ELSE 0
-        END AS animaux_saisis_bph
-    FROM carcasse_view c
-    JOIN fei_view f ON f.numero = c.fei_numero
-    WHERE c.svi_assigned_at IS NOT NULL
-      AND c.type IS NOT NULL
-      AND COALESCE(c.date_mise_a_mort, f.date_mise_a_mort) IS NOT NULL
-      AND c.svi_carcasse_status NOT IN (
-          'MANQUANTE_ETG_COLLECTEUR', 'REFUS_ETG_COLLECTEUR', 'SANS_DECISION', 'CONSIGNE', 'MANQUANTE_SVI'
-      )
-),
-saisons AS (
-    SELECT saison, type_gibier, SUM(animaux) AS animaux, SUM(animaux_saisis_bph) AS animaux_saisis_bph
-    FROM carcasses
-    GROUP BY saison, type_gibier
-)
+-- 9. Taux de saisie BPH hors Zacharie n-1 — grand gibier
+-- Chiffre affiché à côté du taux de saisie BPH Zacharie (question #328) : même règle et même format que le KPI 8.
 SELECT
-    s.saison,
-    s.type_gibier,
-    s.animaux,
-    s.animaux_saisis_bph,
-    ROUND((100.0 * s.animaux_saisis_bph / NULLIF(s.animaux, 0))::numeric, 1) AS taux_saisie_bph_zacharie_pct,
-    ref.valeur AS taux_saisie_bph_hors_zacharie_pct
-FROM saisons s
-LEFT JOIN stats_ref_national ref
-    ON ref.saison = s.saison AND ref.circuit = 'LONG' AND ref.type_gibier = s.type_gibier
-    AND ref.indicateur = 'TAUX_SAISIE_BPH_HORS_ZACHARIE'
-ORDER BY s.saison, s.type_gibier;
+    r.valeur / 100 AS taux_saisie_bph_hors_zacharie,
+    r.saison
+FROM stats_ref_national r
+WHERE r.circuit = 'LONG'
+  AND r.type_gibier = 'GROS_GIBIER'
+  AND r.indicateur = 'TAUX_SAISIE_BPH_HORS_ZACHARIE'
+  AND r.saison < to_char(now() - interval '5 months', 'YYYY') || '-' ||
+      (extract(year FROM now() - interval '5 months')::int + 1)
+ORDER BY r.saison DESC
+LIMIT 1;
