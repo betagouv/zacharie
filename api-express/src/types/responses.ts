@@ -201,6 +201,7 @@ export interface AdminEntitiesResponse {
   data: {
     entities: Array<Entity>;
     counts: Record<string, number>;
+    activityCounts: Record<Entity['id'], { carcasses: number; fiches: number }>;
   };
   error: string;
 }

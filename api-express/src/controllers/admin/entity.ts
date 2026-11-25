@@ -75,9 +75,46 @@ router.get(
         counts[t] = typeCounts[i];
       });
 
+      // carcasses et fiches (non supprimées) qui passent par l'entité à n'importe quelle étape du circuit :
+      // premier détenteur, dépôt (CCG), intermédiaire, SVI, ou propriétaire précédent / actuel / suivant
+      const activityRows = await prisma.$queryRaw<
+        Array<{ entity_id: string; carcasses: number; fiches: number }>
+      >`
+        WITH links AS (
+          SELECT e.entity_id, c.zacharie_carcasse_id, c.fei_numero
+          FROM "Carcasse" c
+          JOIN "Fei" f ON f.numero = c.fei_numero AND f.deleted_at IS NULL
+          CROSS JOIN LATERAL unnest(ARRAY[
+            c.premier_detenteur_entity_id,
+            c.premier_detenteur_depot_entity_id,
+            c.svi_entity_id,
+            c.prev_owner_entity_id,
+            c.current_owner_entity_id,
+            c.next_owner_entity_id
+          ]) AS e(entity_id)
+          WHERE c.deleted_at IS NULL AND e.entity_id IS NOT NULL
+          UNION
+          SELECT e.entity_id, ci.zacharie_carcasse_id, ci.fei_numero
+          FROM "CarcasseIntermediaire" ci
+          JOIN "Carcasse" c ON c.zacharie_carcasse_id = ci.zacharie_carcasse_id AND c.deleted_at IS NULL
+          JOIN "Fei" f ON f.numero = ci.fei_numero AND f.deleted_at IS NULL
+          CROSS JOIN LATERAL unnest(ARRAY[ci.intermediaire_entity_id, ci.intermediaire_depot_entity_id]) AS e(entity_id)
+          WHERE ci.deleted_at IS NULL AND e.entity_id IS NOT NULL
+        )
+        SELECT entity_id,
+          COUNT(DISTINCT zacharie_carcasse_id)::int AS carcasses,
+          COUNT(DISTINCT fei_numero)::int AS fiches
+        FROM links
+        GROUP BY entity_id;
+      `;
+      const activityCounts: AdminEntitiesResponse['data']['activityCounts'] = {};
+      for (const row of activityRows) {
+        activityCounts[row.entity_id] = { carcasses: row.carcasses, fiches: row.fiches };
+      }
+
       res.status(200).send({
         ok: true,
-        data: { entities, counts },
+        data: { entities, counts, activityCounts },
         error: '',
       });
     }
