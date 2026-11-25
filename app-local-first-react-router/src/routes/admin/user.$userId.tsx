@@ -36,6 +36,7 @@ import { EntityWithUserRelations } from '@api/src/types/entity';
 import { toast } from 'react-toastify';
 import ConnexionButton from '@app/components/ConnexionButton';
 import AdminDeletedBanner from '@app/components/AdminDeletedBanner';
+import { isNumeroCfeiHorsFormat, NUMERO_CFEI_FORMAT_MESSAGE } from '@app/utils/numero-cfei';
 
 const loadData = (userId: string): Promise<AdminUserDataResponse> =>
   API.get({ path: `admin/user/${userId}` }).then((res) => res as AdminUserDataResponse);
@@ -124,6 +125,28 @@ const initialState: State = {
   },
   has_password: true,
 };
+
+// Champ non lié à l'état de la page : sa valeur part dans le FormData lu au blur du formulaire.
+// Il garde sa propre saisie pour afficher l'avertissement de format pendant la frappe.
+function NumeroCfeiInput({ defaultValue, disabled }: { defaultValue: string; disabled: boolean }) {
+  const [numeroCfei, setNumeroCfei] = useState(defaultValue);
+  return (
+    <Input
+      label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
+      hintText="De la forme CFEI-DEP-AA-123 ou DEP-FREI-AA-123"
+      disabled={disabled}
+      state={!disabled && isNumeroCfeiHorsFormat(numeroCfei) ? 'info' : 'default'}
+      stateRelatedMessage={NUMERO_CFEI_FORMAT_MESSAGE}
+      nativeInputProps={{
+        id: Prisma.UserScalarFieldEnum.numero_cfei,
+        name: Prisma.UserScalarFieldEnum.numero_cfei,
+        autoComplete: 'off',
+        value: numeroCfei,
+        onChange: (e) => setNumeroCfei(e.currentTarget.value),
+      }}
+    />
+  );
+}
 
 export default function AdminUser() {
   const params = useParams();
@@ -792,16 +815,10 @@ export default function AdminUser() {
                       },
                     ]}
                   />
-                  <Input
-                    label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
-                    hintText="De la forme CFEI-DEP-AA-123 ou DEP-FREI-YY-001"
+                  <NumeroCfeiInput
+                    key={user.id}
+                    defaultValue={user.numero_cfei ?? ''}
                     disabled={!user.est_forme_a_l_examen_initial}
-                    nativeInputProps={{
-                      id: Prisma.UserScalarFieldEnum.numero_cfei,
-                      name: Prisma.UserScalarFieldEnum.numero_cfei,
-                      autoComplete: 'off',
-                      defaultValue: user.numero_cfei ?? '',
-                    }}
                   />
                   {!user.est_forme_a_l_examen_initial ? null : user.numero_cfei ? (
                     officialCfei ? (
