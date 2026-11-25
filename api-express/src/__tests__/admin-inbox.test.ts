@@ -74,7 +74,7 @@ describe('GET /inbox', () => {
     });
   });
 
-  test('la requête des comptes bloqués applique le seuil d’échecs de connexion', async () => {
+  test('la requête des comptes bloqués lit les blocages de la fenêtre', async () => {
     await request(app).get('/inbox');
 
     const lockoutCall = (
@@ -82,8 +82,8 @@ describe('GET /inbox', () => {
     ).find(([strings]) => strings.join('?').includes('"SecurityLog"'));
     expect(lockoutCall).toBeDefined();
     const [strings, ...values] = lockoutCall!;
-    expect(strings.join('?')).toContain("LIKE 'LOGIN_FAILED%'");
     expect(strings.join('?')).toContain('u.deleted_at IS NULL');
-    expect(values).toContain(5);
+    expect(values).toContain('LOGIN_LOCKED');
+    expect(values).toContain(15);
   });
 });

@@ -249,14 +249,14 @@ app.use('/frame-ancestors', frameAncestorsRouter);
 app.use('/v1', v1Router);
 
 // Auth rate limiting
-import { authRateLimit, adminRateLimit } from './middlewares/auth-rate-limit.ts';
+import { authRateLimit, authIpRateLimit, adminRateLimit } from './middlewares/auth-rate-limit.ts';
 import { requireTrichineFeature } from './middlewares/trichine-feature.ts';
-app.use('/user/login', authRateLimit);
-app.use('/user/signup', authRateLimit);
-app.use('/user/signup-with-invitation-token', authRateLimit);
-app.use('/user/access-token', authRateLimit);
-app.use('/user/forget-password', authRateLimit);
-app.use('/user/reset-password', authRateLimit);
+app.use('/user/login', authIpRateLimit({ skipSuccessfulRequests: true }), authRateLimit);
+app.use('/user/signup', authIpRateLimit(), authRateLimit);
+app.use('/user/signup-with-invitation-token', authIpRateLimit(), authRateLimit);
+app.use('/user/access-token', authIpRateLimit(), authRateLimit);
+app.use('/user/forget-password', authIpRateLimit(), authRateLimit);
+app.use('/user/reset-password', authIpRateLimit(), authRateLimit);
 app.use('/user/change-password', authRateLimit);
 // /user/proconnect : le limiteur est posé sur chaque route dans controllers/proconnect.ts
 app.use('/admin', adminRateLimit);

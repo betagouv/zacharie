@@ -2,7 +2,7 @@ import express from 'express';
 import request from 'supertest';
 import { PrismaClient } from '@prisma/client';
 import { describe, test, expect, vi, beforeAll, afterAll, afterEach } from 'vitest';
-import { LOCKOUT_DURATION_MINUTES, MAX_FAILED_ATTEMPTS } from '~/utils/login-lockout';
+import { LOCKOUT_DURATION_MINUTES } from '~/utils/login-lockout';
 import prismaClient from '~/prisma';
 import adminInboxRouter from '~/controllers/admin/inbox';
 import { sendError } from '~/middlewares/errors';
@@ -57,14 +57,8 @@ describe.skipIf(!VITEST_DB_URL)('GET /inbox sur une vraie base', () => {
     });
   }
 
-  async function logLoginFailures(email: string, count: number, at: Date) {
-    await prisma.securityLog.createMany({
-      data: Array.from({ length: count }, () => ({
-        email,
-        action: 'LOGIN_FAILED_WRONG_PASSWORD',
-        created_at: at,
-      })),
-    });
+  async function logLock(email: string, at: Date) {
+    await prisma.securityLog.create({ data: { email, action: 'LOGIN_LOCKED', created_at: at } });
   }
 
   async function logUnlock(email: string, at: Date) {
@@ -86,38 +80,29 @@ describe.skipIf(!VITEST_DB_URL)('GET /inbox sur une vraie base', () => {
     expect(timezone).toBe('Pacific/Auckland');
   });
 
-  test(`${MAX_FAILED_ATTEMPTS} échecs récents bloquent le compte, un de moins ne le bloque pas`, async () => {
+  test('un blocage de la fenêtre apparaît, un blocage plus ancien que la fenêtre n’apparaît pas', async () => {
     const bloque = await createUser('bloque');
-    const presque = await createUser('presque');
-    await logLoginFailures(bloque.email!, MAX_FAILED_ATTEMPTS, minutesAgo(1));
-    await logLoginFailures(presque.email!, MAX_FAILED_ATTEMPTS - 1, minutesAgo(1));
+    const expire = await createUser('expire');
+    await logLock(bloque.email!, minutesAgo(LOCKOUT_DURATION_MINUTES - 1));
+    await logLock(expire.email!, minutesAgo(LOCKOUT_DURATION_MINUTES + 1));
 
     expect(await comptesBloquesIds()).toEqual([bloque.id]);
   });
 
-  test('des échecs plus anciens que la fenêtre de blocage ne comptent pas', async () => {
-    const ancien = await createUser('ancien');
-    const limite = await createUser('limite');
-    await logLoginFailures(ancien.email!, MAX_FAILED_ATTEMPTS, minutesAgo(LOCKOUT_DURATION_MINUTES + 1));
-    await logLoginFailures(limite.email!, MAX_FAILED_ATTEMPTS, minutesAgo(LOCKOUT_DURATION_MINUTES - 1));
-
-    expect(await comptesBloquesIds()).toEqual([limite.id]);
-  });
-
-  test('un déblocage admin remet le compteur à zéro, les échecs suivants comptent de nouveau', async () => {
+  test('un déblocage admin après le blocage le lève, un déblocage avant ne le lève pas', async () => {
     const debloque = await createUser('debloque');
     const rebloque = await createUser('rebloque');
-    await logLoginFailures(debloque.email!, MAX_FAILED_ATTEMPTS, minutesAgo(5));
+    await logLock(debloque.email!, minutesAgo(5));
     await logUnlock(debloque.email!, minutesAgo(4));
     await logUnlock(rebloque.email!, minutesAgo(6));
-    await logLoginFailures(rebloque.email!, MAX_FAILED_ATTEMPTS, minutesAgo(5));
+    await logLock(rebloque.email!, minutesAgo(5));
 
     expect(await comptesBloquesIds()).toEqual([rebloque.id]);
   });
 
   test('un compte supprimé n’apparaît pas parmi les comptes bloqués', async () => {
     const supprime = await createUser('supprime', { deleted_at: new Date() });
-    await logLoginFailures(supprime.email!, MAX_FAILED_ATTEMPTS, minutesAgo(1));
+    await logLock(supprime.email!, minutesAgo(1));
 
     expect(await comptesBloquesIds()).toEqual([]);
   });

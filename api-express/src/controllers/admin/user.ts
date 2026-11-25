@@ -35,7 +35,12 @@ import {
 import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
 import { BrevoTemplateId } from '~/third-parties/brevo-templates';
 import { requestCarcassesReload } from '~/utils/carcasses-reload';
-import { LOCKOUT_DURATION_MINUTES, MAX_FAILED_ATTEMPTS } from '~/utils/login-lockout';
+import {
+  getLockoutExpiresAt,
+  getLockoutState,
+  LOCKOUT_DURATION_MINUTES,
+  LOCKOUT_FAILED_ACTIONS,
+} from '~/utils/login-lockout';
 
 async function getLockoutInfo(email: string): Promise<AdminUserLockoutInfo> {
   const since = dayjs().subtract(LOCKOUT_DURATION_MINUTES, 'minute').toDate();
@@ -44,21 +49,21 @@ async function getLockoutInfo(email: string): Promise<AdminUserLockoutInfo> {
     orderBy: { created_at: 'desc' },
   });
   const failureSince = lastUnlock ? lastUnlock.created_at : since;
-  const recentFailures = await prisma.securityLog.count({
-    where: { email, action: { startsWith: 'LOGIN_FAILED' }, created_at: { gte: failureSince } },
-  });
-  const lastFailure = await prisma.securityLog.findFirst({
-    where: { email, action: { startsWith: 'LOGIN_FAILED' }, created_at: { gte: failureSince } },
-    orderBy: { created_at: 'desc' },
-  });
-  const isLocked = recentFailures >= MAX_FAILED_ATTEMPTS;
+  const [lockout, recentFailures, lastFailure] = await Promise.all([
+    getLockoutState(email),
+    prisma.securityLog.count({
+      where: { email, action: LOCKOUT_FAILED_ACTIONS, created_at: { gte: failureSince } },
+    }),
+    // toutes les tentatives échouées, y compris pendant le blocage : l'admin voit si elles continuent
+    prisma.securityLog.findFirst({
+      where: { email, action: { startsWith: 'LOGIN_FAILED' }, created_at: { gte: failureSince } },
+      orderBy: { created_at: 'desc' },
+    }),
+  ]);
   return {
-    is_locked: isLocked,
+    is_locked: !!lockout.locked_at,
     recent_failures: recentFailures,
-    lockout_expires_at:
-      isLocked && lastFailure
-        ? dayjs(lastFailure.created_at).add(LOCKOUT_DURATION_MINUTES, 'minute').toISOString()
-        : null,
+    lockout_expires_at: lockout.locked_at ? getLockoutExpiresAt(lockout.locked_at).toISOString() : null,
     last_failure_action: lastFailure?.action ?? null,
     last_failure_at: lastFailure?.created_at.toISOString() ?? null,
   };

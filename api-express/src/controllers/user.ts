@@ -18,7 +18,12 @@ import {
 import { BrevoTemplateId } from '~/third-parties/brevo-templates';
 import { capture } from '~/third-parties/sentry';
 import createUserId from '~/utils/createUserId';
-import { LOCKOUT_DURATION_MINUTES, MAX_FAILED_ATTEMPTS } from '~/utils/login-lockout';
+import {
+  getLockoutState,
+  LOCKOUT_DURATION_MINUTES,
+  LOGIN_LOCKED_ACTION,
+  MAX_FAILED_ATTEMPTS,
+} from '~/utils/login-lockout';
 import { comparePassword, hashPassword } from '~/service/crypto';
 import { userPartenaireSelect, type UserPartenaire } from '~/types/user';
 import { trouverPremierDetenteurRateLimit } from '~/middlewares/auth-rate-limit';
@@ -143,20 +148,9 @@ router.post(
         return;
       }
 
-      const since = dayjs().subtract(LOCKOUT_DURATION_MINUTES, 'minute').toDate();
-      const lastUnlock = await prisma.securityLog.findFirst({
-        where: { email, action: 'LOGIN_UNLOCK_FROM_ADMIN', created_at: { gte: since } },
-        orderBy: { created_at: 'desc' },
-      });
-      const recentFailures = await prisma.securityLog.count({
-        where: {
-          email,
-          action: { startsWith: 'LOGIN_FAILED' },
-          created_at: { gte: lastUnlock ? lastUnlock.created_at : since },
-        },
-      });
+      const lockout = await getLockoutState(email);
 
-      if (recentFailures >= MAX_FAILED_ATTEMPTS) {
+      if (lockout.locked_at) {
         await prisma.securityLog.create({
           data: {
             email,
@@ -185,7 +179,10 @@ router.post(
           },
         });
 
-        if (recentFailures + 1 >= MAX_FAILED_ATTEMPTS) {
+        if (lockout.failures_toward_lock + 1 >= MAX_FAILED_ATTEMPTS) {
+          await prisma.securityLog.create({
+            data: { email, action: LOGIN_LOCKED_ACTION, ip: req.ip, user_agent: req.headers['user-agent'] },
+          });
           res.status(429).send({
             ok: false,
             data: { user: null },
@@ -217,7 +214,10 @@ router.post(
           },
         });
 
-        if (recentFailures + 1 >= MAX_FAILED_ATTEMPTS) {
+        if (lockout.failures_toward_lock + 1 >= MAX_FAILED_ATTEMPTS) {
+          await prisma.securityLog.create({
+            data: { email, action: LOGIN_LOCKED_ACTION, ip: req.ip, user_agent: req.headers['user-agent'] },
+          });
           res.status(429).send({
             ok: false,
             data: { user: null },
@@ -247,7 +247,10 @@ router.post(
           },
         });
 
-        if (recentFailures + 1 >= MAX_FAILED_ATTEMPTS) {
+        if (lockout.failures_toward_lock + 1 >= MAX_FAILED_ATTEMPTS) {
+          await prisma.securityLog.create({
+            data: { email, action: LOGIN_LOCKED_ACTION, ip: req.ip, user_agent: req.headers['user-agent'] },
+          });
           res.status(429).send({
             ok: false,
             data: { user: null },
