@@ -83,6 +83,17 @@ test("« Créer « … » » depuis la recherche ouvre l'ajout d'un destinataire
   await presetBoucherie.scrollIntoViewIfNeeded();
   await presetBoucherie.click();
   await expect(qualite).toHaveValue('Boucherie');
+  // Les raccourcis ne s'affichent que si le champ est vide
+  await expect(presetBoucherie).toHaveCount(0);
+  await qualite.fill('');
+  await expect(presetBoucherie).toBeVisible();
+
+  // « Autre » masque les raccourcis et place le curseur dans le champ libre
+  await modal.getByRole('button', { name: 'Autre', exact: true }).click();
+  await expect(presetBoucherie).toHaveCount(0);
+  await expect(qualite).toBeFocused();
+  await expect(qualite).toHaveAttribute('placeholder', 'Entrez la qualité du destinataire (champ libre)');
+  await qualite.fill('Boucherie');
 
   // Remplir les champs obligatoires — scrollIntoViewIfNeeded sur mobile viewport
   const email = modal.locator('#partenaire-nouveau-email');

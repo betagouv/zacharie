@@ -40,6 +40,8 @@ const QUALITES_PRESETS = [
   'Collecteur professionnel',
   'Restauration collective',
 ];
+const QUALITE_PRESET_CLASSNAME =
+  'mr-1 mb-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-left text-sm text-[#000091]';
 
 function toAnnuaireOption(etablissement: EtablissementTrouve) {
   return {
@@ -72,6 +74,8 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
   // le type précis du professionnel est déduit côté serveur de la qualité qu'il saisit librement
   const [particulier, setParticulier] = useState(false);
   const [qualite, setQualite] = useState('');
+  const [qualiteLibre, setQualiteLibre] = useState(false);
+  const qualiteInputRef = useRef<HTMLInputElement>(null);
   const [annuairePrefill, setAnnuairePrefill] = useState<EtablissementTrouve | null>(null);
 
   const professionnel = !particulier;
@@ -159,6 +163,7 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
       if (response.ok) {
         setParticulier(false);
         setQualite('');
+        setQualiteLibre(false);
         setAnnuairePrefill(null);
         track('partenaire', 'creer');
         onFinish(response.data.entity!);
@@ -281,23 +286,39 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
             <Input
               label="Qualité du destinataire *"
               hintText={
-                <>
-                  {QUALITES_PRESETS.map((preset) => (
+                // les raccourcis ne s'affichent que tant que le champ est vide et que « Autre » n'est pas choisi
+                !qualite && !qualiteLibre ? (
+                  <>
+                    {QUALITES_PRESETS.map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        className={QUALITE_PRESET_CLASSNAME}
+                        onClick={() => setQualite(preset)}
+                      >
+                        {preset}
+                      </button>
+                    ))}
                     <button
-                      key={preset}
                       type="button"
-                      className="mr-1 mb-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-left text-sm text-[#000091]"
-                      onClick={() => setQualite(preset)}
+                      className={QUALITE_PRESET_CLASSNAME}
+                      onClick={() => {
+                        setQualiteLibre(true);
+                        qualiteInputRef.current?.focus();
+                      }}
                     >
-                      {preset}
+                      Autre
                     </button>
-                  ))}
-                </>
+                  </>
+                ) : undefined
               }
               nativeInputProps={{
+                ref: qualiteInputRef,
                 id: fieldId(Prisma.EntityScalarFieldEnum.qualite_du_destinataire),
                 name: Prisma.EntityScalarFieldEnum.qualite_du_destinataire,
-                placeholder: 'Entrez la qualité du destinataire ou sélectionnez ci-dessus',
+                placeholder: qualiteLibre
+                  ? 'Entrez la qualité du destinataire (champ libre)'
+                  : 'Entrez la qualité du destinataire ou sélectionnez ci-dessus',
                 autoComplete: 'off',
                 required: true,
                 value: qualite,
