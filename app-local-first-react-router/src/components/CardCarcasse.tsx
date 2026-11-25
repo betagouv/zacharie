@@ -585,6 +585,19 @@ function CarcasseDetails({
     return commentaires;
   }, [carcassesIntermediaires, entities]);
 
+  const poidsIntermediaires = useMemo(() => {
+    const poids = [];
+    for (const carcasseIntermediaire of carcassesIntermediaires) {
+      if (carcasseIntermediaire?.intermediaire_poids) {
+        const intermediaireEntity = entities[carcasseIntermediaire.intermediaire_entity_id];
+        poids.push(
+          `${intermediaireEntity?.nom_d_usage}\u00A0: ${carcasseIntermediaire.intermediaire_poids}\u00A0kg`
+        );
+      }
+    }
+    return poids;
+  }, [carcassesIntermediaires, entities]);
+
   const examinateurInitialUser = fei.examinateur_initial_user_id
     ? users[fei.examinateur_initial_user_id!]
     : null;
@@ -887,6 +900,16 @@ function CarcasseDetails({
           <ul className="space-y-1 text-sm">
             {commentairesIntermediaires.map((c, i) => (
               <li key={i}>{c}</li>
+            ))}
+          </ul>
+        </ModalCard>
+      )}
+
+      {poidsIntermediaires.length > 0 && (
+        <ModalCard title="Poids renseignés par les intermédiaires">
+          <ul className="space-y-1 text-sm">
+            {poidsIntermediaires.map((p, i) => (
+              <li key={i}>{p}</li>
             ))}
           </ul>
         </ModalCard>
