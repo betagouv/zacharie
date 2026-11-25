@@ -5,6 +5,7 @@ import { createNewFei } from '@app/utils/create-new-fei';
 import { createNewCarcasse } from '@app/utils/create-new-carcasse';
 import { syncData } from '@app/utils/sync-data';
 import useUser from '@app/zustand/user';
+import useZustandStore from '@app/zustand/store';
 import Button from '@codegouvfr/react-dsfr/Button';
 import { UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
@@ -84,6 +85,8 @@ export default function NouvelleFiche() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const user = useUser((state) => state.user);
+  // le store est relu depuis IndexedDB de façon asynchrone : une fiche créée avant serait écrasée
+  const hasHydrated = useZustandStore((state) => state._hasHydrated);
   const isExaminateurInitial = !!user?.roles.includes(UserRoles.CHASSEUR) && !!user?.numero_cfei;
   const [error, setError] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -91,7 +94,7 @@ export default function NouvelleFiche() {
   const hasCreatedFei = useRef(false);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !hasHydrated) return;
     if (!isExaminateurInitial) {
       setError(true);
       return;
@@ -150,7 +153,7 @@ export default function NouvelleFiche() {
       capture(error);
       setError(true);
     });
-  }, [user, isExaminateurInitial, searchParams, navigate]);
+  }, [user, hasHydrated, isExaminateurInitial, searchParams, navigate]);
 
   useEffect(() => {
     if (error) {

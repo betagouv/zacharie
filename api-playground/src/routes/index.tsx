@@ -51,11 +51,9 @@ function Etape0({ hint }: { hint: string | null }) {
       <p>
         Demandez à un administrateur Zacharie de créer une clé API tierce partie avec les scopes
         <br />
-        <code>FEI_READ_FOR_USER</code>,
+        <code>FEI_READ_FOR_USER</code>
         <br />
-        <code>CARCASSE_READ_FOR_USER</code>,
-        <br />
-        et <code>USER_LOGIN_FOR_USER</code>.<br />
+        et <code>CARCASSE_READ_FOR_USER</code>.<br />
         Puis collez ici sa clé privée.
       </p>
       <p>
