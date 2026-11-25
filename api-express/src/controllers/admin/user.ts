@@ -12,6 +12,7 @@ import { signSessionToken } from '~/utils/session-token';
 import { SECRET, VITE_APP_URL } from '~/config';
 import { z } from 'zod';
 import { normalizeNumeroCfei, sanitize } from '~/utils/sanitize';
+import { findOfficialCfeisForNumerosSaisis } from '~/utils/official-cfei';
 import { hasAllRequiredFields } from '~/utils/user';
 import type {
   AdminUsersResponse,
@@ -473,15 +474,8 @@ router.get(
 
       let officialCfei = null;
       if (user.numero_cfei) {
-        officialCfei = await prisma.officialCfei.findUnique({
-          where: { numero_cfei: user.numero_cfei },
-          select: {
-            numero_cfei: true,
-            nom: true,
-            prenom: true,
-            departement: true,
-          },
-        });
+        const getOfficialCfei = await findOfficialCfeisForNumerosSaisis([user.numero_cfei]);
+        officialCfei = getOfficialCfei(user.numero_cfei);
       }
 
       const lockout = await getLockoutInfo(user.email);
@@ -689,19 +683,15 @@ router.get(
         counts[row.user_id] = { carcasses: row.carcasses, fiches: row.fiches };
       }
       // la liste officielle compte des dizaines de milliers de numéros : on ne renvoie que ceux des comptes
-      const numerosCfei = users
-        .map((user) => user.numero_cfei)
-        .filter((numero): numero is string => !!numero);
-      const [matchingOfficialCfeis, officialCfeisCount] = await Promise.all([
-        prisma.officialCfei.findMany({
-          where: { numero_cfei: { in: numerosCfei } },
-          select: { numero_cfei: true, nom: true, prenom: true, departement: true },
-        }),
+      const usersAvecCfei = users.filter((user) => !!user.numero_cfei);
+      const [getOfficialCfei, officialCfeisCount] = await Promise.all([
+        findOfficialCfeisForNumerosSaisis(usersAvecCfei.map((user) => user.numero_cfei!)),
         prisma.officialCfei.count(),
       ]);
       const officialCfeis: AdminUsersResponse['data']['officialCfeis'] = {};
-      for (const officialCfei of matchingOfficialCfeis) {
-        officialCfeis[officialCfei.numero_cfei] = officialCfei;
+      for (const user of usersAvecCfei) {
+        const officialCfei = getOfficialCfei(user.numero_cfei!);
+        if (officialCfei) officialCfeis[user.id] = officialCfei;
       }
       res.status(200).send({
         ok: true,

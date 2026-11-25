@@ -215,17 +215,17 @@ export default function AdminUsers() {
   const sortBy = searchParams.get('tri') || 'created_desc';
 
   const getCfeiValidationStatus = useCallback(
-    (user: { numero_cfei: string | null }): CfeiValidationStatus => {
+    (user: { id: string; numero_cfei: string | null }): CfeiValidationStatus => {
       if (!user.numero_cfei) return 'missing';
-      return officialCfeis[user.numero_cfei] ? 'valid' : 'invalid';
+      return officialCfeis[user.id] ? 'valid' : 'invalid';
     },
     [officialCfeis]
   );
 
   const getOfficialCfeiDetails = useCallback(
-    (user: { numero_cfei: string | null }): OfficialCfei | null => {
+    (user: { id: string; numero_cfei: string | null }): OfficialCfei | null => {
       if (!user.numero_cfei) return null;
-      return officialCfeis[user.numero_cfei] ?? null;
+      return officialCfeis[user.id] ?? null;
     },
     [officialCfeis]
   );

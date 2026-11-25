@@ -1,12 +1,13 @@
--- Numéros CFEI / FREI réécrits sous leur forme canonique, dans "User" et dans "OfficialCfei".
+-- Numéros de la liste officielle ("OfficialCfei") réécrits sous leur forme canonique.
 --
 -- Avant : la liste officielle et les comptes écrivent le même numéro de plusieurs façons
 --         (CFEI-45-13-577 / CFEI-45-13-0577 / CFEI-045-13-00577, tirets typographiques, espaces,
 --         minuscules, sans préfixe « CFEI- » pour le Var). La comparaison compte ↔ liste officielle
 --         étant une égalité, ces comptes sont signalés « CFEI introuvable » dans l'admin.
--- Après : l'API stocke toute nouvelle saisie sous la forme canonique (normalizeNumeroCfei →
---         canonicalNumeroCfei, api-express/src/utils/numero-cfei.ts), l'import de la liste aussi.
---         Ce script rattrape les lignes déjà en base, avec la même règle :
+-- Après : la liste officielle est stockée sous forme canonique (import : canonicalNumeroCfei,
+--         api-express/src/utils/numero-cfei.ts) ; le numéro saisi par le chasseur (User.numero_cfei)
+--         n'est jamais modifié, il est ramené à la forme canonique au moment de la comparaison.
+--         Ce script rattrape les lignes déjà importées, avec la même règle :
 --         - CFEI : `CFEI-<dép sans zéro de tête, 2 car. min.>-<AA>-<numéro sans zéro de tête>`,
 --           préfixe ajouté s'il manque ;
 --         - FREI : `<dép>-FREI-<AA>-<numéro>`, seuls séparateurs et casse nettoyés ;
@@ -47,14 +48,7 @@ BEGIN
 END;
 $$;
 
--- Comptes : le numéro saisi est réécrit (il s'affiche ainsi sur les fiches et dans l'admin).
-UPDATE "User"
-SET numero_cfei = pg_temp.canonical_numero_cfei(numero_cfei),
-    updated_at = now()
-WHERE numero_cfei IS NOT NULL
-  AND numero_cfei <> pg_temp.canonical_numero_cfei(numero_cfei);
-
--- Liste officielle : numero_cfei est la clé. Quand plusieurs lignes donnent la même forme canonique,
+-- numero_cfei est la clé. Quand plusieurs lignes donnent la même forme canonique,
 -- on garde celle déjà canonique, sinon la plus récente.
 DELETE FROM "OfficialCfei" o
 USING (

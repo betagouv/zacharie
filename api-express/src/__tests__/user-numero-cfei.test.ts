@@ -81,7 +81,7 @@ describe('POST /user/:id — numero_cfei', () => {
     );
 
     expect(res.status).toBe(200);
-    expect(updateData().numero_cfei).toBe('CFEI-56-24-123');
+    expect(updateData().numero_cfei).toBe('CFEI-056-24-123');
     expect(updateData().activated).toBe(false);
     expect(sendEmail).toHaveBeenCalledOnce();
     expect(sendEmail.mock.calls[0][0].subject).toMatch(/Numéro CFEI changé/i);
@@ -102,7 +102,7 @@ describe('POST /user/:id — numero_cfei', () => {
     );
 
     expect(res.status).toBe(200);
-    expect(updateData().numero_cfei).toBe('CFEI-56-24-123');
+    expect(updateData().numero_cfei).toBe('CFEI-056-24-123');
     expect(sendEmail).not.toHaveBeenCalled();
   });
 
@@ -118,18 +118,18 @@ describe('POST /user/:id — numero_cfei', () => {
     expect(sendEmail).not.toHaveBeenCalled();
   });
 
-  test('même numéro, écrit autrement → stocké sous sa forme canonique, aucun effet', async () => {
+  test('même numéro renvoyé (blur sans modification) → aucun effet', async () => {
     const { sendEmail } = await mocks();
-    const avecNumero = { ...chasseur, numero_cfei: 'CFEI-56-24-123' };
+    const avecNumero = { ...chasseur, numero_cfei: 'CFEI-056-24-123' };
     vi.mocked(prisma.user.update).mockResolvedValue(avecNumero as unknown as User);
 
     const res = await authed(
-      request(app).post('/user/user-chasseur').send({ numero_cfei: ' cfei 056-24-0123 ' }),
+      request(app).post('/user/user-chasseur').send({ numero_cfei: ' CFEI-056-24-123 ' }),
       avecNumero
     );
 
     expect(res.status).toBe(200);
-    expect(updateData().numero_cfei).toBe('CFEI-56-24-123');
+    expect(updateData().numero_cfei).toBe('CFEI-056-24-123');
     expect(updateData().activated).toBeUndefined();
     expect(sendEmail).not.toHaveBeenCalled();
   });
