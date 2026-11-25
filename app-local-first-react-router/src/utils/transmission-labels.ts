@@ -58,7 +58,7 @@ export function getCurrentStepLabel(
   entitiesIdsWorkingDirectlyFor: ReturnType<typeof useEntitiesIdsWorkingDirectlyForObj>,
   etgRole?: User['etg_role']
 ): TransmissionStep {
-  if (simpleStatus === 'Déposée au CCG') return 'Déposée au CCG';
+  if (simpleStatus === 'Dépôt en chambre froide') return 'Dépôt en chambre froide';
   // Circuit court (commerce de détail, boucher, ...) is a passive viewer : la fiche est toujours clôturée pour lui.
   if (isRoleCircuitCourt(role)) return 'Clôturée';
   // Le libellé est propre à chaque rôle (chaque fonction gère ses états clôturé et en cours).

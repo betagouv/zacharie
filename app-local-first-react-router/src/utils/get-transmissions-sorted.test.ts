@@ -690,7 +690,7 @@ describe('getTransmissionsShared', () => {
 });
 
 describe('computeTransmissions — fiches de CCG', () => {
-  it('une carcasse lue comme propriétaire du CCG a le statut « Déposée au CCG »', () => {
+  it('une carcasse lue comme propriétaire du CCG a le statut « Dépôt en chambre froide »', () => {
     const result = computeTransmissions({
       carcasses: { C1: carcasse({ zacharie_carcasse_id: 'C1' }) },
       carcassesIntermediaireById: {},
@@ -699,7 +699,7 @@ describe('computeTransmissions — fiches de CCG', () => {
       entitiesWorkingDirectlyFor: noEntities,
       ccgCarcasseIds: new Set(['C1']),
     });
-    expect(result[TID].labels.simpleStatus).toBe('Déposée au CCG');
+    expect(result[TID].labels.simpleStatus).toBe('Dépôt en chambre froide');
   });
 });
 

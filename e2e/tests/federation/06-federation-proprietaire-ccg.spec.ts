@@ -19,17 +19,17 @@ test('Fédération propriétaire de CCG — voit les fiches déposées dans son 
   await expect(page).toHaveURL(/\/app\/federation\/fiches/);
   const ficheLink = page.locator(`a[href$="/${FEI_NUMERO}"]`);
   await expect(ficheLink).toBeVisible({ timeout: 15000 });
-  await expect(ficheLink).toContainText('Déposée au CCG');
+  await expect(ficheLink).toContainText('Dépôt en chambre froide');
   await expect(ficheLink).toContainText('Pierre Petit');
 
   await ficheLink.click();
-  await expect(page).toHaveURL(new RegExp(`/app/federation/fiches/${FEI_NUMERO}`));
+  await expect(page).toHaveURL(new RegExp(`/app/federation/fiches/ccg/${FEI_NUMERO}`));
   await expect(page.getByRole('heading', { name: `Fiche ${FEI_NUMERO}` })).toBeVisible();
-  await expect(page.getByText('Pierre Petit')).toBeVisible();
   await expect(page.getByText('Daim – MM-001-001')).toBeVisible();
   await expect(page.getByText('Abcès - Système respiratoire (trachée, poumons)')).toBeVisible();
-  await expect(page.getByText(/Déposée dans CCG Chasseurs par le premier détenteur/)).toHaveCount(4);
-  await expect(page.getByText(/Sortie du CCG par ETG 1/)).toHaveCount(4);
+  await expect(page.getByText('Chambre froide : CCG Chasseurs')).toHaveCount(4);
+  await expect(page.getByText('Déposée par : Pierre Petit')).toHaveCount(4);
+  await expect(page.getByText(/Sortie par : ETG 1/)).toHaveCount(4);
 
   await expect(page.getByText(/saisie/i)).toHaveCount(0);
   await expect(page.getByText(/Tuberculose/)).toHaveCount(0);
@@ -48,11 +48,11 @@ test('Chasseur propriétaire de CCG — voit les fiches de son CCG dans « Fiche
   await page.goto('http://localhost:3290/app/chasseur');
   const ficheLink = page.locator(`a[href="/app/chasseur/ccg/${FEI_NUMERO}"]`);
   await expect(ficheLink).toBeVisible({ timeout: 15000 });
-  await expect(ficheLink).toContainText('Déposée au CCG');
+  await expect(ficheLink).toContainText('Dépôt en chambre froide');
   await expect(page.getByText('Pas encore de fiches cette saison')).toHaveCount(0);
   await ficheLink.click();
   await expect(page).toHaveURL(new RegExp(`/app/chasseur/ccg/${FEI_NUMERO}`));
-  await expect(page.getByText(/Sortie du CCG par ETG 1/)).toHaveCount(4);
+  await expect(page.getByText(/Sortie par : ETG 1/)).toHaveCount(4);
   await expect(page.getByText(/saisie/i)).toHaveCount(0);
   await expect(page.getByText(/refus/i)).toHaveCount(0);
 

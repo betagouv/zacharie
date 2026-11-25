@@ -40,6 +40,11 @@ export default function FederationLayout() {
           linkProps: { to: '/app/federation/profil/ma-federation', href: '#' },
         },
         {
+          text: 'Chambres froides',
+          isActive: location.pathname.startsWith('/app/federation/profil/ccgs'),
+          linkProps: { to: '/app/federation/profil/ccgs', href: '#' },
+        },
+        {
           text: 'Coordonnées',
           isActive: location.pathname === '/app/federation/profil/coordonnees',
           linkProps: { to: '/app/federation/profil/coordonnees', href: '#' },

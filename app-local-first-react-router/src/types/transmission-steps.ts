@@ -1,5 +1,5 @@
-// « Déposée au CCG » : fiche lue comme propriétaire du CCG, sans le statut des carcasses
-export type TransmissionSimpleStatus = 'À compléter' | 'Clôturée' | 'En cours' | 'Déposée au CCG';
+// « Dépôt en chambre froide » : fiche lue comme propriétaire du CCG, sans le statut des carcasses
+export type TransmissionSimpleStatus = 'À compléter' | 'Clôturée' | 'En cours' | 'Dépôt en chambre froide';
 
 export type TransmissionStepForTransportOrSoustraite = 'Sous-traitée' | 'Transporté' | '';
 
@@ -33,7 +33,7 @@ export type TransmissionStepForChasseur =
 
 export type TransmissionStepForSvi = 'Traitement des carcasses' | 'Clôturée';
 
-export type TransmissionStepGeneric = 'Clôturée' | 'En cours' | 'Déposée au CCG';
+export type TransmissionStepGeneric = 'Clôturée' | 'En cours' | 'Dépôt en chambre froide';
 
 export type TransmissionStep =
   | TransmissionStepForEtg

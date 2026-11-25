@@ -49,7 +49,7 @@ const statusColors: Record<TransmissionSimpleStatus, { bg: string; text: string 
     bg: 'bg-[#E8EDFF]',
     text: 'text-[#01008B]',
   },
-  'Déposée au CCG': {
+  'Dépôt en chambre froide': {
     bg: 'bg-[#EEEEEE]',
     text: 'text-[#3A3A3A]',
   },

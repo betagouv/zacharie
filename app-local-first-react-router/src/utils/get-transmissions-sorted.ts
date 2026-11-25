@@ -286,7 +286,7 @@ export function computeTransmissions({
     // carcasse lue comme propriétaire du CCG : son statut n'est pas connu
     if (ccgCarcasseIds.has(carcasse.zacharie_carcasse_id)) {
       transmissions[transmissionId].labels = getTransmissionLabels(
-        'Déposée au CCG',
+        'Dépôt en chambre froide',
         transmissions[transmissionId].content,
         role,
         entitiesWorkingDirectlyFor,
@@ -527,7 +527,7 @@ export function useTransmissionsSorted(): TransmissionSorted {
     if (transmission.labels.simpleStatus === 'Clôturée') {
       transmissionsSorted.transmissionsCloturees.push(transmission);
     }
-    if (transmission.labels.simpleStatus === 'Déposée au CCG') {
+    if (transmission.labels.simpleStatus === 'Dépôt en chambre froide') {
       transmissionsSorted.transmissionsDeposeesAuCcg.push(transmission);
     }
   }

@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { TransmissionSimpleStatus } from '@app/types/transmission-steps';
-import { CarcasseType, DepotType } from '@prisma/client';
+import { CarcasseType, DepotType, UserRoles } from '@prisma/client';
 import { abbreviations } from '@app/utils/count-carcasses';
 import { keepAvailableFilterValues } from '@app/utils/keep-available-filter-values';
 import dayjs from 'dayjs';
@@ -82,7 +82,7 @@ const statusColors: Record<TransmissionSimpleStatus, { bg: string; text: string 
     bg: 'bg-[#E8EDFF]',
     text: 'text-[#01008B]',
   },
-  'Déposée au CCG': {
+  'Dépôt en chambre froide': {
     bg: 'bg-[#EEEEEE]',
     text: 'text-[#3A3A3A]',
   },
@@ -135,7 +135,10 @@ function OnboardingChasseInfoBanner() {
 // En mode test (Playwright) on baisse la pagination pour pouvoir la tester avec peu de fiches.
 const ITEMS_PER_PAGE = import.meta.env.VITE_TEST_PLAYWRIGHT === 'true' ? 3 : 100;
 
-export default function ChasseurFiches() {
+// chasseur : /app/chasseur ; fédération (fiches de ses CCG) : /app/federation/fiches
+const FicheBasePathContext = createContext('/app/chasseur');
+
+export default function ChasseurFiches({ basePath = '/app/chasseur' }: { basePath?: string }) {
   const navigate = useNavigate();
   const user = useMostFreshUser('chasseur fiches')!;
   const {
@@ -305,6 +308,13 @@ export default function ChasseurFiches() {
     ];
   }, [transmissionsACompleter, transmissionsEnCours, transmissionsCloturees, transmissionsDeposeesAuCcg]);
 
+  // « Dépôt en chambre froide » seulement si l'utilisateur a des fiches de CCG ; sans autre fiche, le filtre est inutile
+  const statusOptions = useMemo((): TransmissionSimpleStatus[] => {
+    if (!transmissionsDeposeesAuCcg.length) return ['À compléter', 'En cours', 'Clôturée'];
+    if (transmissionsDeposeesAuCcg.length === allTransmissions.length) return [];
+    return ['À compléter', 'En cours', 'Clôturée', 'Dépôt en chambre froide'];
+  }, [transmissionsDeposeesAuCcg, allTransmissions]);
+
   const premierDetenteurOptions = useMemo(() => {
     const map = new Map<string, string>();
     for (const transmission of allTransmissions) {
@@ -417,7 +427,7 @@ export default function ChasseurFiches() {
         }
         if (!isIncluded) continue;
       }
-      if (filterStatuses.length > 0) {
+      if (filterStatuses.length > 0 && statusOptions.length > 0) {
         if (!filterStatuses.includes(transmission.labels.simpleStatus)) continue;
       }
       if (filterPremierDetenteurs.length > 0) {
@@ -454,6 +464,7 @@ export default function ChasseurFiches() {
     allTransmissions,
     searchQuery,
     filterStatuses,
+    statusOptions,
     filterPremierDetenteurs,
     filterCCGs,
     filterCollecteurs,
@@ -526,44 +537,46 @@ export default function ChasseurFiches() {
       </div>
 
       {/* Filtre Statut */}
-      <CollapsibleSection
-        title="Statut"
-        badge={
-          filterStatuses.length > 0 ? (
-            <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
-              {filterStatuses.length}
-            </span>
-          ) : undefined
-        }
-      >
-        <div className="flex flex-col gap-1.5">
-          {(['À compléter', 'En cours', 'Clôturée'] as TransmissionSimpleStatus[]).map((status) => (
-            <label
-              key={status}
-              className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
-            >
-              <input
-                type="checkbox"
-                checked={filterStatuses.includes(status)}
-                className="checked:accent-action-high-blue-france h-4 w-4"
-                onChange={() => {
-                  trackFeature('fiches-chasseur', 'filtre', 'statut');
-                  if (filterStatuses.includes(status)) {
-                    setFilterStatuses(filterStatuses.filter((s) => s !== status));
-                  } else {
-                    setFilterStatuses([...filterStatuses, status]);
-                  }
-                }}
-              />
-              <span
-                className={`inline-block rounded px-2 py-0.5 text-xs font-semibold uppercase ${statusColors[status].bg} ${statusColors[status].text}`}
-              >
-                {status}
+      {statusOptions.length > 0 && (
+        <CollapsibleSection
+          title="Statut"
+          badge={
+            filterStatuses.length > 0 ? (
+              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
+                {filterStatuses.length}
               </span>
-            </label>
-          ))}
-        </div>
-      </CollapsibleSection>
+            ) : undefined
+          }
+        >
+          <div className="flex flex-col gap-1.5">
+            {statusOptions.map((status) => (
+              <label
+                key={status}
+                className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+              >
+                <input
+                  type="checkbox"
+                  checked={filterStatuses.includes(status)}
+                  className="checked:accent-action-high-blue-france h-4 w-4"
+                  onChange={() => {
+                    trackFeature('fiches-chasseur', 'filtre', 'statut');
+                    if (filterStatuses.includes(status)) {
+                      setFilterStatuses(filterStatuses.filter((s) => s !== status));
+                    } else {
+                      setFilterStatuses([...filterStatuses, status]);
+                    }
+                  }}
+                />
+                <span
+                  className={`inline-block rounded px-2 py-0.5 text-xs font-semibold uppercase ${statusColors[status].bg} ${statusColors[status].text}`}
+                >
+                  {status}
+                </span>
+              </label>
+            ))}
+          </div>
+        </CollapsibleSection>
+      )}
 
       {/* Filtre Saison */}
       {(saisonOptions.length > 0 || filterSaisons.length > 0) && (
@@ -763,194 +776,196 @@ export default function ChasseurFiches() {
   }
 
   return (
-    <div className="relative">
-      <title>Mes fiches | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
+    <FicheBasePathContext.Provider value={basePath}>
+      <div className="relative">
+        <title>Mes fiches | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
 
-      <PendingModifRequestsAlertModal />
+        <PendingModifRequestsAlertModal />
 
-      {/* Mobile : bouton filtres sticky */}
-      <div className="fr-background-alt--blue-france sticky top-0 z-30 flex items-center justify-between px-4 py-2 md:hidden">
-        <span className="text-sm font-medium">
-          {filteredTransmissions.length} fiche{filteredTransmissions.length > 1 ? 's' : ''}
-        </span>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            aria-label={viewType === 'grid' ? 'Afficher en table' : 'Afficher en grille'}
-            title={viewType === 'grid' ? 'Afficher en table' : 'Afficher en grille'}
-            className="h- flex w-10 items-center justify-center rounded border border-gray-300 bg-white text-gray-700 transition-colors hover:bg-gray-50"
-            onClick={() => {
-              const next = viewType === 'grid' ? 'table' : 'grid';
-              trackFeature('fiches-chasseur', 'vue', next);
-              setViewType(next);
-            }}
-          >
-            <span
-              className={`fr-icon--sm ${viewType === 'grid' ? 'ri-table-line' : 'ri-grid-line'}`}
-              aria-hidden="true"
-            />
-          </button>
-          <button
-            type="button"
-            aria-label="Filtres"
-            className="relative flex h-10 items-center gap-1 rounded border border-gray-300 bg-white px-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
-            onClick={() => setShowMobileFilters(!showMobileFilters)}
-          >
-            <span
-              className="fr-icon--sm ri-filter-3-line"
-              aria-hidden="true"
-            />
-            <span>Filtres</span>
-            {hasActiveFilters && (
-              <span className="bg-action-high-blue-france ml-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white">
-                {filterStatuses.length +
-                  filterPremierDetenteurs.length +
-                  filterCCGs.length +
-                  filterCollecteurs.length +
-                  filterSaisons.length +
-                  (filterDateFrom || filterDateTo ? 1 : 0)}
-              </span>
-            )}
-          </button>
-          {user.numero_cfei && (
-            <Button
-              iconId="fr-icon-add-circle-line"
-              priority="primary"
-              onClick={async () => {
-                const newFei = await createNewFei('liste-mobile');
-                navigate(`/app/chasseur/fei/${newFei.numero}`);
+        {/* Mobile : bouton filtres sticky */}
+        <div className="fr-background-alt--blue-france sticky top-0 z-30 flex items-center justify-between px-4 py-2 md:hidden">
+          <span className="text-sm font-medium">
+            {filteredTransmissions.length} fiche{filteredTransmissions.length > 1 ? 's' : ''}
+          </span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              aria-label={viewType === 'grid' ? 'Afficher en table' : 'Afficher en grille'}
+              title={viewType === 'grid' ? 'Afficher en table' : 'Afficher en grille'}
+              className="h- flex w-10 items-center justify-center rounded border border-gray-300 bg-white text-gray-700 transition-colors hover:bg-gray-50"
+              onClick={() => {
+                const next = viewType === 'grid' ? 'table' : 'grid';
+                trackFeature('fiches-chasseur', 'vue', next);
+                setViewType(next);
               }}
             >
-              Nouvelle
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Mobile : panneau filtres */}
-      {showMobileFilters && (
-        <div className="fixed inset-0 z-[800] md:hidden">
-          <div
-            className="absolute inset-0 bg-black/30"
-            onClick={() => setShowMobileFilters(false)}
-          />
-          <div className="absolute top-0 right-0 bottom-0 w-80 overflow-y-auto bg-white p-4 shadow-xl">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold">Filtres</h2>
-              <button
-                className="text-action-high-blue-france text-sm underline"
-                onClick={() => setShowMobileFilters(false)}
+              <span
+                className={`fr-icon--sm ${viewType === 'grid' ? 'ri-table-line' : 'ri-grid-line'}`}
+                aria-hidden="true"
+              />
+            </button>
+            <button
+              type="button"
+              aria-label="Filtres"
+              className="relative flex h-10 items-center gap-1 rounded border border-gray-300 bg-white px-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+              onClick={() => setShowMobileFilters(!showMobileFilters)}
+            >
+              <span
+                className="fr-icon--sm ri-filter-3-line"
+                aria-hidden="true"
+              />
+              <span>Filtres</span>
+              {hasActiveFilters && (
+                <span className="bg-action-high-blue-france ml-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white">
+                  {filterStatuses.length +
+                    filterPremierDetenteurs.length +
+                    filterCCGs.length +
+                    filterCollecteurs.length +
+                    filterSaisons.length +
+                    (filterDateFrom || filterDateTo ? 1 : 0)}
+                </span>
+              )}
+            </button>
+            {user.numero_cfei && (
+              <Button
+                iconId="fr-icon-add-circle-line"
+                priority="primary"
+                onClick={async () => {
+                  const newFei = await createNewFei('liste-mobile');
+                  navigate(`/app/chasseur/fei/${newFei.numero}`);
+                }}
               >
-                Fermer
-              </button>
-            </div>
-            {sidebarContent}
+                Nouvelle
+              </Button>
+            )}
           </div>
         </div>
-      )}
 
-      {/* Layout principal */}
-      <div className="flex">
-        {/* Sidebar gauche - desktop, collée au bord */}
-        <aside className="sticky top-0 hidden h-screen w-64 shrink-0 overflow-y-auto border-r border-gray-200 bg-white p-4 md:block">
-          {sidebarContent}
-        </aside>
-
-        {/* Contenu principal */}
-        <div className="mx-auto max-w-5xl min-w-0 flex-1 px-4 pt-4 md:px-6">
-          {!user.activated && (
-            <CompteEnAttenteValidationAlert
-              variant={user.numero_cfei ? 'examinateur' : 'chasseur'}
-              className="fr-mb-4w"
+        {/* Mobile : panneau filtres */}
+        {showMobileFilters && (
+          <div className="fixed inset-0 z-[800] md:hidden">
+            <div
+              className="absolute inset-0 bg-black/30"
+              onClick={() => setShowMobileFilters(false)}
             />
-          )}
-          <OnboardingChasseInfoBanner />
-          {filteredTransmissions.length > 0 && (
-            <div className="hidden w-full flex-wrap items-center justify-end gap-3 py-4 md:flex">
-              <SegmentedControl
-                hideLegend
-                className="hidden bg-white md:block"
-                segments={[
-                  {
-                    label: 'Grille',
-                    iconId: 'ri-grid-line',
-                    nativeInputProps: {
-                      checked: viewType === 'grid',
-                      onChange: () => {
-                        trackFeature('fiches-chasseur', 'vue', 'grid');
-                        setViewType('grid');
-                      },
-                      name: 'view-type',
-                      value: 'grid',
-                    },
-                  },
-                  {
-                    label: 'Table',
-                    iconId: 'ri-table-line',
-                    nativeInputProps: {
-                      checked: viewType === 'table',
-                      onChange: () => {
-                        trackFeature('fiches-chasseur', 'vue', 'table');
-                        setViewType('table');
-                      },
-                      name: 'view-type',
-                      value: 'table',
-                    },
-                  },
-                ]}
+            <div className="absolute top-0 right-0 bottom-0 w-80 overflow-y-auto bg-white p-4 shadow-xl">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-lg font-bold">Filtres</h2>
+                <button
+                  className="text-action-high-blue-france text-sm underline"
+                  onClick={() => setShowMobileFilters(false)}
+                >
+                  Fermer
+                </button>
+              </div>
+              {sidebarContent}
+            </div>
+          </div>
+        )}
+
+        {/* Layout principal */}
+        <div className="flex">
+          {/* Sidebar gauche - desktop, collée au bord */}
+          <aside className="sticky top-0 hidden h-screen w-64 shrink-0 overflow-y-auto border-r border-gray-200 bg-white p-4 md:block">
+            {sidebarContent}
+          </aside>
+
+          {/* Contenu principal */}
+          <div className="mx-auto max-w-5xl min-w-0 flex-1 px-4 pt-4 md:px-6">
+            {!user.activated && (
+              <CompteEnAttenteValidationAlert
+                variant={user.numero_cfei ? 'examinateur' : 'chasseur'}
+                className="fr-mb-4w"
               />
-              <div className="hidden md:block">
-                <ExportTransmissionsModal
-                  transmissionsIds={selectedTransmissions}
-                  storageKey="chasseur-fiches-export-columns"
+            )}
+            {user.roles.includes(UserRoles.CHASSEUR) && <OnboardingChasseInfoBanner />}
+            {filteredTransmissions.length > 0 && (
+              <div className="hidden w-full flex-wrap items-center justify-end gap-3 py-4 md:flex">
+                <SegmentedControl
+                  hideLegend
+                  className="hidden bg-white md:block"
+                  segments={[
+                    {
+                      label: 'Grille',
+                      iconId: 'ri-grid-line',
+                      nativeInputProps: {
+                        checked: viewType === 'grid',
+                        onChange: () => {
+                          trackFeature('fiches-chasseur', 'vue', 'grid');
+                          setViewType('grid');
+                        },
+                        name: 'view-type',
+                        value: 'grid',
+                      },
+                    },
+                    {
+                      label: 'Table',
+                      iconId: 'ri-table-line',
+                      nativeInputProps: {
+                        checked: viewType === 'table',
+                        onChange: () => {
+                          trackFeature('fiches-chasseur', 'vue', 'table');
+                          setViewType('table');
+                        },
+                        name: 'view-type',
+                        value: 'table',
+                      },
+                    },
+                  ]}
+                />
+                <div className="hidden md:block">
+                  <ExportTransmissionsModal
+                    transmissionsIds={selectedTransmissions}
+                    storageKey="chasseur-fiches-export-columns"
+                  />
+                </div>
+                {user.numero_cfei && (
+                  <Button
+                    iconId="fr-icon-add-circle-line"
+                    priority="primary"
+                    onClick={async () => {
+                      const newFei = await createNewFei('liste-bureau');
+                      navigate(`/app/chasseur/fei/${newFei.numero}`);
+                    }}
+                  >
+                    Nouvelle fiche
+                  </Button>
+                )}
+              </div>
+            )}
+            <FeisWrapper
+              viewType={viewType}
+              handleSelectAll={handleSelectAll}
+              handleCheckboxClick={handleCheckboxClick}
+              selectedTransmissions={selectedTransmissions}
+              filter={'Toutes les fiches'}
+              paginatedTransmissions={paginatedTransmissions}
+              hasActiveFilters={hasActiveFilters}
+              clearAllFilters={clearAllFilters}
+            />
+            {filteredTransmissions.length > 0 && totalPages > 1 && (
+              <div className="mt-4 flex justify-center">
+                <Pagination
+                  count={totalPages}
+                  defaultPage={page}
+                  getPageLinkProps={(pageNumber) => ({
+                    to: `${basePath}?page=${pageNumber}`,
+                  })}
                 />
               </div>
-              {user.numero_cfei && (
-                <Button
-                  iconId="fr-icon-add-circle-line"
-                  priority="primary"
-                  onClick={async () => {
-                    const newFei = await createNewFei('liste-bureau');
-                    navigate(`/app/chasseur/fei/${newFei.numero}`);
-                  }}
-                >
-                  Nouvelle fiche
-                </Button>
-              )}
+            )}
+            <div className="my-4">
+              <a
+                className="fr-link fr-icon-arrow-up-fill fr-link--icon-left"
+                href="#top"
+              >
+                Haut de page
+              </a>
             </div>
-          )}
-          <FeisWrapper
-            viewType={viewType}
-            handleSelectAll={handleSelectAll}
-            handleCheckboxClick={handleCheckboxClick}
-            selectedTransmissions={selectedTransmissions}
-            filter={'Toutes les fiches'}
-            paginatedTransmissions={paginatedTransmissions}
-            hasActiveFilters={hasActiveFilters}
-            clearAllFilters={clearAllFilters}
-          />
-          {filteredTransmissions.length > 0 && totalPages > 1 && (
-            <div className="mt-4 flex justify-center">
-              <Pagination
-                count={totalPages}
-                defaultPage={page}
-                getPageLinkProps={(pageNumber) => ({
-                  to: `/app/chasseur?page=${pageNumber}`,
-                })}
-              />
-            </div>
-          )}
-          <div className="my-4">
-            <a
-              className="fr-link fr-icon-arrow-up-fill fr-link--icon-left"
-              href="#top"
-            >
-              Haut de page
-            </a>
           </div>
         </div>
       </div>
-    </div>
+    </FicheBasePathContext.Provider>
   );
 }
 
@@ -973,6 +988,7 @@ function FeisWrapper({
   hasActiveFilters: boolean;
   clearAllFilters: () => void;
 }) {
+  const ficheBasePath = useContext(FicheBasePathContext);
   const user = useMostFreshUser('chasseur fiches')!;
   const navigate = useNavigate();
   const nothingToShow = paginatedTransmissions.length === 0;
@@ -1047,7 +1063,7 @@ function FeisWrapper({
             filter={'Toutes les fiches'}
             onPrintSelect={handleCheckboxClick}
             isPrintSelected={selectedTransmissions.includes(getTransmissionIdFromMetadata(transmission))}
-            linkTo={getChasseurFicheLink(transmission)}
+            linkTo={getChasseurFicheLink(transmission, ficheBasePath)}
             detenteurName={transmission.content.premier_detenteur_name_cache ?? null}
             detenteurIcon={<ChasseIcon />}
           />
@@ -1072,6 +1088,7 @@ function FeisTableRow({
   filter?: TransmissionSimpleStatus | 'Toutes les fiches';
   onVisibilityChange?: (feiNumero: string, isVisible: boolean) => void;
 }) {
+  const ficheBasePath = useContext(FicheBasePathContext);
   const simpleStatus = transmission.labels.simpleStatus;
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
 
@@ -1126,7 +1143,7 @@ function FeisTableRow({
     <tr
       key={transmission.fei.numero!}
       className={`cursor-pointer border-b border-gray-200 hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}
-      onClick={() => navigate(getChasseurFicheLink(transmission))}
+      onClick={() => navigate(getChasseurFicheLink(transmission, ficheBasePath))}
     >
       <td
         className="px-4 py-3"
@@ -1273,9 +1290,9 @@ function FeisTable({
 }
 
 // fiche lue comme propriétaire du CCG : page en lecture seule, sans le statut des carcasses
-function getChasseurFicheLink(transmission: CarcasseTransmissionWihMetadata) {
-  if (transmission.labels.simpleStatus === 'Déposée au CCG') {
-    return `/app/chasseur/ccg/${transmission.fei.numero}`;
+function getChasseurFicheLink(transmission: CarcasseTransmissionWihMetadata, basePath: string) {
+  if (transmission.labels.simpleStatus === 'Dépôt en chambre froide') {
+    return `${basePath}/ccg/${transmission.fei.numero}`;
   }
-  return `/app/chasseur/fei/${transmission.fei.numero}`;
+  return `${basePath}/fei/${transmission.fei.numero}`;
 }

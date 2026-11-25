@@ -543,7 +543,6 @@ export default function AdminEntity() {
               relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
               fetcherKey="working-with"
               setIsSaving={setIsSaving}
-              ccgOwners={entity.type === EntityTypes.CCG}
             />
           )}
           {selectedTabId === 'ETGs associés' && (
@@ -603,8 +602,6 @@ interface WorkingWithOrForProps {
   }>;
   fetcherKey: string;
   setIsSaving: (isSaving: boolean) => void;
-  // CCG : l'utilisateur ajouté en devient propriétaire (statut ADMIN)
-  ccgOwners?: boolean;
 }
 
 function UserWorkingWithOrFor({
@@ -614,7 +611,6 @@ function UserWorkingWithOrFor({
   potentialUsers,
   fetcherKey,
   setIsSaving,
-  ccgOwners = false,
 }: WorkingWithOrForProps) {
   const { entity } = adminEntityResponse;
   return (
@@ -667,9 +663,6 @@ function UserWorkingWithOrFor({
                     // ajout par un admin Zacharie : validé d'office (le premier devient admin de l'entité)
                     ...(relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
                       ? { [Prisma.EntityAndUserRelationsScalarFieldEnum.status]: EntityRelationStatus.MEMBER }
-                      : {}),
-                    ...(ccgOwners
-                      ? { [Prisma.EntityAndUserRelationsScalarFieldEnum.status]: EntityRelationStatus.ADMIN }
                       : {}),
                   },
                 })

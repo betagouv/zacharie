@@ -17,7 +17,7 @@ import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { useNavigate } from 'react-router';
 import type { UserCCGsResponse, UserEntityResponse } from '@api/src/types/responses';
 
-export default function MesCCGs() {
+export default function MesCCGs({ editBasePath = '/app/chasseur/profil/ccgs' }: { editBasePath?: string }) {
   const [userCCGs, setUserCCGs] = useState<Array<EntityWithUserRelations>>([]);
   const user = useUser((state) => state.user)!;
 
@@ -203,7 +203,7 @@ export default function MesCCGs() {
                           iconId="fr-icon-pencil-line"
                           title="Éditer"
                           nativeButtonProps={{
-                            onClick: () => navigate(`/app/chasseur/profil/ccgs/${entity.id}`),
+                            onClick: () => navigate(`${editBasePath}/${entity.id}`),
                           }}
                         />
                       )}

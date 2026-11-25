@@ -64,7 +64,9 @@ export default function CcgFiche({ basePath }: { basePath: string }) {
               </div>
             </dl>
           </Section>
-          <Section title={`Carcasses déposées dans mes CCG (${carcasses.length})`}>
+          <Section
+            title={`${carcasses.length > 1 ? 'Carcasses déposées' : 'Carcasse déposée'} dans mes chambres froides (${carcasses.length})`}
+          >
             <ul className="flex flex-col gap-4 p-0">
               {carcasses.map(({ carcasse, ccgId, deposeAt, deposant, sortie }) => {
                 const anomalies = [
@@ -82,24 +84,24 @@ export default function CcgFiche({ basePath }: { basePath: string }) {
                         ? ` (${carcasse.nombre_d_animaux} animaux)`
                         : ''}
                     </span>
+                    {anomalies.length > 0 && <span>Examen initial : {anomalies.join(', ')}</span>}
+                    <span>Chambre froide : {entities[ccgId]?.nom_d_usage ?? ''}</span>
+                    <span>Dépôt : {deposeAt ? `le ${formatDateTime(deposeAt)}` : 'date non renseignée'}</span>
                     <span>
-                      Examen initial :{' '}
-                      {anomalies.length
-                        ? anomalies.join(', ')
-                        : carcasse.examinateur_carcasse_sans_anomalie
-                          ? 'pas d’anomalie'
-                          : ''}
+                      Déposée par :{' '}
+                      {deposant ? intermediaireName(deposant) : fei.premier_detenteur_name_cache}
                     </span>
-                    <span>
-                      Déposée dans {entities[ccgId]?.nom_d_usage ?? 'le CCG'}
-                      {deposant ? ` par ${intermediaireName(deposant)}` : ' par le premier détenteur'}
-                      {deposeAt ? ` le ${formatDateTime(deposeAt)}` : ''}
-                    </span>
-                    <span>
-                      {sortie
-                        ? `Sortie du CCG par ${intermediaireName(sortie)}${sortie.prise_en_charge_at ? ` le ${formatDateTime(sortie.prise_en_charge_at)}` : ''}`
-                        : 'Pas encore sortie du CCG'}
-                    </span>
+                    {sortie ? (
+                      <>
+                        <span>
+                          Sortie :{' '}
+                          {sortie.prise_en_charge_at ? `le ${formatDateTime(sortie.prise_en_charge_at)}` : ''}
+                        </span>
+                        <span>Sortie par : {intermediaireName(sortie)}</span>
+                      </>
+                    ) : (
+                      <span>Sortie : pas encore sortie de la chambre froide</span>
+                    )}
                   </li>
                 );
               })}

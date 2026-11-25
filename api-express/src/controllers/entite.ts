@@ -434,8 +434,9 @@ router.post(
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
     const user = req.user!;
-    if (!user.roles.includes(UserRoles.CHASSEUR)) {
-      const error = new Error('Seulement un chasseur peut créer un CCG');
+    // une fédération pré-enregistre un CCG pour en voir les fiches (tableau de bord CCG)
+    if (!user.roles.includes(UserRoles.CHASSEUR) && !user.roles.includes(UserRoles.FEDERATION)) {
+      const error = new Error('Seulement un chasseur ou une fédération peut créer un CCG');
       res.status(400);
       return next(error);
     }

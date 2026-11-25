@@ -5,7 +5,9 @@ import ChangerMonMotDePasse from '@app/routes/profil/changer-mon-mot-de-passe';
 import FederationLayout from './federation-layout';
 import FederationCoordonnees from './federation-coordonnees';
 import FederationMaFederation from './federation-ma-federation';
-import CcgFiches from '@app/routes/ccg/ccg-fiches';
+import FederationCCGs from './federation-ccgs';
+import ChasseurCCGEdit from '@app/routes/chasseur/profil/chasseur-ccg-edit';
+import ChasseurFiches from '@app/routes/chasseur/chasseur-fiches';
 import CcgFiche from '@app/routes/ccg/ccg-fiche';
 
 export default function RouterFederation() {
@@ -37,11 +39,19 @@ export default function RouterFederation() {
       />
       <Route
         path="fiches"
-        element={<CcgFiches basePath="/app/federation/fiches" />}
+        element={<ChasseurFiches basePath="/app/federation/fiches" />}
       />
       <Route
-        path="fiches/:fei_numero"
+        path="fiches/ccg/:fei_numero"
         element={<CcgFiche basePath="/app/federation/fiches" />}
+      />
+      <Route
+        path="profil/ccgs"
+        element={<FederationCCGs />}
+      />
+      <Route
+        path="profil/ccgs/:entityId"
+        element={<ChasseurCCGEdit />}
       />
       <Route
         path="profil/ma-federation"
