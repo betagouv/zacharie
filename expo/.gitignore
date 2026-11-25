@@ -42,5 +42,6 @@ ios/
 
 # android
 *.aab
+*.apk
 android/
 google-services.json

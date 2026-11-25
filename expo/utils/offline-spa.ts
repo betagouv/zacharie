@@ -63,7 +63,7 @@ export const checkAndDownloadSpa = async (): Promise<void> => {
 
         // Write bytes to file
         const bytes = await assetResponse.bytes();
-        file.write(bytes);
+        await file.write(bytes);
 
         downloadedCount++;
       } catch (e) {
