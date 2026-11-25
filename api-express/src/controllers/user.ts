@@ -64,7 +64,6 @@ import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
 import { z } from 'zod';
 import { normalizeNumeroCfei, sanitize } from '~/utils/sanitize';
 import { inviteUser } from '~/utils/invite-user';
-import { requestCarcassesReload } from '~/utils/carcasses-reload';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
 // Schemas for validation
@@ -492,7 +491,9 @@ router.post(
         });
         return;
       }
-      const isOk = existingPassword.reset_password_token === invitationToken;
+      // un compte qui a déjà un mot de passe ne passe plus par l'invitation : le jeton présent en base
+      // est alors un jeton de réinitialisation, utilisable seulement sur /reset-password
+      const isOk = !existingPassword.password && existingPassword.reset_password_token === invitationToken;
       if (!isOk) {
         await prisma.securityLog.create({
           data: {
@@ -520,16 +521,6 @@ router.post(
             user_agent: req.headers['user-agent'],
           },
         });
-        await prisma.password.delete({
-          where: { id: existingPassword.id },
-        });
-        await prisma.entityAndUserRelations.deleteMany({
-          where: {
-            owner_id: user.id,
-            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-          },
-        });
-        await requestCarcassesReload(user.id);
         res.status(400).send({
           ok: false,
           data: { user: null },
@@ -623,16 +614,32 @@ router.post(
         return;
       }
 
+      // compte sans mot de passe (invitation jamais acceptée) : pas de lien de réinitialisation,
+      // il écraserait le jeton d'invitation et serait accepté comme tel pendant 7 jours
+      const existingPassword = await prisma.password.findUnique({ where: { user_id: user.id } });
+      if (!existingPassword?.password) {
+        await prisma.securityLog.create({
+          data: {
+            email,
+            action: 'PASSWORD_RESET_REFUSED_NO_PASSWORD',
+            ip: req.ip,
+            user_agent: req.headers['user-agent'],
+          },
+        });
+        res.status(200).send({
+          ok: true,
+          data: { user: null },
+          error: '',
+          message:
+            'Si cet email existe, un email de réinitialisation de mot de passe a été envoyé\nCliquez sur le lien dans cet email pour réinitialiser votre mot de passe',
+        });
+        return;
+      }
+
       const token = crypto.randomUUID();
-      await prisma.password.upsert({
+      await prisma.password.update({
         where: { user_id: user.id },
-        update: {
-          reset_password_token: token,
-          reset_password_last_email_sent_at: new Date(),
-        },
-        create: {
-          User: { connect: { id: user.id } },
-          password: '',
+        data: {
           reset_password_token: token,
           reset_password_last_email_sent_at: new Date(),
         },

@@ -788,16 +788,18 @@ router.post(
         res.status(400).send({ ok: false, error: 'User not found' });
         return;
       }
+      const existingPassword = await prisma.password.findUnique({ where: { user_id: user.id } });
+      if (!existingPassword?.password) {
+        res.status(400).send({
+          ok: false,
+          error: "Cet utilisateur n'a pas encore de mot de passe : envoyez-lui un lien d'invitation",
+        });
+        return;
+      }
       const token = crypto.randomUUID();
-      await prisma.password.upsert({
+      await prisma.password.update({
         where: { user_id: user.id },
-        update: {
-          reset_password_token: token,
-          reset_password_last_email_sent_at: new Date(),
-        },
-        create: {
-          User: { connect: { id: user.id } },
-          password: '',
+        data: {
           reset_password_token: token,
           reset_password_last_email_sent_at: new Date(),
         },

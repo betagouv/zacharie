@@ -159,20 +159,32 @@ describe('Admin lockout management', () => {
   describe('POST /user/:user_id/send-reset-password', () => {
     test('sends reset email and logs PASSWORD_RESET_SENT_FROM_ADMIN', async () => {
       (prisma.user.findUnique as any).mockResolvedValue(targetUser);
-      (prisma.password.upsert as any).mockResolvedValue({});
+      (prisma.password.findUnique as any).mockResolvedValue({ password: 'hash-existant' });
+      (prisma.password.update as any).mockResolvedValue({});
       (prisma.securityLog.create as any).mockResolvedValue({});
       const res = await request(app).post('/user/target-1/send-reset-password');
 
       expect(res.status).toBe(200);
       expect(res.body.ok).toBe(true);
       expect(sendTemplateEmail).toHaveBeenCalledTimes(1);
-      expect(prisma.password.upsert).toHaveBeenCalled();
+      expect(prisma.password.update).toHaveBeenCalled();
       expect(prisma.securityLog.create).toHaveBeenCalledWith({
         data: {
           email: 'locked@example.fr',
           action: 'PASSWORD_RESET_SENT_FROM_ADMIN',
         },
       });
+    });
+
+    test('refuses an account without password (invitation never accepted)', async () => {
+      (prisma.user.findUnique as any).mockResolvedValue(targetUser);
+      (prisma.password.findUnique as any).mockResolvedValue({ password: '' });
+      const res = await request(app).post('/user/target-1/send-reset-password');
+
+      expect(res.status).toBe(400);
+      expect(res.body.ok).toBe(false);
+      expect(prisma.password.update).not.toHaveBeenCalled();
+      expect(sendTemplateEmail).not.toHaveBeenCalled();
     });
 
     test('returns 400 for unknown user', async () => {

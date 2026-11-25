@@ -322,7 +322,8 @@ export default function AdminUser() {
     API.post({ path: `admin/user/${params.userId}/send-reset-password` })
       .then((res) => {
         if (!res.ok) {
-          return toast.error("Une erreur est survenue lors de l'envoi du lien");
+          const error = (res as { error?: string }).error;
+          return toast.error(error || "Une erreur est survenue lors de l'envoi du lien");
         }
         toast.success(`Lien de réinitialisation envoyé à ${user.email}`);
       })
