@@ -4,6 +4,7 @@ export type SeedRole =
   | 'EXAMINATEUR_INITIAL'
   | 'PREMIER_DETENTEUR'
   | 'PREMIER_DETENTEUR_WITH_PARTAGE'
+  | 'PREMIER_DETENTEUR_ASSOCIATION'
   | 'PREMIER_DETENTEUR_SANS_DESTINATAIRE'
   | 'ETG'
   | 'ETG_TAKEN_CHARGE'
@@ -33,7 +34,8 @@ export type SeedRole =
   | 'ETG_TABLEAU_DE_BORD'
   | 'LABORATOIRE_FTP_RECUE'
   | 'SVI_SANGLIERS'
-  | 'API_BAC_A_SABLE';
+  | 'API_BAC_A_SABLE'
+  | 'LIEN_ACCESS_TOKEN_AUTRE_COMPTE';
 
 export async function resetDb(role?: SeedRole) {
   const timer = `resetDb(${role ?? ''})`;

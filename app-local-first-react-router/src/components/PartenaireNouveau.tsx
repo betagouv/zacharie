@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@app/components/Input';
-import { EntityRelationType, Prisma, Entity, EntityTypes } from '@prisma/client';
+import { EntityRelationType, Prisma, Entity } from '@prisma/client';
 import InputCodePostalEtVille from '@app/components/InputCodePostalEtVille';
 import type { UserEntityResponse } from '@api/src/types/responses';
 import type { EntitiesById } from '@api/src/types/entity';
@@ -12,12 +12,7 @@ import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import useZustandStore from '@app/zustand/store';
 import { toast } from 'react-toastify';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
-import {
-  getEtablissementBySiret,
-  isSiret,
-  searchEntreprises,
-  type EtablissementTrouve,
-} from '@app/services/recherche-entreprises';
+import { searchEntreprises, type EtablissementTrouve } from '@app/services/recherche-entreprises';
 import { track } from '@app/services/matomo';
 
 interface PartenaireNouveauProps {
@@ -34,6 +29,17 @@ const fieldId = (field: string) => `${ID_PREFIX}-${field}`;
 const ANNUAIRE_OPTION_PREFIX = 'annuaire-';
 
 type SelectOption = EntitiesById[string];
+
+// raccourcis pour remplir la qualité du destinataire, qui reste un champ libre
+const QUALITES_PRESETS = [
+  'Boucherie',
+  'Restaurant',
+  'Repas de chasse',
+  'Repas associatif',
+  'Cantine scolaire',
+  'Collecteur professionnel',
+  'Restauration collective',
+];
 
 function toAnnuaireOption(etablissement: EtablissementTrouve) {
   return {
@@ -62,10 +68,13 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
   const [newEntityNomDUsage, setNewEntityNomDUsage] = useState<string | undefined>(
     defaultRaisonSociale || undefined
   );
-  const [entityType, setEntityType] = useState<EntityTypes | undefined>(undefined);
+  // le chasseur dit seulement si le destinataire est un particulier ou un professionnel :
+  // le type précis du professionnel est déduit côté serveur de la qualité qu'il saisit librement
+  const [particulier, setParticulier] = useState(false);
+  const [qualite, setQualite] = useState('');
   const [annuairePrefill, setAnnuairePrefill] = useState<EtablissementTrouve | null>(null);
 
-  const hasSiret = entityType !== EntityTypes.CONSOMMATEUR_FINAL;
+  const professionnel = !particulier;
 
   const newEntity = newEntityNomDUsage
     ? ({
@@ -126,27 +135,14 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
     return () => controller.abort();
   }, [defaultRaisonSociale]);
 
-  function handleSiretBlur(siretSaisi: string) {
-    if (!isSiret(siretSaisi)) return;
-    const cleaned = siretSaisi.replace(/\s/g, '');
-    if (annuairePrefill?.siret === cleaned) return;
-    getEtablissementBySiret(cleaned).then((etablissement) => {
-      if (!etablissement) return;
-      selectAnnuaireEtablissement(etablissement);
-    });
-  }
-
   const handleEntitySubmit = useCallback(
     async (event: React.FocusEvent<HTMLFormElement>) => {
       event.preventDefault();
       const formData = new FormData(event.currentTarget);
-      const body: Partial<Entity> = Object.fromEntries(formData.entries());
-      if (!entityType) {
-        alert('Veuillez sélectionner un type de partenaire');
-        return;
-      }
-      // le consommateur final n'a pas de raison sociale : on le nomme par le nom de son représentant
-      if (entityType === EntityTypes.CONSOMMATEUR_FINAL) {
+      const body: Partial<Entity> & { particulier?: boolean } = Object.fromEntries(formData.entries());
+      body.particulier = particulier;
+      // le particulier n'a pas de raison sociale : on le nomme par son nom
+      if (particulier) {
         body.raison_sociale =
           `${formData.get('prenom') ?? ''} ${formData.get('nom_de_famille') ?? ''}`.trim();
       } else {
@@ -156,13 +152,13 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
           return;
         }
       }
-      body.type = entityType;
       const response = await API.post({
         path: 'entite/partenaire',
         body,
       }).then((data) => data as UserEntityResponse);
       if (response.ok) {
-        setEntityType(undefined);
+        setParticulier(false);
+        setQualite('');
         setAnnuairePrefill(null);
         track('partenaire', 'creer');
         onFinish(response.data.entity!);
@@ -181,7 +177,7 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [newEntityNomDUsage, entityType]
+    [newEntityNomDUsage, particulier]
   );
 
   return (
@@ -191,147 +187,131 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
         method="POST"
         onSubmit={handleEntitySubmit}
       >
-        {hasSiret && (
-          <SelectCustom
-            getOptionLabel={(entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`}
-            getOptionValue={(entity) => entity.id}
-            formatOptionLabel={(entity, options) => {
-              if (options.context === 'menu') {
-                // @ts-expect-error - __isNew__ and value are not typed
-                if (entity.__isNew__) return entity.value;
-                if (!entity.code_postal) return entity.nom_d_usage;
-                return `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`;
-              }
-              return entity.nom_d_usage;
-            }}
-            // @ts-expect-error - onCreateOption is not typed
-            onCreateOption={async (raison_sociale) => {
-              setNewEntityNomDUsage(raison_sociale);
-              setAnnuairePrefill(null);
-            }}
-            label="Raison Sociale *"
-            hint="Recherchez l'entreprise par son nom : le SIRET et l'adresse se remplissent automatiquement."
-            name={Prisma.EntityScalarFieldEnum.raison_sociale}
-            placeholder=""
-            creatable={true}
-            async={true}
-            loadOptions={loadRaisonSocialeOptions}
-            defaultOptions={annuaireInitial}
-            isLoading={chargementAnnuaireInitial}
-            // le nom est dans le champ de saisie (et non comme valeur choisie) pour que le curseur soit à la fin
-            defaultInputValue={defaultRaisonSociale}
-            autoFocus={!!defaultRaisonSociale}
-            openMenuOnFocus
-            loadingMessage={() => "Recherche dans l'annuaire des entreprises..."}
-            value={newEntity}
-            // la saisie devient la raison sociale au fil de la frappe : sur mobile, react-select quitte le
-            // champ juste après le choix d'un résultat, un onBlur écraserait ce choix par le texte tapé
-            onInputChange={(inputValue, { action }) => {
-              if (action === 'input-change') setNewEntityNomDUsage(inputValue);
-            }}
-            onChange={(option) => {
-              if (option?.id?.startsWith(ANNUAIRE_OPTION_PREFIX)) {
-                selectAnnuaireEtablissement({
-                  siret: option.siret!,
-                  raison_sociale: option.nom_d_usage ?? '',
-                  address_ligne_1: option.address_ligne_1 ?? '',
-                  address_ligne_2: option.address_ligne_2 ?? '',
-                  code_postal: option.code_postal ?? '',
-                  ville: option.ville ?? '',
-                });
-                return;
-              }
-              if (!option) {
-                clearSelection();
-              }
-            }}
-            isClearable={!!newEntityNomDUsage}
-            required={true}
-            inputId={Prisma.EntityScalarFieldEnum.raison_sociale}
-            classNamePrefix={Prisma.EntityScalarFieldEnum.raison_sociale}
-            className="mb-6"
-          />
-        )}
         <RadioButtons
-          legend="Qualité du destinataire *"
-          hintText="Est-ce un commerce de détail, repas de chasse ou associatif, un consommateur final, ou encore un collecteur professionnel ?"
-          orientation="vertical"
+          legend="Le destinataire est *"
+          orientation="horizontal"
           options={[
             {
               nativeInputProps: {
-                checked: entityType === EntityTypes.COMMERCE_DE_DETAIL ? true : false,
-                name: EntityTypes.COMMERCE_DE_DETAIL,
-                onChange: () => {
-                  setEntityType(EntityTypes.COMMERCE_DE_DETAIL);
-                },
+                checked: !particulier,
+                name: 'particulier',
+                value: 'professionnel',
+                onChange: () => setParticulier(false),
               },
-              label: 'Commerce de détail (boucherie, restaurant, etc.)',
+              label: 'Un professionnel',
             },
             {
               nativeInputProps: {
-                checked: entityType === EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE ? true : false,
-                name: EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
-                onChange: () => {
-                  setEntityType(EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE);
-                },
+                checked: particulier,
+                name: 'particulier',
+                value: 'particulier',
+                onChange: () => setParticulier(true),
               },
-              label: 'Cantine ou restauration collective',
-            },
-            {
-              nativeInputProps: {
-                checked: entityType === EntityTypes.ASSOCIATION_CARITATIVE ? true : false,
-                name: EntityTypes.ASSOCIATION_CARITATIVE,
-                onChange: () => {
-                  setEntityType(EntityTypes.ASSOCIATION_CARITATIVE);
-                },
-              },
-              label: 'Association caritative',
-            },
-            {
-              nativeInputProps: {
-                checked: entityType === EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF ? true : false,
-                name: EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
-                onChange: () => {
-                  setEntityType(EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF);
-                },
-              },
-              label: 'Repas de chasse ou associatif',
-            },
-            {
-              nativeInputProps: {
-                checked: entityType === EntityTypes.CONSOMMATEUR_FINAL ? true : false,
-                name: EntityTypes.CONSOMMATEUR_FINAL,
-                onChange: () => {
-                  setEntityType(EntityTypes.CONSOMMATEUR_FINAL);
-                },
-              },
-              label: 'Consommateur final',
-            },
-            {
-              nativeInputProps: {
-                checked: entityType === EntityTypes.COLLECTEUR_PRO ? true : false,
-                name: EntityTypes.COLLECTEUR_PRO,
-                onChange: () => {
-                  setEntityType(EntityTypes.COLLECTEUR_PRO);
-                },
-              },
-              label: 'Collecteur professionnel',
+              label: 'Un particulier',
             },
           ]}
         />
-        {hasSiret && (
-          <Input
-            label="SIRET"
-            hintText="14 chiffres : la raison sociale et l'adresse se remplissent automatiquement."
-            key={'SIRET' + prefillKey}
-            nativeInputProps={{
-              id: fieldId(Prisma.EntityScalarFieldEnum.siret),
-              name: Prisma.EntityScalarFieldEnum.siret,
-              autoComplete: 'off',
-              defaultValue: annuairePrefill?.siret ?? '',
-              onBlur: (event) => handleSiretBlur(event.target.value),
-            }}
-          />
+        {professionnel && (
+          <div className="mb-6">
+            <SelectCustom
+              getOptionLabel={(entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`}
+              getOptionValue={(entity) => entity.id}
+              formatOptionLabel={(entity, options) => {
+                if (options.context === 'menu') {
+                  // @ts-expect-error - __isNew__ and value are not typed
+                  if (entity.__isNew__) return entity.value;
+                  if (!entity.code_postal) return entity.nom_d_usage;
+                  return `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`;
+                }
+                return entity.nom_d_usage;
+              }}
+              // @ts-expect-error - onCreateOption is not typed
+              onCreateOption={async (raison_sociale) => {
+                setNewEntityNomDUsage(raison_sociale);
+                setAnnuairePrefill(null);
+              }}
+              label="Raison Sociale *"
+              hint={annuairePrefill?.siret ? undefined : "Recherchez l'entreprise par son nom"}
+              name={Prisma.EntityScalarFieldEnum.raison_sociale}
+              placeholder=""
+              creatable={true}
+              async={true}
+              loadOptions={loadRaisonSocialeOptions}
+              defaultOptions={annuaireInitial}
+              isLoading={chargementAnnuaireInitial}
+              // le nom est dans le champ de saisie (et non comme valeur choisie) pour que le curseur soit à la fin
+              defaultInputValue={defaultRaisonSociale}
+              autoFocus={!!defaultRaisonSociale}
+              openMenuOnFocus
+              loadingMessage={() => "Recherche dans l'annuaire des entreprises..."}
+              value={newEntity}
+              // la saisie devient la raison sociale au fil de la frappe : sur mobile, react-select quitte le
+              // champ juste après le choix d'un résultat, un onBlur écraserait ce choix par le texte tapé
+              onInputChange={(inputValue, { action }) => {
+                if (action === 'input-change') setNewEntityNomDUsage(inputValue);
+              }}
+              onChange={(option) => {
+                if (option?.id?.startsWith(ANNUAIRE_OPTION_PREFIX)) {
+                  selectAnnuaireEtablissement({
+                    siret: option.siret!,
+                    raison_sociale: option.nom_d_usage ?? '',
+                    address_ligne_1: option.address_ligne_1 ?? '',
+                    address_ligne_2: option.address_ligne_2 ?? '',
+                    code_postal: option.code_postal ?? '',
+                    ville: option.ville ?? '',
+                  });
+                  return;
+                }
+                if (!option) {
+                  clearSelection();
+                }
+              }}
+              isClearable={!!newEntityNomDUsage}
+              required={true}
+              inputId={Prisma.EntityScalarFieldEnum.raison_sociale}
+              classNamePrefix={Prisma.EntityScalarFieldEnum.raison_sociale}
+            />
+            {annuairePrefill?.siret && (
+              <p className="mt-2 mb-0 text-sm text-gray-600">SIRET : {annuairePrefill.siret}</p>
+            )}
+          </div>
+        )}
+        {professionnel && (
+          <>
+            <Input
+              label="Qualité du destinataire *"
+              hintText={
+                <>
+                  {QUALITES_PRESETS.map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      className="mr-1 mb-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-left text-sm text-[#000091]"
+                      onClick={() => setQualite(preset)}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </>
+              }
+              nativeInputProps={{
+                id: fieldId(Prisma.EntityScalarFieldEnum.qualite_du_destinataire),
+                name: Prisma.EntityScalarFieldEnum.qualite_du_destinataire,
+                placeholder: 'Entrez la qualité du destinataire ou sélectionnez ci-dessus',
+                autoComplete: 'off',
+                required: true,
+                value: qualite,
+                onChange: (e) => setQualite(e.target.value),
+              }}
+            />
+            {/* le SIRET n'est plus saisi : il vient de l'annuaire et sert au serveur à repérer les doublons */}
+            <input
+              type="hidden"
+              key={'SIRET' + prefillKey}
+              name={Prisma.EntityScalarFieldEnum.siret}
+              defaultValue={annuairePrefill?.siret ?? ''}
+            />
+          </>
         )}
         <Input
           label="Email du représentant *"
@@ -346,7 +326,7 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
           <Input
             label="Nom du représentant *"
             className="shrink-0 md:basis-1/2"
-            key={'Nom' + hasSiret}
+            key={'Nom' + professionnel}
             nativeInputProps={{
               id: fieldId(Prisma.UserScalarFieldEnum.nom_de_famille),
               name: Prisma.UserScalarFieldEnum.nom_de_famille,

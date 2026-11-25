@@ -82,6 +82,7 @@ export const TRICHINE_ENTITY_CODE_PREFIX: Record<EntityTypes, string> = {
   [EntityTypes.ASSOCIATION_CARITATIVE]: 'AC',
   [EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF]: 'RC',
   [EntityTypes.CONSOMMATEUR_FINAL]: 'CF',
+  [EntityTypes.CIRCUIT_COURT]: 'CC',
   [EntityTypes.LABORATOIRE]: 'LAB',
   [EntityTypes.FDC]: 'FDC',
   [EntityTypes.FRC]: 'FRC',

@@ -282,3 +282,55 @@ describe("syncCarcasseIntermediaire — identité de l'intermédiaire", () => {
     expect(upsertCall.create.intermediaire_role).toBe('COLLECTEUR_PRO');
   });
 });
+
+describe("syncCarcasseIntermediaire — ligne d'une autre entité", () => {
+  // Le collecteur (entity-A) a transporté la carcasse jusqu'à l'ETG (entity-etg), qui l'a refusée.
+  const ligneEtg = {
+    ...baseCi,
+    intermediaire_id: 'INT-ETG',
+    intermediaire_entity_id: 'entity-etg',
+    intermediaire_role: 'ETG',
+    intermediaire_user_id: 'user-etg',
+    refus: 'odeur anormale',
+    version: 1,
+  };
+  const collecteurUser = { ...etgUser, id: 'user-collecteur', roles: [UserRoles.COLLECTEUR_PRO] } as User;
+
+  test("un collecteur ne peut pas modifier la ligne de l'ETG", async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
+    vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(baseCarcasse);
+    vi.mocked(prisma.carcasseIntermediaire.findUnique).mockResolvedValueOnce(ligneEtg as any);
+
+    await expect(
+      syncCarcasseIntermediaire(
+        'FEI-1',
+        'INT-ETG',
+        'ZC-1',
+        { ...baseCi, intermediaire_id: 'INT-ETG', refus: null, version: 1 } as any,
+        collecteurUser,
+        scope
+      )
+    ).rejects.toThrow('Vous ne pouvez pas agir au nom de cette entité');
+    expect(prisma.carcasseIntermediaire.upsert).not.toHaveBeenCalled();
+  });
+
+  test('un membre de la même entité modifie la ligne', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
+    vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(baseCarcasse);
+    vi.mocked(prisma.carcasseIntermediaire.findUnique).mockResolvedValueOnce({
+      ...ligneEtg,
+      intermediaire_entity_id: 'entity-A',
+    } as any);
+    vi.mocked(prisma.carcasseIntermediaire.upsert).mockResolvedValueOnce({} as any);
+
+    await syncCarcasseIntermediaire(
+      'FEI-1',
+      'INT-ETG',
+      'ZC-1',
+      { ...baseCi, intermediaire_id: 'INT-ETG', refus: null, version: 1 } as any,
+      etgUser,
+      scope
+    );
+    expect(vi.mocked(prisma.carcasseIntermediaire.upsert).mock.calls[0][0].update.refus).toBeNull();
+  });
+});

@@ -51,6 +51,7 @@ const ROLE_OPTIONS: Array<{ value: UserRoles; label: string }> = [
   { value: UserRoles.ASSOCIATION_CARITATIVE, label: 'Association caritative' },
   { value: UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF, label: 'Repas de chasse ou associatif' },
   { value: UserRoles.CONSOMMATEUR_FINAL, label: 'Consommateur final' },
+  { value: UserRoles.CIRCUIT_COURT, label: 'Circuit court (non classé)' },
   { value: UserRoles.LABORATOIRE, label: 'Laboratoire' },
   { value: UserRoles.FEDERATION, label: 'Fédération (sans être chasseur)' },
 ];
@@ -321,7 +322,8 @@ export default function AdminUser() {
     API.post({ path: `admin/user/${params.userId}/send-reset-password` })
       .then((res) => {
         if (!res.ok) {
-          return toast.error("Une erreur est survenue lors de l'envoi du lien");
+          const error = (res as { error?: string }).error;
+          return toast.error(error || "Une erreur est survenue lors de l'envoi du lien");
         }
         toast.success(`Lien de réinitialisation envoyé à ${user.email}`);
       })
@@ -560,12 +562,17 @@ export default function AdminUser() {
               <p className="mt-1 mb-0 text-sm">
                 {lockout.is_locked ? (
                   <>
-                    Cet utilisateur est bloqué suite à {lockout.recent_failures} tentatives échouées en moins
-                    de 15 minutes.
+                    Cet utilisateur est bloqué suite à 5 tentatives échouées en moins de 15 minutes.
                     {lockout.lockout_expires_at && (
                       <>
                         {' '}
                         Le blocage expire le {dayjs(lockout.lockout_expires_at).format('DD/MM/YYYY à HH:mm')}.
+                      </>
+                    )}
+                    {lockout.last_failure_at && (
+                      <>
+                        {' '}
+                        Dernière tentative le {dayjs(lockout.last_failure_at).format('DD/MM/YYYY à HH:mm')}.
                       </>
                     )}
                   </>

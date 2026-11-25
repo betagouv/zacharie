@@ -85,8 +85,8 @@ export async function remettreCarcasse(page: Page, nom: string) {
 }
 
 // Étape « Destinataire » : les destinataires habituels (enregistrés par le chasseur) sont des boutons
-// radio ; les autres se cherchent dans le champ texte, ouvert par « Envoyer à un autre destinataire »
-// (directement affiché quand le chasseur n'a aucun destinataire habituel).
+// radio, avec « Moi-même » ou « Repas de chasse » ; les autres se cherchent dans le champ texte,
+// ouvert par « Envoyer à un autre destinataire ».
 export async function selectDestinataire(page: Page, optionName: string | RegExp) {
   const modal = venteDonModal(page);
   await expect(modal.getByText('Prochain détenteur des carcasses').first()).toBeVisible({ timeout: 10000 });

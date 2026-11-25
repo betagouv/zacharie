@@ -8,6 +8,7 @@ import { createNewCarcasse } from '@app/utils/create-new-carcasse';
 import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
 import { useIsEmbedded } from '@app/utils/use-is-embedded';
+import { clearLocalAppState } from '@app/utils/disconnect';
 import useUser from '@app/zustand/user';
 import Button from '@codegouvfr/react-dsfr/Button';
 import dayjs from 'dayjs';
@@ -123,6 +124,12 @@ export default function NouvelleFiche() {
         if (response.ok && response.data?.user?.id && response.data?.contexte) {
           const user = response.data.user;
           const contexte = response.data.contexte;
+          // le lien connecte le compte du jeton : les données locales d'un autre compte
+          // (fiches, carcasses, curseur de synchro) ne doivent ni s'afficher ni partir avec cette session
+          if (useUser.getState().user?.id !== user.id) {
+            await clearLocalAppState('access-token');
+            useZustandStore.getState().reset();
+          }
           useUser.setState({ user });
           useZustandStore.setState((state) => ({ users: { ...state.users, [user.id]: user } }));
 

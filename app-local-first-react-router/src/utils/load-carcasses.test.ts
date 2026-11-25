@@ -127,6 +127,78 @@ describe('loadCarcasses — rechargement complet', () => {
   });
 });
 
+describe('loadCarcasses — pagination par curseur', () => {
+  it('demande la page suivante après la dernière carcasse reçue, et garde les carcasses des deux pages', async () => {
+    const page1 = serverResponse(false);
+    page1.data.carcasses = [
+      { ...base(), updated_at: new Date(900), zacharie_carcasse_id: 'C-2', fei_numero: 'FEI-SERVEUR' },
+      { ...base(), updated_at: new Date(800), zacharie_carcasse_id: 'C-1', fei_numero: 'FEI-SERVEUR' },
+    ];
+    page1.data.hasMore = true;
+    const page2 = serverResponse(false);
+    mocks.get.mockImplementation(({ path, query }: { path: string; query?: Record<string, string> }) => {
+      if (path === 'now') return Promise.resolve({ ok: true, data: 2000 });
+      if (path === '/carcasse/count') return Promise.resolve({ ok: false });
+      return Promise.resolve(query?.cursorId ? page2 : page1);
+    });
+
+    await loadCarcasses();
+
+    const queries = mocks.get.mock.calls
+      .filter(([arg]) => arg.path === '/carcasse')
+      .map(([arg]) => arg.query);
+    expect(queries).toHaveLength(2);
+    expect(queries[0].cursorId).toBeUndefined();
+    expect(queries[0].page).toBeUndefined();
+    expect(queries[1]).toMatchObject({ cursorUpdatedAt: '800', cursorId: 'C-1' });
+    expect(Object.keys(mocks.state.carcasses)).toEqual(expect.arrayContaining(['C-1', 'C-2', 'C-SERVEUR']));
+  });
+
+  it('rechargement complet sur plusieurs pages : relance un pull delta pour les carcasses modifiées pendant la boucle', async () => {
+    const page1 = serverResponse(true);
+    page1.data.carcasses = [
+      { ...base(), updated_at: new Date(900), zacharie_carcasse_id: 'C-1', fei_numero: 'FEI-SERVEUR' },
+    ];
+    page1.data.hasMore = true;
+    const page2 = serverResponse(true);
+    const delta = serverResponse(false);
+    delta.data.carcasses = [
+      {
+        ...base(),
+        updated_at: new Date(2100),
+        zacharie_carcasse_id: 'C-MODIFIEE',
+        fei_numero: 'FEI-SERVEUR',
+      },
+    ];
+    let carcasseCalls = 0;
+    mocks.get.mockImplementation(({ path, query }: { path: string; query?: Record<string, string> }) => {
+      if (path === 'now') return Promise.resolve({ ok: true, data: 2000 });
+      if (path === '/carcasse/count') return Promise.resolve({ ok: false });
+      carcasseCalls++;
+      if (carcasseCalls > 2) return Promise.resolve(delta);
+      return Promise.resolve(query?.cursorId ? page2 : page1);
+    });
+
+    await loadCarcasses();
+
+    await vi.waitFor(() => expect(mocks.state.carcasses['C-MODIFIEE']).toBeDefined());
+    const queries = mocks.get.mock.calls
+      .filter(([arg]) => arg.path === '/carcasse')
+      .map(([arg]) => arg.query);
+    expect(queries).toHaveLength(3);
+    expect(queries[2].cursorId).toBeUndefined();
+    expect(queries[2].reloadVersion).toBe('4');
+    expect(Object.keys(mocks.state.carcasses)).toEqual(expect.arrayContaining(['C-1', 'C-SERVEUR']));
+  });
+
+  it('rechargement complet sur une seule page : pas de pull supplémentaire', async () => {
+    mockServer(true);
+    await loadCarcasses();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(mocks.get.mock.calls.filter(([arg]) => arg.path === '/carcasse')).toHaveLength(1);
+  });
+});
+
 describe('loadCarcasses — version de rechargement', () => {
   it('envoie la version stockée et stocke la version reçue', async () => {
     mockServer(true);
@@ -229,5 +301,38 @@ describe('loadCarcasses — carcasses sorties du périmètre', () => {
     );
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(carcasseCalls()).toHaveLength(1);
+  });
+});
+
+describe('loadCarcasses — demandes de modification', () => {
+  const request = (id: string, value: string) => ({ ...base(), id, zacharie_carcasse_id: 'C-SORTIE', value });
+
+  function mockServerWithRequests(requests: Array<ReturnType<typeof request>>) {
+    mocks.get.mockImplementation(({ path }: { path: string }) => {
+      if (path === 'now') return Promise.resolve({ ok: true, data: 2000 });
+      if (path === '/carcasse/count') return Promise.resolve({ ok: false });
+      const response = serverResponse(false);
+      return Promise.resolve({ ...response, data: { ...response.data, carcasseModifRequests: requests } });
+    });
+  }
+
+  it("une carcasse dont aucune demande n'a changé garde son tableau", async () => {
+    const previous = [request('R-1', 'x'), request('R-2', 'y')];
+    mocks.state.modifRequestsByCarcasseId = { 'C-SORTIE': previous };
+    mockServerWithRequests([request('R-2', 'y')]);
+    await loadCarcasses();
+    expect((mocks.state.modifRequestsByCarcasseId as Record<string, unknown>)['C-SORTIE']).toBe(previous);
+  });
+
+  it('une carcasse dont une demande a changé reçoit un nouveau tableau', async () => {
+    const previous = [request('R-1', 'x'), request('R-2', 'y')];
+    mocks.state.modifRequestsByCarcasseId = { 'C-SORTIE': previous };
+    const changed = request('R-2', 'modifiée');
+    mockServerWithRequests([changed]);
+    await loadCarcasses();
+    const next = (mocks.state.modifRequestsByCarcasseId as Record<string, Array<unknown>>)['C-SORTIE'];
+    expect(next).not.toBe(previous);
+    expect(next).toContain(changed);
+    expect(next).toContain(previous[0]);
   });
 });

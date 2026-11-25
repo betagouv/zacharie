@@ -809,12 +809,43 @@ Christine
   }
 
   if (role) {
+    // La clé tierce partie a l'accord d'examinateur-premier-detenteur@ : elle peut lui créer un lien
+    // access_token (`/app/nouvelle-fiche?access_token=…`), ouvert sur l'appareil d'un autre compte.
+    if ((role as string) === 'LIEN_ACCESS_TOKEN_AUTRE_COMPTE') {
+      const autreCompte = users.find((u) => u.email === 'examinateur-premier-detenteur@example.fr');
+      await prisma.apiKeyApprovalByUserOrEntity.create({
+        data: { api_key_id: apiKeyUser.id, user_id: autreCompte!.id, status: 'APPROVED' },
+      });
+      await prisma.apiKey.update({ where: { id: apiKeyUser.id }, data: { slug_for_context: 'bac-a-sable' } });
+      console.log('LIEN_ACCESS_TOKEN_AUTRE_COMPTE: accord de la clé tierce partie');
+    }
     if (role === FeiOwnerRole.PREMIER_DETENTEUR) {
       const fei = await prisma.fei.create({ data: feiValidatedByExaminateur });
       const carcasses = await prisma.carcasse.createMany({
         data: getCarcasses(fei, ownershipValidatedByExaminateur),
       });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for premier détenteur)`);
+    }
+    // Même fiche que PREMIER_DETENTEUR, mais le premier détenteur est « Association de chasseurs »
+    // (dont premier-detenteur@ est admin) : l'association peut garder les carcasses pour un repas de chasse.
+    if ((role as string) === 'PREMIER_DETENTEUR_ASSOCIATION') {
+      const fei = await prisma.fei.create({
+        data: {
+          ...feiValidatedByExaminateur,
+          premier_detenteur_entity_id: '5b916331-632e-4c29-be2e-12a834e92688',
+          premier_detenteur_name_cache: 'Association de chasseurs',
+        },
+      });
+      const carcasses = await prisma.carcasse.createMany({
+        data: getCarcasses(fei, {
+          ...ownershipValidatedByExaminateur,
+          current_owner_entity_id: '5b916331-632e-4c29-be2e-12a834e92688',
+          current_owner_entity_name_cache: 'Association de chasseurs',
+        }),
+      });
+      console.log(
+        `Fei ${fei.numero} created with ${carcasses.count} carcasses (premier détenteur = association)`
+      );
     }
     // Même fiche que PREMIER_DETENTEUR, mais premier-detenteur@ n'a encore enregistré aucun destinataire
     if ((role as string) === 'PREMIER_DETENTEUR_SANS_DESTINATAIRE') {

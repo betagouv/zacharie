@@ -117,6 +117,7 @@ export const circuitCourtRoles: FeiOwnerRole[] = [
   FeiOwnerRole.CANTINE_OU_RESTAURATION_COLLECTIVE,
   FeiOwnerRole.ASSOCIATION_CARITATIVE,
   FeiOwnerRole.CONSOMMATEUR_FINAL,
+  FeiOwnerRole.CIRCUIT_COURT,
 ];
 
 export type CircuitValorisation = 'agree' | 'nonAgree' | 'domestique';

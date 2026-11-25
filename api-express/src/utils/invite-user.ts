@@ -11,11 +11,17 @@ export async function inviteUser(newUser: User, me: User, entity?: Entity) {
       user_id: newUser.id,
     },
   });
-  const accountAlreadyExists = !!password;
-  if (!password) {
+  // compte sans mot de passe (invitation jamais acceptée) : on renvoie un nouveau lien d'invitation
+  const accountAlreadyExists = !!password?.password;
+  if (!accountAlreadyExists) {
     const token = crypto.randomUUID();
-    password = await prisma.password.create({
-      data: {
+    password = await prisma.password.upsert({
+      where: { user_id: newUser.id },
+      update: {
+        reset_password_token: token,
+        reset_password_last_email_sent_at: new Date(),
+      },
+      create: {
         user_id: newUser.id,
         password: '',
         reset_password_token: token,

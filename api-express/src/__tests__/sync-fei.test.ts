@@ -365,3 +365,61 @@ describe('syncFei — body validation', () => {
     ).rejects.toThrow();
   });
 });
+
+describe('syncFei — premier détenteur personne physique', () => {
+  test("un premier détenteur sans relation PREMIER_DETENTEUR avec l'auteur est ignoré", async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
+    vi.mocked(prisma.fei.update).mockResolvedValue(baseFei as any);
+    vi.mocked(prisma.userRelations.findFirst).mockResolvedValueOnce(null);
+
+    await syncFei(
+      'FEI-1',
+      { numero: 'FEI-1', premier_detenteur_user_id: 'ARBIT' } as any,
+      examinateurInitial,
+      scope
+    );
+
+    const updateCall = vi.mocked(prisma.fei.update).mock.calls[0][0];
+    expect(updateCall.data).not.toHaveProperty('premier_detenteur_user_id');
+  });
+
+  test('un premier détenteur ajouté par son email (relation PREMIER_DETENTEUR) est accepté', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
+    vi.mocked(prisma.fei.update).mockResolvedValue(baseFei as any);
+    vi.mocked(prisma.userRelations.findFirst).mockResolvedValueOnce({ id: 'rel-1' } as any);
+
+    await syncFei(
+      'FEI-1',
+      { numero: 'FEI-1', premier_detenteur_user_id: otherChasseur.id } as any,
+      examinateurInitial,
+      scope
+    );
+
+    expect(prisma.userRelations.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          owner_id: examinateurInitial.id,
+          related_id: otherChasseur.id,
+          relation: 'PREMIER_DETENTEUR',
+        },
+      })
+    );
+    const updateCall = vi.mocked(prisma.fei.update).mock.calls[0][0];
+    expect(updateCall.data).toHaveProperty('premier_detenteur_user_id', otherChasseur.id);
+  });
+
+  test("l'auteur peut se désigner lui-même premier détenteur", async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
+    vi.mocked(prisma.fei.update).mockResolvedValue(baseFei as any);
+
+    await syncFei(
+      'FEI-1',
+      { numero: 'FEI-1', premier_detenteur_user_id: examinateurInitial.id } as any,
+      examinateurInitial,
+      scope
+    );
+
+    const updateCall = vi.mocked(prisma.fei.update).mock.calls[0][0];
+    expect(updateCall.data).toHaveProperty('premier_detenteur_user_id', examinateurInitial.id);
+  });
+});

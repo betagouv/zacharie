@@ -83,15 +83,17 @@ describe('Admin lockout management', () => {
       });
     });
 
-    test('returns lockout.is_locked=true when 5+ recent failures', async () => {
-      const failureDate = new Date('2026-09-18T16:50:00Z');
+    test('returns lockout.is_locked=true and the expiry 15 minutes after the LOGIN_LOCKED row', async () => {
+      const lockedAt = new Date(Date.now() - 5 * 60 * 1000);
+      const failureDate = new Date(Date.now() - 2 * 60 * 1000);
       (prisma.user.findUnique as any).mockResolvedValue(targetUser);
       (prisma.entity.findMany as any).mockResolvedValue([]);
-      // First findFirst call: lastUnlock (none)
-      // Second findFirst call: lastFailure
-      (prisma.securityLog.findFirst as any)
-        .mockResolvedValueOnce(null) // no unlock
-        .mockResolvedValue({ action: 'LOGIN_FAILED_WRONG_PASSWORD', created_at: failureDate });
+      (prisma.securityLog.findFirst as any).mockImplementation(({ where }: any) => {
+        if (where.action === 'LOGIN_LOCKED')
+          return Promise.resolve({ action: 'LOGIN_LOCKED', created_at: lockedAt });
+        if (where.action === 'LOGIN_UNLOCK_FROM_ADMIN') return Promise.resolve(null);
+        return Promise.resolve({ action: 'LOGIN_FAILED_WRONG_PASSWORD', created_at: failureDate });
+      });
       (prisma.securityLog.count as any).mockResolvedValue(7);
 
       const res = await request(app).get('/user/target-1');
@@ -99,7 +101,9 @@ describe('Admin lockout management', () => {
       expect(res.status).toBe(200);
       expect(res.body.data.lockout.is_locked).toBe(true);
       expect(res.body.data.lockout.recent_failures).toBe(7);
-      expect(res.body.data.lockout.lockout_expires_at).toBeTruthy();
+      expect(res.body.data.lockout.lockout_expires_at).toBe(
+        new Date(lockedAt.getTime() + 15 * 60 * 1000).toISOString()
+      );
       expect(res.body.data.lockout.last_failure_action).toBe('LOGIN_FAILED_WRONG_PASSWORD');
     });
 
@@ -155,20 +159,32 @@ describe('Admin lockout management', () => {
   describe('POST /user/:user_id/send-reset-password', () => {
     test('sends reset email and logs PASSWORD_RESET_SENT_FROM_ADMIN', async () => {
       (prisma.user.findUnique as any).mockResolvedValue(targetUser);
-      (prisma.password.upsert as any).mockResolvedValue({});
+      (prisma.password.findUnique as any).mockResolvedValue({ password: 'hash-existant' });
+      (prisma.password.update as any).mockResolvedValue({});
       (prisma.securityLog.create as any).mockResolvedValue({});
       const res = await request(app).post('/user/target-1/send-reset-password');
 
       expect(res.status).toBe(200);
       expect(res.body.ok).toBe(true);
       expect(sendTemplateEmail).toHaveBeenCalledTimes(1);
-      expect(prisma.password.upsert).toHaveBeenCalled();
+      expect(prisma.password.update).toHaveBeenCalled();
       expect(prisma.securityLog.create).toHaveBeenCalledWith({
         data: {
           email: 'locked@example.fr',
           action: 'PASSWORD_RESET_SENT_FROM_ADMIN',
         },
       });
+    });
+
+    test('refuses an account without password (invitation never accepted)', async () => {
+      (prisma.user.findUnique as any).mockResolvedValue(targetUser);
+      (prisma.password.findUnique as any).mockResolvedValue({ password: '' });
+      const res = await request(app).post('/user/target-1/send-reset-password');
+
+      expect(res.status).toBe(400);
+      expect(res.body.ok).toBe(false);
+      expect(prisma.password.update).not.toHaveBeenCalled();
+      expect(sendTemplateEmail).not.toHaveBeenCalled();
     });
 
     test('returns 400 for unknown user', async () => {

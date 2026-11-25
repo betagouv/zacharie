@@ -30,6 +30,8 @@ export default function ChasseurFeiEnvoyée() {
     const grouped: Record<string, { entityId: string; entityName: string; carcasses: Array<Carcasse> }> = {};
     for (const transmission of transmissions) {
       if (!transmission.content.next_owner_entity_id) continue;
+      // repas de chasse de l'association premier détenteur : les carcasses ne quittent pas l'association
+      if (transmission.content.next_owner_entity_id === fei?.premier_detenteur_entity_id) continue;
       if (!grouped[transmission.content.next_owner_entity_id]) {
         const entity = entities[transmission.content.next_owner_entity_id];
         grouped[transmission.content.next_owner_entity_id] = {
@@ -41,7 +43,19 @@ export default function ChasseurFeiEnvoyée() {
       grouped[transmission.content.next_owner_entity_id].carcasses = transmission.carcasses;
     }
     return Object.values(grouped);
-  }, [transmissions, entities]);
+  }, [transmissions, entities, fei?.premier_detenteur_entity_id]);
+
+  // Carcasses gardées par le premier détenteur (usage domestique, repas de chasse de son association) :
+  // rien n'est transmis, la fiche est clôturée pour elles.
+  const carcassesGardees = useMemo(
+    () =>
+      carcasses.filter(
+        (c) =>
+          !!c.consommateur_final_usage_domestique ||
+          (!!fei?.premier_detenteur_entity_id && c.next_owner_entity_id === fei.premier_detenteur_entity_id)
+      ),
+    [carcasses, fei?.premier_detenteur_entity_id]
+  );
 
   // La transmission est portée par les carcasses (`updateCarcassesTransmission`), pas par la fiche :
   // c'est leur état de synchro, et non `fei.is_synced`, qui dit si le destinataire a été notifié.
@@ -138,7 +152,13 @@ export default function ChasseurFeiEnvoyée() {
                     </ul>
                   </>
                 )}
-                {sentByRecipient.length === 0 && premierDetenteurName && (
+                {sentByRecipient.length === 0 && carcassesGardees.length > 0 && (
+                  <>
+                    <h1 className="fr-h4 fr-mb-0">Votre fiche est clôturée</h1>
+                    <p className="fr-mb-0">({formatCarcasseLotCount(carcassesGardees)})</p>
+                  </>
+                )}
+                {sentByRecipient.length === 0 && carcassesGardees.length === 0 && premierDetenteurName && (
                   <>
                     <h1 className="fr-h4 fr-mb-0">Votre fiche a été transmise à {premierDetenteurName}</h1>
                     <p className="fr-mb-0">({formatCarcasseLotCount(carcasses)})</p>

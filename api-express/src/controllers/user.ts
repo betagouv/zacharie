@@ -18,14 +18,20 @@ import {
 import { BrevoTemplateId } from '~/third-parties/brevo-templates';
 import { capture } from '~/third-parties/sentry';
 import createUserId from '~/utils/createUserId';
-import { LOCKOUT_DURATION_MINUTES, MAX_FAILED_ATTEMPTS } from '~/utils/login-lockout';
+import {
+  getLockoutState,
+  LOCKOUT_DURATION_MINUTES,
+  LOGIN_LOCKED_ACTION,
+  MAX_FAILED_ATTEMPTS,
+} from '~/utils/login-lockout';
 import { comparePassword, hashPassword } from '~/service/crypto';
-import { userFeiSelect, type UserForFei } from '~/types/user';
+import { userPartenaireSelect, type UserPartenaire } from '~/types/user';
+import { trouverPremierDetenteurRateLimit } from '~/middlewares/auth-rate-limit';
 import { apiKeySafeSelect } from '~/types/api-key';
 import type {
   UserConnexionResponse,
   UserMyRelationsResponse,
-  UserForFeiResponse,
+  UserPartenaireResponse,
   UserEntityResponse,
 } from '~/types/responses';
 import type { EntityWithUserRelation } from '~/types/entity';
@@ -48,6 +54,7 @@ import {
   cookieOptions,
   JWT_MAX_AGE,
   logoutCookieOptions,
+  SESSION_COOKIE_NAME,
 } from '~/utils/cookie';
 import { signSessionToken } from '~/utils/session-token';
 import { SECRET, VITE_APP_URL } from '~/config';
@@ -57,7 +64,6 @@ import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
 import { z } from 'zod';
 import { normalizeNumeroCfei, sanitize } from '~/utils/sanitize';
 import { inviteUser } from '~/utils/invite-user';
-import { requestCarcassesReload } from '~/utils/carcasses-reload';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
 // Schemas for validation
@@ -141,20 +147,9 @@ router.post(
         return;
       }
 
-      const since = dayjs().subtract(LOCKOUT_DURATION_MINUTES, 'minute').toDate();
-      const lastUnlock = await prisma.securityLog.findFirst({
-        where: { email, action: 'LOGIN_UNLOCK_FROM_ADMIN', created_at: { gte: since } },
-        orderBy: { created_at: 'desc' },
-      });
-      const recentFailures = await prisma.securityLog.count({
-        where: {
-          email,
-          action: { startsWith: 'LOGIN_FAILED' },
-          created_at: { gte: lastUnlock ? lastUnlock.created_at : since },
-        },
-      });
+      const lockout = await getLockoutState(email);
 
-      if (recentFailures >= MAX_FAILED_ATTEMPTS) {
+      if (lockout.locked_at) {
         await prisma.securityLog.create({
           data: {
             email,
@@ -183,7 +178,10 @@ router.post(
           },
         });
 
-        if (recentFailures + 1 >= MAX_FAILED_ATTEMPTS) {
+        if (lockout.failures_toward_lock + 1 >= MAX_FAILED_ATTEMPTS) {
+          await prisma.securityLog.create({
+            data: { email, action: LOGIN_LOCKED_ACTION, ip: req.ip, user_agent: req.headers['user-agent'] },
+          });
           res.status(429).send({
             ok: false,
             data: { user: null },
@@ -215,7 +213,10 @@ router.post(
           },
         });
 
-        if (recentFailures + 1 >= MAX_FAILED_ATTEMPTS) {
+        if (lockout.failures_toward_lock + 1 >= MAX_FAILED_ATTEMPTS) {
+          await prisma.securityLog.create({
+            data: { email, action: LOGIN_LOCKED_ACTION, ip: req.ip, user_agent: req.headers['user-agent'] },
+          });
           res.status(429).send({
             ok: false,
             data: { user: null },
@@ -245,7 +246,10 @@ router.post(
           },
         });
 
-        if (recentFailures + 1 >= MAX_FAILED_ATTEMPTS) {
+        if (lockout.failures_toward_lock + 1 >= MAX_FAILED_ATTEMPTS) {
+          await prisma.securityLog.create({
+            data: { email, action: LOGIN_LOCKED_ACTION, ip: req.ip, user_agent: req.headers['user-agent'] },
+          });
           res.status(429).send({
             ok: false,
             data: { user: null },
@@ -279,7 +283,7 @@ router.post(
         where: { id: user.id },
         data: { last_login_at: new Date() },
       });
-      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
+      res.cookie(SESSION_COOKIE_NAME, token, cookieOptions(req));
       res.status(200).send({ ok: true, data: { user, token }, message: '', error: '' });
     }
   )
@@ -382,7 +386,7 @@ router.post(
       const token = jwt.sign({ userId: user.id }, SECRET, {
         expiresIn: JWT_MAX_AGE,
       });
-      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
+      res.cookie(SESSION_COOKIE_NAME, token, cookieOptions(req));
       res.status(200).send({ ok: true, data: { user, token }, message: '', error: '' });
     }
   )
@@ -487,7 +491,9 @@ router.post(
         });
         return;
       }
-      const isOk = existingPassword.reset_password_token === invitationToken;
+      // un compte qui a déjà un mot de passe ne passe plus par l'invitation : le jeton présent en base
+      // est alors un jeton de réinitialisation, utilisable seulement sur /reset-password
+      const isOk = !existingPassword.password && existingPassword.reset_password_token === invitationToken;
       if (!isOk) {
         await prisma.securityLog.create({
           data: {
@@ -515,16 +521,6 @@ router.post(
             user_agent: req.headers['user-agent'],
           },
         });
-        await prisma.password.delete({
-          where: { id: existingPassword.id },
-        });
-        await prisma.entityAndUserRelations.deleteMany({
-          where: {
-            owner_id: user.id,
-            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-          },
-        });
-        await requestCarcassesReload(user.id);
         res.status(400).send({
           ok: false,
           data: { user: null },
@@ -559,7 +555,7 @@ router.post(
         where: { id: user.id },
         data: { last_login_at: new Date() },
       });
-      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
+      res.cookie(SESSION_COOKIE_NAME, token, cookieOptions(req));
       res.status(200).send({ ok: true, data: { user, token }, message: '', error: '' });
     }
   )
@@ -618,16 +614,32 @@ router.post(
         return;
       }
 
+      // compte sans mot de passe (invitation jamais acceptée) : pas de lien de réinitialisation,
+      // il écraserait le jeton d'invitation et serait accepté comme tel pendant 7 jours
+      const existingPassword = await prisma.password.findUnique({ where: { user_id: user.id } });
+      if (!existingPassword?.password) {
+        await prisma.securityLog.create({
+          data: {
+            email,
+            action: 'PASSWORD_RESET_REFUSED_NO_PASSWORD',
+            ip: req.ip,
+            user_agent: req.headers['user-agent'],
+          },
+        });
+        res.status(200).send({
+          ok: true,
+          data: { user: null },
+          error: '',
+          message:
+            'Si cet email existe, un email de réinitialisation de mot de passe a été envoyé\nCliquez sur le lien dans cet email pour réinitialiser votre mot de passe',
+        });
+        return;
+      }
+
       const token = crypto.randomUUID();
-      await prisma.password.upsert({
+      await prisma.password.update({
         where: { user_id: user.id },
-        update: {
-          reset_password_token: token,
-          reset_password_last_email_sent_at: new Date(),
-        },
-        create: {
-          User: { connect: { id: user.id } },
-          password: '',
+        data: {
           reset_password_token: token,
           reset_password_last_email_sent_at: new Date(),
         },
@@ -758,6 +770,7 @@ router.post(
         where: { user_id: password.user_id },
         data: {
           password: hashedPassword,
+          password_changed_at: new Date(),
           reset_password_token: null,
           reset_password_last_email_sent_at: null,
         },
@@ -781,7 +794,7 @@ router.post(
         where: { id: user.id },
         data: { last_login_at: new Date() },
       });
-      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
+      res.cookie(SESSION_COOKIE_NAME, token, cookieOptions(req));
       res.status(200).send({
         ok: true,
         data: { user: updatedUser, token },
@@ -858,6 +871,7 @@ router.post(
         where: { user_id: user.id },
         data: {
           password: await hashPassword(newPassword),
+          password_changed_at: new Date(),
           reset_password_token: null,
           reset_password_last_email_sent_at: null,
         },
@@ -878,11 +892,11 @@ router.post(
         text: `Bonjour, le mot de passe de votre compte Zacharie vient d'être modifié. Si vous n'êtes pas à l'origine de ce changement, réinitialisez votre mot de passe depuis ${VITE_APP_URL}/app/connexion/mot-de-passe-oublie et contactez-nous à contact@zacharie.beta.gouv.fr`,
       });
 
-      // on renouvelle le token de la session courante, l'ancien reste valide jusqu'à son expiration
+      // nouveau jeton pour la session courante : les jetons émis avant le changement sont refusés
       const token = jwt.sign({ userId: user.id }, SECRET, {
         expiresIn: JWT_MAX_AGE,
       });
-      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
+      res.cookie(SESSION_COOKIE_NAME, token, cookieOptions(req));
       res.status(200).send({
         ok: true,
         data: { user, token },
@@ -1030,7 +1044,7 @@ router.post(
         data: { last_login_at: new Date() },
       });
       // refreshMaterializedViews();
-      res.cookie('zacharie_express_jwt', token, cookieOptions(req, ACCESS_TOKEN_SESSION_MAX_AGE));
+      res.cookie(SESSION_COOKIE_NAME, token, cookieOptions(req, ACCESS_TOKEN_SESSION_MAX_AGE));
       await prisma.apiKeyApprovalByUserOrEntity.update({
         where: { access_token: accessToken },
         data: { access_token: null, access_token_created_at: null },
@@ -1057,7 +1071,7 @@ router.post(
         user_agent: req.headers['user-agent'],
       },
     });
-    res.clearCookie('zacharie_express_jwt', logoutCookieOptions(req));
+    res.clearCookie(SESSION_COOKIE_NAME, logoutCookieOptions(req));
     res.status(200).send({ ok: true, data: { user: null, token: null } });
   })
 );
@@ -1069,8 +1083,13 @@ const trouverPremierDetenteurBodySchema = z.object({
 router.post(
   '/fei/trouver-premier-detenteur',
   passport.authenticate('user', { session: false, failWithError: true }),
+  trouverPremierDetenteurRateLimit,
   catchErrors(
-    async (req: RequestWithUser, res: express.Response<UserForFeiResponse>, next: express.NextFunction) => {
+    async (
+      req: RequestWithUser,
+      res: express.Response<UserPartenaireResponse>,
+      next: express.NextFunction
+    ) => {
       const user = req.user!;
       let result = trouverPremierDetenteurBodySchema.safeParse(req.body);
       if (!result.success) {
@@ -1122,19 +1141,12 @@ router.post(
           email: body[Prisma.UserScalarFieldEnum.email].toLowerCase(),
         },
       });
-      if (!nextPremierDetenteur) {
+      // même réponse pour un email inconnu et pour un non-chasseur : la route ne dit pas qui a un compte
+      if (!nextPremierDetenteur || !nextPremierDetenteur.roles.includes(UserRoles.CHASSEUR)) {
         res.status(400).send({
           ok: false,
           data: { user: null },
           error: "L'utilisateur n'existe pas",
-        });
-        return;
-      }
-      if (!nextPremierDetenteur.roles.includes(UserRoles.CHASSEUR)) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          error: "L'utilisateur n'est pas un chasseur",
         });
         return;
       }
@@ -1157,14 +1169,14 @@ router.post(
         });
       }
 
-      const nextPremierDetenteurForFei = await prisma.user.findUnique({
+      const nextPremierDetenteurPartenaire = await prisma.user.findUnique({
         where: {
           email: body[Prisma.UserScalarFieldEnum.email].toLowerCase(),
         },
-        select: userFeiSelect,
+        select: userPartenaireSelect,
       });
 
-      res.status(200).send({ ok: true, data: { user: nextPremierDetenteurForFei }, error: '' });
+      res.status(200).send({ ok: true, data: { user: nextPremierDetenteurPartenaire }, error: '' });
     }
   )
 );
@@ -1716,6 +1728,7 @@ router.get(
                 EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
                 EntityTypes.ASSOCIATION_CARITATIVE,
                 EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
+                EntityTypes.CIRCUIT_COURT,
                 ...FEDERATION_ENTITY_TYPES,
               ],
             },
@@ -1747,7 +1760,7 @@ router.get(
         },
         include: {
           UserRelatedOfUserRelation: {
-            select: userFeiSelect,
+            select: userPartenaireSelect,
           },
         },
         orderBy: {
@@ -1755,7 +1768,7 @@ router.get(
         },
       });
 
-      const detenteursInitiaux = userRelationsWithOtherUsers
+      const detenteursInitiaux: Array<UserPartenaire> = userRelationsWithOtherUsers
         .filter((userRelation) => userRelation.relation === UserRelationType.PREMIER_DETENTEUR)
         .map((userRelation) => userRelation.UserRelatedOfUserRelation);
       if (user.roles.includes(UserRoles.CHASSEUR)) {
@@ -1791,14 +1804,15 @@ router.get(
           entity.type === EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE ||
           entity.type === EntityTypes.ASSOCIATION_CARITATIVE ||
           entity.type === EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF ||
-          entity.type === EntityTypes.CONSOMMATEUR_FINAL
+          entity.type === EntityTypes.CONSOMMATEUR_FINAL ||
+          entity.type === EntityTypes.CIRCUIT_COURT
       );
 
       res.status(200).send({
         ok: true,
         data: {
           user: user satisfies User,
-          detenteursInitiaux: detenteursInitiaux satisfies Array<UserForFei>,
+          detenteursInitiaux: detenteursInitiaux satisfies Array<UserPartenaire>,
           // examinateursInitiaux: examinateursInitiaux satisfies Array<User>,
           associationsDeChasse: associationsDeChasse satisfies Array<EntityWithUserRelation>,
           ccgs: ccgs satisfies Array<EntityWithUserRelation>,
