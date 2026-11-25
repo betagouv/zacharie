@@ -27,10 +27,10 @@ const HEADER_SEARCH_DEPTH = 15;
 function normalizeHeader(cell: string) {
   return cell
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036F]/g, '')
     .toLowerCase()
     .replace(/[’']/g, ' ')
-    .replace(/[‐-―−]/g, '-')
+    .replace(/[\u2010-\u2015\u2212]/g, '-')
     .replace(/\s+/g, ' ')
     .trim();
 }

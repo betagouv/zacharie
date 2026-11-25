@@ -13,9 +13,15 @@ describe('canonicalNumeroCfei', () => {
     ['CFEI45-13-577', 'CFEI-45-13-577'],
     ['CFEI - 45 - 13 - 577', 'CFEI-45-13-577'],
     ['CFEI/45/13/577', 'CFEI-45-13-577'],
+    ['CFEI.45.13.0577', 'CFEI-45-13-577'],
+    ['CFEI\t45-13-0577\n', 'CFEI-45-13-577'],
+    // un espace qui coupe un groupe de chiffres (copier-coller) est retiré
+    ['CFEI-21-09-1 234', 'CFEI-21-09-1234'],
+    ['CFEI-21-09-0 5', 'CFEI-21-09-5'],
+    ['CFEI-2 1-09-5', 'CFEI-21-09-5'],
     // tirets typographiques (onglet Corrèze)
-    ['CFEI‐19‐12‐0345', 'CFEI-19-12-345'],
-    ['CFEI–19−12—0345', 'CFEI-19-12-345'],
+    ['CFEI\u201019\u201012\u20100345', 'CFEI-19-12-345'],
+    ['CFEI\u201319\u221212\u20140345', 'CFEI-19-12-345'],
     // département sur 3 chiffres ou sur 1
     ['CFEI-056-24-123', 'CFEI-56-24-123'],
     ['CFEI-5-14-0012', 'CFEI-05-14-12'],
@@ -25,7 +31,7 @@ describe('canonicalNumeroCfei', () => {
     ['83-07-132', 'CFEI-83-07-132'],
     // FREI gardé tel quel
     ['32-FREI-20-002', '32-FREI-20-002'],
-    ['32‑frei‑20‑002', '32-FREI-20-002'],
+    ['32\u2011frei\u201120\u2011002', '32-FREI-20-002'],
     // texte libre : nettoyé seulement
     ['en cours', 'EN-COURS'],
     ['ABC-12', 'ABC-12'],
@@ -88,7 +94,7 @@ describe('findOfficialCfeiColumns', () => {
   });
 
   test('nom et prénom dans une seule colonne', () => {
-    expect(findOfficialCfeiColumns([['NOM – Prénom', "Numéro d'attestation"]])).toMatchObject({
+    expect(findOfficialCfeiColumns([['NOM \u2013 Prénom', "Numéro d'attestation"]])).toMatchObject({
       numero: 1,
       nom: null,
       nomPrenom: 0,
@@ -114,7 +120,7 @@ describe('extractOfficialCfeisFromSheet', () => {
       TITRE,
       ['Département : Corrèze'],
       ['NOM', 'Prénom', "Numéro d'attestation"],
-      ['DUPONT', 'Jean', 'CFEI‐19‐12‐0345'],
+      ['DUPONT', 'Jean', 'CFEI\u201019\u201012\u20100345'],
       ['MARTIN', 'Paul', ''],
       ['DURAND', 'Luc', 'en cours'],
       ['', '', ''],
@@ -146,7 +152,7 @@ describe('extractOfficialCfeisFromSheet', () => {
 
   test('nom et prénom dans une seule colonne → rangés dans nom', () => {
     const result = extractOfficialCfeisFromSheet('27', [
-      ['NOM – Prénom', "Numéro d'attestation"],
+      ['NOM \u2013 Prénom', "Numéro d'attestation"],
       ['DUPONT Jean', 'CFEI-27-10-0001'],
     ]);
     expect(result.records[0]).toMatchObject({ nom: 'DUPONT Jean', prenom: null });

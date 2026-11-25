@@ -26,26 +26,33 @@ LANGUAGE plpgsql IMMUTABLE AS $$
 DECLARE
   cleaned text;
   tokens text;
+  compact text;
+  candidat text;
   m text[];
   departement text;
 BEGIN
-  cleaned := upper(regexp_replace(source, '[‐-―−]', '-', 'g'));
-  tokens := regexp_replace(cleaned, '[\t\n\v\f\r    -     　﻿_./]+', '-', 'g');
+  cleaned := upper(regexp_replace(source, '[\u2010-\u2015\u2212]', '-', 'g'));
+  tokens := regexp_replace(cleaned, '[\t\n\v\f\r \u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF_./]+', '-', 'g');
   tokens := regexp_replace(regexp_replace(tokens, '-+', '-', 'g'), '^-|-$', '', 'g');
+  -- un espace peut aussi couper un groupe de chiffres (« CFEI-21-09-1 234 ») : on retente sans les espaces
+  compact := regexp_replace(regexp_replace(cleaned, '[\t\n\v\f\r \u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]+', '', 'g'), '[_./]+', '-', 'g');
+  compact := regexp_replace(regexp_replace(compact, '-+', '-', 'g'), '^-|-$', '', 'g');
 
-  m := regexp_match(tokens, '^(?:CFEI)?-?(\d{1,3}|0?2[AB])-(\d{2})-(\d+)$');
-  IF m IS NOT NULL THEN
-    departement := regexp_replace(m[1], '^0+(?=.)', '');
-    IF length(departement) < 2 THEN
-      departement := lpad(departement, 2, '0');
+  FOREACH candidat IN ARRAY ARRAY[tokens, compact] LOOP
+    m := regexp_match(candidat, '^(?:CFEI)?-?(\d{1,3}|0?2[AB])-(\d{2})-(\d+)$');
+    IF m IS NOT NULL THEN
+      departement := regexp_replace(m[1], '^0+(?=.)', '');
+      IF length(departement) < 2 THEN
+        departement := lpad(departement, 2, '0');
+      END IF;
+      RETURN 'CFEI-' || departement || '-' || m[2] || '-' || regexp_replace(m[3], '^0+(?=.)', '');
     END IF;
-    RETURN 'CFEI-' || departement || '-' || m[2] || '-' || regexp_replace(m[3], '^0+(?=.)', '');
-  END IF;
 
-  m := regexp_match(tokens, '^(\d{1,3}|0?2[AB])-?FREI-?(\d{2})-(\d+)$');
-  IF m IS NOT NULL THEN
-    RETURN m[1] || '-FREI-' || m[2] || '-' || m[3];
-  END IF;
+    m := regexp_match(candidat, '^(\d{1,3}|0?2[AB])-?FREI-?(\d{2})-(\d+)$');
+    IF m IS NOT NULL THEN
+      RETURN m[1] || '-FREI-' || m[2] || '-' || m[3];
+    END IF;
+  END LOOP;
 
   RETURN tokens;
 END;

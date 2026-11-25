@@ -51,3 +51,45 @@ describe('GET /users — statut CFEI de chaque compte', () => {
     expect(res.body.data.hasOfficialCfeis).toBe(false);
   });
 });
+
+describe('GET /user/:user_id — ligne officielle du compte', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (prisma.entity.findMany as any).mockResolvedValue([]);
+    (prisma as any).securityLog.findFirst = vi.fn().mockResolvedValue(null);
+    (prisma as any).securityLog.findMany = vi.fn().mockResolvedValue([]);
+    (prisma as any).securityLog.count = vi.fn().mockResolvedValue(0);
+    (prisma as any).password.findUnique = vi.fn().mockResolvedValue(null);
+    (prisma.officialCfei.findMany as any).mockImplementation(({ where }: any) =>
+      Promise.resolve(where.numero_cfei.in.includes(officiel.numero_cfei) ? [officiel] : [])
+    );
+  });
+
+  test('numéro saisi avec des zéros de tête → ligne officielle trouvée', async () => {
+    (prisma.user.findUnique as any).mockResolvedValue({
+      id: 'u-zeros',
+      email: 'u@example.fr',
+      roles: ['CHASSEUR'],
+      numero_cfei: 'cfei-045-13-0577',
+    });
+
+    const res = await request(app).get('/user/u-zeros');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.officialCfei).toEqual(officiel);
+  });
+
+  test('numéro absent de la liste → null', async () => {
+    (prisma.user.findUnique as any).mockResolvedValue({
+      id: 'u-inconnu',
+      email: 'v@example.fr',
+      roles: ['CHASSEUR'],
+      numero_cfei: 'CFEI-45-13-578',
+    });
+
+    const res = await request(app).get('/user/u-inconnu');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.officialCfei).toBeNull();
+  });
+});
