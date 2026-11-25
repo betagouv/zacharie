@@ -1044,7 +1044,7 @@ describe('DELETE /user-entity/ sur un CCG pré-enregistré', () => {
     mockRelations([relationCreateur, relationRattache]);
     vi.mocked(prisma.entityAndUserRelations.update).mockResolvedValue(relationCreateur as any);
 
-    await authed(
+    const res = await authed(
       request(app).put(BASE).send({
         owner_id: regularUser.id,
         entity_id: 'ccg-1',
@@ -1053,9 +1053,11 @@ describe('DELETE /user-entity/ sur un CCG pré-enregistré', () => {
       })
     );
 
-    for (const [args] of vi.mocked(prisma.entityAndUserRelations.update).mock.calls) {
-      expect(args.data).not.toHaveProperty('status');
-    }
+    expect(res.status).toBe(200);
+    expect(prisma.entityAndUserRelations.update).toHaveBeenCalledOnce();
+    expect(vi.mocked(prisma.entityAndUserRelations.update).mock.calls[0][0].data).not.toHaveProperty(
+      'status'
+    );
   });
 });
 

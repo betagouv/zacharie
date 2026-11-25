@@ -108,6 +108,9 @@ test('52 - seul le créateur d’un CCG pré-enregistré peut le modifier', asyn
 
   // L'admin Zacharie voit le créateur et peut donner la main à l'autre chasseur
   const { context: adminContext, page: admin } = await adminPage(browser);
+  await admin.goto(`http://localhost:3290/app/admin/entity/${ccgId}`);
+  await admin.getByRole('tab', { name: 'Chasseurs utilisant cette chambre froide (2)' }).click();
+  await expect(admin.locator('.select-relation-status__single-value')).toHaveCount(2, { timeout: 10000 });
   await admin.goto('http://localhost:3290/app/admin/user/0Y545');
   await admin.getByRole('tab', { name: /CCGs/ }).click();
   await expect(admin.locator('.select-relation-status__single-value')).toHaveText('Admin', {
