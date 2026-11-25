@@ -1,4 +1,5 @@
 import xss from 'xss';
+import { canonicalNumeroCfei } from '~/utils/numero-cfei';
 
 export function sanitize(source: string) {
   return xss(source, {
@@ -20,7 +21,8 @@ export function escapeBrevoPlaceholders(source: string) {
 
 // Le numéro CFEI est nullable : un champ laissé vide (ou envoyé à null par le front) doit être
 // stocké en null, jamais en chaîne vide, sinon il compte comme un changement de numéro.
+// Il est stocké sous sa forme canonique, la même que la liste officielle (cf canonicalNumeroCfei).
 export function normalizeNumeroCfei(source: string | null | undefined) {
   if (!source) return null;
-  return sanitize(source).trim() || null;
+  return canonicalNumeroCfei(sanitize(source)) || null;
 }

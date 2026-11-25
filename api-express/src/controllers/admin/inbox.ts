@@ -25,7 +25,7 @@ router.get(
             WHERE u.numero_cfei IS NOT NULL
               AND u.deleted_at IS NULL
               AND NOT EXISTS (
-                SELECT 1 FROM "OfficialCfei" o WHERE UPPER(o.numero_cfei) = UPPER(u.numero_cfei)
+                SELECT 1 FROM "OfficialCfei" o WHERE o.numero_cfei = u.numero_cfei
               )
           `,
           prisma.user.count({

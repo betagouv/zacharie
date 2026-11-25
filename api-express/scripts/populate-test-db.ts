@@ -85,11 +85,11 @@ Julie
 Thomas
 Christine
 */
-  // Liste officielle des CFEI : Martin et Petit y figurent, Moreau (CFEI-075-25-003) non → « CFEI introuvable »
+  // Liste officielle des CFEI : Martin et Petit y figurent, Moreau (CFEI-75-25-003) non → « CFEI introuvable »
   await prisma.officialCfei.createMany({
     data: [
-      { numero_cfei: 'CFEI-075-25-001', nom: 'Martin', prenom: 'Marie', departement: '75' },
-      { numero_cfei: 'CFEI-075-25-002', nom: 'Petit', prenom: 'Pierre', departement: '75' },
+      { numero_cfei: 'CFEI-75-25-001', nom: 'Martin', prenom: 'Marie', departement: '75' },
+      { numero_cfei: 'CFEI-75-25-002', nom: 'Petit', prenom: 'Pierre', departement: '75' },
     ],
   });
 
@@ -105,7 +105,7 @@ Christine
         nom_de_famille: 'Martin',
         addresse_ligne_1: '1 rue de la paix',
         est_forme_a_l_examen_initial: true,
-        numero_cfei: 'CFEI-075-25-001',
+        numero_cfei: 'CFEI-75-25-001',
         code_postal: '75000',
         ville: 'Paris',
         telephone: '0606060601',
@@ -138,7 +138,7 @@ Christine
         nom_de_famille: 'Petit',
         addresse_ligne_1: '3 rue de la paix',
         est_forme_a_l_examen_initial: true,
-        numero_cfei: 'CFEI-075-25-002',
+        numero_cfei: 'CFEI-75-25-002',
         code_postal: '75000',
         ville: 'Paris',
         telephone: '0606060603',
@@ -363,7 +363,7 @@ Christine
         nom_de_famille: 'Moreau',
         addresse_ligne_1: '13 rue de la paix',
         est_forme_a_l_examen_initial: true,
-        numero_cfei: 'CFEI-075-25-003',
+        numero_cfei: 'CFEI-75-25-003',
         code_postal: '75000',
         ville: 'Paris',
         telephone: '0606060611',

@@ -107,10 +107,10 @@ describe.skipIf(!VITEST_DB_URL)('GET /inbox sur une vraie base', () => {
     expect(await comptesBloquesIds()).toEqual([]);
   });
 
-  test('CFEI introuvable : comparaison sans tenir compte de la casse, comptes supprimés exclus', async () => {
+  test('CFEI introuvable : comptes supprimés exclus', async () => {
     const avant = (await request(app).get('/inbox')).body.data.cfei_introuvable as number;
     await prisma.officialCfei.create({ data: { numero_cfei: 'CFEI-INBOX-001' } });
-    await createUser('cfei-officiel', { numero_cfei: 'cfei-inbox-001' });
+    await createUser('cfei-officiel', { numero_cfei: 'CFEI-INBOX-001' });
     await createUser('cfei-inconnu', { numero_cfei: 'CFEI-INBOX-999' });
     await createUser('cfei-inconnu-supprime', { numero_cfei: 'CFEI-INBOX-998', deleted_at: new Date() });
 

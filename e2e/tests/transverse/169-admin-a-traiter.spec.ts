@@ -41,7 +41,7 @@ test('les cartes comptent ce qui est à traiter et mènent à la liste filtrée'
   await expect(onboardingIncomplet.getByText('0', { exact: true })).toBeVisible();
   await expect(main.getByRole('link', { name: /Onboarding incomplet/ })).toHaveCount(0);
 
-  // Seed par défaut : seul le CFEI de Moreau Lucie (CFEI-075-25-003) manque à la liste officielle
+  // Seed par défaut : seul le CFEI de Moreau Lucie (CFEI-75-25-003) manque à la liste officielle
   const cfeiIntrouvable = main.getByRole('link', { name: /CFEI introuvable/ });
   await expect(cfeiIntrouvable.getByText('1', { exact: true })).toBeVisible();
   await cfeiIntrouvable.click();

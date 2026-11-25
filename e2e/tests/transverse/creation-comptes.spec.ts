@@ -326,9 +326,9 @@ test('Premier détenteur devient examinateur initial depuis son profil', async (
   await page.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page.getByText('Informations de chasse enregistrées')).toBeVisible();
 
-  // Refresh and verify the change persisted
+  // Refresh and verify the change persisted, sous sa forme canonique (département et numéro sans zéro de tête)
   await page.reload();
-  await expect(page.getByRole('textbox', { name: "Numéro d'attestation de" })).toHaveValue('CFEI-075-00-444');
+  await expect(page.getByRole('textbox', { name: "Numéro d'attestation de" })).toHaveValue('CFEI-75-00-444');
 });
 
 test('Premier détenteur ajoute association et CCG depuis son profil', async ({ page }) => {

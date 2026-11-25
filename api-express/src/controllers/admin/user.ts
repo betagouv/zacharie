@@ -474,7 +474,7 @@ router.get(
       let officialCfei = null;
       if (user.numero_cfei) {
         officialCfei = await prisma.officialCfei.findUnique({
-          where: { numero_cfei: user.numero_cfei.toUpperCase() },
+          where: { numero_cfei: user.numero_cfei },
           select: {
             numero_cfei: true,
             nom: true,
@@ -688,9 +688,24 @@ router.get(
       for (const row of countsRows) {
         counts[row.user_id] = { carcasses: row.carcasses, fiches: row.fiches };
       }
+      // la liste officielle compte des dizaines de milliers de numéros : on ne renvoie que ceux des comptes
+      const numerosCfei = users
+        .map((user) => user.numero_cfei)
+        .filter((numero): numero is string => !!numero);
+      const [matchingOfficialCfeis, officialCfeisCount] = await Promise.all([
+        prisma.officialCfei.findMany({
+          where: { numero_cfei: { in: numerosCfei } },
+          select: { numero_cfei: true, nom: true, prenom: true, departement: true },
+        }),
+        prisma.officialCfei.count(),
+      ]);
+      const officialCfeis: AdminUsersResponse['data']['officialCfeis'] = {};
+      for (const officialCfei of matchingOfficialCfeis) {
+        officialCfeis[officialCfei.numero_cfei] = officialCfei;
+      }
       res.status(200).send({
         ok: true,
-        data: { users, counts },
+        data: { users, counts, officialCfeis, hasOfficialCfeis: officialCfeisCount > 0 },
         error: '',
       });
     }
