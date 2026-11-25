@@ -2,7 +2,6 @@ import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { IPM1Decision, Prisma, TrichineResultatAnalyse, UserRoles } from '@prisma/client';
 import type { User } from '@prisma/client';
 
-// Les deux garde-fous ne s'activent qu'avec la feature trichine posée dans l'env
 vi.mock('~/config', async (importOriginal) => ({
   ...(await importOriginal<typeof import('~/config')>()),
   TRICHINE_FEATURE_ENABLED: true,
@@ -24,8 +23,6 @@ import { syncCarcasse } from '~/utils/sync-carcasse';
 import type { SyncScope } from '~/utils/sync-scope';
 import { automaticClosingOfFeis } from '~/cronjobs/feis';
 
-// Ces tests portent sur les garde-fous trichine, pas sur le périmètre d'écriture : on passe un
-// scope qui autorise tout pour que la carcasse arrive jusqu'aux vérifications testées.
 const allowAllScope: SyncScope = {
   entityIds: [],
   carcasseAccessWhere: {},
@@ -142,9 +139,7 @@ describe('automaticClosingOfFeis — sanglier auto-clôturé seulement sur résu
         },
       },
     ]);
-    // les autres critères restent intacts
     expect(where.svi_closed_at).toBeNull();
-    // la demande de modification est indicative : elle ne retient pas l'auto-clôture
     expect(where.CarcasseModificationRequests).toBeUndefined();
   });
 });

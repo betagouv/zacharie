@@ -56,35 +56,20 @@ import {
 
 const router: express.Router = express.Router();
 
-/**
- * Routes émetteur (SVI, circuit agréé).
- * Les routes laboratoire (LVD/LNR) sont dans controllers/laboratoire.ts.
- */
-
 function sendError(res: express.Response, status: number, error: string) {
   res.status(status).send({ ok: false, data: null, error });
 }
 
-/**
- * Convention d'adressage : les routes de **lecture d'un objet** prennent sa référence métier
- * (E-/P-/F-…), pas son uuid — c'est ce que manipulent les utilisateurs et les laboratoires,
- * et ça rend les URL de l'app copiables et mémorisables. Les routes d'**action** gardent l'id,
- * elles sont toujours appelées depuis un objet déjà chargé.
- */
-
-// Données carcasse affichées dans les écrans trichine (mêmes champs que la projection labo, §10.2)
 const carcasseProjectionSelect = {
   zacharie_carcasse_id: true,
   numero_bracelet: true,
   espece: true,
   date_mise_a_mort: true,
   fei_numero: true,
-  // Une carcasse retirée de sa fiche a vu sa décision prise : les écrans n'ont plus à la réclamer
   trichine_retire_de_fei_at: true,
   Fei: { select: { commune_mise_a_mort: true } },
 } as const;
 
-// Émetteurs trichine : le SVI, en circuit agréé
 function isEmitter(req: RequestWithUser): boolean {
   return req.user.roles.includes(UserRoles.SVI);
 }
@@ -107,12 +92,6 @@ const masseDefautParType: Record<TrichineType, number> = {
   [TrichineType.CONFIRMATION]: TRICHINE_MASSE_DEFAUT_CONFIRMATION,
 };
 
-/**
- * Circuit agréé : le SVI prélève sur les carcasses assignées à son service d'inspection, mais
- * aussi sur celles déjà arrivées chez un ETG rattaché à ce service et pas encore transmises —
- * le prélèvement trichine se fait à l'arrivage, avant la transmission officielle au SVI.
- * Renvoie, parmi les ids demandés, ceux sur lesquels l'utilisateur peut agir.
- */
 async function carcassesAccessiblesAuSvi(
   userId: string,
   zacharieCarcasseIds: Array<string>
@@ -128,13 +107,6 @@ async function carcassesAccessiblesAuSvi(
   return new Set(carcasses.map((carcasse) => carcasse.zacharie_carcasse_id));
 }
 
-/**
- * Alias saisis à la création d'un objet : validés (format, unicité pour le service) avant de créer
- * quoi que ce soit, pour ne pas laisser un objet créé sans la référence que l'agent a tapée.
- * L'alias est posé au nom du service d'inspection de l'objet (cf `entiteSviPourObjet`). Seule une
- * saisie simultanée de la même référence peut encore le faire échouer : l'objet reste alors créé
- * sans alias.
- */
 type AliasACreer = { kind: 'ok'; entityId: string | null } | { kind: 'error'; error: string };
 
 async function preparerAliases(
@@ -156,7 +128,6 @@ async function preparerAliases(
   return { kind: 'ok', entityId };
 }
 
-// Champ `alias` optionnel des routes de création : chaîne vide = pas d'alias
 const aliasCreationSchema = z
   .string()
   .optional()
@@ -169,18 +140,8 @@ function erreurParametres(error: z.ZodError) {
     : 'Paramètres invalides';
 }
 
-/* -------------------------------------------------------------------------- */
-/* Échantillons                                                                */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Ce que les analyses déjà ouvertes disent de chaque carcasse : ses pools actifs, et si elle
- * porte un échantillon encore à regrouper. Sert à refuser un prélèvement qui n'ouvrirait
- * aucune analyse (cf `validateNouveauPrelevement`).
- */
 async function etatDesAnalyses(carcasseIds: Array<string>) {
   const echantillons = await prisma.trichineEchantillon.findMany({
-    // Un échantillon retiré par le laboratoire n'a jamais été analysé : il ne compte pas
     where: { zacharie_carcasse_id: { in: carcasseIds }, deleted_at: null, retire_par_labo_at: null },
     select: {
       zacharie_carcasse_id: true,
@@ -250,7 +211,6 @@ router.post(
     if (carcasse.trichine_retire_de_fei_at) {
       return sendError(res, 400, 'Cette carcasse a été retirée de la FEI');
     }
-    // Seul le SVI assigné à la carcasse prélève
     const accessibles = await carcassesAccessiblesAuSvi(req.user.id, [carcasse.zacharie_carcasse_id]);
     if (!accessibles.has(carcasse.zacharie_carcasse_id)) {
       return sendError(res, 403, "Cette carcasse n'est pas assignée à votre service d'inspection");
@@ -328,7 +288,6 @@ router.get(
       where: {
         preleve_par_user_id: { in: await trichineEquipeUserIds(req.user) },
         deleted_at: null,
-        // Un échantillon retiré par le laboratoire ne se regroupe plus : la carcasse est à re-prélever
         ...(sansPool ? { pool_id: null, retire_par_labo_at: null } : {}),
       },
       include: {
@@ -355,17 +314,11 @@ const echantillonsBulkSchema = z.object({
     )
     .min(1)
     .max(200),
-  // Type commun au lot : INITIAL au prélèvement, COMPLEMENTAIRE / CONFIRMATION en 2e intention
   type: z.enum(Object.values(TrichineType) as [TrichineType]).optional(),
   preleve_par_entity_id: z.string().optional(),
   commentaire: z.string().optional(),
 });
 
-/**
- * Prélèvement en lot : le SVI prélève sur toutes les carcasses de sanglier d'un arrivage,
- * pas une par une. Tout ou rien — le lot est refusé si une seule carcasse ne convient pas,
- * pour ne pas laisser l'utilisateur avec un prélèvement à moitié fait.
- */
 router.post(
   '/echantillons',
   passport.authenticate('user', { session: false }),
@@ -479,12 +432,6 @@ router.post(
   })
 );
 
-/**
- * Un pool est figé dès que la fiche qui le porte est partie au laboratoire : la FTP papier
- * est dans le colis, l'écran ne peut plus diverger d'elle. Tant qu'elle est en brouillon
- * (ou qu'elle a été annulée), tout reste modifiable.
- */
-// L'échantillon retiré reste tel que le laboratoire l'a reçu : il trace pourquoi la carcasse est à re-prélever
 const ERREUR_RETIRE_PAR_LABO =
   'Cet échantillon a été retiré de son pool par le laboratoire : il ne peut plus être modifié';
 
@@ -576,7 +523,6 @@ router.delete(
       where: { id: echantillon.id },
       data: { deleted_at: new Date() },
     });
-    // Un objet supprimé libère ses références : elles resservent pour celui qui le remplace
     await prisma.trichineAlias.deleteMany({ where: { echantillon_id: echantillon.id } });
     await logTrichineStatutChange({
       objetType: TrichineObjetType.ECHANTILLON,
@@ -614,7 +560,6 @@ router.post(
     if (await poolEstFige(pool.id)) {
       return sendError(res, 400, 'Ce pool est parti au laboratoire, sa composition ne peut plus changer');
     }
-    // Un pool vide n'existe pas : c'est le pool entier qu'il faut supprimer
     if (pool.TrichineEchantillons.length <= 1) {
       return sendError(res, 400, 'Dernier échantillon du pool : supprimez plutôt le pool');
     }
@@ -634,10 +579,6 @@ router.post(
     res.status(200).send({ ok: true, data: {}, error: '' });
   })
 );
-
-/* -------------------------------------------------------------------------- */
-/* Pools                                                                       */
-/* -------------------------------------------------------------------------- */
 
 const poolSchema = z.object({
   echantillon_ids: z.array(z.string().min(1)).min(1),
@@ -897,7 +838,6 @@ router.delete(
     if (await poolEstFige(pool.id)) {
       return sendError(res, 400, 'Ce pool est parti au laboratoire, il ne peut plus être supprimé');
     }
-    // Supprimer une mère orphelinerait ses pools de 2e intention
     if (pool.PoolsFilles.length) {
       return sendError(res, 400, 'Ce pool a des pools de 2e intention : supprimez-les d’abord');
     }
@@ -907,7 +847,6 @@ router.delete(
       where: { id: { in: echantillonIds } },
       data: { pool_id: null },
     });
-    // Le pool n'est référencé que par des FTP brouillon : les liens n'ont plus d'objet
     await prisma.trichinePoolFTP.deleteMany({ where: { pool_id: pool.id } });
     await prisma.trichinePool.update({ where: { id: pool.id }, data: { deleted_at: new Date() } });
     await prisma.trichineAlias.deleteMany({ where: { pool_id: pool.id } });
@@ -926,10 +865,6 @@ router.delete(
     res.status(200).send({ ok: true, data: {}, error: '' });
   })
 );
-
-/* -------------------------------------------------------------------------- */
-/* FTP                                                                         */
-/* -------------------------------------------------------------------------- */
 
 const ftpSchema = z.object({
   pool_ids: z.array(z.string().min(1)).min(1),
@@ -976,7 +911,6 @@ router.post(
     if (pools.some((pool) => pool.cree_par_user_id !== req.user.id)) {
       return sendError(res, 403, "Un des pools n'a pas été créé par vous");
     }
-    // Une fiche supprimée ou annulée libère ses pools : ils repartent dans une nouvelle fiche
     const dejaEngage = pools.some((pool) =>
       pool.TrichinePoolFTPs.some(
         ({ TrichineFTP: autre }) =>
@@ -1075,16 +1009,12 @@ router.post(
       userId: req.user.id,
       commentaire: 'statut_logistique',
     });
-    // Les pools (et leurs échantillons / carcasses) passent en cours d'analyses
     for (const { pool_id } of ftp.TrichinePoolFTPs) {
       await recomputePoolTrichine(pool_id, req.user.id);
     }
-    // Statut analytique de la FTP (EN_COURS_ANALYSES) + historique
     await recomputeFTPTrichine(ftp.id, req.user.id);
 
     const laboUsers = await getUsersWorkingForEntity(ftp.destinataire_entity_id);
-    // La fiche est archivée telle qu'envoyée, et part en pièce jointe : le labo l'a même
-    // si le colis arrive sans son papier
     const pdf = await archiveFtpPdf(ftp.id, req.user.id);
     await notifyTrichineUsers({
       users: laboUsers,
@@ -1174,7 +1104,6 @@ router.put(
       if (pools.some((pool) => pool.cree_par_user_id !== req.user.id)) {
         return sendError(res, 403, "Un des pools n'a pas été créé par vous");
       }
-      // Un pool déjà engagé dans une AUTRE fiche encore vivante ne peut pas être ajouté ici
       const dejaEngage = pools.some((pool) =>
         pool.TrichinePoolFTPs.some(
           ({ TrichineFTP: autre }) =>
@@ -1250,7 +1179,6 @@ router.delete(
       userId: req.user.id,
       commentaire: `Suppression du brouillon ${ftp.numero_fiche}`,
     });
-    // Les pools redeviennent libres, rattachables à une autre fiche
     for (const { pool_id } of ftp.TrichinePoolFTPs) {
       await recomputePoolTrichine(pool_id, req.user.id);
     }
@@ -1263,11 +1191,6 @@ const annulerSchema = z.object({
   raison_annulation: z.string().min(1),
 });
 
-/**
- * Annulation d'une fiche déjà envoyée : le colis est parti mais le laboratoire ne l'a pas
- * encore réceptionné. La fiche reste tracée (statut ANNULEE + motif), le laboratoire est
- * prévenu au cas où le colis arrive quand même, et les pools redeviennent rattachables.
- */
 router.post(
   '/ftp/:ftp_id/annuler',
   passport.authenticate('user', { session: false }),
@@ -1314,7 +1237,6 @@ router.post(
       userId: req.user.id,
       commentaire: `Annulation : ${bodyResult.data.raison_annulation}`,
     });
-    // Les pools quittent l'état « en cours d'analyses » et redeviennent rattachables
     for (const { pool_id } of ftp.TrichinePoolFTPs) {
       await recomputePoolTrichine(pool_id, req.user.id);
     }
@@ -1424,7 +1346,6 @@ router.get(
   })
 );
 
-// Détail d'un échantillon (E-…)
 router.get(
   '/echantillon/:reference',
   passport.authenticate('user', { session: false }),
@@ -1468,7 +1389,6 @@ router.get(
   })
 );
 
-// Détail d'un pool (P-…) : c'est ici que vit le résultat d'analyse et sa provenance
 router.get(
   '/pool/:reference',
   passport.authenticate('user', { session: false }),
@@ -1528,7 +1448,6 @@ router.get(
   })
 );
 
-// PDF de la FTP à imprimer et joindre au colis (cf doc/trichine.md §12.1)
 router.get(
   '/ftp/:ftp_id/pdf',
   passport.authenticate('user', { session: false }),
@@ -1550,10 +1469,6 @@ router.get(
     res.status(200).send(pdf);
   })
 );
-
-/* -------------------------------------------------------------------------- */
-/* Vue carcasse (émetteur)                                                     */
-/* -------------------------------------------------------------------------- */
 
 router.get(
   '/carcasse/:zacharie_carcasse_id',
@@ -1598,16 +1513,11 @@ router.get(
   })
 );
 
-/* -------------------------------------------------------------------------- */
-/* Annuaire des laboratoires (pour la création de FTP)                         */
-/* -------------------------------------------------------------------------- */
-
 router.get(
   '/laboratoires',
   passport.authenticate('user', { session: false }),
   catchErrors(async (req: RequestWithUser, res: express.Response) => {
     if (!guardEmitter(req, res)) return;
-    // LVD uniquement : le LNR ne reçoit que les FTP générées automatiquement après un résultat douteux
     const laboratoires = await prisma.entity.findMany({
       where: { type: EntityTypes.LABORATOIRE, is_lnr: false, deleted_at: null },
       select: {
@@ -1623,10 +1533,6 @@ router.get(
     res.status(200).send({ ok: true, data: { laboratoires }, error: '' });
   })
 );
-
-/* -------------------------------------------------------------------------- */
-/* Notifications                                                               */
-/* -------------------------------------------------------------------------- */
 
 router.get(
   '/notifications',

@@ -1,7 +1,6 @@
 import { EntityRelationStatus, EntityRelationType, FeiOwnerRole, Prisma } from '@prisma/client';
 import prisma from '~/prisma';
 
-// ETG rattachés au(x) SVI de l'utilisateur, avec un libellé d'affichage par ETG.
 export async function getEtgsLinkedToSviUser(userId: string) {
   const sviEntityRelations = await prisma.entityAndUserRelations.findMany({
     where: {
@@ -25,11 +24,6 @@ export async function getEtgsLinkedToSviUser(userId: string) {
   return { sviEntityIds, etgIds, etgNameById };
 }
 
-/**
- * Carcasses physiquement arrivées chez un ETG rattaché au SVI (acceptées, ni refusées ni
- * manquantes) mais pas encore transmises au SVI. Le SVI les voit avant d'en être officiellement
- * détenteur : il partage les locaux de l'ETG et y prélève la trichine dès l'arrivage.
- */
 export function carcassesAVenirChezEtgWhere(etgIds: Array<string>): Prisma.CarcasseWhereInput {
   return {
     svi_assigned_at: null,

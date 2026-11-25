@@ -4,10 +4,6 @@ import prisma from '~/prisma';
 import { extractDepartementFromCommune } from '~/utils/federation-stats';
 import type { BilanAnomaliesLigne, BilanAnomaliesData } from '~/types/responses';
 
-// Bilan des anomalies de fin de saison demandé par la DGAL aux SVI (calque "bilan des anomalies"),
-// pré-rempli avec les données Zacharie : une ligne par ETG et par groupe d'espèces du calque.
-
-// Groupes d'espèces du calque DGAL, dans l'ordre du calque.
 export const BILAN_GROUPES_ESPECES = [
   'Cerf',
   'Chevreuil',
@@ -38,7 +34,6 @@ const groupeByEspece: Record<string, BilanGroupeEspece> = {
   'Autres petits gibiers à poils': 'Petit gibier à poils',
 };
 
-// Chapitre II du calque (anomalies examen initial) : seules ces deux anomalies sont tracées dans Zacharie.
 const MOTIFS_EI_NON_VALIDE = [
   "Viandes provenant d'une carcasse dont l'examen initial n'est pas valide",
   "Viandes provenant d'un lot de carcasses dont l'examen initial n'est pas valide",
@@ -48,7 +43,6 @@ const MOTIFS_EI_NON_IDENTIFIEE = [
   "Viandes provenant d'un lot de carcasses non identifié",
 ];
 
-// Une colonne par motif relevé dans le bilan, les plus fréquents en premier.
 export function getColonnesAnomalies(lignes: Array<BilanAnomaliesLigne>): Array<string> {
   const totalByMotif = new Map<string, number>();
   for (const ligne of lignes) {
@@ -61,7 +55,6 @@ export function getColonnesAnomalies(lignes: Array<BilanAnomaliesLigne>): Array<
     .map(([motif]) => motif);
 }
 
-// Une saison de chasse va du 1er juin (année N) au 31 mai (année N+1), identifiée par N.
 export function getSaisonBounds(saison: number) {
   const start = dayjs(`${saison}-06-01`).startOf('day');
   return { start: start.toDate(), end: start.add(1, 'year').toDate() };
@@ -102,8 +95,6 @@ function emptyLigne(etg: BilanEtg, groupe_espece: BilanGroupeEspece): BilanAnoma
   };
 }
 
-// Grand gibier : 1 carcasse = 1 animal. Petit gibier : un lot, dont une partie seulement
-// peut être concernée par la décision SVI.
 function countAnimaux(carcasse: BilanCarcasse, animauxConcernes: number | null = null): number {
   if (carcasse.type !== CarcasseType.PETIT_GIBIER) return 1;
   return animauxConcernes ?? carcasse.nombre_d_animaux ?? 1;
@@ -146,14 +137,11 @@ export function buildBilanAnomalies(
       carcasse.examinateur_anomalies_carcasse.length > 0 || carcasse.examinateur_anomalies_abats.length > 0;
     if (isSaisie && !anomaliesSignaleesFei) ligne.saisies_non_signalees_fei += animauxSaisis;
 
-    // Un motif relevé en IPM1 puis en IPM2 n'est compté qu'une fois par carcasse.
     const motifs = new Set([...carcasse.svi_ipm1_lesions_ou_motifs, ...carcasse.svi_ipm2_lesions_ou_motifs]);
     const animauxInspectes = countAnimaux(
       carcasse,
       carcasse.svi_ipm2_nombre_animaux ?? carcasse.svi_ipm1_nombre_animaux
     );
-    // Chapitre III : le référentiel Zacharie des motifs est le référentiel officiel, chaque motif
-    // est repris tel quel. Chapitre II : seules deux anomalies d'examen initial sont tracées par des motifs.
     let isEiNonValide = false;
     let isEiNonIdentifiee = false;
     for (const motif of motifs) {
@@ -173,15 +161,12 @@ export function buildBilanAnomalies(
     .sort((a, b) => a.etg_nom.localeCompare(b.etg_nom, 'fr'));
 }
 
-// Les fiches créées ou tenues par un admin Zacharie (tests, démos) sont exclues, comme dans les stats fédérations.
 const EXCLUDE_ADMIN_FEI_WHERE: Prisma.FeiWhereInput = {
   FeiCreatedByUser: { isNot: { isZacharieAdmin: true } },
   FeiExaminateurInitialUser: { isNot: { isZacharieAdmin: true } },
   FeiPremierDetenteurUser: { isNot: { isZacharieAdmin: true } },
 };
 
-// Carcasses tuées pendant la saison et prises en charge par un ETG (de la liste `etgIds`,
-// ou n'importe quel ETG si `etgIds` est null). La carcasse est rattachée au dernier ETG qui l'a prise en charge.
 export async function getBilanAnomalies(
   saison: number,
   etgIds: Array<string> | null

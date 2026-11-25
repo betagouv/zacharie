@@ -33,9 +33,6 @@ import { CarcasseTransmission } from '@app/types/carcasse';
 import { datesToIso } from '@app/utils/dates-to-iso';
 import { hasUnsyncedData } from '@app/utils/has-unsynced-data';
 
-// State keys to persist in IndexedDB (each stored as its own entry)
-// `dataIsSynced` et `syncRejections` n'y sont pas : le premier est recalculé à l'hydratation depuis les
-// items persistés, le second ne vaut que pour la session en cours.
 const PERSISTED_KEYS: (keyof State)[] = [
   'feis',
   'users',
@@ -52,8 +49,6 @@ const PERSISTED_KEYS: (keyof State)[] = [
   'feiIdsRenvoiToHide',
 ];
 
-// Tranches qui sont des maps par id : stockées enregistrement par enregistrement, pour qu'une
-// modification n'écrive que l'enregistrement modifié. Les autres tranches tiennent sur une clé.
 const RECORD_KEYS: (keyof State)[] = [
   'feis',
   'users',
@@ -71,27 +66,14 @@ export interface State {
   entities: Record<EntityWithUserRelation['id'], EntityWithUserRelation>;
   detenteursInitiauxIds: Array<UserForFei['id']>;
   carcasses: Record<Carcasse['zacharie_carcasse_id'], Carcasse>;
-  // single intermediaire for a single carcasse
   carcassesIntermediaireById: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>;
-  // full history of modif requests (PENDING/APPROVED/REJECTED) per carcasse — loaded by carcasse,
-  // and the single source of truth for both sync and the modif-request UI.
   modifRequestsByCarcasseId: Record<Carcasse['zacharie_carcasse_id'], Array<CarcasseModificationRequest>>;
   apiKeyApprovals: NonNullable<UserConnexionResponse['data']['apiKeyApprovals']>;
-  // fédération (FDC / FRC / FNC) dont l'utilisateur est membre validé : donne accès au tableau de bord fédération
   federation: NonNullable<UserConnexionResponse['data']['federation']> | null;
   lastUpdateFromServer: number;
-  // User.carcasses_reload_version reçue au dernier pull réussi, renvoyée au suivant : le serveur décide
-  // d'un rechargement complet (voir doc/rechargement-complet.md).
   carcassesReloadVersion: number;
-  // Fiches que ce compte a renvoyées à l'expéditeur : masquées de ses listes sans attendre la
-  // synchro, pour que le renvoi marche hors ligne. Le serveur ne les lui enverra plus (périmètre
-  // getCarcasseAccessWhere côté api-express) ; si elles lui sont réattribuées plus tard,
-  // loadCarcasses les redescend et retire la fiche de cette liste.
   feiIdsRenvoiToHide: Array<Fei['numero']>;
   logs: Array<Log>;
-  // Items que le serveur a refusé d'écrire lors d'une synchro de cette session, avec le `updated_at`
-  // (en ms) de la version refusée. Cette version n'est plus renvoyée ; une nouvelle modification
-  // locale de l'item l'est (voir sync-data.ts).
   syncRejections: Array<SyncRejection & { updated_at: number }>;
   _hasHydrated: boolean;
 }
@@ -175,13 +157,6 @@ function initialState(): State {
   };
 }
 
-// Changement de `version` : tout le stockage local est remis à zéro, sauf les éléments pas encore
-// synchronisés (is_synced = false), quelle que soit l'ancienne version. Sans ce `migrate`, zustand
-// jetterait tout l'état stocké et ces saisies seraient perdues définitivement. Exception volontaire
-// à la règle « pas de code de rétrocompatibilité », pour la sécurité des données : les éléments
-// gardés sont renvoyés tels quels à /sync, donc un bump qui change la forme d'un élément exige
-// toujours un correctif côté serveur ou base. lastUpdateFromServer = 0 force un rechargement complet,
-// qui conserve ces éléments (keepLocal dans load-carcasses).
 export function migratePersistedState(persistedState: unknown): Partial<State> {
   const persisted = (persistedState ?? {}) as Partial<State>;
   const isUnsynced = (item: { is_synced: boolean }) => !item.is_synced;
@@ -243,12 +218,6 @@ const useZustandStore = create<State & Actions>()(
           }));
         },
         updateFei: (fei_numero: Fei['numero'], partialFei: Partial<Fei>) => {
-          // On exclut les carcasses prises en charge en aval : les repasser en is_synced=false les
-          // repousse entières vers le serveur depuis un snapshot local antérieur à cette prise en
-          // charge — et /sync applique le body sans comparer updated_at. Le serveur propage de toute
-          // façon les dates de la fiche à toutes ses carcasses (syncCarcasseDates).
-          // Une carcasse simplement transmise, pas encore prise en charge, reste ici : le chasseur
-          // en est toujours le détenteur courant et peut encore la modifier.
           const carcassefeiCarcasses = Object.values(get().carcasses).filter(
             (c) => c.fei_numero === fei_numero && !isCarcassePriseEnChargeEnAval(c)
           );
@@ -328,9 +297,6 @@ const useZustandStore = create<State & Actions>()(
           });
         },
         updateCarcassesTransmission: (zacharie_carcasse_ids, transmissionFields) => {
-          // Un seul setState pour tout le lot : sur une fiche à plusieurs centaines de carcasses,
-          // appeler updateCarcasse en boucle recopiait la map entière et déclenchait un re-render
-          // par carcasse (O(n²) + n rendus), ce qui figeait l'app à la prise en charge / transmission.
           const carcasses = useZustandStore.getState().carcasses;
           const now = dayjs().toDate();
           const nextCarcasses = { ...carcasses };
@@ -390,8 +356,8 @@ const useZustandStore = create<State & Actions>()(
                   commentaire: null,
                   decision_at: null,
                   ecarte_pour_inspection: false,
-                  prise_en_charge: true, // always true by default, confirmed by the intermediaire globally
-                  prise_en_charge_at: newIntermediaire.prise_en_charge_at, // will be set by the intermediaire when he confirms all the carcasse
+                  prise_en_charge: true,
+                  prise_en_charge_at: newIntermediaire.prise_en_charge_at,
                   intermediaire_depot_type: newIntermediaire.intermediaire_depot_type,
                   intermediaire_depot_entity_id: newIntermediaire.intermediaire_depot_entity_id,
                   intermediaire_prochain_detenteur_role_cache:
@@ -400,7 +366,7 @@ const useZustandStore = create<State & Actions>()(
                     newIntermediaire.intermediaire_prochain_detenteur_id_cache,
                   intermediaire_poids: null,
                   numero_bon_reception: newIntermediaire.numero_bon_reception,
-                  carcasse_updated_at: null, // posé par trigger côté serveur
+                  carcasse_updated_at: null,
                   created_at: newIntermediaire.created_at,
                   updated_at: newIntermediaire.created_at,
                   deleted_at: null,
@@ -463,11 +429,6 @@ const useZustandStore = create<State & Actions>()(
               dataIsSynced: false,
             };
           });
-          // FIXME: pourquoi on n'envoie pas de syncData ici ?
-          // explication : parce qu'on fait un syncData après updateFei seulement
-          // et qu'on appelle TOUT LE TEMPS updateFei APRÈS updateAllCarcasseIntermediaire
-          // à vérifier toutefois : que c'est bien la dernière version du store
-          // qui est envoyée
         },
         updateCarcasseIntermediaire: (
           feiAndCarcasseAndIntermediaireIds: FeiAndCarcasseAndIntermediaireIds,
@@ -496,8 +457,6 @@ const useZustandStore = create<State & Actions>()(
           set({ apiKeyApprovals });
         },
         createCarcasseModifRequest: (request: CarcasseModificationRequest) => {
-          // Modif requests live in a full-history map keyed by carcasse id. We append the new one and
-          // sync it; the UI derives pending/history from this same array.
           const next: CarcasseModificationRequest = datesToIso({
             ...request,
             is_synced: false,
@@ -516,8 +475,6 @@ const useZustandStore = create<State & Actions>()(
           });
         },
         updateCarcasseModifRequest: (carcasseId, partial, approvalPayload) => {
-          // Updates target the carcasse's currently-pending request (approve/reject/cancel). At most
-          // one PENDING request exists per carcasse at a time (creation is blocked while one is open).
           const existing = useZustandStore.getState().modifRequestsByCarcasseId[carcasseId] ?? [];
           const pendingIdx = existing.findIndex(
             (r) => r.status === CarcasseModificationRequestStatus.PENDING && !r.deleted_at
@@ -530,9 +487,6 @@ const useZustandStore = create<State & Actions>()(
               updated_at: dayjs().toDate(),
               is_synced: false,
             });
-          // approvalPayload is transient: it rides along on this row only to be sent in the next /sync
-          // POST so the backend can apply the examinateur sanitary fields to the underlying Carcasse on
-          // NEW_CARCASSE approval. It's not part of the persisted CarcasseModificationRequest schema.
           if (approvalPayload) next._approvalPayload = approvalPayload;
           const nextArray = [...existing];
           nextArray[pendingIdx] = next;
@@ -546,8 +500,6 @@ const useZustandStore = create<State & Actions>()(
           }));
         },
         addLog: (newLog: Omit<CreateLog, 'fei_intermediaire_id'>) => {
-          // Version et date de la copie locale au moment de l'action : permet de retrouver, côté
-          // serveur, quelle version une écriture refusée comme périmée avait sous les yeux.
           const fei = newLog.fei_numero ? get().feis[newLog.fei_numero] : null;
           const carcasse = newLog.zacharie_carcasse_id ? get().carcasses[newLog.zacharie_carcasse_id] : null;
           const history =
@@ -601,8 +553,6 @@ const useZustandStore = create<State & Actions>()(
       }),
       {
         name: 'zacharie-zustand-store',
-        // v11: les maps par id sont stockées enregistrement par enregistrement. Les tranches entières
-        // de la v10 ne sont plus lues : rechargement complet depuis le serveur.
         version: 11,
         migrate: migratePersistedState,
         storage: createSlicedIDBStorage<Partial<State>>(PERSISTED_KEYS, RECORD_KEYS),

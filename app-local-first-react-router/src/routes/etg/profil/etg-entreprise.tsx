@@ -44,7 +44,6 @@ export default function EtgProfilEntreprise() {
     window.scrollTo(0, 0);
   }, []);
 
-  // Le n° de bon de réception est un réglage de l'entreprise : il vaut pour tous ses salariés.
   const handleDemandeNumeroBonReception = useCallback(
     async (etgId: string, demandeNumeroBonReception: boolean) => {
       const response = await API.post({

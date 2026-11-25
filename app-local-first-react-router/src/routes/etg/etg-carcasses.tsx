@@ -134,9 +134,6 @@ export default function EtgCarcasses() {
   >('etg-carcasses-quick-filter-premier-detenteurs-obj', {});
   const [quickFilterSearch, setQuickFilterSearch] = useState('');
 
-  // le n° de bon de réception est saisi par l'ETG au contrôle à réception, sur sa propre
-  // CarcasseIntermediaire : on n'affiche que celui de nos établissements, car une carcasse peut
-  // ensuite être réceptionnée par un autre ETG qui saisit le sien.
   const numeroBonReceptionByCarcasseId = useMemo(() => {
     const result: Record<Carcasse['zacharie_carcasse_id'], string> = {};
     const createdAtByCarcasseId: Record<Carcasse['zacharie_carcasse_id'], number> = {};
@@ -168,9 +165,6 @@ export default function EtgCarcasses() {
     itemsPerPage,
   ].join('|');
 
-  // on réinitialise la page seulement quand les filtres changent vraiment :
-  // setSearchParams change d'identité à chaque navigation (react-router), donc on
-  // compare la valeur précédente de filtersKey plutôt que de garder le 1er render.
   const prevFiltersKey = useRef(filtersKey);
   useEffect(() => {
     if (prevFiltersKey.current === filtersKey) return;
@@ -197,17 +191,12 @@ export default function EtgCarcasses() {
     const _collecteursNamesByFeiNumero: Record<Carcasse['fei_numero'], string> = {};
     const _feiMetaByFeiNumero: Record<Carcasse['fei_numero'], FeiQuickFilterMeta> = {};
     const _ccgNames: Record<NonNullable<Carcasse['premier_detenteur_depot_entity_name_cache']>, true> = {};
-    const _motifs: Record<
-      string, // one of 'svi_ipm2_lesions_ou_motifs',
-      true
-    > = {};
+    const _motifs: Record<string, true> = {};
     const _collecteurOptions: Record<Entity['id'], Entity['nom_d_usage']> = {};
     const _especeOptions: Record<NonNullable<Carcasse['espece']>, true> = {};
     // @ts-expect-error Type '{}' is missing the following properties
     const _statusOptions: Record<CarcasseStatusLabel, boolean> = {};
     const _premierDetenteurOptions: Record<NonNullable<Carcasse['premier_detenteur_name_cache']>, true> = {};
-    // l'entité peut manquer du store (collecteur supprimé, entité de test) : on retombe sur le nom
-    // du user puis sur l'id plutôt que de casser le registre
     const collecteurNameById = (id: string): string => {
       const entity = entities[id];
       const userOnly = usersById[id];
@@ -222,7 +211,6 @@ export default function EtgCarcasses() {
     for (const carcasse of carcassesRegistry) {
       if (!_feiMetaByFeiNumero[carcasse.fei_numero]) {
         const __collecteursIds: Record<Entity['id'], Entity['nom_d_usage']> = {};
-        // une carcasse du registre peut n'avoir aucune transmission (fiche absente ou supprimée)
         const transmission = transmissions[getTransmissionId(carcasse)];
         const intermediaires = transmission?.intermediaires ?? [];
         for (const intermediaire of intermediaires) {
@@ -268,7 +256,6 @@ export default function EtgCarcasses() {
     };
   }, [carcassesRegistry, transmissions, entities, usersById]);
 
-  // Séparé des options : taper dans un filtre ne recalcule que le filtrage et le tri.
   const filteredData = useMemo(() => {
     const _filteredData: Array<Carcasse> = [];
     const searchQuery = quickFilterSearch.trim().toLowerCase();
@@ -724,7 +711,7 @@ export default function EtgCarcasses() {
           }
         >
           <div className="flex max-h-60 flex-col gap-1 overflow-y-auto">
-            {Object.entries(collecteurOptions) // [optionId, optionName]
+            {Object.entries(collecteurOptions)
               .sort((a, b) => (a[1] as string).localeCompare(b[1] as string))
               .map(([optionId, optionName]) => (
                 <label

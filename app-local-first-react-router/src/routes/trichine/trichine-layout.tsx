@@ -2,11 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router';
 import { useTrichineBasePath } from '@app/utils/trichine-hooks';
 
-/**
- * Navigation latérale de l'espace trichine (même mécanique que l'espace admin) : la section
- * a ses quatre écrans propres, qui n'ont pas leur place dans la navigation principale du rôle.
- * Repliable en rail d'icônes sur desktop, en tiroir sur mobile.
- */
 export default function TrichineLayout() {
   const location = useLocation();
   const basePath = useTrichineBasePath();

@@ -24,8 +24,6 @@ import statsRefRouter from './stats-ref.ts';
 
 const router: express.Router = express.Router();
 
-// Callback custom : on distingue "pas admin / session invalide" (401, le front déconnecte)
-// de "admin sans ProConnect" (403 + code, le front redirige vers /app/proconnect)
 router.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
   passport.authenticate(
     'admin',
@@ -48,7 +46,6 @@ router.use((req: express.Request, res: express.Response, next: express.NextFunct
 
 router.use(adminAuditLog);
 
-// Le front admin vérifie ici que la session admin est complète (ProConnect inclus) avant d'afficher quoi que ce soit
 router.get('/session', (_req: express.Request, res: express.Response) => {
   res.status(200).send({ ok: true, data: null, message: '', error: '' });
 });

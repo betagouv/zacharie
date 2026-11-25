@@ -14,11 +14,6 @@ test('97 - Circuit court : re-transmission à un autre acteur interdite', async 
   await page.getByRole('link', { name: feiId }).click();
   await expect(page).toHaveURL(new RegExp(`/app/circuit-court/fei/${feiId}`));
 
-  // Aucun sélecteur "prochain détenteur" ni bouton "Transmettre"
   await expect(page.locator("[class*='select-prochain-detenteur']")).toHaveCount(0);
   await expect(page.getByRole('button', { name: /Transmettre la fiche/i })).toHaveCount(0);
-
-  // Pas de possibilité de changer le statut owner vers un autre acteur :
-  // l'UI doit rester limitée à la consultation + prise en charge éventuelle.
-  // TODO: ajouter assertion API (POST /fei ... fei_next_owner_role=ETG → 403) si endpoint exposé
 });

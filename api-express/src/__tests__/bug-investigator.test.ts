@@ -130,7 +130,6 @@ describe('runBugInvestigation', () => {
         ],
       },
     });
-    // le brouillon et le contrôle sont envoyés à Albert sans les champs internes
     const lastRequest = albertChatCompletion.mock.calls[3][0].messages;
     expect(JSON.stringify(lastRequest)).not.toMatch(/"draft"|"control"/);
   });

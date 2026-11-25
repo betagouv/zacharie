@@ -1,5 +1,4 @@
 import type { UserConnexionResponse } from '@api/src/types/responses';
-// import useUser from '@app/zustand/user';
 import { useEffect, useState } from 'react';
 import API from '@app/services/api';
 import useZustandStore from '@app/zustand/store';
@@ -307,7 +306,6 @@ function ApprovalStatusSelector({
   refreshApiApprovals: () => void;
 }) {
   const [status, setStatus] = useState<Approval['status']>(approval?.status);
-  // seul un administrateur de l'entité peut modifier l'accord donné au nom de l'entité
   if (entity && entity.relationStatus !== EntityRelationStatus.ADMIN) {
     return (
       <p className="m-0 text-sm">

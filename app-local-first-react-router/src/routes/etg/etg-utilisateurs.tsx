@@ -68,7 +68,6 @@ export default function EtgUtilisateurs() {
 
   const sidebarContent = (
     <>
-      {/* Recherche */}
       <div className="relative">
         <span
           className="fr-icon--sm fr-icon-search-line absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"
@@ -83,7 +82,6 @@ export default function EtgUtilisateurs() {
         />
       </div>
 
-      {/* Compteur */}
       <div className="mt-2 flex items-center justify-between border-b border-gray-200 pb-3">
         <span className="text-sm font-medium text-gray-600">
           {filteredUsers.length} utilisateur{filteredUsers.length > 1 ? 's' : ''}
@@ -98,7 +96,6 @@ export default function EtgUtilisateurs() {
         )}
       </div>
 
-      {/* Filtre Rôle */}
       {roleOptions.length > 1 && (
         <CollapsibleSection
           title="Rôle"
@@ -140,7 +137,6 @@ export default function EtgUtilisateurs() {
     <div className="relative">
       <title>{`Utilisateurs | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
 
-      {/* Mobile : bouton filtres sticky */}
       <div className="fr-background-alt--blue-france sticky top-0 z-30 flex items-center justify-between px-4 py-2 md:hidden">
         <span className="text-sm font-medium">
           {filteredUsers.length} utilisateur{filteredUsers.length > 1 ? 's' : ''}
@@ -164,7 +160,6 @@ export default function EtgUtilisateurs() {
         </button>
       </div>
 
-      {/* Mobile : panneau filtres */}
       {showMobileFilters && (
         <div className="fixed inset-0 z-[800] md:hidden">
           <div
@@ -186,14 +181,11 @@ export default function EtgUtilisateurs() {
         </div>
       )}
 
-      {/* Layout principal */}
       <div className="flex">
-        {/* Sidebar gauche - desktop, collée au bord */}
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 overflow-y-auto border-r border-gray-200 bg-white p-4 md:block">
           {sidebarContent}
         </aside>
 
-        {/* Contenu principal */}
         <div className="min-w-0 flex-1 px-4 pt-4 md:px-6">
           <h1 className="fr-h2 fr-mb-1w">Utilisateurs</h1>
           <p className="fr-text--sm mb-4 text-gray-600">

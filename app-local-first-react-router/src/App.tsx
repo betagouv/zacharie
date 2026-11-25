@@ -10,7 +10,6 @@ import PageNotFound from './components/PageNotFound';
 import ScrollToTop from './components/ScrollToTop';
 import useLandingPageNavigationMenu from './utils/get-landing-page-navigation-menu';
 
-// landing pages
 import LandingPage from './routes/landing';
 import LandingProsPage from './routes/landing-pros';
 import LandingDemarchesPage from './routes/landing-demarches';
@@ -60,7 +59,6 @@ declare global {
 function App() {
   const landingPageNavigationMenu = useLandingPageNavigationMenu();
   const user = useUser((state) => state.user);
-  // const generalNavigation = useLoggedInNavigationMenu();
 
   useEffect(() => {
     if (user) {
@@ -154,7 +152,6 @@ function App() {
           {RouterCollecteur()}
           {RouterCircuitCourt()}
           {RouterSvi()}
-          {/* Espace laboratoire (trichine) : invisible tant que le feature flag n'est pas posé */}
           {TRICHINE_FEATURE_ENABLED && RouterLaboratoire()}
           {RouterFederation()}
           {RouterAdmin()}
@@ -167,7 +164,6 @@ function App() {
             element={
               <RootDisplay
                 id="contact"
-                // navigation={generalNavigation}
                 mainLink={user ? getUserOnboardingRoute(user) : '/app/connexion'}
               >
                 <Contact />
@@ -182,7 +178,6 @@ function App() {
             path="tableau-de-bord/*"
             element={<TableauDeBordRedirect />}
           />
-          {/* liens déjà envoyés par email avant la correction de fei-url */}
           <Route
             path="collecteur-pro/*"
             element={<CollecteurProRedirect />}

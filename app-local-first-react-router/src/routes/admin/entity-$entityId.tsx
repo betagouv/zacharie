@@ -84,7 +84,6 @@ export default function AdminEntity() {
   const [adminEntityResponse, setAdminEntityResponse] = useState<State>(initialData);
   const [isSaving, setIsSaving] = useState(false);
   const {
-    // entity,
     dedicatedApiKey,
     canTakeFichesForEntity,
     canSendFichesToEntity,
@@ -420,16 +419,6 @@ export default function AdminEntity() {
                 }}
               />
 
-              {/*  <Input
-                      label="Téléphone"
-                      hintText="Format attendu : 01 22 33 44 55"
-                      nativeInputProps={{
-                        id: Prisma.EntityScalarFieldEnum.,
-                        name: Prisma.EntityScalarFieldEnum.telephone,
-                        autoComplete: "off",
-                        defaultValue: entity.telephone ?? "",
-                      }}
-                    /> */}
               <Input
                 label="Adresse"
                 hintText="Indication : numéro et voie"
@@ -655,7 +644,6 @@ function UserWorkingWithOrFor({
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
                     relation: relationType,
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
-                    // ajout par un admin Zacharie : validé d'office (le premier devient admin de l'entité)
                     ...(relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
                       ? { [Prisma.EntityAndUserRelationsScalarFieldEnum.status]: EntityRelationStatus.MEMBER }
                       : {}),
@@ -778,7 +766,6 @@ function EntitiesRelatedTo({
       </Highlight>
       {entitiesRelated.map((coupledEntity) => {
         const etg = entity.type === EntityTypes.ETG ? entity : coupledEntity;
-        // const svi = entity.type === EntityTypes.ETG ? coupledEntity : entity;
         return (
           <Notice
             key={coupledEntity.id}

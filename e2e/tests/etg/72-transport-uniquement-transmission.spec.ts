@@ -5,8 +5,6 @@ import { logoutAndConnect } from '../../utils/logout-and-connect';
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Une fiche prise en charge par l'atelier de mon ETG : un salarié en « transport uniquement »
-// n'a rien à y faire, elle est « En cours » pour lui.
 test('ETG transport uniquement - une fiche prise en charge par mon atelier est en cours', async ({
   page,
 }) => {
@@ -18,8 +16,6 @@ test('ETG transport uniquement - une fiche prise en charge par mon atelier est e
   await expect(page.getByRole('link', { name: feiId })).not.toContainText('À compléter');
 });
 
-// Un salarié d'ETG en « transport uniquement » n'a qu'à cliquer sur « Prendre en charge » :
-// la fiche est automatiquement transmise à son ETG, où la réception peut la prendre en charge.
 test('ETG transport uniquement - la prise en charge suffit à transmettre la fiche à mon ETG', async ({
   page,
 }) => {
@@ -41,18 +37,15 @@ test('ETG transport uniquement - la prise en charge suffit à transmettre la fic
   await expect(page.getByText('ETG 1 a été notifié')).toBeVisible({ timeout: 10000 });
   await expect(page.getByRole('button', { name: 'Transmettre la fiche' })).toBeDisabled();
 
-  // Nicolas n'a plus rien à faire : la fiche attend l'atelier, elle est « En cours » pour lui
   await expect(page.getByText("En attente de prise en charge par l'atelier")).toBeVisible();
   await expect(page.getByText('Fiche reçue, pas encore prise en charge')).not.toBeVisible();
   await page.getByRole('link', { name: 'Voir toutes mes fiches' }).click();
   await expect(page.getByRole('link', { name: feiId })).toContainText('En cours', { timeout: 10000 });
   await expect(page.getByRole('link', { name: feiId })).not.toContainText('À compléter');
 
-  // La réception de l'ETG reçoit la fiche et peut la prendre en charge
   await logoutAndConnect(page, 'etg-1@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/etg');
   await page.getByRole('link', { name: feiId }).click();
   await expect(page.getByRole('button', { name: 'Prendre en charge' })).toBeVisible({ timeout: 10000 });
-  // L'expéditeur est le transport de son propre ETG : un renvoi laisserait la fiche chez l'ETG, sans action
   await expect(page.getByRole('button', { name: "Renvoyer à l'expéditeur" })).not.toBeVisible();
 });

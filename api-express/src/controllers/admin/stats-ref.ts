@@ -8,9 +8,6 @@ import type { AdminStatsRefResponse, AdminStatsRefsResponse } from '~/types/resp
 
 const router: express.Router = express.Router();
 
-// Références nationales des KPI Metabase (volumes, objectifs, taux) : table de référence,
-// la suppression est définitive (la trace reste dans le journal admin).
-
 const STATS_REF_KEYS = ['saison', 'circuit', 'type_gibier', 'indicateur', 'valeur', 'source'];
 
 const DOUBLON_MESSAGE =
@@ -123,7 +120,6 @@ router.delete(
       return;
     }
     await prisma.statsRefNational.delete({ where: { id: statsRef.id } });
-    // le DELETE n'a pas de body : on garde les valeurs supprimées dans le journal
     setAdminAuditChanges(res, statsRef, {}, STATS_REF_KEYS);
     res.status(200).send({ ok: true, data: { statsRef: null }, error: '' });
   })

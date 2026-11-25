@@ -6,9 +6,6 @@ import laboratoireRouter from '~/controllers/laboratoire';
 import prisma from '~/prisma';
 import { applyPoolResult } from '~/utils/trichine-result';
 
-// Un pool parti en confirmation au LNR : son résultat appartient au LNR, le LVD ne peut plus
-// ni le corriger ni le refuser.
-
 vi.mock('~/third-parties/sentry', () => ({ capture: vi.fn() }));
 vi.mock('~/utils/trichine-result', async (importOriginal) => ({
   ...(await importOriginal<typeof import('~/utils/trichine-result')>()),

@@ -11,7 +11,6 @@ vi.mock('~/third-parties/sentry', () => ({
   captureException: vi.fn(),
 }));
 
-// Mapping des champs : le cloisonnement a son propre fichier (permissions-sync-write.test.ts).
 const scope = fakeSyncScope();
 
 const examinateurInitial = {
@@ -52,7 +51,6 @@ const baseFei = {
   deleted_at: null,
   date_mise_a_mort: '2026-01-01',
   commune_mise_a_mort: 'Paris',
-  // Side-effect-free populated relations stubbed as empty arrays/null
   Carcasses: [],
   CarcasseIntermediaire: [],
 } as any;
@@ -115,7 +113,6 @@ describe('syncFei — update', () => {
 
     const updateCall = vi.mocked(prisma.fei.update).mock.calls[0][0];
     expect(updateCall.data).toHaveProperty('commune_mise_a_mort', 'Lyon');
-    // date_mise_a_mort was NOT in body → must not appear in update payload
     expect(updateCall.data).not.toHaveProperty('date_mise_a_mort');
     expect(updateCall.data).toHaveProperty('is_synced', true);
   });
@@ -292,7 +289,6 @@ describe('syncFei — deletion', () => {
     });
   });
 
-  // les pouvoirs d'admin Zacharie passent par /admin (ProConnect), pas par /sync
   test('soft-delete by isZacharieAdmin → throws "Vous ne pouvez pas supprimer cette fiche"', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
 
@@ -362,13 +358,7 @@ describe('syncFei — deletion', () => {
 describe('syncFei — body validation', () => {
   test('rejects malformed body (boolean given for a string field)', async () => {
     await expect(
-      syncFei(
-        'FEI-1',
-        // commune_mise_a_mort expects string|null
-        { numero: 'FEI-1', commune_mise_a_mort: 42 } as any,
-        examinateurInitial,
-        scope
-      )
+      syncFei('FEI-1', { numero: 'FEI-1', commune_mise_a_mort: 42 } as any, examinateurInitial, scope)
     ).rejects.toThrow();
   });
 });

@@ -34,7 +34,6 @@ describe('getLatestSviDates', () => {
     expect(res.sviClosedAt).toEqual(new Date('2026-05-10T08:00:00Z'));
   });
 
-  // Régression : la clôture automatique doit lire svi_automatic_closed_at, PAS svi_closed_at.
   it('reads automatic close from svi_automatic_closed_at, independently of svi_closed_at', () => {
     const res = getLatestSviDates([c({ svi_automatic_closed_at: new Date('2026-06-01T12:00:00Z') })]);
     expect(res.sviAutomaticClosedAt).toEqual(new Date('2026-06-01T12:00:00Z'));

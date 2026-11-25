@@ -1,4 +1,3 @@
-// https://developer.matomo.org/api-reference/reporting-api
 import { z } from 'zod';
 import { MATOMO_TOKEN, MATOMO_URL } from '~/config';
 
@@ -11,7 +10,6 @@ export class MatomoApiError extends Error {
   }
 }
 
-// Matomo répond en 200 même quand la requête échoue
 const errorSchema = z.object({ result: z.literal('error'), message: z.string() });
 
 export function throwIfMatomoError(payload: unknown): void {
@@ -19,8 +17,6 @@ export function throwIfMatomoError(payload: unknown): void {
   if (error.success) throw new MatomoApiError(error.data.message);
 }
 
-// Toujours en POST avec le token dans le body : les tokens « secure only » de Matomo 5 refusent le GET.
-// Renvoie un résultat par sous-requête, dans le même ordre.
 export async function matomoBulkRequest(requests: Array<MatomoRequestParams>): Promise<Array<unknown>> {
   if (!MATOMO_TOKEN) throw new MatomoApiError('MATOMO_TOKEN non configuré');
   const body = new URLSearchParams({

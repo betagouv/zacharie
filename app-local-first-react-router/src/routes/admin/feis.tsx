@@ -28,7 +28,6 @@ function formatDateOnly(d: Date | string | null): string {
 
 const LIMIT = 100;
 
-// Calculées au rendu : « 7 derniers jours » part de la date du jour.
 function getFeiViews(): Array<AdminView> {
   return [
     { label: 'Toutes', params: {} },
@@ -208,7 +207,6 @@ export default function AdminFeis() {
               <th className="p-1">premier détenteur</th>
               <th className="p-1">destinataire</th>
               <th className="p-1">nb carcasses</th>
-              {/* <th className="p-1">SVI</th> */}
               <th className="p-1">created_at</th>
             </tr>
           </thead>
@@ -269,12 +267,6 @@ export default function AdminFeis() {
                       })}
                 </td>
                 <td className="p-1">{row._count.Carcasses}</td>
-                {/* <td
-                  className="max-w-[160px] truncate p-1"
-                  title={row.FeiSviEntity?.nom_d_usage ?? ''}
-                >
-                  {row.FeiSviEntity?.nom_d_usage ?? '—'}
-                </td> */}
                 <td className="p-1">{formatDate(row.created_at)}</td>
               </tr>
             ))}

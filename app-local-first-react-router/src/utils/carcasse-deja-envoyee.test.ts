@@ -50,8 +50,6 @@ describe('isCarcasseDejaEnvoyee', () => {
     );
   });
 
-  // L'invariant violé du check n°1 de data-health : rôle EXAMINATEUR_INITIAL avec une entité aval.
-  // La carcasse est chez le chasseur — c'est l'entité qui est parasite, pas le rôle.
   test('rôle EXAMINATEUR_INITIAL avec une entité parasite : reste chez le chasseur', () => {
     expect(
       isCarcasseDejaEnvoyee({

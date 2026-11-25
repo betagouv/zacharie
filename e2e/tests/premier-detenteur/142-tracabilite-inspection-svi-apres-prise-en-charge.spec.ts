@@ -13,9 +13,6 @@ test.beforeEach(async () => {
   await resetDb('SVI_CLOSED');
 });
 
-// L'inspection SVI (date sans heure) le même jour que la prise en charge ETG doit apparaître après
-// celle-ci dans la traçabilité, et non en premier événement de la journée.
-// La modale de traçabilité s'ouvre en lecture seule : côté premier détenteur, la carcasse est prise en charge en aval.
 test('142 - Traçabilité : inspection SVI après la prise en charge ETG du même jour', async ({ page }) => {
   const feiId = 'ZACH-20250707-QZ6E0-205242';
   await connectWith(page, 'premier-detenteur@example.fr');

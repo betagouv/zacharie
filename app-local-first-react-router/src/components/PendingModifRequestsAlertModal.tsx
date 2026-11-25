@@ -11,14 +11,6 @@ const modal = createModal({
   id: 'pending-modif-requests-alert',
 });
 
-// ----------------------------------------------------------------------------
-// PendingModifRequestsAlertModal
-// S'ouvre automatiquement au montage si l'utilisateur courant est l'examinateur
-// initial d'au moins une carcasse avec une demande de modification en cours.
-// La demande est indicative : elle ne bloque personne, on informe seulement.
-// Utilisé sur la page d'accueil chasseur (/app/chasseur) — apparaît à chaque
-// visite de cette URL tant qu'il reste des demandes à traiter.
-// ----------------------------------------------------------------------------
 export default function PendingModifRequestsAlertModal() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -31,8 +23,6 @@ export default function PendingModifRequestsAlertModal() {
     setHasMounted(true);
   }, []);
 
-  // Strictly match /app/chasseur — the user wanted the modal to appear only on that root URL.
-  // The trailing slash is tolerated to handle browser-normalised paths.
   const isChasseurIndex = location.pathname === '/app/chasseur' || location.pathname === '/app/chasseur/';
 
   const pendingForMe = useMemo(() => {
@@ -52,12 +42,6 @@ export default function PendingModifRequestsAlertModal() {
   ).length;
   const newCarcasseCount = count - renameCount;
 
-  // Open whenever the user lands on /app/chasseur and has pending demandes. We track an
-  // "already opened for this visit" ref so:
-  //   - the modal opens as soon as data finishes loading (count may be 0 at mount time, become > 0
-  //     once loadFeis() resolves — depending on `count` here is what makes the modal show up)
-  //   - dismissing it via "Plus tard" doesn't re-open it on every store change
-  //   - leaving /app/chasseur resets the ref so the next visit re-opens
   const hasOpenedRef = useRef(false);
   useEffect(() => {
     if (!hasMounted) return;

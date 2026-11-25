@@ -3,11 +3,6 @@ import type { TrichineHistoriqueStatut } from '@prisma/client';
 import { libelleStatutHistorique } from '@app/utils/trichine';
 import { TrichineCard } from '@app/components/trichine/TrichineDetailPage';
 
-/**
- * Historique réglementaire des changements de statut (`TrichineHistoriqueStatut`).
- * Affiché en colonne latérale sur chaque page de détail : c'est la trace de ce qui s'est
- * passé sur l'objet, et la réponse à « pourquoi ce pool est dans cet état ? ».
- */
 export default function TrichineChronologie({ historique }: { historique: Array<TrichineHistoriqueStatut> }) {
   return (
     <TrichineCard titre="Chronologie">

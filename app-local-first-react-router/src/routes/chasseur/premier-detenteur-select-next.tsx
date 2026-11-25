@@ -52,7 +52,6 @@ export interface DestinatairePremierDetenteurHandle {
   submit: () => void;
 }
 
-// Une vente / un don = un prochain détenteur + son stockage + son transport + les carcasses concernées.
 interface DispatchGroup {
   id: string;
   recipientEntityId: string | null;
@@ -64,16 +63,12 @@ interface DispatchGroup {
   transportDate: string | undefined;
 }
 
-// Étape « Carcasses » : soit tout part chez le destinataire, soit le chasseur retire ce qui reste.
 type CarcasseMode = 'all' | 'partial';
 
-// Dans le wizard, l'usage domestique privé est un destinataire comme un autre, sauf que rien
-// ne bouge : pas de prochain détenteur, pas de stockage, pas de transport.
 function isUsageDomestique(group: Pick<DispatchGroup, 'recipientEntityId'>): boolean {
   return group.recipientEntityId === USAGE_DOMESTIQUE_ID;
 }
 
-// Ordre d'affichage des carcasses : groupées par espèce, dans leur ordre d'apparition.
 function orderCarcassesByEspece(carcasses: Carcasse[]): Carcasse[] {
   const parEspece = new Map<string, Carcasse[]>();
   for (const carcasse of carcasses) {
@@ -92,7 +87,6 @@ function getCarcasseMode(carcasseIds: Array<string>, poolSize: number): Carcasse
   return poolSize > 0 && carcasseIds.length === poolSize ? 'all' : 'partial';
 }
 
-// Options en cartes : sans ces réglages DSFR impose 5,5rem de haut par option, presque vides.
 const richRadioClasses = {
   content: 'flex flex-col gap-2',
   inputGroup:
@@ -118,8 +112,6 @@ const confirmDeleteDispatchModal = createModal({
   id: 'confirm-delete-dispatch-modal-pd',
 });
 
-// Le transport est à renseigner par le premier détenteur sauf quand le prochain détenteur
-// vient chercher les carcasses lui-même (collecteur) ou est en bout de chaîne (conso final, circuit court).
 function needTransportForType(type?: EntityTypes | null): boolean {
   if (
     type === EntityTypes.CONSOMMATEUR_FINAL ||
@@ -209,7 +201,6 @@ function getGroupFieldErrors(
   return errors;
 }
 
-// Champs validés à chaque étape de la modale, avant de pouvoir passer à la suivante.
 const STEP_FIELDS: Record<string, Array<keyof GroupFieldErrors>> = {
   Destinataire: ['recipientEntityId'],
   Carcasses: ['carcasseIds'],
@@ -217,7 +208,6 @@ const STEP_FIELDS: Record<string, Array<keyof GroupFieldErrors>> = {
   Transport: ['transportType', 'transportDate'],
 };
 
-// Priority order used to surface a single message for the global validation string.
 const GROUP_FIELD_ERROR_ORDER: Array<keyof GroupFieldErrors> = [
   'recipientEntityId',
   'carcasseIds',
@@ -241,7 +231,6 @@ function getGroupValidationError(
   return null;
 }
 
-// === Carte résumé d'une vente / d'un don (formulaire refermé) ===
 function DispatchGroupCard({
   group,
   index,
@@ -253,7 +242,6 @@ function DispatchGroupCard({
 }: {
   group: DispatchGroup;
   index: number;
-  // 'sent' = déjà transmis, reconstruit depuis les carcasses : consultable mais plus modifiable.
   variant: 'draft' | 'sent';
   entities: Record<string, EntityWithUserRelation>;
   groupCarcasses: Carcasse[];
@@ -330,7 +318,6 @@ function DispatchGroupCard({
   );
 }
 
-// === Carte d'ajout : même gabarit que les cartes remplies, en squelette ===
 function AddDispatchGroupCard({ disabled, onClick }: { disabled: boolean; onClick: () => void }) {
   return (
     <button
@@ -350,8 +337,6 @@ function AddDispatchGroupCard({ disabled, onClick }: { disabled: boolean; onClic
   );
 }
 
-// Une carcasse dans l'étape 2 : même gabarit que les cartes de carcasses du reste de l'app
-// (bordure + fond bleu clair), en version compacte sur une ligne.
 function CarcasseChip({
   carcasse,
   variant,
@@ -406,9 +391,6 @@ function CarcasseChip({
   );
 }
 
-// === Étape 2 — Carcasses ===
-// Dans la très grande majorité des cas tout part chez le même destinataire : on propose donc
-// « toutes » par défaut, et le chasseur retire une à une les carcasses qui restent à attribuer.
 function CarcassesStep({
   canEdit,
   mode,
@@ -436,10 +418,8 @@ function CarcassesStep({
   const retirees = ordered.filter((carcasse) => !selected.has(carcasse.zacharie_carcasse_id));
   const partAilleurs = retirees.filter((carcasse) => carcasseToGroupLabel[carcasse.zacharie_carcasse_id]);
   const resteAAttribuer = retirees.filter((carcasse) => !carcasseToGroupLabel[carcasse.zacharie_carcasse_id]);
-  // « Toutes les carcasses restantes » ne prend que ce qui n'est pas déjà promis à un autre lot.
   const libres = ordered.filter((carcasse) => !carcasseToGroupLabel[carcasse.zacharie_carcasse_id]);
 
-  // Une seule carcasse : il n'y a rien à répartir, on se contente de la rappeler.
   if (ordered.length === 1) {
     const carcasse = ordered[0];
     return (
@@ -569,7 +549,6 @@ function CarcassesStep({
 
 const NB_DESTINATAIRES_AFFICHES = 3;
 
-// === Formulaire d'une vente / d'un don (contenu de la modale, en étapes) ===
 function DispatchGroupForm({
   group,
   canEdit,
@@ -622,13 +601,8 @@ function DispatchGroupForm({
   const usageDomestique = isUsageDomestique(group);
   const prochainDetenteur = group.recipientEntityId ? entities[group.recipientEntityId] : null;
   const recipientInputId = `${Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}_${group.id}`;
-  // le nom tapé dans la recherche préremplit la raison sociale du destinataire à créer
   const [nomPartenaireACreer, setNomPartenaireACreer] = useState('');
 
-  // On propose d'abord les destinataires enregistrés les plus récents et « Moi-même » ou « Repas de
-  // chasse » (seul choix proposé tant que le chasseur n'a enregistré aucun destinataire), la recherche
-  // restant accessible via « Envoyer à un autre destinataire ». Un destinataire déjà choisi hors de ces
-  // boutons (via la recherche) s'affiche dans la recherche.
   const [showAllDestinataires, setShowAllDestinataires] = useState(
     () =>
       !!group.recipientEntityId &&
@@ -641,7 +615,6 @@ function DispatchGroupForm({
       group.recipientEntityId !== destinataireDuPremierDetenteur.value &&
       !destinatairesEnregistres.some((entity) => entity.id === group.recipientEntityId)
   );
-  // « Moi-même » ou « Repas de chasse » est toujours proposé, après les destinataires enregistrés
   const destinatairesAffiches = [
     ...(showAllDestinataires
       ? destinatairesEnregistres
@@ -650,7 +623,6 @@ function DispatchGroupForm({
     { id: destinataireDuPremierDetenteur.value, label: destinataireDuPremierDetenteur.label },
   ];
 
-  // Le raccourci de date affiche l'heure qu'il va renseigner, on la garde à jour tant que la modale est ouverte.
   const [now, setNow] = useState(() => dayjs().format('YYYY-MM-DDTHH:mm'));
   useEffect(() => {
     const interval = setInterval(() => setNow(dayjs().format('YYYY-MM-DDTHH:mm')), 15_000);
@@ -661,13 +633,11 @@ function DispatchGroupForm({
 
   const errorFor = (key: keyof GroupFieldErrors) => (showErrors ? fieldErrors[key] : undefined);
 
-  // En édition on n'affiche que l'étape courante ; en lecture seule on empile tout.
   const currentStepName = steps[currentStep - 1];
   const showStep = (name: string) => !canEdit || currentStepName === name;
 
   return (
     <div className="space-y-4">
-      {/* Étape 1 — Destinataire */}
       {showStep('Destinataire') && (
         <>
           {creatingPartenaire ? (
@@ -768,7 +738,6 @@ function DispatchGroupForm({
         </>
       )}
 
-      {/* Étape 2 — Carcasses concernées */}
       {showCarcasseSelector && showStep('Carcasses') && (
         <CarcassesStep
           canEdit={canEdit}
@@ -787,11 +756,9 @@ function DispatchGroupForm({
         />
       )}
 
-      {/* Étape 3 — Stockage */}
       {!usageDomestique && showStep('Stockage') && (
         <>
           <RadioButtons
-            // legend="Lieu de stockage des carcasses"
             classes={richRadioClasses}
             className={canEdit ? '' : 'radio-black'}
             state={errorFor('depotType') ? 'error' : 'default'}
@@ -947,7 +914,6 @@ function DispatchGroupForm({
         </>
       )}
 
-      {/* Étape 4 — Transport */}
       {!usageDomestique && showStep('Transport') && (
         <>
           <RadioButtons
@@ -1052,8 +1018,6 @@ export default function DestinataireSelectPremierDetenteur({
   disabled?: boolean;
   submitRef?: MutableRefObject<DestinatairePremierDetenteurHandle | null>;
   hideSubmitButton?: boolean;
-  // true quand les carcasses restent toutes chez le premier détenteur (usage domestique, repas de
-  // chasse) : la fiche est clôturée, pas transmise.
   onClotureChange?: (cloture: boolean) => void;
 }) {
   const params = useParams();
@@ -1070,8 +1034,6 @@ export default function DestinataireSelectPremierDetenteur({
   const circuitCourtIds = useCircuitCourtIds();
 
   const isDispatchModalOpen = useIsModalOpen(dispatchModal);
-  // Création inline (pas de modale imbriquée dans la modale de vente / don) : pendant la saisie,
-  // le pied de la modale ne propose que « Annuler », le formulaire a son propre bouton d'enregistrement
   const [creatingPartenaire, setCreatingPartenaire] = useState(false);
   const [creatingCcg, setCreatingCcg] = useState(false);
   useEffect(() => {
@@ -1086,9 +1048,6 @@ export default function DestinataireSelectPremierDetenteur({
 
   const fei = feis[params.fei_numero!];
 
-  // Quand le premier détenteur est une association, elle peut garder les carcasses pour un repas de
-  // chasse : c'est elle le destinataire, mais avec le rôle « repas de chasse ou associatif ».
-  // On présente donc l'association sous ce type dans tout le wizard (étapes, trichine, transmission).
   const repasDeChasseEntityId = fei.premier_detenteur_entity_id;
   const entities = useMemo(() => {
     if (!repasDeChasseEntityId || !storeEntities[repasDeChasseEntityId]) return storeEntities;
@@ -1099,7 +1058,6 @@ export default function DestinataireSelectPremierDetenteur({
         ...association,
         type: EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
         nom_d_usage: `Repas de chasse – ${association.nom_d_usage}`,
-        // l'association utilise déjà Zacharie : pas d'alerte « pas prêt pour Zacharie »
         zacharie_compatible: true,
       },
     };
@@ -1123,8 +1081,6 @@ export default function DestinataireSelectPremierDetenteur({
   const ccgs = ccgsIds.map((id) => entities[id]);
   const etgs = etgsIds.map((id) => entities[id]);
   const collecteursPros = collecteursProIds.map((id) => entities[id]);
-  // le store contient aussi les partenaires circuit court vus sur des fiches (relation NONE) :
-  // on ne propose que ceux que le chasseur a lui-même enregistrés
   const circuitCourt = circuitCourtIds
     .map((id) => entities[id])
     .filter((entity) => entity.relation !== EntityRelationType.NONE);
@@ -1137,8 +1093,6 @@ export default function DestinataireSelectPremierDetenteur({
     ];
   }, [etgs, collecteursPros, circuitCourt]);
 
-  // Destinataires enregistrés par le chasseur, du plus récemment utilisé au plus ancien
-  // (d'après les carcasses présentes localement), puis ceux jamais utilisés.
   const destinatairesEnregistres = useMemo(() => {
     const derniereUtilisation: Record<string, number> = {};
     for (const carcasse of Object.values(allStoreCarcasses)) {
@@ -1170,8 +1124,6 @@ export default function DestinataireSelectPremierDetenteur({
     return ccgs.filter((entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY);
   }, [ccgs]);
 
-  // Toujours proposé : « moi-même » si le premier détenteur est le chasseur, « repas de chasse »
-  // si c'est son association.
   const destinataireDuPremierDetenteur = useMemo(() => {
     if (repasDeChasseEntityId) {
       return {
@@ -1195,14 +1147,9 @@ export default function DestinataireSelectPremierDetenteur({
     ];
   }, [prochainsDetenteurs, destinataireDuPremierDetenteur]);
 
-  // Ventes / dons déjà transmis. La transmission est portée par les carcasses, pas par un lot en base :
-  // on les regroupe par destinataire + stockage + transport pour reconstituer les cartes en revenant
-  // sur la fiche, sinon une transmission partielle laisse la liste vide.
   const ventesDonsDejaEnvoyes = useMemo(() => {
     const parSignature = new Map<string, DispatchGroup>();
     for (const carcasse of carcassesDejaEnvoyees) {
-      // Les carcasses gardées pour soi n'ont ni destinataire ni stockage ni transport :
-      // elles forment un lot à part, sinon elles se mélangeraient dans une signature toute vide.
       const usageDomestique = !!carcasse.consommateur_final_usage_domestique;
       const depotDate = carcasse.premier_detenteur_depot_ccg_at
         ? dayjs(carcasse.premier_detenteur_depot_ccg_at).format('YYYY-MM-DDTHH:mm')
@@ -1241,20 +1188,15 @@ export default function DestinataireSelectPremierDetenteur({
     return Array.from(parSignature.values());
   }, [carcassesDejaEnvoyees]);
 
-  // Ventes / dons validés (une carte chacun). Vides au départ : le premier détenteur les crée via la modale.
   const [dispatchGroups, setDispatchGroups] = useState<DispatchGroup[]>([]);
 
-  // Brouillon en cours d'édition dans la modale (add = nouveau, edit = carte existante).
   const [draft, setDraft] = useState<DispatchGroup | null>(null);
   const [draftMode, setDraftMode] = useState<'add' | 'edit'>('add');
   const [showModalErrors, setShowModalErrors] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
-  // Étape « Carcasses » : « toutes » ou « une partie ». Le mode ne survit pas à la fermeture de la modale.
   const [draftCarcasseMode, setDraftCarcasseMode] = useState<CarcasseMode>('all');
-  // État de la répartition à l'ouverture, restauré quand on change de destinataire.
   const draftInitialCarcasseIds = useRef<Array<string>>([]);
 
-  // Carcasses attribuées à une vente / un don, ou restant à attribuer.
   const assignedCarcasseIds = useMemo(() => {
     const set = new Set<string>();
     for (const group of dispatchGroups) {
@@ -1268,9 +1210,6 @@ export default function DestinataireSelectPremierDetenteur({
     [carcassesRestantes, assignedCarcasseIds]
   );
 
-  // Les carcasses qu'un lot peut prendre sans en priver un autre : celles qui ne sont dans aucune
-  // autre vente / aucun autre don. Reprendre une carcasse déjà attribuée reste possible, mais c'est
-  // un geste explicite dans l'étape « Carcasses ».
   const getCarcassesLibresIds = useCallback(
     (groupId: string | null) => {
       const prisesAilleurs = new Set(
@@ -1284,8 +1223,6 @@ export default function DestinataireSelectPremierDetenteur({
   const openAddDispatchGroup = useCallback(() => {
     const isFirst = dispatchGroups.length === 0;
     const libresIds = getCarcassesLibresIds(null);
-    // on ne reprend le destinataire d'une fiche précédente que s'il fait partie des destinataires proposés
-    // (pas l'association propriétaire initiale par exemple)
     const prefilledRecipientId = prefilledInfos?.premier_detenteur_prochain_detenteur_id_cache;
     const nextDraft: DispatchGroup = {
       id: `group-${Date.now()}`,
@@ -1295,8 +1232,6 @@ export default function DestinataireSelectPremierDetenteur({
         prochainsDetenteurs.some((entity) => entity.id === prefilledRecipientId)
           ? prefilledRecipientId
           : null,
-      // On part de toutes les carcasses encore libres : le chasseur n'a qu'à retirer ce qui ne
-      // part pas chez ce destinataire.
       carcasseIds: libresIds,
       depotType:
         isFirst && prefilledInfos?.premier_detenteur_depot_type
@@ -1322,17 +1257,12 @@ export default function DestinataireSelectPremierDetenteur({
     dispatchModal.open();
   }, [dispatchGroups.length, prefilledInfos, prochainsDetenteurs, getCarcassesLibresIds]);
 
-  // L'état initial des lots est figé au montage. Une carcasse créée après coup rejoint donc le lot
-  // par défaut, sinon elle reste en arrière : la fiche part sans elle et elle devient orpheline,
-  // impossible à transmettre comme à clôturer. Symétriquement on retire des lots les carcasses qui
-  // ne sont plus à envoyer (supprimées, ou parties dans un autre lot).
   const knownCarcasseIdsRef = useRef<Set<string>>(new Set(carcassesRestantesIds));
   useEffect(() => {
     const restantes = new Set(carcassesRestantesIds);
     const nouvelles = carcassesRestantesIds.filter((id) => !knownCarcasseIdsRef.current.has(id));
     knownCarcasseIdsRef.current = restantes;
     setDispatchGroups((prev) => {
-      // Aucune vente / aucun don créé : rien à recaler, la première carte prendra toutes les restantes.
       if (prev.length === 0) {
         return prev;
       }
@@ -1366,7 +1296,6 @@ export default function DestinataireSelectPremierDetenteur({
 
   const onChangeDraft = useCallback(
     (updates: Partial<DispatchGroup>) => {
-      // Changer de destinataire remet la répartition des carcasses dans l'état où elle était à l'ouverture.
       const resetCarcasses =
         updates.recipientEntityId !== undefined &&
         !!draft &&
@@ -1385,8 +1314,6 @@ export default function DestinataireSelectPremierDetenteur({
     [draft, getCarcassesLibresIds]
   );
 
-  // « Toutes » comme « une partie » démarrent sur « tout retenu » : la seconde ne fait que
-  // dérouler les carcasses pour en retirer.
   const onChangeCarcasseMode = useCallback(
     (mode: CarcasseMode) => {
       setDraftCarcasseMode(mode);
@@ -1413,8 +1340,6 @@ export default function DestinataireSelectPremierDetenteur({
     [dispatchGroups, draft?.id]
   );
 
-  // Étape « Carcasses » seulement s'il y a de quoi répartir : avec une seule carcasse
-  // elle n'apporte rien, la carcasse part avec la vente / le don.
   const showCarcasseSelector = carcassesRestantes.length > 1;
 
   const draftCarcasseToGroupLabel = useMemo(() => {
@@ -1439,7 +1364,6 @@ export default function DestinataireSelectPremierDetenteur({
     ? (entities[draft.recipientEntityId]?.nom_d_usage ?? null)
     : null;
 
-  // Étapes de la modale : le transport n'existe que si le premier détenteur doit l'organiser.
   const draftUsageDomestique = !!draft && isUsageDomestique(draft);
   const draftNeedTransport =
     !!draft &&
@@ -1448,13 +1372,11 @@ export default function DestinataireSelectPremierDetenteur({
   const steps = useMemo(() => {
     const nextSteps = ['Destinataire'];
     if (showCarcasseSelector) nextSteps.push('Carcasses');
-    // Rien ne quitte le chasseur : ni stockage ni transport à renseigner.
     if (draftUsageDomestique) return nextSteps;
     nextSteps.push('Stockage');
     if (draftNeedTransport) nextSteps.push('Transport');
     return nextSteps;
   }, [showCarcasseSelector, draftNeedTransport, draftUsageDomestique]);
-  // Le nombre d'étapes peut diminuer (ex : passage ETG → collecteur) ; on borne l'étape courante.
   const boundedStep = Math.min(currentStep, steps.length);
 
   const currentStepValid = !(STEP_FIELDS[steps[boundedStep - 1]] ?? []).some((f) => draftFieldErrors[f]);
@@ -1480,7 +1402,6 @@ export default function DestinataireSelectPremierDetenteur({
 
   const saveDraft = useCallback(() => {
     if (!draft) return;
-    // « Toutes mes carcasses » n'est pas un drapeau : on fige la liste des ids au moment de la validation.
     const finalDraft: DispatchGroup =
       draftCarcasseMode === 'all' || !showCarcasseSelector
         ? { ...draft, carcasseIds: getCarcassesLibresIds(draft.id) }
@@ -1492,7 +1413,6 @@ export default function DestinataireSelectPremierDetenteur({
     }
     track('vente-don', 'enregistrer', isUsageDomestique(finalDraft) ? 'usage-domestique' : 'destinataire');
     setDispatchGroups((prev) => {
-      // Exclusivité : les carcasses de cette vente / ce don quittent les autres.
       const claimed = new Set(finalDraft.carcasseIds);
       const others = prev
         .filter((g) => g.id !== finalDraft.id)
@@ -1516,7 +1436,6 @@ export default function DestinataireSelectPremierDetenteur({
     confirmDeleteDispatchModal.close();
   }, [draft, removeGroup]);
 
-  // Trichine : au moins une vente / un don vers du circuit court avec du sanglier.
   const hasSanglier = useMemo(
     () => carcassesRestantes.some((carcasse) => carcasse.espece === 'Sanglier'),
     [carcassesRestantes]
@@ -1587,16 +1506,11 @@ export default function DestinataireSelectPremierDetenteur({
     });
   }, []);
 
-  // Une vente / un don peut se retrouver sans carcasse après coup : une autre vente les a reprises,
-  // ou elles ont été supprimées du bloc carcasses. On bloque alors la transmission — sinon la fiche
-  // part avec un destinataire qui ne reçoit rien.
   const emptyDispatchGroups = useMemo(
     () => dispatchGroups.filter((group) => group.carcasseIds.length === 0),
     [dispatchGroups]
   );
 
-  // Les carcasses non attribuées, elles, ne bloquent pas : on peut ne transmettre qu'une partie de
-  // la fiche, le reste est simplement signalé par une alerte.
   const globalValidationError = useMemo(() => {
     if (dispatchGroups.length === 0) {
       return 'Veuillez ajouter au moins un destinataire';
@@ -1635,13 +1549,11 @@ export default function DestinataireSelectPremierDetenteur({
   const notActivated = !user.activated;
 
   const handleSubmit = () => {
-    // Compte pas encore activé (CFEI non validé) : préparation autorisée, transmission bloquée.
     if (notActivated) {
       return;
     }
     for (const group of dispatchGroups) {
       if (!group.recipientEntityId) continue;
-      // Garde-fou : un groupe vidé entre-temps n'a rien à transmettre ni à journaliser.
       if (group.carcasseIds.length === 0) continue;
       if (isUsageDomestique(group)) {
         const nextUsageDomestique: CarcasseTransmission = {
@@ -1677,7 +1589,6 @@ export default function DestinataireSelectPremierDetenteur({
         : null;
 
       const nextTransmission: CarcasseTransmission = {
-        // le membre de l'association qui transmet devient le détenteur courant
         current_owner_user_id: user.id,
         current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
         next_owner_entity_id: group.recipientEntityId,
@@ -1694,8 +1605,6 @@ export default function DestinataireSelectPremierDetenteur({
         premier_detenteur_transport_type: nextTransportType,
         premier_detenteur_transport_date: nextTransportDate,
       };
-      // une carcasse du groupe sert de référence pour l'état avant transmission :
-      // toutes les carcasses du groupe partagent les mêmes champs de transmission.
       const carcasseRef = allCarcasses.find((c) => c.zacharie_carcasse_id === group.carcasseIds[0]);
       updateCarcassesTransmission(group.carcasseIds, nextTransmission);
       addLog({
@@ -1742,8 +1651,6 @@ export default function DestinataireSelectPremierDetenteur({
     };
   }
 
-  // On peut ajouter une vente / un don tant qu'il reste des carcasses à répartir
-  // (la 1re prend toutes les carcasses ; les suivantes en récupèrent une partie).
   const canAddDispatchGroup =
     canEdit &&
     carcassesRestantes.length > 0 &&
@@ -1754,9 +1661,7 @@ export default function DestinataireSelectPremierDetenteur({
     return "Il n'y a pas encore de propriétaire initial pour cette fiche";
   }
 
-  // Sans carcasse retenue il n'y a rien à envoyer : on bloque l'étape plutôt que d'afficher une erreur.
   const noCarcasseSelected = steps[boundedStep - 1] === 'Carcasses' && (draft?.carcasseIds.length ?? 0) === 0;
-  // Le titre de la modale porte le fil d'étapes : « Étape 2 sur 4 · suivant : stockage » / « Carcasses ».
   const modalTitle =
     canEdit && !disabled ? (
       <>
@@ -1786,8 +1691,6 @@ export default function DestinataireSelectPremierDetenteur({
           doClosesModal: false,
           nativeButtonProps: { onClick: () => saveDraft() },
         };
-  // Sur la première étape, une vente / un don déjà enregistré (donc pas encore transmis) se supprime
-  // depuis la modale. À la création il n'y a rien à supprimer : on ferme avec la croix.
   const modalSecondaryButton: ModalProps.ActionAreaButtonProps | null =
     boundedStep > 1
       ? {
@@ -1803,8 +1706,6 @@ export default function DestinataireSelectPremierDetenteur({
             iconId: 'fr-icon-delete-bin-line',
             className: 'text-error-main-525',
             doClosesModal: false,
-            // On ferme la modale d'édition avant d'ouvrir la confirmation :
-            // les modales DSFR ne s'empilent pas proprement (verrou de scroll booléen).
             onClick: () => {
               dispatchModal.close();
               confirmDeleteDispatchModal.open();
@@ -1822,7 +1723,6 @@ export default function DestinataireSelectPremierDetenteur({
           'space-y-4',
         ].join(' ')}
       >
-        {/* Grille unique : ventes / dons transmis, puis en préparation, puis la carte d'ajout. */}
         {(ventesDonsDejaEnvoyes.length > 0 || dispatchGroups.length > 0 || canAddDispatchGroup) && (
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
             {ventesDonsDejaEnvoyes.map((group, index) => (
@@ -1873,7 +1773,6 @@ export default function DestinataireSelectPremierDetenteur({
 
         {carcassesRestantes.length > 0 && (
           <>
-            {/* Carcasses non attribuées */}
             {dispatchGroups.length > 0 && unassignedCarcasses.length > 0 && (
               <Alert
                 severity="warning"
@@ -1904,7 +1803,6 @@ export default function DestinataireSelectPremierDetenteur({
               />
             )}
 
-            {/* Bouton de transmission (mode premier détenteur autonome) */}
             {canEdit && !hideSubmitButton && (
               <div className="mt-4">
                 <Button

@@ -25,8 +25,6 @@ const rowsSchema = z.object({
     .min(1),
 });
 
-// une association de chasse est identifiée par sa raison sociale, son code postal et sa commune,
-// comme à la création par un chasseur (POST /entite/association-de-chasse)
 const keyOf = (row: PremierDetenteurImportRow) =>
   [row.raison_sociale, row.code_postal, row.ville].map((v) => v.toLowerCase()).join('|');
 
@@ -38,7 +36,6 @@ function parseRows(body: unknown): PremierDetenteurImportRow[] | null {
     code_postal: sanitize(row.code_postal),
     ville: sanitize(row.ville),
   }));
-  // une ligne en double dans le fichier n'est importée qu'une fois
   const byKey = new Map<string, PremierDetenteurImportRow>();
   for (const row of rows) {
     if (!byKey.has(keyOf(row))) byKey.set(keyOf(row), row);
@@ -96,7 +93,6 @@ router.post(
         .send({ ok: false, data: { created: 0, skipped: 0 }, error: 'premiers_detenteurs requis' });
       return;
     }
-    // on revérifie à l'import : un double clic ou un second import du même fichier ne crée pas de doublon
     const { nouveaux, existants } = await splitNewAndExisting(rows);
     for (const row of nouveaux) {
       const createdEntity = await prisma.entity.create({

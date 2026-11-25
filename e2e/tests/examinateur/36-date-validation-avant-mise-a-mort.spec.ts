@@ -47,7 +47,6 @@ test("Date de validation de l'examen antérieure à la date de mise à mort → 
   await heureEvisceration.fill(dayjs().startOf('day').add(2, 'hour').format('HH:mm'));
   await heureEvisceration.blur();
 
-  // mise à mort aujourd'hui, validation la veille
   const dateValidation = page.locator('#examinateur_initial_date_approbation_mise_sur_le_marche');
   await dateValidation.scrollIntoViewIfNeeded();
   await dateValidation.fill(dayjs().subtract(1, 'day').hour(10).minute(0).format('YYYY-MM-DDTHH:mm'));
@@ -67,7 +66,6 @@ test("Date de validation de l'examen antérieure à la date de mise à mort → 
   await expect(page.getByText('Champs manquants pour transmettre')).toBeVisible();
   await expect(page.getByText(/Votre fiche a été transmise/i)).toHaveCount(0);
 
-  // une date de validation corrigée débloque la transmission
   await dateValidation.scrollIntoViewIfNeeded();
   await dateValidation.fill(dayjs().startOf('day').add(3, 'hour').format('YYYY-MM-DDTHH:mm'));
   await dateValidation.blur();

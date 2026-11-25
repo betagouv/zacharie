@@ -83,7 +83,6 @@ async function notifyExaminateurAndPremierDetenteur({
   }
 }
 
-// Le premier détenteur peut être une entité (association) : premier_detenteur_user_id est alors null.
 async function webhookExaminateurAndPremierDetenteur(carcasse: Carcasse, event: WebhookEvent) {
   await sendWebhook(carcasse.examinateur_initial_user_id, event, {
     carcasseZacharieId: carcasse.zacharie_carcasse_id,
@@ -207,11 +206,6 @@ export async function notifyRefusChasseur(existingCarcasse: Carcasse, updatedCar
   }
 }
 
-// Quand un destinataire (ETG ou collecteur) clique sur « Renvoyer à l'expéditeur », le next_owner
-// de ses carcasses est vidé alors que le current_owner reste inchangé (l'expéditeur). On détecte ce
-// cas — distinct d'une prise en charge, où le current_owner devient le destinataire — et on notifie
-// l'expéditeur. Le renvoi touche un lot de carcasses ; la dédup notificationLog sur une action par
-// (fiche, destinataire qui renvoie) garantit une seule notification.
 export async function notifyRenvoiExpediteur(existingCarcasse: Carcasse, updatedCarcasse: Carcasse) {
   const isRenvoi =
     !!existingCarcasse.next_owner_role &&
@@ -254,15 +248,6 @@ export async function checkCertificat(existingCarcasse: Carcasse, updatedCarcass
   }
 }
 
-// La clôture vit désormais par carcasse. Quand une carcasse vient d'être close au SVI ET que
-// TOUTES les carcasses de la FEI sont terminales, on :
-//   1. maintient le cache FEI Fei.svi_closed_at (consommé par les vues matérialisées et l'API
-//      publique v1, qui ne lisent pas la clôture par carcasse) — pendant manuel de la clôture
-//      auto qui écrit Fei.automatic_closed_at dans le cron ;
-//   2. notifie examinateur + premier détenteur.
-// Idempotent : l'écriture FEI est gardée par `!fei.svi_closed_at`, la notif/webhook par
-// notificationLog (les carcasses sont persistées avant les side-effects, donc plusieurs d'entre
-// elles peuvent voir "toutes terminales" dans le même lot).
 export async function closeFeiAndNotifyChasseurOnSviCarcasseClose(
   existingCarcasse: Carcasse,
   updatedCarcasse: Carcasse
@@ -352,8 +337,6 @@ export async function notifySviAssignment(
       },
     },
   });
-  // Le side-effect tourne une fois par carcasse, mais la notification couvre toute la fiche :
-  // c'est la dédup sur `notificationLogAction` qui garantit un seul envoi par user SVI.
   const { object, text, params, push } = await formatSviAssignedEmail(updatedCarcasse);
   for (const sviUser of sviUsers) {
     await sendNotificationToUser({
@@ -390,7 +373,6 @@ export async function notifySviAssignment(
   return true;
 }
 
-// Délai laissé à Brevo pour remonter un rebond ou un blocage avant qu'on lui demande le statut.
 export const CIRCUIT_COURT_DELIVERY_CHECK_DELAY_MS = 10_000;
 
 type CircuitCourtNotReachedReason = 'NO_RECIPIENT' | 'SEND_FAILED' | 'NOT_DELIVERED';
@@ -413,9 +395,6 @@ function scheduleCircuitCourtDeliveryCheck(
   }, CIRCUIT_COURT_DELIVERY_CHECK_DELAY_MS);
 }
 
-// Email texte à l'expéditeur quand la fiche n'a pas atteint le destinataire circuit court. Envoyé
-// même si l'expéditeur a désactivé les emails : c'est son seul moyen de le savoir. Dédupliqué par
-// fiche et destinataire, car le side-effect tourne une fois par carcasse.
 async function alertSenderCircuitCourtNotReached(
   updatedCarcasse: Carcasse,
   sender: User,
@@ -453,7 +432,6 @@ async function alertSenderCircuitCourtNotReached(
   ].join('\n\n');
 
   const sent = await sendEmail({ emails: [sender.email], subject, text });
-  // Envoi raté : pas de log, sinon la dédup bloquerait le renvoi à la carcasse suivante.
   if (!sent) return;
   await prisma.notificationLog.create({
     data: {
@@ -522,12 +500,9 @@ export async function notifyCircuitCourt(
     },
   });
 
-  // Repas de chasse de l'association premier détenteur : elle garde ses propres carcasses,
-  // il n'y a personne à prévenir.
   const repasDeChasseDuPremierDetenteur =
     updatedCarcasse.next_owner_entity_id === updatedCarcasse.premier_detenteur_entity_id;
   if (!repasDeChasseDuPremierDetenteur) {
-    // Le PDF récapitule toute la fiche : un seul rendu pour tous les destinataires.
     const fichePdf = await getFichePdf(updatedCarcasse, carcasses);
 
     const circuitCourtUrl = getCircuitCourtFeiUrl(
@@ -536,8 +511,6 @@ export async function notifyCircuitCourt(
     );
 
     const recipients = usersWorkingForEntity.filter((nextOwner) => nextOwner.id !== user.id);
-    // L'expéditeur est en copie d'un seul email (le premier destinataire qui reçoit les emails), pour
-    // ne pas recevoir une copie par membre de l'entité.
     const copyRecipient = recipients.find((nextOwner) =>
       nextOwner.notifications.includes(UserNotifications.EMAIL)
     );
@@ -576,7 +549,6 @@ export async function notifyCircuitCourt(
           await alertSenderCircuitCourtNotReached(updatedCarcasse, user, 'SEND_FAILED');
         }
         if (emailResult.status === 'SENT' && emailResult.messageId) {
-          // Pas d'await : la vérification ne doit pas retarder la synchronisation.
           scheduleCircuitCourtDeliveryCheck(emailResult.messageId, nextOwner.email, updatedCarcasse, user);
         }
       }
@@ -751,7 +723,6 @@ export async function webhookIntermediaireClose(existingCarcasse: Carcasse, upda
   await webhookExaminateurAndPremierDetenteur(updatedCarcasse, 'CARCASSE_CLOTUREE');
 }
 
-// Chaque side-effect est isolé : l'échec de l'un n'empêche pas les suivants.
 async function runSideEffect<T>(
   step: string,
   carcasse: Carcasse,
@@ -786,8 +757,6 @@ export async function runCarcasseUpdateSideEffects(
   await run('closeFeiAndNotifyChasseurOnSviCarcasseClose', closeFeiAndNotifyChasseurOnSviCarcasseClose);
   await run('checkCertificat', checkCertificat);
 
-  // en cas d'échec (undefined), on ne sait pas si la transmission était pour le SVI ou le circuit court :
-  // on s'arrête pour ne pas envoyer une notification de prochain détenteur à tort.
   const handledBySvi = await run('notifySviAssignment', notifySviAssignment);
   if (handledBySvi !== false) return;
 

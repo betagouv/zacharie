@@ -11,9 +11,6 @@ import {
 import trichineAliasRouter from '~/controllers/trichine-alias';
 import prisma from '~/prisma';
 
-// PUT/DELETE /trichine-alias/:objet/:id — chaque entité (SVI, LVD, LNR) pose sa propre référence
-// interne sur un objet qu'elle voit déjà, tant que l'objet n'est pas figé.
-
 const app = express();
 app.use(express.json());
 app.use('/trichine-alias', trichineAliasRouter);
@@ -46,7 +43,6 @@ const pool = {
   ],
 };
 
-// Pool du SVI pas encore parti au laboratoire : ses références restent modifiables
 const poolEnPreparation = { ...pool, TrichinePoolFTPs: [] as typeof pool.TrichinePoolFTPs };
 
 const ftp = {
@@ -59,7 +55,6 @@ const ftp = {
   deleted_at: null as Date | null,
 };
 
-// Sert à la fois à l'entité de l'utilisateur (entity_id) et à son équipe SVI (owner_id)
 const travaillePour = (entityId: string, userId: string) =>
   vi
     .mocked(prisma.entityAndUserRelations.findMany)
@@ -212,7 +207,6 @@ describe('PUT /trichine-alias/:objet/:id', () => {
 
   test('« LIMS_12 » n’est pas confondu avec « LIMS-12 » (le _ de ILIKE)', async () => {
     travaillePour('labo-1', 'user-labo');
-    // ILIKE 'LIMS_12' remonte aussi LIMS-12 : la comparaison exacte en mémoire l'écarte
     vi.mocked(prisma.trichineAlias.findMany).mockResolvedValueOnce([
       { reference: 'LIMS-12', echantillon_id: null, pool_id: 'pool-2', ftp_id: null },
     ] as never);
@@ -225,7 +219,6 @@ describe('PUT /trichine-alias/:objet/:id', () => {
 
   test('changer la casse de sa propre référence reste possible', async () => {
     travaillePour('labo-1', 'user-labo');
-    // Contrôle des doublons : la référence est celle de ce pool ; puis l'alias existant à mettre à jour
     vi.mocked(prisma.trichineAlias.findMany).mockResolvedValueOnce([
       { reference: 'lims-1', echantillon_id: null, pool_id: 'pool-1', ftp_id: null },
     ] as never);
@@ -306,7 +299,6 @@ describe('PUT /trichine-alias/:objet/:id', () => {
         clientVersion: 'test',
       })
     );
-    // L'alias concurrent apparaît entre la lecture et la création
     vi.mocked(prisma.trichineAlias.findFirst)
       .mockResolvedValueOnce(null as never)
       .mockResolvedValueOnce({ id: 'alias-concurrent' } as never);

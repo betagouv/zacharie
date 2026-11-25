@@ -17,7 +17,6 @@ const router: express.Router = express.Router();
 
 const MAX_IMAGES = 5;
 
-// L'enquête tourne dans le process de l'API : si le serveur redémarre, elle resterait "en cours"
 async function markInterruptedInvestigations() {
   await prisma.bugInvestigation.updateMany({
     where: {

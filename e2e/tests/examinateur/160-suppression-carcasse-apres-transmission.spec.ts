@@ -14,10 +14,6 @@ test.beforeAll(async () => {
   await resetDb('ETG_PD_EXAMINATEUR');
 });
 
-// Fiche transmise à ETG 1 mais pas encore prise en charge : l'examinateur, aussi premier détenteur,
-// peut encore retirer une carcasse. Retirer une carcasse ne change pas l'examen des autres, la vente
-// déjà faite doit donc rester affichée sans repasser par « Continuer ». La suppression part tout de
-// suite au serveur : l'ETG ne voit plus la carcasse.
 test('Supprimer une carcasse après transmission laisse la vente affichée et la retire chez l’ETG', async ({
   page,
 }) => {

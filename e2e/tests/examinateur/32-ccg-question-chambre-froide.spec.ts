@@ -19,7 +19,6 @@ test.beforeEach(async () => {
   await resetDb('EXAMINATEUR_INITIAL');
 });
 
-// on clique le label DSFR : il recouvre l'input radio, qui n'est pas cliquable directement
 async function cocher(page: Page, label: RegExp) {
   const option = page.getByText(label);
   await option.scrollIntoViewIfNeeded();
@@ -31,7 +30,6 @@ test('CCG : aucune option cochée tant que le chasseur n’a pas répondu, "Non"
   await page.goto('http://localhost:3290/app/chasseur/profil/ccgs');
   await expect(page.getByText(question)).toBeVisible({ timeout: 10000 });
 
-  // pas de réponse enregistrée et aucune CCG : aucune option n'est cochée
   await expect(page.getByRole('radio', { name: ouiAvecNumero })).not.toBeChecked();
   await expect(page.getByRole('radio', { name: ouiSansNumero })).not.toBeChecked();
   await expect(page.getByRole('radio', { name: nonPasDeCCG })).not.toBeChecked();
@@ -43,7 +41,6 @@ test('CCG : aucune option cochée tant que le chasseur n’a pas répondu, "Non"
   await reponseEnregistree;
   await expect(page.getByRole('radio', { name: nonPasDeCCG })).toBeChecked();
 
-  // réponse enregistrée et toujours aucune CCG : "Non" reste coché
   await page.reload();
   await expect(page.getByText(question)).toBeVisible({ timeout: 10000 });
   await expect(page.getByRole('radio', { name: nonPasDeCCG })).toBeChecked();
@@ -63,7 +60,6 @@ test('CCG : la question disparaît une fois une chambre froide enregistrée', as
   await page.getByRole('button', { name: 'Ajouter cette chambre froide' }).click();
   await expect(page.getByText(/CCG Chasseurs|CCG-01/).first()).toBeVisible({ timeout: 10000 });
 
-  // une CCG est enregistrée : la question n'est plus posée
   await expect(page.getByText(question)).toBeHidden();
   await page.reload();
   await expect(page.getByText(/CCG Chasseurs|CCG-01/).first()).toBeVisible({ timeout: 10000 });

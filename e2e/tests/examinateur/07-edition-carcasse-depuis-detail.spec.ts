@@ -21,7 +21,6 @@ test.beforeAll(async () => {
 test('Edition carcasse — ajout anomalie via le picker, persistée au rouvrir', async ({ page }) => {
   await connectWith(page, 'examinateur@example.fr');
 
-  // Crée une fiche minimale avec 1 carcasse (sans anomalie)
   await page.getByRole('button', { name: 'Nouvelle fiche' }).first().click();
   await page.getByRole('button', { name: dayjs.utc().format('dddd DD MMMM') }).click();
   await page.getByRole('textbox', { name: 'Commune de prélèvement du gibier' }).fill('CHASS');
@@ -36,25 +35,20 @@ test('Edition carcasse — ajout anomalie via le picker, persistée au rouvrir',
   await page.getByRole('button', { name: 'Continuer' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Continuer' }).click();
 
-  // Ouvrir la modale d'édition de la carcasse
   await page
     .getByRole('button', { name: /Daim N°/ })
     .first()
     .click();
 
-  // Ajouter une anomalie abats via le picker : site anatomique → anomalie
   await page.getByRole('button', { name: 'Ajouter une anomalie (facultatif)' }).click();
   await page.getByRole('button', { name: 'Système respiratoire (trachée, poumons)' }).click();
   await page.getByRole('button', { name: 'Abcès', exact: true }).click();
 
-  // Sortir du picker : Retour (liste anomalies → sites), Retour (sites → formulaire)
   await page.getByRole('button', { name: 'Retour' }).click();
   await page.getByRole('button', { name: 'Retour' }).click();
 
-  // Fermer la modale d'édition
   await page.getByRole('dialog').getByRole('button', { name: 'Terminer' }).click();
 
-  // Rouvrir : l'anomalie a persisté (le bouton du picker affiche le compteur)
   await page
     .getByRole('button', { name: /Daim N°/ })
     .first()

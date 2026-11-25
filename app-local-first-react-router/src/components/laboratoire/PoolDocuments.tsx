@@ -7,7 +7,6 @@ import { useDepotDocuments } from '@app/components/laboratoire/use-depot-documen
 import downloadApiFile from '@app/utils/download-api-file';
 import { documentTypeLabels } from '@app/utils/trichine';
 
-/** Rapport d'analyse d'un pool : liste des fichiers déposés et bouton pour en joindre un. */
 export default function PoolDocuments({
   poolId,
   referencePool,
@@ -46,7 +45,6 @@ export default function PoolDocuments({
                 onClick={() =>
                   downloadApiFile({
                     path: documentPoolPath(poolId, document.id),
-                    // le nom du fichier d'origine n'est pas conservé : on nomme d'après le pool
                     filename: `${referencePool}-${document.id}.${document.fichier_url.split('.').pop()}`,
                     erreur: 'Impossible de télécharger le document',
                   })
@@ -81,7 +79,6 @@ export default function PoolDocuments({
         aria-label={`Joindre le rapport d'analyse du pool ${referencePool}`}
         onChange={(event) => {
           deposer(Array.from(event.target.files ?? []));
-          // reset pour pouvoir redéposer le même fichier
           event.target.value = '';
         }}
       />

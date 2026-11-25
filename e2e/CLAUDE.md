@@ -54,7 +54,7 @@ The current suite is flake-free; follow these or you break that.
 - **`scrollIntoViewIfNeeded()` before every click** on long DSFR forms. Prevents click-loss from DSFR re-renders.
 - **`.blur()` after `.fill()` on time/date inputs.** Forces the form state commit before the next action.
 - **`slowMo: 100`** via `test.use({ launchOptions })` on DSFR-heavy specs. Paces the store → PQueue → backend chain.
-- **Surgical `setTimeout` only with a `// why` comment** (e.g. DSFR modal re-render storm). Never as a generic fix.
+- **No surgical `setTimeout`.** No comments either (repo rule, see root CLAUDE.md): if a wait is truly unavoidable (e.g. DSFR modal re-render storm), record it in `doc/adr/excuses-a-traiter.md`. Never as a generic fix.
 - **Re-login after logout = `page.goto('/app/connexion')`**, never nav clicks. Resets local-first store cleanly. Use the `logout-and-connect` helper for multi-actor specs.
 - **Multi-actor flows in one test** when verifying sync round-trip through the real backend.
 - **`toMatchAriaSnapshot` for lists/summaries** with dynamic dates/numbers (regex-tolerant).

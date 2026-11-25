@@ -8,7 +8,6 @@ test.beforeEach(async () => {
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Scenario 55 — Post-inspection SVI : décision visible côté ETG.
 test('ETG voit la décision SVI après clôture', async ({ page }) => {
   await connectWith(page, 'etg-1@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/etg');
@@ -18,7 +17,5 @@ test('ETG voit la décision SVI après clôture', async ({ page }) => {
   await expect(feiLink).toBeVisible({ timeout: 10000 });
   await feiLink.click();
 
-  // Carcasses are ACCEPTE per SVI_CLOSED seed (svi_carcasse_status: ACCEPTE for all 4).
-  // Decision text should be visible on the fiche detail page.
   await expect(page.getByText(/accept/i).first()).toBeVisible({ timeout: 10000 });
 });

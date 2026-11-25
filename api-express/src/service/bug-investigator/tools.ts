@@ -4,9 +4,6 @@ import { PrismaClient } from '@prisma/client';
 import { ALBERT_READONLY_DATABASE_URL, GITHUB_REPO, GITHUB_TOKEN, SOURCE_COMMIT } from '~/config';
 import type { AlbertTool } from '~/third-parties/albert';
 
-// Tous les outils de l'assistant sont en lecture seule : aucun ne peut modifier le code ni la base.
-// La vraie garantie côté base est le rôle PostgreSQL SELECT-only (doc/bug-resolution.md), pas ce fichier.
-
 const MAX_ROWS = 200;
 const MAX_FILE_LINES = 400;
 const MAX_RESULT_CHARS = 30_000;
@@ -149,15 +146,11 @@ export async function executeInvestigatorTool(name: string, rawArgs: string): Pr
   }
 }
 
-// l'avertissement est en tête : un modèle qui ne lit que le début doit savoir que la fin manque
 function truncate(text: string) {
   if (text.length <= MAX_RESULT_CHARS) return text;
   return `⚠️ RÉSULTAT TRONQUÉ : seuls les ${MAX_RESULT_CHARS} premiers caractères sur ${text.length} sont affichés, LA FIN MANQUE. Refais une requête plus ciblée (colonnes précises, WHERE, ORDER BY ... DESC, LIMIT) avant de conclure.\n${text.slice(0, MAX_RESULT_CHARS)}`;
 }
 
-/* SQL */
-
-// Premier filet de sécurité avant le rôle en lecture seule : une seule instruction, SELECT ou WITH
 export function checkReadOnlySql(sql: string): { sql: string; error: null } | { sql: null; error: string } {
   const cleaned = sql.trim().replace(/;\s*$/, '');
   if (!cleaned) return { sql: null, error: 'Requête vide' };
@@ -189,7 +182,6 @@ function readonlyQuery<T>(sql: string, ...params: Array<unknown>) {
 async function queryDb(sql: string) {
   const check = checkReadOnlySql(sql);
   if (check.error !== null) return `Refusé : ${check.error}`;
-  // la sous-requête impose la limite de lignes, et PostgreSQL y refuse les CTE qui écrivent
   const rows = await readonlyQuery<Record<string, unknown>>(
     `SELECT * FROM (${check.sql}) AS q LIMIT ${MAX_ROWS + 1}`
   );
@@ -199,8 +191,6 @@ async function queryDb(sql: string) {
   );
   return `${Math.min(rows.length, MAX_ROWS)} ligne(s)${truncated ? ` (limitées à ${MAX_ROWS})` : ''}\n${json}`;
 }
-
-/* Schéma Prisma */
 
 let schemaBlocks: Map<string, { kind: 'model' | 'enum'; text: string }> | null = null;
 function getSchemaBlocks() {
@@ -225,8 +215,6 @@ export function describeTables(names: Array<string>) {
     .map((name) => blocks.get(name.replace(/"/g, '').trim())?.text ?? `${name} : table ou enum inconnu`)
     .join('\n\n');
 }
-
-/* Chronologie d'une fiche */
 
 const IGNORED_HISTORY_FIELDS = ['updated_at', 'is_synced'];
 
@@ -280,8 +268,6 @@ type ActorRow = {
   entities: string | null;
 };
 
-// le rôle d'un log est celui avec lequel l'utilisateur a agi (ex : un salarié d'ETG en mode transport agit
-// comme COLLECTEUR_PRO) : on donne aussi son vrai compte, sinon on le prend pour une autre entreprise
 async function describeActors(userIds: Array<string>) {
   if (!userIds.length) return 'Acteurs : aucun';
   const actors = await readonlyQuery<ActorRow>(
@@ -334,7 +320,6 @@ async function feiTimeline(feiNumero: string) {
   });
   const last = rows.at(-1)!;
   const footer = `\nDERNIÈRE ACTION : n°${rows.length}, ${last.action} le ${new Date(last.created_at).toISOString()}`;
-  // si c'est trop long, on retire les plus anciennes : ce sont les dernières actions qui expliquent l'état actuel
   let omitted = 0;
   while (
     omitted < lines.length - 1 &&
@@ -352,8 +337,6 @@ async function feiTimeline(feiNumero: string) {
   }`;
   return [header, ...lines.slice(omitted)].join('\n') + footer;
 }
-
-/* GitHub */
 
 function checkRepoPath(path: string) {
   const cleaned = path.trim().replace(/^\/+/, '').replace(/\/+$/, '');

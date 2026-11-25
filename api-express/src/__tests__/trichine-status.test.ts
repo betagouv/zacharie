@@ -31,10 +31,6 @@ vi.mock('~/service/notifications', () => ({
 }));
 vi.mock('~/third-parties/sentry', () => ({ capture: vi.fn() }));
 
-/* -------------------------------------------------------------------------- */
-/* Références {E|P|F}-{YY}-{code établissement}-{séquence}                     */
-/* -------------------------------------------------------------------------- */
-
 describe('nextReferenceFromLatest', () => {
   test('première référence de l’année pour l’établissement', () => {
     expect(nextReferenceFromLatest('E', '26', '02', null)).toBe('E-26-02-0001');
@@ -72,10 +68,6 @@ describe('sanitizeEntityTrichineCode', () => {
   });
 });
 
-/* -------------------------------------------------------------------------- */
-/* Validation de composition des pools (règles §9)                             */
-/* -------------------------------------------------------------------------- */
-
 const makeEchantillon = (carcasseId: string, masse = 5, overrides: any = {}) => ({
   id: `ech-${carcasseId}-${masse}-${Math.abs(overrides.seed ?? 0)}`,
   zacharie_carcasse_id: carcasseId,
@@ -87,7 +79,6 @@ const makeEchantillon = (carcasseId: string, masse = 5, overrides: any = {}) => 
   ...overrides,
 });
 
-/** Prélèvement de 2e intention : c'est le seul type qu'un pool fille accepte */
 const makeComplementaire = (carcasseId: string, masse = 20, overrides: any = {}) =>
   makeEchantillon(carcasseId, masse, { type: TrichineType.COMPLEMENTAIRE, ...overrides });
 
@@ -231,10 +222,6 @@ describe('validatePoolComposition — pool petite-fille', () => {
   });
 });
 
-/* -------------------------------------------------------------------------- */
-/* Statuts pool / FTP                                                          */
-/* -------------------------------------------------------------------------- */
-
 describe('isTerminalResult', () => {
   test('DOUTEUX n’est pas terminal (confirmation LNR obligatoire)', () => {
     expect(isTerminalResult(TrichineResultatAnalyse.DOUTEUX)).toBe(false);
@@ -323,10 +310,6 @@ describe('computeFtpStatuts', () => {
     ).toBe(TrichineStatutLogistiqueFTP.RECUE);
   });
 });
-
-/* -------------------------------------------------------------------------- */
-/* Action requise carcasse                                                     */
-/* -------------------------------------------------------------------------- */
 
 const makePoolView = (overrides: any = {}) => ({
   id: 'pool-1',
@@ -419,10 +402,6 @@ describe('computeCarcasseActionRequise', () => {
   });
 });
 
-/* -------------------------------------------------------------------------- */
-/* Historique                                                                  */
-/* -------------------------------------------------------------------------- */
-
 describe('logTrichineStatutChange', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -458,10 +437,6 @@ describe('logTrichineStatutChange', () => {
     });
   });
 });
-
-/* -------------------------------------------------------------------------- */
-/* recomputePoolTrichine (wrapper)                                             */
-/* -------------------------------------------------------------------------- */
 
 describe('recomputePoolTrichine', () => {
   beforeEach(() => {
@@ -521,10 +496,6 @@ describe('recomputePoolTrichine', () => {
     });
   });
 });
-
-/* -------------------------------------------------------------------------- */
-/* Point de non-retour : la fiche est partie (édition / annulation)            */
-/* -------------------------------------------------------------------------- */
 
 describe('isFtpPartie', () => {
   const ftp = (statut: TrichineStatutLogistiqueFTP, deleted: Date | null = null) => ({

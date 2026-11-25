@@ -15,12 +15,6 @@ import type {
 import API from '@app/services/api';
 import type { AvecAliases } from '@app/services/trichine-alias';
 
-/**
- * Appels API trichine (cf doc/trichine.md §10.3).
- * Pas de local-first ici : les analyses trichine nécessitent d'être en ligne
- * (les résultats viennent des laboratoires), on interroge le serveur directement.
- */
-
 type ApiResponse<T> = { ok: boolean; data: T | null; error: string };
 
 export type TrichineCarcasseProjection = Pick<
@@ -83,11 +77,9 @@ export type TrichineFTPDetail = TrichineFTP &
     Documents: Array<TrichineDocument>;
   };
 
-/** ETG où opère le service d'inspection expéditeur d'une FTP. */
 export type TrichinePartieConcernee = { id: string; nom: string };
 
 export type TrichineEchantillonDetail = TrichineEchantillonAvecCarcasse & {
-  /** Pool dont le laboratoire a retiré l'échantillon */
   RetireDuPool: { reference_pool: string } | null;
   TrichinePool:
     | (TrichinePool & { TrichinePoolFTPs: Array<TrichinePoolFTP & { TrichineFTP: TrichineFTPLight }> })
@@ -97,7 +89,6 @@ export type TrichineEchantillonDetail = TrichineEchantillonAvecCarcasse & {
 export type TrichinePoolDetail = TrichinePool &
   AvecAliases & {
     TrichineEchantillons: Array<TrichineEchantillonAvecCarcasse>;
-    /** Échantillons que le laboratoire a sortis du pool : leurs carcasses sont à re-prélever */
     EchantillonsRetires: Array<
       Pick<
         TrichineEchantillon,
@@ -155,19 +146,14 @@ export function createTrichineEchantillon(body: {
   >;
 }
 
-/**
- * Prélèvement en lot (assistant SVI) : tout ou rien côté serveur, un échantillon par carcasse.
- */
 export function createTrichineEchantillonsBulk(body: {
   echantillons: Array<{
     zacharie_carcasse_id: string;
     site_prelevement: TrichineSitePrelevement;
     masse_grammes?: number;
     date_prelevement?: string;
-    /** Référence interne du service pour cet échantillon */
     alias?: string;
   }>;
-  /** INITIAL au prélèvement, COMPLEMENTAIRE / CONFIRMATION en 2e intention */
   type?: TrichineType;
   preleve_par_entity_id?: string;
   commentaire?: string;
@@ -177,10 +163,6 @@ export function createTrichineEchantillonsBulk(body: {
   >;
 }
 
-/**
- * Édition / annulation : possible tant que l'objet n'est pas parti au laboratoire.
- * Le point de non-retour est l'envoi de la FTP — c'est le backend qui l'arbitre.
- */
 export function modifierTrichineEchantillon(
   echantillonId: string,
   body: {
@@ -217,10 +199,8 @@ export function getTrichineEchantillons({ sansPool = false }: { sansPool?: boole
 
 export function createTrichinePool(body: {
   echantillon_ids: Array<string>;
-  /** Renseigné pour un pool de 2e intention : fille du pool douteux, ou petite-fille */
   pool_parent_id?: string;
   commentaire?: string;
-  /** Référence interne du service pour ce pool */
   alias?: string;
 }) {
   return API.post({ path: '/trichine/pool', body }) as Promise<ApiResponse<{ pool: TrichinePool }>>;
@@ -249,7 +229,6 @@ export function createTrichineFTP(body: {
   expediteur_entity_id?: string;
   mode_transport?: string;
   commentaire?: string;
-  /** Référence interne du service pour cette FTP */
   alias?: string;
 }) {
   return API.post({ path: '/trichine/ftp', body }) as Promise<ApiResponse<{ ftp: TrichineFTP }>>;
@@ -277,7 +256,6 @@ export function supprimerTrichineFTP(ftpId: string) {
   return API.delete({ path: `/trichine/ftp/${ftpId}` }) as Promise<ApiResponse<Record<string, never>>>;
 }
 
-/** Fiche déjà envoyée : elle reste tracée, le laboratoire est prévenu, les pools se libèrent. */
 export function annulerTrichineFTP(ftpId: string, raisonAnnulation: string) {
   return API.post({
     path: `/trichine/ftp/${ftpId}/annuler`,
@@ -289,10 +267,6 @@ export function getTrichineFTPs() {
   return API.get({ path: '/trichine/ftps' }) as Promise<ApiResponse<{ ftps: Array<TrichineFTPPopulated> }>>;
 }
 
-/**
- * Détails : adressés par la référence métier (E-/P-/F-…), pas par un uuid — l'URL de l'app
- * est ainsi copiable et correspond à ce que les laboratoires citent au téléphone.
- */
 export function getTrichineFTP(reference: string) {
   return API.get({ path: `/trichine/ftp/${reference}` }) as Promise<
     ApiResponse<{

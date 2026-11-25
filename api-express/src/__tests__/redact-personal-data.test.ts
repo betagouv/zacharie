@@ -43,7 +43,6 @@ describe('redactPersonalData', () => {
     }
   });
 
-  // Tout l'intérêt du payload conservé : rejouer la saisie. Ces champs-là doivent survivre.
   test('laisse intactes les données métier nécessaires au rattrapage', () => {
     const body = {
       numero: 'ZACH-20250707-QZ6E0-155242',

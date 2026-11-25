@@ -30,7 +30,6 @@ import {
   estRetireParLabo,
 } from '@app/utils/trichine';
 
-// Options du filtre « Statut » : exactement les statuts affichés dans la colonne Statut
 const STATUTS = [
   { value: 'tous', label: 'Tous' },
   ...Object.values(TrichineStatutAnalyse).map((statut) => ({
@@ -49,13 +48,10 @@ const RESULTATS = [
   })),
 ];
 
-// Seuls des prélèvements initiaux pas encore regroupés peuvent constituer un nouveau pool.
-// Les complémentaires se regroupent depuis le pool douteux (2e intention).
 function estRegroupable(echantillon: TrichineEchantillonWithCarcasse): boolean {
   return estARegrouper(echantillon) && echantillon.type === TrichineType.INITIAL;
 }
 
-// Un échantillon retiré par le laboratoire n'a plus de pool, mais ne se regroupe plus
 function estARegrouper(echantillon: TrichineEchantillonWithCarcasse): boolean {
   return !echantillon.pool_id && !estRetireParLabo(echantillon);
 }

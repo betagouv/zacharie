@@ -16,10 +16,8 @@ test.beforeEach(async () => {
 test('Onboarding complet : coordonnées → formation → infos de chasse → /chasseur', async ({ page }) => {
   await connectWith(page, 'examinateur-onboarding@example.fr');
 
-  // Étape 1 : mes coordonnées
   await expect(page).toHaveURL(/\/app\/chasseur\/onboarding\/mes-coordonnees/);
 
-  // The form uses native input ids from Prisma field enum
   await page.locator('#nom_de_famille').fill('Dupont');
   await page.locator('#nom_de_famille').blur();
   await page.locator('#prenom').fill('Jean');
@@ -35,16 +33,12 @@ test('Onboarding complet : coordonnées → formation → infos de chasse → /c
 
   await page.getByRole('button', { name: /Enregistrer et continuer/i }).click();
 
-  // Étape 2 : formation examen initial
   await expect(page).toHaveURL(/\/app\/chasseur\/onboarding\/formation-examen-initial/);
-  // DSFR radio: label intercepts pointer events; click the label directly
   await page.locator('label.fr-label:has-text("Oui")').first().click();
-  // Selecting Oui reveals a required CFEI number input
   await page.locator('#numero_cfei').fill('CFEI-075-25-999');
   await page.locator('#numero_cfei').blur();
   await page.getByRole('button', { name: /Enregistrer et continuer/i }).click();
 
-  // Étape 3 : mes informations de chasse
   await expect(page).toHaveURL(/\/app\/chasseur\/onboarding\/mes-informations-de-chasse/);
   await page.getByRole('button', { name: /Enregistrer et terminer/i }).click();
 

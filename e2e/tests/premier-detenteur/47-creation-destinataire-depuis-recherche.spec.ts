@@ -24,8 +24,6 @@ test("« Créer « … » » depuis la recherche ouvre l'ajout d'un destinataire
   page,
 }) => {
   const feiId = 'ZACH-20250707-QZ6E0-155242';
-  // Le champ « Raison Sociale » interroge l'annuaire des entreprises (API externe) : on simule sa réponse
-  // pour que le test ne dépende pas du réseau ni des résultats réels.
   await page.route('https://recherche-entreprises.api.gouv.fr/**', (route) =>
     route.fulfill({
       json: {
@@ -51,13 +49,9 @@ test("« Créer « … » » depuis la recherche ouvre l'ajout d'un destinataire
   await openVenteDon(page);
   await creerDestinataire(page, 'Ma Boucherie Test');
 
-  // Le destinataire est un professionnel par défaut
   const modal = venteDonModal(page);
   await expect(modal.getByRole('radio', { name: 'Un professionnel' })).toBeChecked();
 
-  // La raison sociale reprend le nom tapé dans la recherche, et l'annuaire
-  // des entreprises est interrogé tout de suite : ses résultats s'affichent sans rien retaper
-  // le nom est dans le champ de saisie, curseur à la fin : on peut continuer à taper
   const raisonSociale = modal.locator('#raison_sociale');
   await expect(raisonSociale).toBeFocused();
   await expect(raisonSociale).toHaveValue('Ma Boucherie Test');
@@ -68,34 +62,28 @@ test("« Créer « … » » depuis la recherche ouvre l'ajout d'un destinataire
   await expect(resultatAnnuaire).toBeVisible({ timeout: 10000 });
   await resultatAnnuaire.click();
 
-  // Choisir le résultat de l'annuaire remplit l'adresse ; le SIRET n'est plus saisi : il est affiché
-  // sous la raison sociale et envoyé en caché
   await expect(modal.locator("[class*='raison_sociale__single-value']")).toHaveText('MA BOUCHERIE TEST SARL');
   await expect(modal.getByText('SIRET : 12345678900012')).toBeVisible();
   await expect(modal.getByRole('textbox', { name: 'SIRET' })).toHaveCount(0);
   await expect(modal.locator('#partenaire_data_form input[name="siret"]')).toHaveValue('12345678900012');
   await expect(modal.locator('#partenaire-nouveau-address_ligne_1')).toHaveValue('12 RUE DU COMMERCE');
 
-  // La qualité du destinataire est un champ libre, avec des raccourcis qui le remplissent
   await expect(modal.getByText('Commerce de détail (boucherie, restaurant, etc.)')).toHaveCount(0);
   const qualite = modal.locator('#partenaire-nouveau-qualite_du_destinataire');
   const presetBoucherie = modal.getByRole('button', { name: 'Boucherie', exact: true });
   await presetBoucherie.scrollIntoViewIfNeeded();
   await presetBoucherie.click();
   await expect(qualite).toHaveValue('Boucherie');
-  // Les raccourcis ne s'affichent que si le champ est vide
   await expect(presetBoucherie).toHaveCount(0);
   await qualite.fill('');
   await expect(presetBoucherie).toBeVisible();
 
-  // « Autre » masque les raccourcis et place le curseur dans le champ libre
   await modal.getByRole('button', { name: 'Autre', exact: true }).click();
   await expect(presetBoucherie).toHaveCount(0);
   await expect(qualite).toBeFocused();
   await expect(qualite).toHaveAttribute('placeholder', 'Entrez la qualité du destinataire (champ libre)');
   await qualite.fill('Boucherie');
 
-  // Remplir les champs obligatoires — scrollIntoViewIfNeeded sur mobile viewport
   const email = modal.locator('#partenaire-nouveau-email');
   await email.scrollIntoViewIfNeeded();
   await email.fill('boucher@test.fr');
@@ -108,15 +96,12 @@ test("« Créer « … » » depuis la recherche ouvre l'ajout d'un destinataire
   await prenom.scrollIntoViewIfNeeded();
   await prenom.fill('Jean');
 
-  // Le formulaire inline a son propre bouton « Enregistrer », distinct de celui de la modale
-  // vente / don : on le cible via l'id du formulaire.
   const submit = modal
     .locator('#partenaire_data_form')
     .getByRole('button', { name: 'Enregistrer', exact: true });
   await submit.scrollIntoViewIfNeeded();
   await submit.click();
 
-  // Le formulaire inline disparaît et le partenaire créé est sélectionné comme prochain détenteur
   await expect(modal.getByText('Ajouter un destinataire')).toBeHidden({ timeout: 15000 });
   await expect(modal.getByPlaceholder('Tapez le nom du destinataire')).toHaveValue(
     /^MA BOUCHERIE TEST SARL/,
@@ -125,7 +110,6 @@ test("« Créer « … » » depuis la recherche ouvre l'ajout d'un destinataire
     }
   );
 
-  // Continuer le dispatch : stockage (circuit court = pas de transport)
   await allerAEtape(page, 'Stockage');
   const pasDeStockage = venteDonModal(page)
     .getByText('Pas de stockage')
@@ -135,7 +119,6 @@ test("« Créer « … » » depuis la recherche ouvre l'ajout d'un destinataire
   await pasDeStockage.click();
   await enregistrerVenteDon(page);
 
-  // Transmettre la fiche
   const transmettre = page.getByRole('button', { name: /^Transmettre/ });
   await transmettre.scrollIntoViewIfNeeded();
   await transmettre.click();

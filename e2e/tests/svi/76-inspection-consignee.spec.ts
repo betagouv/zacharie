@@ -8,11 +8,6 @@ test.beforeEach(async () => {
   await resetDb('SVI');
 });
 
-/**
- * Inspection : mise en consigne (IPM1 MISE_EN_CONSIGNE).
- * On vérifie que les champs obligatoires (durée, pièces, lésions) apparaissent
- * et que la section IPM1 est bien ouverte pour édition.
- */
 test('76 - SVI inspection : carcasse consignée (IPM1 MISE_EN_CONSIGNE)', async ({ page }) => {
   const feiId = 'ZACH-20250707-QZ6E0-185242';
   await connectWith(page, 'svi@example.fr');
@@ -23,7 +18,6 @@ test('76 - SVI inspection : carcasse consignée (IPM1 MISE_EN_CONSIGNE)', async 
   await expect(page).toHaveURL(/\/app\/svi\/carcasse-svi\//);
   await expect(page.getByText(/Inspection Post-Mortem 1/)).toBeVisible();
 
-  // "Mise en consigne" is the default IPM1 decision; durée de consigne field appears
   await expect(page.getByLabel('Mise en consigne', { exact: true })).toBeChecked();
   await expect(page.getByLabel(/Durée de la consigne/)).toBeVisible();
   await expect(page.getByText('Lésion ou motif *').first()).toBeVisible();
@@ -33,11 +27,9 @@ test('76 - SVI inspection : carcasse consignée (IPM1 MISE_EN_CONSIGNE)', async 
   await dateShortcut.scrollIntoViewIfNeeded();
   await dateShortcut.click();
 
-  // Fill durée
   await page.getByLabel(/Durée de la consigne/).fill('24');
   await page.getByLabel(/Durée de la consigne/).blur();
 
-  // Try save; missing pieces/lesions should block
   page.once('dialog', (d) => d.dismiss());
   const saveBtn = page.getByRole('button', { name: 'Enregistrer' }).first();
   await saveBtn.scrollIntoViewIfNeeded();

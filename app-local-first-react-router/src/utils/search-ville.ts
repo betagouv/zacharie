@@ -1,13 +1,9 @@
 import villes from '@app/data/villes.json';
 
-// Le fichier est volumineux (~39 000 communes) : les clés sont abrégées pour alléger le bundle.
 type Ville = { c: string; v: string };
 
 const DEFAULT_MAX_RESULTS = 30;
 
-// Le référentiel des communes est en majuscules, sans accent ni apostrophe, et abrège
-// « Saint(e) » en « ST(E) ». On ramène la saisie de l'utilisateur et le référentiel à
-// cette même forme pour que « Sainte-Marie », « Ste Marie » et « STE MARIE » matchent.
 export function normalizeVille(value: string): string {
   return value
     .normalize('NFD')
@@ -45,8 +41,6 @@ function getIndex(): Array<IndexedVille> {
   return index;
 }
 
-// Chaque mot recherché doit être le début d'un mot de la commune : « valdoule » trouve
-// « STE MARIE - VALDOULE », « marie ste » aussi.
 function everyTokenStartsAWord(name: string, tokens: Array<string>): boolean {
   const words = name.split(' ');
   return tokens.every((token) => words.some((word) => word.startsWith(token)));
@@ -57,15 +51,11 @@ export function searchVilles(search: string, maxResults = DEFAULT_MAX_RESULTS): 
   if (!query) {
     return [];
   }
-  // Un code postal ne peut être qu'en tête de recherche : dans un nom de commune les chiffres
-  // sont toujours en suffixe d'arrondissement (« MARSEILLE 01 »).
   const codePostal = query.match(/^\d{1,5}/)?.[0] ?? '';
   const nameQuery = query.slice(codePostal.length).trim();
   const tokens = nameQuery.split(' ').filter(Boolean);
 
   const scored = scoreVilles(codePostal, nameQuery, tokens);
-  // Le code postal saisi peut être absent du référentiel (« 75000 ») ou ne pas correspondre à la
-  // commune cherchée : plutôt que de ne rien proposer, on cherche alors sur le seul nom.
   const results = scored.length || !tokens.length ? scored : scoreVilles('', nameQuery, tokens);
 
   results.sort((a, b) => {
@@ -94,7 +84,6 @@ function scoreVilles(
     } else if (name === nameQuery) {
       score = 0;
     } else if (name.startsWith(`${nameQuery} `)) {
-      // « ste » cherche « Sainte », pas « Stenay » : un préfixe qui tombe sur une fin de mot prime.
       score = 1;
     } else if (name.startsWith(nameQuery)) {
       score = 2;

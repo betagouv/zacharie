@@ -29,11 +29,6 @@ import {
   statutUtilisateurPool,
 } from '@app/utils/trichine';
 
-/**
- * Point d'entrée de l'espace trichine : ce qui demande une action d'abord, les derniers
- * résultats ensuite, et l'accès direct par référence pour retrouver un objet sans passer
- * par les listes.
- */
 export default function TrichineIndex() {
   const basePath = useTrichineBasePath();
   const carcassesRegistry = useCarcassesRegistry();
@@ -56,10 +51,7 @@ export default function TrichineIndex() {
       .catch(console.error);
   }, []);
 
-  // Les compteurs suivent le parcours réel d'une analyse : prélever → regrouper → envoyer → attendre
   const etapes = useMemo(() => {
-    // Même périmètre que l'assistant de prélèvement : les sangliers transmis au SVI et ceux
-    // déjà arrivés chez un ETG rattaché, que celui-ci n'a pas encore transmis.
     const prelevables = new Set(
       carcassesRegistry
         .filter(
@@ -126,7 +118,6 @@ export default function TrichineIndex() {
     }>;
   }, [carcassesRegistry, carcassesAVenir, echantillons, pools, ftps, basePath]);
 
-  // Un résultat défavorable déjà tranché par le SVI (IPM2) n'a plus à être signalé
   const defavorables = useMemo(
     () =>
       pools.filter(
@@ -278,7 +269,6 @@ export default function TrichineIndex() {
         )}
       </section>
 
-      {/* Les listes complètes sont dans le menu latéral : ici, un simple rappel des volumes */}
       <p className="fr-text--sm fr-mb-0 text-gray-600">
         <Link
           to={`${basePath}/echantillons`}

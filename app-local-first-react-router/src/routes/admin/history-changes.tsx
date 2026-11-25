@@ -4,10 +4,8 @@ import type { UserRoles } from '@prisma/client';
 import type { AdminHistoryChange } from '@api/src/types/admin-history';
 import { getUserRoleLabel } from '@app/utils/get-user-roles-label';
 
-// Au-delà, les lignes d'un événement sont repliées
 const VISIBLE_ROWS = 3;
 
-// Champs qui décrivent ensemble un même détenteur : affichés sur une ligne « nom (rôle) »
 type FieldGroup = { label: string; names: Array<string>; ids: Array<string>; role?: string };
 
 const FIELD_GROUPS: Array<FieldGroup> = [
@@ -83,7 +81,6 @@ const FIELD_LABELS: Record<string, string> = {
   nom_de_famille: 'Nom',
 };
 
-// Nom technique rendu lisible : premier_detenteur_depot_ccg_at → « Premier detenteur depot ccg »
 function fieldLabel(field: string) {
   if (FIELD_LABELS[field]) return FIELD_LABELS[field];
   const words = field.replace(/_(cache|at)$/, '').replace(/_/g, ' ');
@@ -97,7 +94,6 @@ const ENUM = /^[A-Z][A-Z0-9_]*$/;
 type DisplayValue = { text: string; title?: string } | null;
 
 function enumLabel(value: string) {
-  // sigles (ETG, SVI, CCG) laissés tels quels
   if (value.length <= 4 && !value.includes('_')) return value;
   const roleLabel = getUserRoleLabel(value as UserRoles);
   if (roleLabel !== 'Inconnu') return roleLabel;

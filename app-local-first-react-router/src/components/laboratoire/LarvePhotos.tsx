@@ -12,10 +12,6 @@ import {
 } from '@app/services/laboratoire';
 import downloadApiFile from '@app/utils/download-api-file';
 
-/**
- * Photographies des larves observées par le LVD, jointes à la FTP de confirmation pour le LNR.
- * Le LVD les dépose, le LNR les consulte.
- */
 export default function LarvePhotos({
   ftpId,
   numeroFiche,
@@ -37,7 +33,6 @@ export default function LarvePhotos({
     setIsUploading(true);
     const deposes: Array<TrichineDocument> = [];
     try {
-      // Un fichier par requête : plusieurs photos de 3,5 Mo dépasseraient la taille d'un appel
       for (const file of files) {
         if (!PHOTO_CONTENT_TYPES.includes(file.type)) {
           toast.error(`${file.name} : format non accepté (JPEG, PNG ou WebP)`);
@@ -118,7 +113,6 @@ export default function LarvePhotos({
             className="hidden"
             onChange={(event) => {
               deposer(Array.from(event.target.files ?? []));
-              // reset pour pouvoir redéposer le même fichier
               event.target.value = '';
             }}
           />

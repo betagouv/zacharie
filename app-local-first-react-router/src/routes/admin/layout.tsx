@@ -66,7 +66,6 @@ export default function AdminLayout() {
   );
   const [sessionStatus, setSessionStatus] = useState<AdminSessionStatus>('loading');
 
-  // Le backend exige ProConnect sur /admin : on le vérifie avant d'afficher les pages admin
   useEffect(() => {
     let cancelled = false;
     API.get({ path: 'admin/session' }).then((response) => {
@@ -95,8 +94,6 @@ export default function AdminLayout() {
     return <Chargement />;
   }
   if (sessionStatus === 'proconnect-required') {
-    // api.ts a déjà pu pousser /app/proconnect en recevant le 403 : on ne ré-encapsule pas cette
-    // URL dans un second `redirect`, sinon ProConnect renvoie l'admin sur /app/proconnect
     if (location.pathname === '/app/proconnect') return null;
     const redirect = encodeURIComponent(location.pathname + location.search);
     return <Navigate to={`/app/proconnect?redirect=${redirect}`} />;
@@ -124,14 +121,12 @@ export default function AdminLayout() {
       mainLink={mainLink}
     >
       <div className="relative flex">
-        {/* Backdrop mobile */}
         {sidebarOpen && (
           <div
             className="fixed inset-0 z-20 hidden bg-black/30 max-md:block"
             onClick={() => setSidebarOpen(false)}
           />
         )}
-        {/* Sidebar */}
         <nav
           className={`fixed top-0 z-[800] max-h-screen min-h-screen shrink-0 overflow-y-auto border-r border-gray-200 bg-white py-2 transition-transform duration-200 md:sticky md:z-auto ${
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
@@ -145,7 +140,6 @@ export default function AdminLayout() {
               aria-label="Fermer le menu"
             />
           </div>
-          {/* Desktop : repli en rail d'icônes */}
           <div className={`hidden px-2 md:flex ${navCollapsed ? 'justify-center' : 'justify-end'}`}>
             <button
               type="button"
@@ -163,7 +157,6 @@ export default function AdminLayout() {
             </li>
             {adminSections.map((section) => (
               <li key={section.title}>
-                {/* Menu replié en rail d'icônes : un trait remplace le titre de section */}
                 <p
                   className={`m-0 mt-3 mb-1 px-3 text-xs font-semibold tracking-wide text-gray-500 uppercase ${
                     navCollapsed ? 'md:hidden' : ''

@@ -176,7 +176,6 @@ function ExaminateurInitial() {
                 id: Prisma.UserScalarFieldEnum.numero_cfei,
                 name: Prisma.UserScalarFieldEnum.numero_cfei,
                 onBlur: () => {
-                  // rien saisi de nouveau : pas d'enregistrement inutile
                   if (numeroCfei === (user.numero_cfei ?? '')) return;
                   handleUserSubmit({ isExaminateurInitial, numeroCfei });
                 },

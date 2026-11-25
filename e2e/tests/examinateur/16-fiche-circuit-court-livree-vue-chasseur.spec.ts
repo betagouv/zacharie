@@ -22,7 +22,6 @@ test('Fiche livrée circuit court — vue chasseur : statut Clôturée + lecture
   await expect(link).toContainText(/Clôturée|Terminée|Livrée/i);
   await link.click();
 
-  // Lecture seule
   await expect(page.getByRole('button', { name: /Prendre en charge/i })).toHaveCount(0);
   await expect(page.getByRole('button', { name: /Transmettre/i })).toHaveCount(0);
 });

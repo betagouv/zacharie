@@ -96,7 +96,6 @@ async function checkIfUserIsAdmin(body: z.infer<typeof userEntitySchema>, user: 
   return false;
 }
 
-// une entité doit toujours garder un admin pour gérer ses utilisateurs
 async function getLastAdminSituation(relation: {
   id: string;
   entity_id: string;
@@ -115,7 +114,6 @@ async function getLastAdminSituation(relation: {
       relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
       deleted_at: null,
       id: { not: relation.id },
-      // les admins Zacharie rattachés à une entité (support, tests) n'en sont pas membres
       UserRelatedWithEntity: { isZacharieAdmin: false },
     },
     select: { status: true },
@@ -189,7 +187,6 @@ router.post(
         return;
       }
 
-      // on ne demande pas à rejoindre une fédération : l'équipe Zacharie ou un admin de la fédération rattache ses membres
       if (FEDERATION_ENTITY_TYPES.includes(entity.type) && !isAdmin) {
         res.status(403).send({
           ok: false,
@@ -238,8 +235,6 @@ router.post(
         }
       }
 
-      // le premier utilisateur de l'entité en devient l'admin : rattachement direct par un admin,
-      // ou chasseur qui rejoint une association de chasse sans membre (ex. importée par l'équipe Zacharie)
       const joinsAssociationDeChasse =
         entity.type === EntityTypes.PREMIER_DETENTEUR && !nextEntityRelation.status;
       if (
@@ -264,7 +259,6 @@ router.post(
 
       if (relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
         await linkBrevoCompanyToContact(entity, req.user);
-        // n'importe quel chasseur peut devenir admin d'une association sans membre : l'équipe vérifie
         if (joinsAssociationDeChasse && relation.status === EntityRelationStatus.ADMIN) {
           await sendEmail({
             emails: ['contact@zacharie.beta.gouv.fr'],
@@ -500,8 +494,6 @@ router.delete(
           });
           return;
         }
-        // seul utilisateur d'une association de chasse : la quitter la supprime.
-        // les autres entités (ETG, SVI...) sont gérées par l'équipe Zacharie
         const softDeleteEntity =
           lastAdminSituation === 'SOLE_USER' && entity.type === EntityTypes.PREMIER_DETENTEUR;
         if (lastAdminSituation === 'SOLE_USER' && !softDeleteEntity) {

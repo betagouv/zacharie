@@ -5,7 +5,6 @@ import { scrubSensitive, scrubString } from '~/utils/scrub-sensitive';
 
 const sentryEnabled = !!SENTRY_KEY;
 
-// En-têtes utiles au debug. Tous les autres (Cookie, Authorization, clé d'API, Referer...) sont écartés.
 const SAFE_HEADERS = [
   'user-agent',
   'appversion',
@@ -29,13 +28,11 @@ export function pickSafeHeaders(headers?: Record<string, unknown>) {
   return safeHeaders;
 }
 
-// On ne garde que l'identifiant de l'utilisateur : ni e-mail, ni téléphone, ni adresse, ni jetons push.
 function onlyUserId(user: unknown) {
   if (!user || typeof user !== 'object' || !('id' in user)) return undefined;
   return { id: String(user.id) };
 }
 
-// Couvre aussi les données de requête (body, en-têtes) ajoutées automatiquement par Sentry.
 export function scrubSentryEvent<T extends Event>(event: T): T {
   if (event.message) event.message = scrubString(event.message);
   for (const exception of event.exception?.values ?? []) {
@@ -66,8 +63,6 @@ export function scrubSentryBreadcrumb(breadcrumb: Breadcrumb): Breadcrumb {
   };
 }
 
-// À passer à chaque Sentry.init : `beforeSend` ne s'applique qu'aux erreurs, les transactions de
-// performance (tracesSampleRate) portent elles aussi le body et les en-têtes de la requête.
 export const SENTRY_SCRUB_OPTIONS = {
   beforeSend: scrubSentryEvent,
   beforeSendTransaction: scrubSentryEvent,
@@ -103,7 +98,6 @@ function capture(
       }
       context.extra = newExtra;
     } catch (error) {
-      // TODO: Check this error type
       const customError = error as string;
       Sentry.captureMessage(customError, context);
     }

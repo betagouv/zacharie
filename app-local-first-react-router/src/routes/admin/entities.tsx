@@ -66,7 +66,6 @@ export default function AdminEntites() {
       const value = entity.zacharie_compatible ? 'true' : 'false';
       if (!selectedCompatibles.includes(value)) return false;
     }
-    // Sans statut coché, on cache les supprimées (comme la liste des utilisateurs).
     if (selectedStatuses.length) {
       const value = entity.deleted_at ? 'deleted' : 'active';
       if (!selectedStatuses.includes(value)) return false;

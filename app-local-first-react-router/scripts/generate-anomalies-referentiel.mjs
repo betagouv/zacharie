@@ -1,12 +1,3 @@
-// Génère src/data/anomalies/gros.json depuis le CSV du référentiel d'examen initial,
-// et aligne petit.json sur le même format.
-//
-//   node scripts/generate-anomalies-referentiel.mjs <chemin-du-csv>
-//
-// Le CSV est la source de vérité, maintenue hors du dépôt. Colonnes attendues :
-// CATÉGORIE, ANOMALIE, COMPLEMENTS D'INFORMATION, FAMILLE, MESSAGE D'AVERTISSEMENT,
-// NIVEAU AVERTISSEMENT, PHOTOGRAPHIE.
-
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,7 +12,6 @@ if (!csvPath) {
   process.exit(1);
 }
 
-// Parseur CSV minimal : guillemets doubles échappés, retours à la ligne dans les champs.
 function parseCsv(text) {
   const rows = [];
   let row = [];
@@ -62,8 +52,6 @@ function parseCsv(text) {
 
 const clean = (value) => (value ?? '').trim().replace(/\s+/g, ' ');
 
-// Coquilles de saisie repérées dans le CSV : sans ces deux corrections on obtient des
-// familles en double dans le picker.
 const FAMILLES_CORRIGEES = {
   'Système circulation (cœur)': 'Système circulatoire (cœur)',
   'Système digestif (foie, intestins': 'Système digestif (foie, intestins)',
@@ -73,8 +61,6 @@ const famille = (value) => {
   return FAMILLES_CORRIGEES[normalized] ?? normalized;
 };
 
-// La colonne photo n'a pas de format stable (« Photo n°16 », « Photo n°5, 6, 7, 8, 9 »,
-// « Photo 20, Photo 30 », « Photo n°2 et photo n°3 »…) : on en extrait tous les nombres.
 function photos(value) {
   const numeros = [...clean(value).matchAll(/\d+/g)].map((m) => m[0]);
   return [...new Set(numeros)].map((n) => `Image${n}.webp`);
@@ -93,7 +79,6 @@ for (const row of rows) {
   const groupe = clean(categorie);
   const site = famille(famille_);
   const intitule = clean(anomalie);
-  // Une famille sans anomalie nommée n'a rien à proposer : on l'ignore.
   if (!groupe || !intitule) continue;
 
   const key = `${groupe}|||${site}`;
@@ -104,7 +89,6 @@ for (const row of rows) {
     sections.push(section);
   }
 
-  // « Champ libre : ... » n'est pas une anomalie sélectionnable mais la saisie libre de la famille.
   if (intitule.startsWith('Champ libre :')) {
     section.champ_libre = clean(intitule.slice('Champ libre :'.length));
     continue;
@@ -134,7 +118,6 @@ if (photosManquantes.size > 0) {
 const grosPath = path.join(dataDir, 'gros.json');
 fs.writeFileSync(grosPath, `${JSON.stringify(sections, null, 2)}\n`);
 
-// petit.json n'est pas couvert par ce CSV : on se contente de l'aligner sur le même format.
 const petitPath = path.join(dataDir, 'petit.json');
 const petit = JSON.parse(fs.readFileSync(petitPath, 'utf8')).map((section) => ({
   groupe: section.groupe,

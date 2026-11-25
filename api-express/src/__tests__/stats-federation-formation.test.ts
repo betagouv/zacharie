@@ -5,9 +5,6 @@ import prisma from '~/prisma';
 import statsRouter from '~/controllers/stats';
 import { getViewableFederationEntity } from '~/utils/federation-stats';
 
-// Examinateurs actifs du tableau de bord fédération : le total du périmètre compte chaque
-// examinateur une seule fois, même s'il a transmis des fiches dans plusieurs départements.
-
 vi.mock('passport', () => {
   const authenticate = vi.fn(() => (req: any, _res: any, next: any) => {
     req.user = { id: 'user-frc', roles: ['CHASSEUR'] };
@@ -41,7 +38,6 @@ describe('GET /stats/federation/formation — examinateurs actifs', () => {
       { examinateur_initial_user_id: 'marie', commune_mise_a_mort: '07000 Privas' },
       { examinateur_initial_user_id: 'paul', commune_mise_a_mort: '07000 Privas' },
       { examinateur_initial_user_id: 'luc', commune_mise_a_mort: '07000 Privas' },
-      // Rhône : hors du périmètre de la fédération.
       { examinateur_initial_user_id: 'zoe', commune_mise_a_mort: '69000 Lyon' },
     ] as any);
 

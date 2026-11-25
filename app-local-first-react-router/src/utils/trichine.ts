@@ -7,29 +7,16 @@ import {
   TrichineType,
 } from '@prisma/client';
 
-/**
- * Libellés et couleurs des statuts trichine (cf doc/trichine.md §4.10 et §4.11).
- */
-
-/**
- * Feature flag trichine côté chasseur : la fonctionnalité reste invisible en
- * production tant que `VITE_FEATURE_TRICHINE=true` n'est pas posé au build.
- * Toujours actif en dev. L'espace laboratoire n'est PAS gaté (rôle LABORATOIRE
- * requis, aucun laboratoire actif en production).
- */
 export const TRICHINE_FEATURE_ENABLED = import.meta.env.VITE_FEATURE_TRICHINE === 'true';
 
 export const TRICHINE_ESPECE_CONCERNEE = 'Sanglier';
 
-// Contraintes réglementaires pool initial (validées côté backend, rappelées côté UI)
 export const TRICHINE_POOL_MAX_CARCASSES = 19;
 export const TRICHINE_POOL_MAX_MASSE_GRAMMES = 100;
 
-// Contraintes des pools de 2e intention (miroir de api-express/src/utils/trichine.ts)
 export const TRICHINE_POOL_FILLE_MAX_CARCASSES = 5;
 export const TRICHINE_POOL_PETITE_FILLE_MIN_MASSE_GRAMMES = 50;
 
-// Masses de prélèvement par défaut selon le rang du pool
 export const TRICHINE_MASSE_DEFAUT_INITIAL = 5;
 export const TRICHINE_MASSE_DEFAUT_FILLE = 20;
 export const TRICHINE_MASSE_DEFAUT_PETITE_FILLE = TRICHINE_POOL_PETITE_FILLE_MIN_MASSE_GRAMMES;
@@ -49,7 +36,6 @@ export const resultatAnalyseLabels: Record<TrichineResultatAnalyse, string> = {
   [TrichineResultatAnalyse.POSITIF]: 'Positif — trichine confirmée',
 };
 
-// Statut logistique vu par l'émetteur : ce qu'il a fait de sa fiche
 export const statutLogistiqueLabels: Record<TrichineStatutLogistiqueFTP, string> = {
   [TrichineStatutLogistiqueFTP.BROUILLON]: 'Brouillon',
   [TrichineStatutLogistiqueFTP.ENVOYEE]: 'Envoyée',
@@ -58,11 +44,6 @@ export const statutLogistiqueLabels: Record<TrichineStatutLogistiqueFTP, string>
   [TrichineStatutLogistiqueFTP.ANNULEE]: 'Annulée',
 };
 
-/**
- * Même statut vu par le laboratoire : la fiche lui parvient dès qu'elle est ENVOYEE, si bien
- * que « Envoyée » y désigne en réalité un colis dont la réception reste à enregistrer.
- * Les libellés reprennent donc ceux de l'onglet et du compteur « À réceptionner ».
- */
 export const statutLogistiqueLaboLabels: Record<TrichineStatutLogistiqueFTP, string> = {
   ...statutLogistiqueLabels,
   [TrichineStatutLogistiqueFTP.ENVOYEE]: 'À réceptionner',
@@ -75,7 +56,6 @@ export const sitePrelevementLabels: Record<TrichineSitePrelevement, string> = {
   [TrichineSitePrelevement.MEMBRE_ANTERIEUR]: 'Membre antérieur',
 };
 
-/** Options prêtes à l'emploi pour un choix de site (boutons ou select). */
 export const sitePrelevementOptions = Object.values(TrichineSitePrelevement).map((site) => ({
   value: site,
   label: sitePrelevementLabels[site],
@@ -87,7 +67,6 @@ export const trichineTypeLabels: Record<TrichineType, string> = {
   [TrichineType.CONFIRMATION]: 'Confirmation LNR',
 };
 
-// Valeurs String de TrichineDocument.type (cf doc/trichine.md §12.2)
 export const documentTypeLabels: Record<string, string> = {
   RAPPORT_COFRAC: "Rapport d'analyse",
   PHOTOGRAPHIE_LARVE: 'Photographie de larve',
@@ -95,7 +74,6 @@ export const documentTypeLabels: Record<string, string> = {
   AUTRE: 'Document',
 };
 
-// Valeurs String de Carcasse.trichine_action_requise (cf doc/trichine.md §4.10)
 export const actionRequiseLabels: Record<string, string> = {
   AUCUNE: 'Aucune action requise',
   PRELEVEMENT_COMPLEMENTAIRE: 'Prélèvement complémentaire à réaliser',
@@ -113,7 +91,6 @@ export function resultatBadgeSeverity(resultat: TrichineResultatAnalyse): BadgeS
     case TrichineResultatAnalyse.ANALYSE_IMPOSSIBLE:
       return 'warning';
     default:
-      // POSITIF / NON_NEGATIF / PRESENCE_PARASITE_NON_IDENTIFIE
       return 'error';
   }
 }
@@ -129,7 +106,6 @@ export function statutAnalyseBadgeSeverity(statut: TrichineStatutAnalyse): Badge
   }
 }
 
-// Résultats interdisant la consommation : retrait de la FEI possible (cf doc/trichine.md §6.1)
 export function isResultatDefavorable(resultat: TrichineResultatAnalyse | null): boolean {
   return (
     resultat === TrichineResultatAnalyse.POSITIF ||
@@ -138,10 +114,6 @@ export function isResultatDefavorable(resultat: TrichineResultatAnalyse | null):
   );
 }
 
-/**
- * Une IPM2 signifie que le SVI a statué sur la carcasse : son résultat trichine est traité.
- * Un pool reste donc à traiter tant qu'une de ses carcasses n'a pas d'IPM2.
- */
 export function poolEnAttenteIpm2(
   pool: { TrichineEchantillons: Array<{ zacharie_carcasse_id: string }> },
   carcassesAvecIpm2: Set<string>
@@ -151,7 +123,6 @@ export function poolEnAttenteIpm2(
   );
 }
 
-// Libellés courts (pour badges de liste ; resultatAnalyseLabels est trop long)
 export const resultatCourtLabels: Record<TrichineResultatAnalyse, string> = {
   [TrichineResultatAnalyse.NEGATIF]: 'Négatif',
   [TrichineResultatAnalyse.DOUTEUX]: 'Non négatif',
@@ -161,19 +132,17 @@ export const resultatCourtLabels: Record<TrichineResultatAnalyse, string> = {
   [TrichineResultatAnalyse.POSITIF]: 'Positif',
 };
 
-// Rang de sévérité (0 = pire) pour trier/agréger les résultats d'une FTP
 function resultatSeverityRank(resultat: TrichineResultatAnalyse): number {
-  if (isResultatDefavorable(resultat)) return 0; // POSITIF / NON_NEGATIF / parasite
+  if (isResultatDefavorable(resultat)) return 0;
   if (resultat === TrichineResultatAnalyse.DOUTEUX) return 1;
   if (resultat === TrichineResultatAnalyse.ANALYSE_IMPOSSIBLE) return 2;
-  return 3; // NEGATIF
+  return 3;
 }
 
 type FTPPoolResults = {
   TrichinePoolFTPs: Array<{ TrichinePool: { resultat_analyse: TrichineResultatAnalyse | null } }>;
 };
 
-// Niveau de trichine d'une FTP pour la mise en avant labo : confirmée (rouge) / suspectée (orange) / aucune
 export type TrichineNiveauFTP = 'positif' | 'douteux' | null;
 export function ftpTrichineNiveau(ftp: FTPPoolResults): TrichineNiveauFTP {
   const resultats = ftp.TrichinePoolFTPs.map((link) => link.TrichinePool.resultat_analyse);
@@ -182,7 +151,6 @@ export function ftpTrichineNiveau(ftp: FTPPoolResults): TrichineNiveauFTP {
   return null;
 }
 
-// Résumé des résultats des pools d'une FTP, regroupés par valeur, pire en premier
 export function ftpResultatsResume(
   ftp: FTPPoolResults
 ): Array<{ resultat: TrichineResultatAnalyse; count: number }> {
@@ -196,10 +164,6 @@ export function ftpResultatsResume(
     .sort((a, b) => resultatSeverityRank(a.resultat) - resultatSeverityRank(b.resultat));
 }
 
-/**
- * Libellé d'un statut apparaissant dans l'historique : la table est polymorphique et mélange
- * les valeurs des différents enums (analyse, logistique, résultat, action requise).
- */
 export function libelleStatutHistorique(valeur: string | null): string {
   if (!valeur) return '—';
   return (
@@ -211,10 +175,6 @@ export function libelleStatutHistorique(valeur: string | null): string {
   );
 }
 
-/**
- * Miroir de `isFtpPartie` côté backend : une fiche dont le colis est parti fige tout ce
- * qu'elle contient. C'est le backend qui arbitre, l'UI ne fait que masquer ce qui échouerait.
- */
 export function ftpEstPartie(ftp: {
   deleted_at: Date | null;
   statut_logistique: TrichineStatutLogistiqueFTP;
@@ -234,13 +194,8 @@ export function poolEstFige(pool: {
   return pool.TrichinePoolFTPs.some((link) => ftpEstPartie(link.TrichineFTP));
 }
 
-/**
- * Statut utilisateur (À faire / En cours / Clôturé) — règles §4.11 côté émetteur.
- */
 export type StatutUtilisateur = 'À faire' | 'En cours' | 'Clôturé';
 
-// Types structurels : les mêmes règles servent aux listes et aux pages de détail,
-// qui n'ont pas exactement la même profondeur de données.
 type PoolStatutInput = {
   statut: TrichineStatutAnalyse;
   TrichinePoolFTPs: Array<{
@@ -264,7 +219,6 @@ export function statutUtilisateurFTP(ftp: {
   statut_analytique: TrichineStatutAnalyse;
 }): StatutUtilisateur {
   if (ftp.statut_logistique === TrichineStatutLogistiqueFTP.BROUILLON) return 'À faire';
-  // Une fiche annulée n'attend plus rien de l'utilisateur ; le badge « Annulée » dit le reste
   if (ftp.statut_logistique === TrichineStatutLogistiqueFTP.ANNULEE) return 'Clôturé';
   if (
     ftp.statut_logistique === TrichineStatutLogistiqueFTP.TRAITEE &&
@@ -286,11 +240,6 @@ export function statutUtilisateurBadgeSeverity(statut: StatutUtilisateur): Badge
   }
 }
 
-/**
- * Où en est un objet trichine, en une ligne : un libellé et ce qu'il attend de l'utilisateur.
- * Les enums (suivi, logistique, analyse, résultat, type) décrivent la même progression sous
- * plusieurs angles — affichés côte à côte en badges ils se répètent sans rien apprendre.
- */
 export type EtapeTrichine = { label: string; severity: BadgeSeverity; explication: string };
 
 export function etapeFTP(ftp: {
@@ -345,7 +294,6 @@ export function etapeFTP(ftp: {
   }
 }
 
-/** Étape d'un pool ou d'un échantillon dont le laboratoire a rendu son résultat. */
 function etapeResultat(resultat: TrichineResultatAnalyse): EtapeTrichine {
   switch (resultat) {
     case TrichineResultatAnalyse.NEGATIF:
@@ -394,7 +342,6 @@ type PoolFTPLinks = {
   }>;
 };
 
-/** Où en est le colis d'un pool : pas encore de fiche, fiche en brouillon, ou fiche partie. */
 function etatFTPDuPool(pool: PoolFTPLinks): 'aucune' | 'brouillon' | 'partie' {
   const liens = pool.TrichinePoolFTPs.filter((link) => !link.TrichineFTP.deleted_at);
   if (liens.some((link) => ftpEstPartie(link.TrichineFTP))) return 'partie';
@@ -428,7 +375,6 @@ export function etapePool(
   }
 }
 
-/** Échantillon sorti de son pool par le laboratoire : jamais analysé, la carcasse est à re-prélever */
 export function estRetireParLabo(echantillon: { retire_par_labo_at: Date | string | null }): boolean {
   return !!echantillon.retire_par_labo_at;
 }
@@ -477,10 +423,6 @@ export function etapeEchantillon(echantillon: {
   }
 }
 
-/**
- * Options du filtre « Suivi » des listes : exactement les valeurs affichées dans la colonne
- * « Suivi », pour qu'un filtre et un badge ne puissent pas se contredire.
- */
 export const statutUtilisateurVues: Array<{ value: string; label: string }> = [
   { value: 'tous', label: 'Tous' },
   { value: 'a-faire', label: 'À faire' },
@@ -494,7 +436,6 @@ const statutUtilisateurParVue: Record<string, StatutUtilisateur> = {
   cloture: 'Clôturé',
 };
 
-/** Filtre une liste sur le statut utilisateur affiché dans sa colonne « Suivi ». */
 export function filterByStatutUtilisateur<Row>(
   rows: Array<Row>,
   vue: string,
@@ -504,20 +445,10 @@ export function filterByStatutUtilisateur<Row>(
   return attendu ? rows.filter((row) => statutDeLaLigne(row) === attendu) : rows;
 }
 
-/** Un pool est rattachable à une FTP s'il n'est lié à aucune FTP non supprimée. */
 export function poolSansFTP(pool: PoolStatutInput): boolean {
   return !pool.TrichinePoolFTPs.some((link) => !link.TrichineFTP.deleted_at);
 }
 
-/* -------------------------------------------------------------------------- */
-/* Helpers des tables trichine (recherche + tri client-side)                   */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Options d'un filtre de colonne construites à partir des valeurs réellement présentes :
- * inutile de proposer un laboratoire ou une FTP qui n'apparaît dans aucune ligne.
- * À préfixer par l'option « tous » du filtre.
- */
 export function optionsDepuisColonne(
   valeurs: Array<string | null | undefined>
 ): Array<{ value: string; label: string }> {
@@ -526,7 +457,6 @@ export function optionsDepuisColonne(
     .map((valeur) => ({ value: valeur, label: valeur }));
 }
 
-/** Filtre une colonne date sur une période inclusive (bornes `YYYY-MM-DD`, chacune facultative). */
 export function filterParPeriode<Row>(
   rows: Array<Row>,
   du: string,
@@ -544,7 +474,6 @@ export function filterParPeriode<Row>(
   });
 }
 
-/** Normalisation pour la recherche : minuscules, sans accents. */
 export function normalizeSearchText(value: string): string {
   return value
     .normalize('NFD')
@@ -552,7 +481,6 @@ export function normalizeSearchText(value: string): string {
     .toLowerCase();
 }
 
-/** Recherche insensible à la casse et aux accents sur le texte concaténé d'une ligne. */
 export function filterTrichineRows<T>(
   rows: Array<T>,
   query: string,
@@ -565,10 +493,6 @@ export function filterTrichineRows<T>(
 
 export type TrichineSortOrder = 'ASC' | 'DESC';
 
-/**
- * Tri générique null-safe (les valeurs nulles vont en dernier quel que soit l'ordre).
- * Les dates ISO en string se trient correctement par comparaison lexicale.
- */
 export function sortTrichineRows<T>(rows: Array<T>, sortBy: keyof T, sortOrder: TrichineSortOrder): Array<T> {
   return [...rows].sort((a, b) => {
     const valueA = a[sortBy] as unknown;
@@ -588,18 +512,10 @@ export function sortTrichineRows<T>(rows: Array<T>, sortBy: keyof T, sortOrder: 
   });
 }
 
-/**
- * Filtres de la liste des FTP côté laboratoire (§6.3), par statut logistique (= la réception) :
- * à traiter (envoyée, pas encore reçue) / en cours (reçue) / clôturées (traitée).
- *
- * On NE se base PAS sur la présence d'un résultat : une FTP de confirmation vers le LNR porte
- * déjà le résultat DOUTEUX saisi par le LVD, ce qui la classerait à tort « en cours » avant même
- * que le LNR l'ait reçue.
- */
 export type LaboFiltreTab = 'a-traiter' | 'en-cours' | 'cloturees';
 
 export function filtreLaboFTP(ftp: { statut_logistique: TrichineStatutLogistiqueFTP }): LaboFiltreTab {
   if (ftp.statut_logistique === TrichineStatutLogistiqueFTP.TRAITEE) return 'cloturees';
   if (ftp.statut_logistique === TrichineStatutLogistiqueFTP.RECUE) return 'en-cours';
-  return 'a-traiter'; // ENVOYEE (BROUILLON n'atteint jamais le labo, filtré côté backend)
+  return 'a-traiter';
 }

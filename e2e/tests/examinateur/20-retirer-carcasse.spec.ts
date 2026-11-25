@@ -27,7 +27,6 @@ test('Retirer une carcasse déjà ajoutée — compteur MAJ + transmission OK', 
   await page.getByRole('button', { name: 'Pierre Petit' }).click();
   await page.getByRole('button', { name: 'Continuer' }).first().click();
 
-  // Ajouter 2 carcasses
   for (let i = 0; i < 2; i++) {
     await page.getByRole('button', { name: 'Ajouter une carcasse' }).click();
     await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Daim');
@@ -35,7 +34,6 @@ test('Retirer une carcasse déjà ajoutée — compteur MAJ + transmission OK', 
     await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
   }
 
-  // Supprimer la 1ère via la modale d'édition (plus de corbeille ni window.confirm).
   await expect(page.getByRole('button', { name: /Daim N°/ })).toHaveCount(2, { timeout: 5000 });
   await page
     .getByRole('button', { name: /Daim N°/ })
@@ -47,6 +45,5 @@ test('Retirer une carcasse déjà ajoutée — compteur MAJ + transmission OK', 
     .getByRole('button', { name: 'Supprimer' })
     .click();
 
-  // Il reste 1 carcasse
   await expect(page.getByRole('button', { name: /Daim N°/ })).toHaveCount(1, { timeout: 5000 });
 });

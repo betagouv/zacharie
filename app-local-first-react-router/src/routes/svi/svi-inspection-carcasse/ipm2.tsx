@@ -61,7 +61,6 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
   const allCarcasses = useZustandStore((state) => state.carcasses);
   const carcasse = allCarcasses[params.zacharie_carcasse_id!];
   const transmission = useGetTransmissionFromCarcasse(carcasse);
-  // on ne met à jour que les carcasses du même groupe de transmission
   const carcasseIds = transmission.carcasses
     .filter(
       (c) =>
@@ -70,7 +69,6 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
     )
     .map((c) => c.zacharie_carcasse_id);
 
-  // Suggestion de décision selon le résultat trichine LNR (cf doc/trichine.md §6.2)
   const trichineConcernee = TRICHINE_FEATURE_ENABLED && carcasse.espece === 'Sanglier';
   const trichine = useTrichineResultat(carcasse.zacharie_carcasse_id, trichineConcernee);
 
@@ -276,7 +274,6 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
       carcasse_intermediaire_id: null,
     });
     syncData('svi-ipm2-edit');
-    // TODO: vérifier qu'elles sont réellement bien enregistrées
     alert('IPM2 enregistrée');
   }
 
@@ -284,9 +281,6 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
     if (!canEdit) {
       return false;
     }
-    // if (carcasse.svi_ipm2_signed_at) {
-    //   return false;
-    // }
     if (carcasse.svi_ipm1_decision === IPM1Decision.ACCEPTE) {
       return false;
     }
@@ -434,7 +428,6 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
                 min: 0,
                 required: true,
                 value: sviIpm2NombreAnimaux ?? '',
-                // max: Number(carcasse.nombre_d_animaux),
                 onChange: (e) => {
                   setSviIpm2NombreAnimaux(Number(e.target.value));
                 },

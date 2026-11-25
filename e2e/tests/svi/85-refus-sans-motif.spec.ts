@@ -21,17 +21,14 @@ test("85 - SVI tente d'enregistrer IPM1 MISE_EN_CONSIGNE sans motif/lésions : b
   await carcasseBtn.click();
   await expect(page).toHaveURL(/\/app\/svi\/carcasse-svi\//);
 
-  // Date seulement
   const dateShortcut = page.getByRole('button', { name: /Cliquez ici/ }).first();
   await dateShortcut.scrollIntoViewIfNeeded();
   await dateShortcut.click();
 
-  // Default decision is "Mise en consigne" — try to save without pièces/lésions/durée
   const saveBtn = page.getByRole('button', { name: 'Enregistrer' }).first();
   await saveBtn.scrollIntoViewIfNeeded();
   await saveBtn.click();
 
-  // Validation error should appear (missing pièces or lésions or durée)
   await expect(
     page.getByText(/Il manque les pièces inspectées|Il manque les lésions|Il manque la durée/i).first()
   ).toBeVisible({ timeout: 10000 });

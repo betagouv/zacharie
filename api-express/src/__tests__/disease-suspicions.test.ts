@@ -37,9 +37,6 @@ function carcasse(overrides: Partial<CarcasseLike> = {}): CarcasseLike {
   };
 }
 
-// Le mapping maladie ↔ anomalie repose sur des valeurs exactes du référentiel. Si une
-// anomalie est renommée côté front sans être répercutée ici, la détection s'éteindrait
-// en silence : ce test est le garde-fou.
 describe('cohérence avec le référentiel', () => {
   test('toutes les anomalies surveillées existent encore dans gros.json', () => {
     const existantes = canonicalsOf('gros.json');

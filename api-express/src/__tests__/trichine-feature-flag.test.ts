@@ -3,8 +3,6 @@ import request from 'supertest';
 import { describe, test, expect, vi } from 'vitest';
 import { requireTrichineFeature } from '~/middlewares/trichine-feature';
 
-// Sans VITE_FEATURE_TRICHINE (cas de la production), les routes trichine n'existent pas.
-
 vi.mock('~/config', async (importOriginal) => ({
   ...(await importOriginal<typeof import('~/config')>()),
   TRICHINE_FEATURE_ENABLED: false,

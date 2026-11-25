@@ -256,7 +256,6 @@ export default function TrichineFTPs() {
             ...sortProps,
             render: (ftp) => (ftp.date_envoi ? dayjs(ftp.date_envoi).format('DD/MM/YYYY') : '—'),
           },
-          // dataKey arbitraire (clé de colonne unique) : la cellule est rendue via render()
           {
             dataKey: 'statut_analytique',
             title: 'Résultats',

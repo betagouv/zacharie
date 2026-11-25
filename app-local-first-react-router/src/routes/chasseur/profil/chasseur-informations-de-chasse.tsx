@@ -131,9 +131,6 @@ export default function MesInformationsDeChasse({
                     method="POST"
                     onSubmit={(e) => e.preventDefault()}
                   >
-                    {/* <h3 className="inline-flex items-center text-lg font-semibold text-gray-900">
-                      <span>Examen initial</span>
-                    </h3> */}
                     <RadioButtons
                       legend="Êtes-vous formé à l'examen initial ? *"
                       orientation="horizontal"
@@ -184,7 +181,6 @@ export default function MesInformationsDeChasse({
                           id: Prisma.UserScalarFieldEnum.numero_cfei,
                           name: Prisma.UserScalarFieldEnum.numero_cfei,
                           onBlur: () => {
-                            // rien saisi de nouveau : pas d'enregistrement inutile
                             if (numeroCfei === (user.numero_cfei ?? '')) return;
                             handleUserSubmit({ isExaminateurInitial, numeroCfei, visibilityChecked });
                           },

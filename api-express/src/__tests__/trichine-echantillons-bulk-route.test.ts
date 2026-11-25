@@ -5,13 +5,6 @@ import { TrichineResultatAnalyse, TrichineSitePrelevement, TrichineType, UserRol
 import trichineRouter from '~/controllers/trichine';
 import prisma from '~/prisma';
 
-// POST /trichine/echantillons — prélèvement en lot (assistant SVI).
-// Contrat épinglé ici :
-//  - tout ou rien : une seule carcasse invalide fait échouer le lot entier, sans rien créer ;
-//  - le SVI ne prélève que sur les carcasses de son périmètre (assignées à son service, ou
-//    déjà arrivées chez un ETG rattaché et pas encore transmises) ;
-//  - les références sont consécutives et calculées en une lecture, pas une par échantillon.
-
 vi.mock('~/utils/trichine-status', () => ({
   recomputeCarcasseTrichine: vi.fn().mockResolvedValue(undefined),
   recomputeFTPTrichine: vi.fn().mockResolvedValue(undefined),
@@ -35,8 +28,6 @@ const makeCarcasse = (id: string, overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-// prisma.carcasse.findMany est appelé deux fois par la route : la lecture des carcasses du lot,
-// puis le calcul du périmètre SVI (carcasses accessibles parmi les ids demandés).
 const mockCarcasses = (
   carcasses: Array<ReturnType<typeof makeCarcasse>>,
   accessibleIds: Array<string> = carcasses.map((carcasse) => carcasse.zacharie_carcasse_id)
@@ -46,8 +37,6 @@ const mockCarcasses = (
     .mockResolvedValueOnce(accessibleIds.map((id) => ({ zacharie_carcasse_id: id })) as never);
 };
 
-// La route relit les analyses déjà ouvertes sur chaque carcasse : un complémentaire exige un
-// pool douteux, un initial exige qu'aucune analyse ne soit en cours.
 const mockAnalyses = (
   pools: Array<{ zacharie_carcasse_id: string; resultat_analyse: TrichineResultatAnalyse | null }>
 ) => {
@@ -103,14 +92,12 @@ describe('POST /trichine/echantillons', () => {
       .send(body(['c1', 'c2', 'c3']));
 
     expect(res.status).toBe(200);
-    // références consécutives (l'année courante préfixe la séquence)
     const references = res.body.data.echantillons.map(
       (echantillon: { reference_echantillon: string }) => echantillon.reference_echantillon
     );
     expect(references).toHaveLength(3);
     const sequences = references.map((reference: string) => Number(reference.split('-')[2]));
     expect(sequences).toEqual([sequences[0], sequences[0] + 1, sequences[0] + 2]);
-    // une lecture pour toute la séquence, pas une par échantillon
     expect(prisma.trichineEchantillon.findFirst).toHaveBeenCalledTimes(1);
   });
 
@@ -126,8 +113,6 @@ describe('POST /trichine/echantillons', () => {
     expect(prisma.trichineEchantillon.create).not.toHaveBeenCalled();
   });
 
-  // Le SVI prélève à l'arrivage : une carcasse déjà chez un ETG rattaché mais pas encore
-  // transmise (svi_entity_id nul) fait partie de son périmètre.
   test('carcasse arrivée chez un ETG rattaché mais non transmise → prélèvement accepté', async () => {
     vi.mocked(prisma.entity.findMany).mockResolvedValue([
       { id: 'entity-etg', nom_d_usage: 'ETG du coin', raison_sociale: null },
@@ -140,7 +125,6 @@ describe('POST /trichine/echantillons', () => {
       .send(body(['c1']));
 
     expect(res.status).toBe(200);
-    // le périmètre interrogé couvre les deux cas : assignée au service, ou à venir chez l'ETG
     const perimetre = vi.mocked(prisma.carcasse.findMany).mock.calls[1][0]!.where as {
       OR: Array<Record<string, unknown>>;
     };
@@ -176,7 +160,6 @@ describe('POST /trichine/echantillons', () => {
     expect(prisma.trichineEchantillon.create).not.toHaveBeenCalled();
   });
 
-  // 2e intention : le lot porte un type et sa masse réglementaire par défaut
   test('type COMPLEMENTAIRE → masse par défaut de 20 g', async () => {
     mockCarcasses([makeCarcasse('c1')]);
     mockAnalyses([{ zacharie_carcasse_id: 'c1', resultat_analyse: TrichineResultatAnalyse.DOUTEUX }]);
@@ -193,7 +176,6 @@ describe('POST /trichine/echantillons', () => {
     });
   });
 
-  // Un prélèvement n'ouvre une analyse que s'il y a une analyse à ouvrir
   test('complémentaire sans pool douteux → 400, rien créé', async () => {
     mockCarcasses([makeCarcasse('c1')]);
     mockAnalyses([{ zacharie_carcasse_id: 'c1', resultat_analyse: TrichineResultatAnalyse.NEGATIF }]);
@@ -221,7 +203,6 @@ describe('POST /trichine/echantillons', () => {
     expect(prisma.trichineEchantillon.create).not.toHaveBeenCalled();
   });
 
-  // Analyse impossible = analyse inexistante : le SVI doit pouvoir reprélever
   test('prélèvement initial après une analyse impossible → accepté', async () => {
     mockCarcasses([makeCarcasse('c1')]);
     mockAnalyses([

@@ -5,10 +5,6 @@ import { describe, test, expect, vi, beforeAll, beforeEach, afterEach } from 'vi
 import { capture } from '~/third-parties/sentry';
 import { catchErrors, errorHandlers } from '~/middlewares/errors';
 
-// Les refus attendus de l'API publique v1 (clé non autorisée, demande d'accès absente ou non
-// approuvée, paramètres invalides) posent leur code via res.status(4xx) puis next(error) :
-// ils ne remontent pas à Sentry. Les 5xx remontent, une seule fois.
-
 vi.mock('~/third-parties/sentry', () => ({
   capture: vi.fn(),
   pickSafeHeaders: (headers: unknown) => headers,
@@ -29,7 +25,6 @@ beforeAll(() => {
 beforeEach(() => {
   vi.clearAllMocks();
   sentEvents.length = 0;
-  // en environnement de test, sendError se contente de logger
   vi.stubEnv('NODE_ENV', 'production');
 });
 

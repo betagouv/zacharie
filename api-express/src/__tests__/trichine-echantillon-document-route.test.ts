@@ -6,11 +6,6 @@ import laboratoireRouter from '~/controllers/laboratoire';
 import prisma from '~/prisma';
 import { getFromCellar, uploadToCellar } from '~/third-parties/cellar';
 
-// Documents joints par le laboratoire à un échantillon d'un pool reçu.
-// Contrat épinglé ici : dépôt et téléchargement réservés au laboratoire destinataire du pool,
-// pas de nouveau dépôt sur un échantillon retiré du pool (ses documents restent téléchargeables),
-// et le document est toujours cherché sur cet échantillon, pas sur son seul id.
-
 vi.mock('~/third-parties/cellar', () => ({
   IS_CELLAR_CONFIGURED: true,
   getFromCellar: vi.fn(),

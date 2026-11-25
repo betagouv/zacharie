@@ -13,27 +13,16 @@ export default function PageNotFound() {
   const user = useUser((state) => state.user);
   const pathWithoutTrailingPunctuation = getPathWithoutTrailingPunctuation(window.location.pathname);
 
-  // Ce 404 est un rendu silencieux : sans report explicite il est invisible
-  // dans Sentry et noyé dans Matomo. On logge le chemin + la plateforme pour
-  // identifier les URLs fautives (initial-path périmé côté natif vs liens
-  // d'email ouverts dans le navigateur).
   useEffect(() => {
     const { pathname, search, hash } = window.location;
-    // Lien suivi de sa ponctuation (`/)`) : on corrige l'URL sans rien remonter.
     if (pathWithoutTrailingPunctuation) {
       navigate(pathWithoutTrailingPunctuation + search + hash, { replace: true });
       return;
     }
     const platform = window.ReactNativeWebView ? 'native' : 'web';
-    // navigation.type distingue un cold-start (`navigate`) d'un reload ou d'un
-    // back/forward : un `navigate` + `referrer` vide en natif = signature d'un
-    // `initial-path` périmé rejoué au démarrage (cf. réparation plus bas).
     const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
     trackEvent('error', '404', pathname + search);
     if (isBotPath(pathname)) return;
-    // L'identité (id/rôle) est déjà attachée globalement via Sentry.setUser
-    // dans App.tsx. Ici on ajoute le contexte propre à la route : des tags
-    // filtrables/groupables dans l'UI + le userAgent (version app native / OS).
     capture('PageNotFound 404', {
       tags: {
         error_404: 'true',
@@ -51,11 +40,6 @@ export default function PageNotFound() {
     });
   }, [user, navigate, pathWithoutTrailingPunctuation]);
 
-  // Auto-réparation côté natif : l'app Expo rejoue au démarrage un `initial-path`
-  // figé en AsyncStorage qui peut pointer vers une route supprimée (ex.
-  // `/app/tableau-de-bord`, retiré en #391) -> 404 au cold start. Plutôt que
-  // d'afficher le 404, on renvoie l'utilisateur vers sa vraie destination et on
-  // réécrit le `initial-path` stocké pour que le bug ne se reproduise plus.
   useEffect(() => {
     if (!window.ReactNativeWebView) return;
     if (pathWithoutTrailingPunctuation) return;

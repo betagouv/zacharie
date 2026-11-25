@@ -36,7 +36,6 @@ function spaManifestPlugin(): Plugin {
           } else if (entry.isFile()) {
             if (entry.name === 'spa-manifest.json') continue;
             if (entry.name.endsWith('.DS_Store')) continue;
-            // Normalize path separators to forward slashes for JSON
             files.push('/' + relativePath.split(path.sep).join('/'));
           }
         }
@@ -64,11 +63,9 @@ function spaManifestPlugin(): Plugin {
 const buildId = JSON.stringify(`${dayjs().format('DD-MM-YYYY')} vers ${dayjs().format('HH')}:00`);
 process.env.VITE_BUILD_ID = buildId;
 
-// https://vitejs.dev/config/
 export default defineConfig({
   base: '/',
   optimizeDeps: {
-    // noDiscovery: true,
     include: ['@prisma/client'],
   },
   plugins: [
@@ -78,17 +75,15 @@ export default defineConfig({
       project: 'zacharie-vite-react-router-spa',
       url: 'https://sentry.incubateur.net',
       telemetry: false,
-      // actif seulement sur le build Clever, qui a SENTRY_AUTH_TOKEN
       disable: !process.env.SENTRY_AUTH_TOKEN,
       release: { name: JSON.parse(buildId) },
-      // les sourcemaps partent sur Sentry, elles ne sont pas servies aux utilisateurs
       sourcemaps: { filesToDeleteAfterUpload: ['build/**/*.map'] },
     }),
     !process.env.VITEST ? checker({ typescript: true }) : undefined,
     VitePWA({
-      strategies: 'injectManifest', // This tells the plugin to use our custom Service Worker file.
+      strategies: 'injectManifest',
       srcDir: 'src',
-      filename: 'service-worker.ts', // next to entry-client.ts
+      filename: 'service-worker.ts',
       registerType: 'autoUpdate',
       injectRegister: false,
       pwaAssets: {
@@ -134,13 +129,8 @@ export default defineConfig({
         ],
       },
       injectManifest: {
-        // This configuration tells the plugin to include all js, css, html, ico, png, svg, woff2 and webp files in the precache manifest.
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,webp}'],
         maximumFileSizeToCacheInBytes: 100 * 1024 * 1024,
-        // injectionPoint: undefined,
-        // rollupFormat: "es",
-        // swDest: "build-spa/client/main-sw.js",
-        // swSrc: "build-spa/client/main-sw.mjs",
       },
       devOptions: {
         enabled: true,
@@ -149,32 +139,12 @@ export default defineConfig({
         navigateFallbackAllowlist: [/^\/$/],
         type: 'module',
       },
-      // workbox: {
-      //   globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-      //   runtimeCaching: [
-      //     {
-      //       urlPattern: /^https:\/\/api\.zacharie\.beta\.gouv\.fr\//,
-      //       handler: "NetworkFirst",
-      //       options: {
-      //         cacheName: "api-v2-cache",
-      //         expiration: {
-      //           maxEntries: 100,
-      //           // maxAgeSeconds: 60 * 60 * 24, // 1 day
-      //           maxAgeSeconds: 60, // 1 minute
-      //         },
-      //       },
-      //     },
-      //   ],
-      // },
     }),
     tailwindcss(),
     spaManifestPlugin(),
   ],
   build: {
     outDir: 'build',
-    // 'hidden' : pas de commentaire sourceMappingURL dans les bundles.
-    // Les sourcemaps doublent la RAM du build (2,4 Go vs 1,2 Go de pic) :
-    // le build Clever a besoin d'un CC_BUILD_FLAVOR d'au moins M.
     sourcemap: 'hidden',
   },
   resolve: {

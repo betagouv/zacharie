@@ -14,7 +14,6 @@ interface SearchInputProps {
   type?: string;
 }
 
-// Debounce function will be created inside the component
 export default function SearchInput({ className, id, type }: SearchInputProps) {
   const [value, setValue] = useState('');
   const [cachedValue, setCachedValue] = useState(value);
@@ -53,7 +52,6 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
       setValue(cachedValue);
       return;
     }
-    // La recherche est locale donc synchrone : le loader couvre le debounce, pas la recherche.
     setIsLoading(true);
 
     searchDebounce.current = setTimeout(() => {
@@ -67,8 +65,6 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
       const { carcasses, feis, carcassesIntermediaireById } = useZustandStore.getState();
       const data = searchLocally(cachedValue, user, carcasses, feis, carcassesIntermediaireById);
       setIsLoading(false);
-      // Une recherche stabilisée (debounce 500ms) : on suit l'usage + si elle aboutit ou non.
-      // RGPD : on n'envoie jamais le contenu tapé, seulement le résultat trouvé/vide.
       trackFeature('header-recherche', data.data?.length ? 'resultat-trouve' : 'resultat-vide');
       if (data.data?.length) {
         setSuccessData(data.data);

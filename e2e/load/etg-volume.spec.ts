@@ -1,9 +1,6 @@
 import { test, expect, type Page, type CDPSession } from '@playwright/test';
 import { connectWith } from '../utils/connect-with';
 
-// Mesure l'app d'un ETG avec un gros historique. Lancer d'abord load/populate-volume.ts avec le même
-// CARCASSES. Chaque étape note : la durée, le temps bloqué par les tâches longues (> 50 ms) du thread
-// principal, la plus longue d'entre elles, et la mémoire JS.
 const CARCASSES = Number(process.env.CARCASSES ?? 10000);
 const CARCASSES_PAR_FICHE = 4;
 const COPIES = Math.ceil(CARCASSES / CARCASSES_PAR_FICHE) - 1;
@@ -51,7 +48,6 @@ test(`ETG avec ${TOTAL} carcasses`, async ({ page }) => {
   });
   const cdp = await page.context().newCDPSession(page);
   await cdp.send('Performance.enable');
-  // le compteur de fiches n'apparaît qu'une fois toutes les données chargées dans le store
   const totalBadge = page.getByText(`${FICHES} fiches`, { exact: true }).filter({ visible: true }).first();
 
   console.log('connexion…');
@@ -62,8 +58,6 @@ test(`ETG avec ${TOTAL} carcasses`, async ({ page }) => {
     await expect(totalBadge).toBeVisible({ timeout: STEP_TIMEOUT });
   });
 
-  // Après le téléchargement, le store écrit tous les enregistrements dans IndexedDB en une transaction.
-  // Une transaction en lecture seule n'obtient la main qu'une fois cette écriture terminée.
   await mesurer(page, cdp, 'écriture dans IndexedDB (après le chargement)', async () => {
     await page.evaluate(
       () =>

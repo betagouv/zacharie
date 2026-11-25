@@ -4,19 +4,6 @@ import { connectWith } from '../../utils/connect-with';
 import { ajouterVenteDon } from '../../utils/vente-don';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
-// Scenario 128 — Écriture cross-branche via l'API.
-// Dispatch 2+2 vers ETG 1 et ETG 2, puis, connecté en ETG 1, tentative d'écriture sur une carcasse
-// de la branche ETG 2.
-//
-// La cible a changé : ce spec visait `POST /carcasse/:feiNumero/:zacharieCarcasseId`, qui n'existe
-// plus — toutes les écritures de carcasse passent par `/sync`. Il était `skip` en attendant que le
-// backend pose un contrôle de propriété ; c'est fait, et il garde maintenant les deux moitiés du
-// contrat :
-//   - le refus est effectif ET remonté par item dans `data.rejected`, pour que le client cesse de
-//     repousser au lieu de boucler indéfiniment sur un `is_synced = false` ;
-//   - une écriture légitime de la même forme passe toujours (pas de faux refus), et une erreur
-//     technique reste absente de `rejected` donc réessayable.
-
 test.setTimeout(180_000);
 
 test.use({ launchOptions: { slowMo: 100 } });
@@ -35,10 +22,7 @@ async function jwtCookie(page: import('@playwright/test').Page) {
   return `zacharie_express_jwt=${cookie!.value}`;
 }
 
-// Les carcasses visibles de la fiche pour l'utilisateur connecté : c'est le périmètre de lecture,
-// que l'écriture doit désormais épouser exactement.
 async function getCarcasses(page: import('@playwright/test').Page, cookie: string) {
-  // GET /carcasse est paginé et exige les 4 paramètres, comme le fait le client (load-carcasses.ts).
   const res = await page.request.get(`${API_BASE}/carcasse`, {
     headers: { Cookie: cookie },
     params: { page: '0', after: '0', limit: '5000', withDeleted: 'true' },
@@ -62,25 +46,18 @@ async function sync(page: import('@playwright/test').Page, cookie: string, body:
 }
 
 test("Écriture /sync sur une carcasse d'une autre branche → refusée et reportée", async ({ page }) => {
-  // 1. Le PD dispatche 2+2 vers ETG 1 et ETG 2 (viewport mobile)
   await page.setViewportSize({ width: 350, height: 667 });
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
 
-  // Select ETG 1 for group 1
   await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris' });
 
-  // Add second group
-  // Move 2 carcasses to group 2
-  // Select ETG 2 for group 2
-  // Transmettre
   await ajouterVenteDon(page, { destinataire: 'ETG 2 - 75000 Paris', carcasses: [0, 1] });
   const transmettreBtn = page.getByRole('button', { name: /Transmettre/ });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
   await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 15000 });
 
-  // 2. ETG 2 prend en charge, puis on relève son périmètre
   await page.setViewportSize({ width: 1280, height: 900 });
   await logoutAndConnect(page, 'etg-2@example.fr');
   await page.getByRole('link', { name: feiId }).click();
@@ -90,7 +67,6 @@ test("Écriture /sync sur une carcasse d'une autre branche → refusée et repor
   });
   const perimetreEtg2 = await carcassesVisibles(page, await jwtCookie(page));
 
-  // 3. ETG 1 prend en charge sa branche, puis on relève son périmètre
   await logoutAndConnect(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await page.getByRole('button', { name: 'Prendre en charge' }).click();
@@ -100,14 +76,11 @@ test("Écriture /sync sur une carcasse d'une autre branche → refusée et repor
   const cookieEtg1 = await jwtCookie(page);
   const perimetreEtg1 = await carcassesVisibles(page, cookieEtg1);
 
-  // On déduit les cibles des périmètres réels plutôt que de coder en dur des numéros de marquage :
-  // l'ordre du dispatch a déjà changé une fois et avait laissé ce spec avec un commentaire faux.
   const carcasseAutreBranche = perimetreEtg2.find((id) => !perimetreEtg1.includes(id));
   const carcasseSienne = perimetreEtg1[0];
   expect(carcasseAutreBranche, 'le dispatch 2+2 devrait laisser des carcasses hors périmètre').toBeTruthy();
   expect(carcasseSienne, "l'ETG 1 devrait avoir ses propres carcasses").toBeTruthy();
 
-  // 4. ETG 1 tente d'écrire sur la carcasse de la branche ETG 2
   const attaque = await sync(page, cookieEtg1, {
     carcasses: [
       {
@@ -126,10 +99,8 @@ test("Écriture /sync sur une carcasse d'une autre branche → refusée et repor
       reason: "Vous n'avez pas accès à cette carcasse",
     },
   ]);
-  // Rien n'est renvoyé pour cette carcasse : ce serait exposer la branche d'en face.
   expect(attaque.body.data.carcasses).toEqual([]);
 
-  // 5. L'écriture n'a pas eu lieu : ETG 2 relit et retrouve sa valeur d'origine
   await logoutAndConnect(page, 'etg-2@example.fr');
   const relecture = await getCarcasses(page, await jwtCookie(page));
   const carcasseApres = relecture.find(
@@ -137,7 +108,6 @@ test("Écriture /sync sur une carcasse d'une autre branche → refusée et repor
   ) as { intermediaire_carcasse_refus_motif?: string | null };
   expect(carcasseApres.intermediaire_carcasse_refus_motif).not.toBe('motif-test');
 
-  // 6. Contrôle anti-faux-refus : la même écriture, sur sa propre carcasse, passe
   await logoutAndConnect(page, 'etg-1@example.fr');
   const cookieEtg1Bis = await jwtCookie(page);
   const legitime = await sync(page, cookieEtg1Bis, {
@@ -154,8 +124,6 @@ test("Écriture /sync sur une carcasse d'une autre branche → refusée et repor
   expect(legitime.body.data.carcasses).toHaveLength(1);
   expect(legitime.body.data.carcasses[0].intermediaire_carcasse_refus_motif).toBe('motif-test');
 
-  // 7. Une erreur technique n'est PAS un refus : elle reste hors de `rejected` pour que le client
-  // réessaie. Sans cette distinction, un aléa côté base ferait abandonner la saisie de l'utilisateur.
   const transitoire = await sync(page, cookieEtg1Bis, {
     carcasses: [{ fei_numero: 'ZACH-FICHE-INEXISTANTE', zacharie_carcasse_id: 'ZC-INEXISTANTE' }],
   });

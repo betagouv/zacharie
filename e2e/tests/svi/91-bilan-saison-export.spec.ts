@@ -10,7 +10,6 @@ test.beforeEach(async () => {
   await resetDb('SVI_CLOSED');
 });
 
-// Scenario 91 — Bilan des anomalies de fin de saison (calque DGAL) pré-rempli avec les données Zacharie
 test('91 - Le SVI exporte le bilan de saison, une ligne par ETG et par espèce', async ({ page }) => {
   await connectWith(page, 'svi@example.fr');
   await expect(page).toHaveURL(/\/app\/svi/);
@@ -38,7 +37,6 @@ test('91 - Le SVI exporte le bilan de saison, une ligne par ETG et par espèce',
       defval: '',
     }
   );
-  // 7 groupes d'espèces du calque pour l'unique ETG du seed.
   expect(rows).toHaveLength(7);
   const rowOf = (espece: string) => rows.find((row) => row['Espèce'] === espece);
 
@@ -50,7 +48,6 @@ test('91 - Le SVI exporte le bilan de saison, une ligne par ETG et par espèce',
     'Nbre de saisies partielles': 0,
     'Nbre de saisies totales': 0,
   });
-  // Petit gibier : le lot de 10 pigeons compte pour 10 animaux.
   expect(rowOf('Petit gibier à plumes')).toMatchObject({
     'Nbre de carcasses réceptionnées': 10,
     'Nbre de carcasses contrôlées': 10,

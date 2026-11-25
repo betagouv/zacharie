@@ -2,13 +2,6 @@ import { type CustomError } from '~/types/error';
 import { capture, pickSafeHeaders } from '../third-parties/sentry.js';
 import type express from 'express';
 import type { RequestWithUser } from '~/types/request';
-/*
-  Catch Errors Handler
-
-  With async/await, you need some way to catch errors
-  Instead of using try{} catch(e) {} in each controller, we wrap the function in
-  catchErrors(), catch any errors they throw, and pass it along to our express middleware with next()
-*/
 type MiddlewareFn<T extends express.Request> = (
   req: T,
   res: express.Response,
@@ -21,11 +14,6 @@ function catchErrors<T extends express.Request>(fn: MiddlewareFn<T>) {
   };
 }
 
-/*
-  Not Found Error Handler
-
-  If we hit a route that is not found, we mark it as 404 and pass it along to the next error handler to display
-*/
 const notFound = (
   req: express.Request | RequestWithUser,
   _res: express.Response,
@@ -37,13 +25,7 @@ const notFound = (
   next(customError);
 };
 
-/*
-  Development Error Handler
-
-  In development we show good error messages so if we hit a syntax error or any other previously un-handled error, we can show good info on what happened
-*/
 const sendError = (
-  // TODO: Check this error type
   err: CustomError,
   req: express.Request | RequestWithUser,
   res: express.Response,
@@ -51,11 +33,7 @@ const sendError = (
 ) => {
   const { body, query, params, route, method, originalUrl, headers } = req;
   const { appversion, appbuild, appdevice } = headers;
-  // body-parser (et les erreurs créées avec un status) portent leur code HTTP dans err.status,
-  // les contrôleurs le posent via res.status() avant next(error)
   const status = (err as { status?: number }).status ?? (res.statusCode >= 400 ? res.statusCode : 500);
-  // requête coupée par le client (onglet fermé, perte réseau, sync annulé), JSON invalide
-  // (souvent des robots scanners) ou body trop gros : ce ne sont pas des erreurs serveur
   const clientError =
     status < 500 ||
     ['request.aborted', 'entity.parse.failed', 'entity.too.large'].includes(
@@ -86,7 +64,6 @@ const sendError = (
     });
   }
 
-  // les 406 portent souvent un message zod brut : on ne l'affiche pas à l'utilisateur
   if (err.message.includes("Can't reach database server") || status === 406 || status >= 500) {
     return res.status(status).send({
       ok: false,
@@ -101,9 +78,6 @@ const sendError = (
   });
 };
 
-// Pas de Sentry.Handlers.errorHandler() : il lit le code HTTP sur err.status uniquement, et les
-// contrôleurs le posent via res.status() avant next(error) : il enverrait chaque refus 4xx
-// (API v1 notamment) comme une erreur 500. sendError capture lui-même les vraies erreurs serveur.
 const errorHandlers = [sendError];
 
 export { catchErrors, notFound, sendError, errorHandlers };

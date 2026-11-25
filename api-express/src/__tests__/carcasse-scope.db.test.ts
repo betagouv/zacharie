@@ -8,14 +8,8 @@ import {
   getCarcasseScopeBranches,
 } from '~/utils/carcasse-access';
 
-// getCarcasseScopeBranches réécrit en SQL brut le périmètre de getCarcasseAccessWhere. Ici, sur une
-// vraie base, les deux doivent renvoyer les mêmes carcasses dans le même ordre, page après page, pour
-// chaque rôle. En CI, VITEST_DB_URL pointe sur la base du job `checks` ; en local, le test est sauté
-// sauf si VITEST_DB_URL est posée sur une base jetable (il y écrit puis supprime ses lignes).
 const VITEST_DB_URL = process.env.VITEST_DB_URL;
 
-// Une seule connexion : le fuseau posé par SET en beforeAll vaut pour toutes les requêtes du test,
-// sans toucher la base partagée avec les autres fichiers de test.
 vi.mock('~/prisma', async () => {
   const { PrismaClient: Client } = await vi.importActual<typeof import('@prisma/client')>('@prisma/client');
   if (!process.env.VITEST_DB_URL) return { default: new Client() };
@@ -55,7 +49,6 @@ const ROWS: Record<string, Row> = {
   'les-trois': { ms: 50, ci: ['E1'], next: 'E2', current: 'E1' },
   autre: { ms: 60, ci: ['AUTRE'], next: 'AUTRE', current: 'AUTRE', prev: 'AUTRE', svi: 'AUTRE' },
   supprimee: { ms: 70, ci: ['E1'], current: 'E1', svi: 'E1', sviAssigned: true, deleted: true },
-  // même updated_at : l'id départage
   'egalite-a': { ms: 80, ci: ['E1'] },
   'egalite-b': { ms: 80, next: 'E2' },
   'egalite-c': { ms: 80, current: 'E1' },
@@ -77,8 +70,6 @@ const ROWS: Record<string, Row> = {
   'svi-autre': { ms: 240, svi: 'AUTRE', sviAssigned: true },
   'svi-e2': { ms: 250, svi: 'E2', sviAssigned: true },
   'next-e2-transmise': { ms: 260, next: 'E2', role: FeiOwnerRole.PREMIER_DETENTEUR },
-  // deux passages par la même entité : une seule fois dans le pull. Sans dédoublonnage avant le LIMIT
-  // de la branche, la page de 2 lignes serait ce doublon, et ci-e2-juste-apres serait sautée.
   'ci-e2-juste-apres': { ms: 265, ci: ['E2'] },
   'ci-e1-deux-fois': { ms: 270, ci: ['E1', 'E1'] },
 };
@@ -103,8 +94,6 @@ describe.skipIf(!VITEST_DB_URL)('périmètre des carcasses en SQL brut sur une v
   }
 
   beforeAll(async () => {
-    // Les triggers viennent des migrations : la base doit être créée par `prisma migrate deploy`.
-    // Fuseau de session différent d'UTC : les bornes de dates du SQL brut doivent rester justes.
     await prisma.$executeRawUnsafe(`SET timezone TO 'Pacific/Auckland'`);
     const [{ timezone }] = await prisma.$queryRaw<
       Array<{ timezone: string }>
@@ -152,8 +141,6 @@ describe.skipIf(!VITEST_DB_URL)('périmètre des carcasses en SQL brut sur une v
           },
         });
       }
-      // updated_at posé en dernier : @updatedAt l'écraserait à chaque écriture Prisma. Le trigger
-      // carcasse_updated_at_to_intermediaires le recopie sur les CarcasseIntermediaire.
       await prisma.$executeRaw`UPDATE "Carcasse" SET updated_at = ${at(row.ms)} WHERE zacharie_carcasse_id = ${id(suffix)}`;
     }
   });
@@ -171,7 +158,6 @@ describe.skipIf(!VITEST_DB_URL)('périmètre des carcasses en SQL brut sur une v
     let cursor: { updatedAt: Date; id: string } | undefined;
     for (;;) {
       const { carcasses, hasMore } = await findScopeCarcassesPage({ branches, ...options, cursor, limit: 2 });
-      // seulement les carcasses du test : la base peut en contenir d'autres
       ids.push(
         ...carcasses
           .map((carcasse) => carcasse.zacharie_carcasse_id)
@@ -259,7 +245,6 @@ describe.skipIf(!VITEST_DB_URL)('périmètre des carcasses en SQL brut sur une v
     );
   });
 
-  // En dernier : modifie des lignes partagées par les tests précédents.
   describe('copie de Carcasse.updated_at sur CarcasseIntermediaire (triggers)', () => {
     async function intermediaires(suffix: string) {
       return prisma.carcasseIntermediaire.findMany({ where: { zacharie_carcasse_id: id(suffix) } });

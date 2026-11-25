@@ -3,13 +3,6 @@ import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
-// Scenario 166 — Chemin critique trichine du circuit agréé, résultat négatif.
-// Seed SVI_SANGLIERS : la fiche ZACH-20250707-QZ6E0-185242 est chez le SVI 1 (svi@example.fr) avec trois
-// sangliers sans prélèvement (MM-001-001, MM-001-002, MM-001-004). laboratoire@example.fr travaille pour
-// « Laboratoire 1 » (LVD, Moulins).
-// Le SVI ne peut pas accepter un sanglier sans résultat négatif ; il prélève, regroupe en un pool, envoie
-// la FTP au LVD ; le LVD réceptionne et rend un résultat négatif ; le SVI peut alors accepter.
-
 test.setTimeout(180_000);
 test.use({ launchOptions: { slowMo: 100 } });
 
@@ -26,7 +19,6 @@ test('Le SVI prélève, envoie au LVD, le LVD rend un négatif, le SVI accepte l
   await connectWith(page, 'svi@example.fr');
   await expect(page).toHaveURL(/\/app\/svi/);
 
-  // 1. Sans résultat négatif, l'acceptation en un clic est refusée
   await expect(page.getByRole('link', { name: feiId })).toBeVisible({ timeout: 10000 });
   await page.getByRole('link', { name: feiId }).click();
   await expect(page).toHaveURL(new RegExp(`/app/svi/fei/${feiId}`));
@@ -40,7 +32,6 @@ test('Le SVI prélève, envoie au LVD, le LVD rend un négatif, le SVI accepte l
   await dialog.dismiss();
   await expect(carteSanglier.getByText(/Décision IPM1\s*:\s*Acceptée/)).toHaveCount(0);
 
-  // 2. Prélèvement des trois sangliers, regroupés automatiquement en un pool
   await page.goto('/app/svi/trichine/prelever');
   await expect(page.getByRole('heading', { name: 'Prélever pour la recherche de trichine' })).toBeVisible({
     timeout: 10000,
@@ -49,14 +40,13 @@ test('Le SVI prélève, envoie au LVD, le LVD rend un négatif, le SVI accepte l
     await page.getByRole('checkbox', { name: `Sélectionner ${bracelet}` }).check();
   }
   await expect(page.getByText('3 carcasses sélectionnées')).toBeVisible();
-  await page.getByRole('button', { name: 'Continuer' }).click(); // → Prélèvement
-  await page.getByRole('button', { name: 'Continuer' }).click(); // → Regroupement
-  await page.getByRole('button', { name: 'Continuer' }).click(); // → Récapitulatif
+  await page.getByRole('button', { name: 'Continuer' }).click();
+  await page.getByRole('button', { name: 'Continuer' }).click();
+  await page.getByRole('button', { name: 'Continuer' }).click();
   await expect(page.getByRole('heading', { name: 'Récapitulatif' })).toBeVisible();
   await page.getByRole('button', { name: 'Enregistrer le prélèvement' }).click();
   await expect(page.getByRole('heading', { name: 'Prélèvement enregistré' })).toBeVisible({ timeout: 10000 });
 
-  // 3. FTP vers le LVD, puis envoi
   await page.getByRole('link', { name: 'Créer la fiche de transmission' }).click();
   await expect(
     page.getByRole('heading', { name: 'Nouvelle fiche de transmission des prélèvements (FTP)' })
@@ -72,7 +62,6 @@ test('Le SVI prélève, envoie au LVD, le LVD rend un négatif, le SVI accepte l
   await expect(page.getByText(`FTP ${numeroFtp} envoyée au laboratoire`)).toBeVisible({ timeout: 10000 });
   await expect(page.getByRole('button', { name: 'Envoyer au laboratoire' })).toHaveCount(0);
 
-  // 4. Le LVD réceptionne le colis et rend un résultat négatif
   await logoutAndConnect(page, 'laboratoire@example.fr');
   await expect(page).toHaveURL(/\/app\/laboratoire/);
   await page.goto(`/app/laboratoire/ftp/${numeroFtp}`);
@@ -87,7 +76,6 @@ test('Le SVI prélève, envoie au LVD, le LVD rend un négatif, le SVI accepte l
     timeout: 10000,
   });
 
-  // 5. Le SVI accepte désormais le sanglier, et la décision est enregistrée côté serveur
   await logoutAndConnect(page, 'svi@example.fr');
   await expect(page.getByRole('link', { name: feiId })).toBeVisible({ timeout: 10000 });
   await page.getByRole('link', { name: feiId }).click();

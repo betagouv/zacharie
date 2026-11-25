@@ -4,18 +4,6 @@ import { connectWith } from '../../utils/connect-with';
 import { ajouterVenteDon } from '../../utils/vente-don';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
-// Scenario 129 — Refus partiel par ETG 1 ne pollue pas la vue ETG 2.
-//
-// Sister to 122 (which only tests cross-ETG visibility *before* any refusal):
-// here ETG 1 actively REFUSES one of its 2 carcasses with a motif. ETG 2's
-// view must remain pristine — neither the refused carcasse (MM-001-003) nor
-// the refusal status itself must appear in ETG 2's UI.
-//
-// Why this matters for the fetch refactor: today, isolation works because
-// carcasses are scoped via CarcasseIntermediaire entity relation. After the
-// flip to carcasse-first fetches, this is *the* boundary preventing refusal
-// leakage. If the refactor breaks here, ETG 2 sees ETG 1's private decisions.
-
 test.setTimeout(120_000);
 test.use({ launchOptions: { slowMo: 100 } });
 
@@ -26,26 +14,18 @@ test.beforeEach(async () => {
 test("Le refus d'une carcasse par ETG 1 reste invisible pour ETG 2", async ({ page }) => {
   const feiId = 'ZACH-20250707-QZ6E0-155242';
 
-  // -------------------------------------------------------------------------
-  // 1. PD dispatches: group 1 (MM-001-003/004) → ETG 1, group 2 (MM-001-001/002) → ETG 2
-  // -------------------------------------------------------------------------
   await page.setViewportSize({ width: 350, height: 667 });
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
 
-  // Group 1 → ETG 1 (defaults to the first 2 carcasses MM-001-003/004)
   await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris' });
 
-  // Group 2 → ETG 2 (manually pick the remaining 2)
   await ajouterVenteDon(page, { destinataire: 'ETG 2 - 75000 Paris', carcasses: [0, 1] });
   const transmettre = page.getByRole('button', { name: /Transmettre/ });
   await transmettre.scrollIntoViewIfNeeded();
   await transmettre.click();
   await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 15000 });
 
-  // -------------------------------------------------------------------------
-  // 2. ETG 1 takes charge and refuses MM-001-003 with motif "Présence de souillures"
-  // -------------------------------------------------------------------------
   await page.setViewportSize({ width: 1280, height: 900 });
   await logoutAndConnect(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
@@ -55,7 +35,6 @@ test("Le refus d'une carcasse par ETG 1 reste invisible pour ETG 2", async ({ pa
     timeout: 10000,
   });
 
-  // why: react-dsfr modal storms when first carcasse panel opens
   await new Promise((r) => setTimeout(r, 500));
 
   await page.getByRole('button', { name: /Daim N° MM-001-004 Mise à/ }).click();
@@ -64,30 +43,22 @@ test("Le refus d'une carcasse par ETG 1 reste invisible pour ETG 2", async ({ pa
   await page.getByRole('option', { name: 'Présence de souillures' }).click();
   await page.getByLabel('Daim - N° MM-001-004').getByRole('button', { name: 'Enregistrer' }).click();
 
-  // Confirm refusal status now shows on ETG 1's own view (sanity)
   await expect(page.getByText(/Refusée par ETG 1|Refus de 1 carcasse/i).first()).toBeVisible({
     timeout: 10000,
   });
 
-  // -------------------------------------------------------------------------
-  // 3. ETG 2 connects and the refusal must be invisible from their side
-  // -------------------------------------------------------------------------
   await logoutAndConnect(page, 'etg-2@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await expect(page.getByText('Carcasses (2)')).toBeVisible({ timeout: 10000 });
 
-  // ETG 2 sees ONLY their group (001/002), never the refused 003 or its partner 004
   await expect(page.getByText('MM-001-001').first()).toBeVisible({ timeout: 10000 });
   await expect(page.getByText('MM-001-002').first()).toBeVisible();
   await expect(page.getByText('MM-001-003')).not.toBeVisible();
   await expect(page.getByText('MM-001-004')).not.toBeVisible();
 
-  // CRITICAL: no trace of "Refusée par ETG 1" or "Présence de souillures" leaks to ETG 2
   await expect(page.getByText(/Refusée par ETG 1/i)).not.toBeVisible();
   await expect(page.getByText(/Présence de souillures/i)).not.toBeVisible();
 
-  // ETG 2 can still independently take charge of their carcasses — refusal in
-  // group 1 must not stall the parallel branch.
   await page.getByRole('button', { name: 'Prendre en charge' }).click();
   await expect(page.getByRole('button', { name: 'Prendre en charge' })).not.toBeVisible({
     timeout: 10000,

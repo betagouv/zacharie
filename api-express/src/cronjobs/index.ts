@@ -15,14 +15,8 @@ if (sentryEnabled) {
     dsn: SENTRY_KEY,
     environment: `cronjobs-${ENVIRONMENT}`,
     release: VERSION,
-    integrations: [
-      // Automatically instrument Node.js libraries and frameworks
-      ...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations(),
-    ],
+    integrations: [...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations()],
 
-    // Set tracesSampleRate to 1.0 to capture 100%
-    // of transactions for performance monitoring.
-    // We recommend adjusting this value in production
     tracesSampleRate: 0.05,
     ...SENTRY_SCRUB_OPTIONS,
   });
@@ -40,8 +34,4 @@ if (!isLocalDevelopment && !isTest) {
     .then(initDataHealthCron)
     .then(() => (MATOMO_TOKEN ? initMatomoStatsCron() : undefined))
     .catch(capture);
-  // .then(initMunicipalities) //
-  // .then(initRecommandations) //
-  // .then(initAggregators) //
-  // .then(initNotifications); //
 }

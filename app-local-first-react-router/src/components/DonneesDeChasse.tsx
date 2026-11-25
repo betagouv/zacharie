@@ -69,8 +69,6 @@ export default function FEIDonneesDeChasse({
     return true;
   }, [carcasses]);
 
-  // Étapes du parcours de la fiche, dans l'ordre chronologique (examinateur -> premier détenteur ->
-  // intermédiaires -> SVI), affichées en frise chronologique.
   const steps = useMemo(() => {
     const _steps: Array<Step> = [];
 
@@ -169,8 +167,6 @@ export default function FEIDonneesDeChasse({
       });
     }
 
-    // Prochain détenteur désigné mais pas encore pris en charge : on l'affiche en dernière étape
-    // pour que tous les membres de l'entreprise expéditrice sachent que la fiche est partie.
     const nextOwnerRole = transmission?.content?.next_owner_role;
     const nextOwnerEntityId = transmission?.content?.next_owner_entity_id;
     if (nextOwnerRole && nextOwnerRole !== FeiOwnerRole.SVI && nextOwnerEntityId) {
@@ -244,8 +240,6 @@ export default function FEIDonneesDeChasse({
   const ccgDepotEntityId = transmission?.content?.premier_detenteur_depot_entity_id;
   const ccgAddress = ccgDepotEntityId ? formatEntityAddress(entities[ccgDepotEntityId]) : '';
 
-  // Faits de la chasse propres à la fiche. Les dates de prise en charge / assignation SVI ne sont pas
-  // répétées ici : elles figurent déjà dans la frise « Parcours de la fiche ».
   const facts = useMemo(() => {
     const _facts: Array<{ label: string; value: string }> = [
       { label: 'Fiche n°', value: fei.numero },

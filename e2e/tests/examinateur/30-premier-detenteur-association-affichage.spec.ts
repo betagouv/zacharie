@@ -14,15 +14,12 @@ test.use({
   launchOptions: { slowMo: 100 },
 });
 
-const ASSOCIATION_ID = '5b916331-632e-4c29-be2e-12a834e92688'; // Association de chasseurs (populate-test-db)
+const ASSOCIATION_ID = '5b916331-632e-4c29-be2e-12a834e92688';
 
 test.beforeEach(async () => {
   await resetDb('EXAMINATEUR_INITIAL');
 });
 
-// Quand le Premier Détenteur est une association, on enregistre aussi `premier_detenteur_user_id`
-// (l'utilisateur qui agit au nom de l'association). Le select doit continuer d'afficher l'association,
-// jamais « Vous » — y compris après le remount provoqué par la validation, et après rechargement.
 test('Examinateur → Association : le select affiche l’association après « Continuer »', async ({ page }) => {
   await connectWith(page, 'examinateur-premier-detenteur@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
@@ -43,20 +40,16 @@ test('Examinateur → Association : le select affiche l’association après « 
 
   await selectBloc.getByRole('button', { name: 'Continuer' }).click();
 
-  // Le bloc a été revalidé : plus de bouton « Continuer » ici, et l'association reste sélectionnée.
   await expect(selectBloc.getByRole('button', { name: 'Continuer' })).toHaveCount(0);
   await expect(select).toHaveValue(ASSOCIATION_ID);
   await expect(select.locator('option:checked')).toHaveText(/Association de chasseurs/i);
   await expect(select.locator('option:checked')).not.toHaveText(/Vous/i);
 
-  // Et après rechargement (état relu depuis la fiche synchronisée).
   await page.goto(`http://localhost:3290/app/chasseur/fei/${feiNumero}`);
   await expect(select).toHaveValue(ASSOCIATION_ID);
   await expect(select.locator('option:checked')).not.toHaveText(/Vous/i);
 });
 
-// Contre-épreuve : quand l'examinateur se désigne lui-même Premier Détenteur, c'est bien « Vous » qui
-// reste affiché (le fix ne doit pas inverser le cas nominal).
 test('Examinateur → lui-même : le select affiche « Vous » après « Continuer »', async ({ page }) => {
   await connectWith(page, 'examinateur-premier-detenteur@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
@@ -69,7 +62,6 @@ test('Examinateur → lui-même : le select affiche « Vous » après « Continu
   const selectBloc = page.locator('#select-next-owner');
   const select = selectBloc.locator('select[name="next_owner"]');
 
-  // « Pierre Petit » = l'utilisateur connecté ; l'API l'ajoute lui-même aux détenteurs initiaux.
   await page.getByRole('button', { name: 'Pierre Petit' }).click();
   await selectBloc.getByRole('button', { name: 'Continuer' }).click();
 

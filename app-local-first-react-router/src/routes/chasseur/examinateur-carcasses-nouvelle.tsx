@@ -20,8 +20,6 @@ const gibierSelect = {
 
 const especesRaccourcis = ['Sanglier', 'Chevreuil', 'Cerf élaphe'];
 
-// Le numero CFEI est de la forme CFEI-DEP-AA-123 : le departement en est le 2e segment.
-// Si le numero saisi ne suit pas ce format, on retombe sur ses 6 derniers caracteres alphanumeriques.
 function getDepartementFromNumeroCfei(numeroCfei: string) {
   const segments = numeroCfei
     .toUpperCase()
@@ -44,7 +42,6 @@ function getNewDefaultNumeroBracelet(user: User) {
   const prenom = user.prenom?.slice(0, 1).toUpperCase() ?? '';
   const nom = user.nom_de_famille?.slice(0, 1).toUpperCase() ?? '';
   const departement = getDepartementFromNumeroCfei(user.numero_cfei);
-  // denier marquage utilise + pad start 0 sur 3 chiffres
   const prochain_bracelet_a_utiliser = (user.prochain_bracelet_a_utiliser || 1).toString().padStart(3, '0');
   return `${prenom}${nom}-${departement}-${prochain_bracelet_a_utiliser}`;
 }
@@ -57,8 +54,6 @@ export default function NouvelleCarcasse({
 }: {
   onCarcasseAdded?: () => void;
   defaultEspece?: string;
-  // Permet au parent d'exposer le CTA « Ajouter » dans le footer natif de la modale :
-  // footerRef.current() déclenche la soumission ; onFooterChange remonte libellé + état désactivé.
   footerRef?: { current: (() => void) | null };
   onFooterChange?: (footer: { label: string; disabled: boolean }) => void;
 }) {
@@ -77,7 +72,6 @@ export default function NouvelleCarcasse({
   const [anomaliesCarcasse, setAnomaliesCarcasse] = useState<string[]>([]);
   const [anomaliesAbats, setAnomaliesAbats] = useState<string[]>([]);
   const [commentaire, setCommentaire] = useState<string>('');
-  // Les anomalies sont une seconde étape : masquées à l'ouverture, accessibles via un bouton.
   const [showAnomalies, setShowAnomalies] = useState(false);
 
   const isPetitGibier = useMemo(() => {
@@ -148,8 +142,6 @@ export default function NouvelleCarcasse({
     }
   };
 
-  // Le CTA « Ajouter la carcasse » vit dans le footer natif de la modale (épinglé, hors scroll).
-  // On expose l'action au parent via footerRef et on remonte libellé/état désactivé.
   if (footerRef) footerRef.current = handleAddCarcasse;
   useEffect(() => {
     onFooterChange?.({ label: submitLabel, disabled: submitDisabled });
@@ -203,7 +195,6 @@ export default function NouvelleCarcasse({
         }}
       >
         <option value="">Sélectionnez l'espèce du gibier</option>
-        {/* <hr /> */}
         {Object.entries(gibierSelect).map(([typeGibier, _especes]) => {
           return (
             <optgroup
@@ -253,10 +244,7 @@ export default function NouvelleCarcasse({
                 >
                   <button
                     type="button"
-                    className={[
-                      'rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]',
-                      // numeroBracelet ? 'pointer-events-none opacity-20' : '',
-                    ].join(' ')}
+                    className={['rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]'].join(' ')}
                     onClick={(e) => {
                       e.preventDefault();
                       incProchainBraceletAUtiliser();
@@ -278,7 +266,6 @@ export default function NouvelleCarcasse({
           placeholder: 'Numéro de marquage',
           name: Prisma.CarcasseScalarFieldEnum.numero_bracelet,
           value: numeroBracelet,
-          // replce slash and space by underscore
           onChange: (e) => setNumeroBracelet(e.target.value.replace(/\/|\s/g, '_')),
         }}
       />

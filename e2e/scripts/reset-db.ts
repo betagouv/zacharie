@@ -39,7 +39,6 @@ export type SeedRole =
 export async function resetDb(role?: SeedRole) {
   const timer = `resetDb(${role ?? ''})`;
   console.time(timer);
-  // le seed tourne dans le process de l'API de test (route montée seulement en NODE_ENV=test)
   const response = await fetch('http://localhost:3291/__e2e/reset', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

@@ -15,35 +15,24 @@ const BREVO_API = process.env.BREVO_API;
 const buildId = JSON.stringify(`${dayjs().format('DD-MM-YYYY')} vers ${dayjs().format('HH')}:00`);
 const VERSION = buildId;
 
-// en production (et staging), un secret par défaut permettrait à n'importe qui de forger un JWT de session
 if (process.env.NODE_ENV === 'production' && !process.env.VITE_SECRET) {
   throw new Error('VITE_SECRET est obligatoire en production : il signe les JWT de session.');
 }
 const SECRET = process.env.VITE_SECRET || 'not-so-secret-lalalala';
 const METABASE_SECRET_KEY = process.env.METABASE_SECRET_KEY;
 
-const IS_DEV = process.env.NODE_ENV === 'development'; // local dev
-const IS_STAGING = process.env.NODE_ENV === 'production' && ENVIRONMENT === 'test'; // staging
-// review app d'une PR (.github/workflows/review-app.yml) : un staging servi sur *.cleverapps.io,
-// où l'app et l'API sont deux sites distincts
+const IS_DEV = process.env.NODE_ENV === 'development';
+const IS_STAGING = process.env.NODE_ENV === 'production' && ENVIRONMENT === 'test';
 const IS_REVIEW_APP = IS_STAGING && process.env.REVIEW_APP === 'true';
 const IS_PRODUCTION = process.env.NODE_ENV === 'production' && ENVIRONMENT === 'production';
-const IS_TEST = process.env.NODE_ENV === 'test'; // when e2e testing
+const IS_TEST = process.env.NODE_ENV === 'test';
 const IS_DEV_OR_TEST = IS_DEV || IS_TEST;
 
-// URL publique de l'API : sert de base au redirect_uri ProConnect.
-// En e2e les deux serveurs sont figés sur 3291 (api) et 3290 (app), voir e2e/playwright.config.ts.
 const API_URL = IS_TEST
   ? 'http://localhost:3291'
   : (process.env.VITE_API_URL ?? 'https://api.zacharie.beta.gouv.fr');
 const APP_URL = IS_TEST ? 'http://localhost:3290' : VITE_APP_URL;
 
-// ProConnect : double authentification exigée pour les admins Zacharie (doc/proconnect-admin.md).
-// En e2e l'API embarque toujours un fournisseur OIDC factice (src/mock-proconnect.ts), même si un
-// PROCONNECT_ISSUER traîne dans l'environnement (le .env local est chargé par cronjobs/index.ts).
-// En dev, le factice ne sert que sans PROCONNECT_ISSUER.
-// En dev, un admin peut désactiver ProConnect pour accéder aux routes /admin sans OIDC.
-// Ignoré en staging/production/test (le mock e2e reste actif indépendamment).
 const PROCONNECT_ADMIN_DISABLED = IS_DEV && process.env.PROCONNECT_ADMIN_DISABLED === 'true';
 
 const PROCONNECT_MOCK_ENABLED = IS_TEST || (IS_DEV && !process.env.PROCONNECT_ISSUER);
@@ -58,38 +47,23 @@ const PROCONNECT_CLIENT_SECRET = PROCONNECT_MOCK_ENABLED
   : (process.env.PROCONNECT_CLIENT_SECRET ?? '');
 const PROCONNECT_REDIRECT_URI = `${API_URL}/user/proconnect/callback`;
 
-// Interrupteur manuel : à `true`, le push natif n'envoie rien en production et se contente de logger
-// le payload (third-parties/expo-push.ts). Aucun NotificationLog n'est écrit pendant ce temps, la
-// dédup s'appuyant dessus : un log écrit en dry run empêcherait définitivement l'envoi une fois
-// l'interrupteur relevé. On le garde comme coupe-circuit en cas de problème d'envoi en production.
 const NATIVE_PUSH_DRY_RUN = false;
-// Recherche de trichine (cf doc/trichine.md). Même variable que le flag du frontend :
-// tant qu'elle n'est pas posée, les garde-fous sangliers restent inactifs.
 const TRICHINE_FEATURE_ENABLED = process.env.VITE_FEATURE_TRICHINE === 'true';
 
-// Object storage Cellar (Clever Cloud, compatible S3) — cf doc/trichine.md §12.2.
-// Les trois premières variables sont posées par l'add-on, le bucket est choisi par nous.
-// Non configuré (dev / test) : les documents sont régénérés à la volée, rien n'est stocké.
 const CELLAR_HOST = process.env.CELLAR_ADDON_HOST ?? '';
 const CELLAR_KEY_ID = process.env.CELLAR_ADDON_KEY_ID ?? '';
 const CELLAR_KEY_SECRET = process.env.CELLAR_ADDON_KEY_SECRET ?? '';
 const CELLAR_BUCKET = process.env.CELLAR_ADDON_BUCKET ?? '';
 
-// Résolution de bug (admin) : l'assistant Albert lit le code sur GitHub et la base via un rôle en lecture seule.
-// Voir doc/bug-resolution.md.
 const ALBERT_API_URL = process.env.ALBERT_API_URL ?? 'https://albert.api.etalab.gouv.fr/v1';
 const ALBERT_API_KEY = process.env.ALBERT_API_KEY ?? '';
-// modèle d'enquête (raisonnement + outils, texte seul) et modèle de vision qui décrit les captures d'écran
 const ALBERT_MODEL = process.env.ALBERT_MODEL ?? 'openai/gpt-oss-120b';
 const ALBERT_VISION_MODEL = process.env.ALBERT_VISION_MODEL ?? 'google/gemma-4-31B-it';
 const ALBERT_READONLY_DATABASE_URL = process.env.ALBERT_READONLY_DATABASE_URL ?? '';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN ?? '';
 const GITHUB_REPO = 'betagouv/zacharie';
-// Clever Cloud expose le commit déployé dans COMMIT_ID : l'assistant lit le code réellement en production
 const SOURCE_COMMIT = process.env.COMMIT_ID ?? 'main';
 
-// API Reporting Matomo (instance mutualisée beta.gouv), lue par le cron matomo-stats (cf doc/matomo.md).
-// Token non posé : le cron n'est pas lancé.
 const MATOMO_URL = process.env.MATOMO_URL ?? 'https://stats.beta.gouv.fr';
 const MATOMO_TOKEN = process.env.MATOMO_TOKEN ?? '';
 const MATOMO_SITE_ID = process.env.MATOMO_SITE_ID ?? '';

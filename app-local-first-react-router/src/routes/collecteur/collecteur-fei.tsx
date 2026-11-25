@@ -68,7 +68,6 @@ export default function CollecteurFei(props: Props) {
         setHasTriedLoading(true);
         console.error(error);
       });
-    // Carcasses refusées/manquantes en amont : hors périmètre du pull delta, on les charge par fiche.
     loadCarcassesRefusees(params.fei_numero!);
   }, [params.fei_numero]);
 
@@ -95,7 +94,6 @@ function CollecteurFeiLoader(props: Props) {
   const myCarcasses = transmissionWithMetadata.carcasses;
   const transmission = transmissionWithMetadata.content;
 
-  // l'intermédiaire de mon entreprise le plus récent : un collègue a pu prendre en charge la fiche
   const myEntitiesIds = useEntitiesIdsWorkingDirectlyFor();
   const myIntermediaireId =
     intermediaires.find(
@@ -105,15 +103,12 @@ function CollecteurFeiLoader(props: Props) {
     )?.id ?? null;
   const [selectedIntermediaireId, setSelectedIntermediaireId] = useState<string | null>(myIntermediaireId);
 
-  // une prise en charge crée un intermédiaire plus récent : on le sélectionne, sinon la transmission
-  // s'appliquerait à l'ancien (ex. le transport fait par un collègue de l'ETG)
   useEffect(() => {
     if (myIntermediaireId) setSelectedIntermediaireId(myIntermediaireId);
   }, [myIntermediaireId]);
 
   const intermediaire = intermediaires.find((i) => i.id === selectedIntermediaireId);
 
-  // collecteur s'identifie par les entités pour lesquelles il travaille
   const userEntityIds = useMemo(() => {
     return Object.values(entities)
       .filter((e) => e.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY)
@@ -245,7 +240,6 @@ function CollecteurProFeiContent({
   const transmission = transmissionWithMetadata.content;
 
   const originalCarcasses = myFeiCarcasses.sort((a, b) => {
-    // SANS_DECISION en premier, puis tri par type → espèce → n° de bracelet
     const aSansDecision = a.svi_carcasse_status === CarcasseStatus.SANS_DECISION;
     const bSansDecision = b.svi_carcasse_status === CarcasseStatus.SANS_DECISION;
     if (aSansDecision !== bSansDecision) {
@@ -280,7 +274,6 @@ function CollecteurProFeiContent({
   const intermediaireCarcasses = useMemo(() => {
     return allIntermediaireCarcasses
       .sort((carcasseIntermediaireA, carcasseIntermediaireB) => {
-        // sort by espece then by numero_bracelet
         const carcasseA = carcasses[carcasseIntermediaireA.zacharie_carcasse_id]!;
         const carcasseB = carcasses[carcasseIntermediaireB.zacharie_carcasse_id]!;
         if (carcasseA.espece === carcasseB.espece) {
@@ -324,7 +317,6 @@ function CollecteurProFeiContent({
         }
       }
     }
-    // Multi-recipient: check if any carcasse has me as next_owner
     if (
       transmission.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR ||
       transmission.current_owner_role === FeiOwnerRole.COLLECTEUR_PRO
@@ -337,8 +329,6 @@ function CollecteurProFeiContent({
     return false;
   }, [transmission, collecteursIds, entities]);
 
-  // Remplace l'ancien flag FEI svi_closed_at : la fiche est verrouillée "pour moi"
-  // quand toutes les carcasses que je gère ont été clôturées (SVI manuel/cron ou refus total).
   const allMyCarcassesDone = useMemo(() => {
     return myFeiCarcasses.length > 0 && myFeiCarcasses.every(isCarcasseDone);
   }, [myFeiCarcasses]);
@@ -364,10 +354,6 @@ function CollecteurProFeiContent({
 
   const effectiveCanEdit = canEdit && !props.readOnly;
 
-  // Comme `canEdit`, mais sans le verrou `allMyCarcassesDone` : même quand toutes mes carcasses
-  // sont clôturées (ex. toutes refusées → fiche clôturée par l'intermédiaire), le collecteur doit
-  // pouvoir rouvrir la modale de décision d'une carcasse pour corriger un refus. Le verrou
-  // « fiche clôturée » ne concerne que la prise en charge et la transmission (= `effectiveCanEdit`).
   const canEditCarcasseDecision = useMemo(() => {
     if (isCollecteurWorkingFor) {
       return true;
@@ -405,7 +391,6 @@ function CollecteurProFeiContent({
     const carcassesRejetees: Record<string, Carcasse> = {};
     const carcassesManquantes: Record<string, Carcasse> = {};
     const carcassesEcarteesPourInspection: Record<string, Carcasse> = {};
-    // const carcassesToCheck: Record<string, Carcasse> = {};
     for (const intermediaireCarcasse of intermediaireCarcasses) {
       const checkId = getFeiAndCarcasseAndIntermediaireIds(intermediaireCarcasse);
       const carcasse = carcasses[intermediaireCarcasse.zacharie_carcasse_id];
@@ -416,10 +401,8 @@ function CollecteurProFeiContent({
         if (intermediaireCheckById[checkId].prise_en_charge) {
           carcassesApproved[checkId] = carcasse;
         } else if (intermediaireCheckById[checkId].manquante) {
-          // console.log("MANQUANTE ICI", intermediaireCheckById[checkId]);
           carcassesManquantes[checkId] = carcasse;
         } else if (intermediaireCheckById[checkId].ecarte_pour_inspection) {
-          // console.log("MANQUANTE ICI", intermediaireCheckById[checkId]);
           carcassesEcarteesPourInspection[checkId] = carcasse;
         } else {
           carcassesRejetees[checkId] = carcasse;
@@ -433,8 +416,6 @@ function CollecteurProFeiContent({
               carcassesRejetees[checkId] = carcasse;
             }
           }
-        } else {
-          // carcassesToCheck[checkId] = carcasse;
         }
       }
     }
@@ -443,7 +424,6 @@ function CollecteurProFeiContent({
       carcassesRejetees: Object.values(carcassesRejetees),
       carcassesManquantes: Object.values(carcassesManquantes),
       carcassesEcarteesPourInspection: Object.values(carcassesEcarteesPourInspection),
-      // carcassesToCheck: Object.values(carcassesToCheck),
     };
   }, [intermediaireCarcasses, intermediaire, carcasses]);
 
@@ -539,11 +519,9 @@ function CollecteurProFeiContent({
     if (allMyCarcassesDone) {
       return false;
     }
-    // Il faut au moins une carcasse manquante ou refusée
     if (carcassesSorted.carcassesManquantes.length === 0 && carcassesSorted.carcassesRejetees.length === 0) {
       return false;
     }
-    // Pas de carcasses acceptées ou écartées pour inspection
     if (
       carcassesSorted.carcassesApproved.length > 0 ||
       carcassesSorted.carcassesEcarteesPourInspection.length > 0
@@ -658,40 +636,6 @@ function CollecteurProFeiContent({
             <CollecteurHeaderFiche />
             <FeiSousTraite />
             <CurrentOwnerConfirm />
-            {/* <Section title="Transport" key={intermediaire?.id}>
-        <form
-          method="POST"
-          className="flex flex-col gap-y-4"
-          id="form_intermediaire_check_finished_at"
-          key={JSON.stringify(priseEnChargeAt || '') + JSON.stringify(labelCheckDone)}
-          onSubmit={handleSubmitCheckFinishedAt}
-        >
-          <p>QUi a transporté les carcasses ?</p>
-          {!!canEdit && (
-            <Button type="submit" disabled={!!submitDisabled}>
-              Enregistrer
-            </Button>
-          )}
-          {!carcassesApprovedSorted.length && fei.intermediaire_closed_at && (
-            <>
-              <Alert
-                severity="info"
-                className="mt-6"
-                description="Vous n'avez pas pris en charge de carcasse acceptée, la fiche est donc clôturée."
-                title="Aucune carcasse acceptée"
-              />
-              <Button
-                className="mt-6"
-                linkProps={{
-                  to: `/app/collecteur/`,
-                }}
-              >
-                Voir toutes mes fiches
-              </Button>
-            </>
-          )}
-        </form>
-      </Section> */}
             {children}
             {intermediaire ? (
               <Section title={`Carcasses (${intermediaireCarcasses.length})`}>
@@ -717,8 +661,6 @@ function CollecteurProFeiContent({
                   {intermediaireCarcasses.map((intermediaireCarcasse) => {
                     const carcasse = carcasses[intermediaireCarcasse.zacharie_carcasse_id];
                     return (
-                      // Clé sur l'id stable : le numéro de marquage est modifiable (correction par un
-                      // intermédiaire), une clé dessus démonterait la carte en pleine saisie.
                       <Fragment key={carcasse.zacharie_carcasse_id}>
                         <CarcasseIntermediaireComp
                           intermediaire={intermediaire}

@@ -26,20 +26,13 @@ import {
 
 const departementsLabels = (departementsRegions as { departements: Record<string, string> }).departements;
 
-// Références nationales officielles (taux sur animaux présentés à l'inspection), pour comparer
-// les statistiques personnelles du chasseur — mêmes bases que les taux personnels (carcasses SVI-éligibles).
-const NATIONAL_BPH_RATE_BIG_GAME = 5.49; // % taux BPH national grand gibier
-const NATIONAL_GG_TAUX_SAISIE_25_26 = 23.9; // % taux de saisie national GG saison 25-26 (valeur officielle)
+const NATIONAL_BPH_RATE_BIG_GAME = 5.49;
+const NATIONAL_GG_TAUX_SAISIE_25_26 = 23.9;
 
-// Rôles d'un destinataire de la fiche : une carcasse qui a eu l'un de ces propriétaires a quitté le chasseur.
 const transmittedOwnerRoles: FeiOwnerRole[] = Object.values(FeiOwnerRole).filter(
   (role) => role !== FeiOwnerRole.EXAMINATEUR_INITIAL && role !== FeiOwnerRole.PREMIER_DETENTEUR
 );
 
-// Les comptes admin Zacharie servent aux fiches de test et aux tutos vidéo : leurs fiches
-// sont exclues des statistiques fédérations (valorisation, sanitaire, formation).
-// `isNot` matche aussi une relation nulle : une fiche sans examinateur ou sans premier
-// détenteur reste comptée.
 const EXCLUDE_ADMIN_FEI_WHERE: Prisma.FeiWhereInput = {
   FeiCreatedByUser: { isNot: { isZacharieAdmin: true } },
   FeiExaminateurInitialUser: { isNot: { isZacharieAdmin: true } },
@@ -57,11 +50,8 @@ router.get(
       return;
     }
 
-    // Calculate current season (hunting season typically runs from July to June)
-    // Format: "25-26" means 2025-2026 season
     const { season, seasonStart, seasonEnd } = getCurrentSeason();
 
-    // Get user's FEIs for the current season
     const feis = await prisma.fei.findMany({
       where: {
         OR: [{ examinateur_initial_user_id: user.id }, { premier_detenteur_user_id: user.id }],
@@ -95,7 +85,6 @@ router.get(
       return;
     }
 
-    // Get all carcasses for these FEIs
     const carcasses = await prisma.carcasse.findMany({
       where: {
         fei_numero: { in: feiNumeros },
@@ -103,10 +92,8 @@ router.get(
       },
     });
 
-    // Calculate total carcasses
     const totalCarcasses = carcasses.length;
 
-    // Calculate big game vs small game
     const bigGameCarcasses = carcasses.filter((c) => c.type === CarcasseType.GROS_GIBIER);
     const bigGame = bigGameCarcasses.length;
     const smallGame = carcasses.filter((c) => c.type === CarcasseType.PETIT_GIBIER).length;
@@ -116,15 +103,12 @@ router.get(
     );
     const hasAnySviReturn = sviEligibleCarcasses.some((c) => c.svi_carcasse_status !== null);
 
-    // Get refusal causes from intermediaire refusals and SVI lesions/motifs
     const refusalCausesMap = new Map<string, number>();
     for (const carcasse of bigGameCarcasses) {
-      // Intermediaire refusal motif
       if (carcasse.intermediaire_carcasse_refus_motif) {
         const motif = carcasse.intermediaire_carcasse_refus_motif;
         refusalCausesMap.set(motif, (refusalCausesMap.get(motif) || 0) + 1);
       }
-      // SVI IPM1 and IPM2 lesions/motifs (deduplicated to avoid counting same motif twice)
       const sviMotifs = new Set([
         ...(carcasse.svi_ipm1_lesions_ou_motifs ?? []),
         ...(carcasse.svi_ipm2_lesions_ou_motifs ?? []),
@@ -136,9 +120,8 @@ router.get(
     const refusalCauses = Array.from(refusalCausesMap.entries())
       .map(([label, count]) => ({ label, count }))
       .sort((a, b) => b.count - a.count)
-      .slice(0, 5); // Top 5 causes
+      .slice(0, 5);
 
-    // Calculate personal seizure rate for SVI-eligible big game carcasses
     const seizedBigGame = sviEligibleCarcasses.filter(
       (c) =>
         c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
@@ -149,11 +132,6 @@ router.get(
         ? (seizedBigGame.length / sviEligibleCarcasses.length) * 100
         : null;
 
-    // Hygiene score (BPH — Bonnes Pratiques d'Hygiène)
-    // score = 100 × (1 − (personalBphRate / (2 × nationalBphRate)))
-    // personalBphRate = (SVI-eligible + SAISIE + motif BPH) / SVI-eligible (aligned with admin /delta-bph).
-    // nationalBphRate = référence officielle fixe NATIONAL_BPH_RATE_BIG_GAME (distincte du taux de saisie).
-    // BPH = carcasses saisies dont au moins un motif relève des bonnes pratiques d'hygiène.
     const bphCarcasses = seizedBigGame.filter((c) => hasBphMotif(c.svi_ipm2_lesions_ou_motifs));
 
     const personalBphRate =
@@ -179,33 +157,25 @@ router.get(
         smallGame,
         hygieneScore,
         refusalCauses,
-        personalSeizureRate: personalSeizureRate !== null ? Math.round(personalSeizureRate * 10) / 10 : null, // Round to 1 decimal
+        personalSeizureRate: personalSeizureRate !== null ? Math.round(personalSeizureRate * 10) / 10 : null,
         nationalSeizureRate: NATIONAL_GG_TAUX_SAISIE_25_26,
-        // Calculation details for debugging
         calculationDetails: {
-          // User & season
           userId: user.id,
           userEmail: user.email,
           season,
           seasonStart,
           seasonEnd,
-          // FEIs
           feisCount: feis.length,
           feiNumeros,
-          // Carcasses
           totalCarcassesCount: totalCarcasses,
           bigGameCount: bigGame,
           smallGameCount: smallGame,
-          // SVI eligibility
           sviEligibleCount: sviEligibleCarcasses.length,
           hasAnySviReturn,
-          // Refusal causes
           refusalCausesFull: Object.fromEntries(refusalCausesMap),
-          // Personal seizure rate calculation
           bigGameCarcassesCount: bigGameCarcasses.length,
           seizedBigGameCount: seizedBigGame.length,
           personalSeizureRateRaw: personalSeizureRate,
-          // Hygiene score calculation (BPH)
           formula: '100 × (1 − (personalBphRate / (2 × nationalBphRate)))',
           bphCount: bphCarcasses.length,
           personalBphRate,
@@ -268,8 +238,6 @@ router.get(
       },
     });
 
-    // `agree`/`nonAgree`/`domestique` comptent les lignes de carcasse : une carcasse pour le grand
-    // gibier, un lot pour le petit gibier. Les compteurs `*Animaux` comptent les animaux.
     type Bucket = {
       agree: number;
       agreeAnimaux: number;
@@ -294,7 +262,6 @@ router.get(
     });
 
     const stats = new Map<string, { gg: Bucket; pg: Bucket }>();
-    // tous les départements du périmètre ont une ligne, même sans carcasse
     for (const code of scopeDepts ?? ALL_DEPARTEMENT_CODES) {
       stats.set(code, { gg: emptyBucket(), pg: emptyBucket() });
     }
@@ -543,7 +510,6 @@ router.get(
           }
         }
 
-        // mêmes saisies que le taux de saisie : totales et partielles
         if (
           c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
           c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE
@@ -634,10 +600,6 @@ router.get(
 
     const { season, seasonStart, seasonEnd } = getCurrentSeason();
 
-    // Q1 — examinateurs actifs par dept de prélèvement : ≥1 FEI de la saison dont au moins une
-    // carcasse est partie chez un destinataire (collecteur, ETG, SVI, circuit court). Une fiche
-    // signée par l'examinateur mais jamais transmise ne compte pas. `prev_owner_role` garde
-    // comptée une carcasse renvoyée au chasseur par son destinataire.
     const feis = await prisma.fei.findMany({
       where: {
         deleted_at: null,
@@ -672,8 +634,6 @@ router.get(
       examinateursByDept.get(dept)!.add(f.examinateur_initial_user_id);
     }
 
-    // Q2 — carcasses saison (national, non scopé) pour calculer le national BPH rate
-    // utilisé en dénominateur du score, puis filtrer par scope pour les depts.
     const carcasses = await prisma.carcasse.findMany({
       where: {
         deleted_at: null,
@@ -703,7 +663,6 @@ router.get(
       const isSviEligible = !c.next_owner_role || !circuitCourtRoles.includes(c.next_owner_role);
       if (!isSviEligible) continue;
 
-      // National toujours : dénominateur scoreBph non scopé.
       national.sviEligible++;
       const isSeized =
         c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
@@ -725,7 +684,6 @@ router.get(
       return Math.max(0, Math.min(100, Math.round(raw)));
     };
 
-    // Toutes les depts vues (examinateurs OU carcasses).
     const allDepts = new Set<string>([...examinateursByDept.keys(), ...byDept.keys()]);
     const departements = Array.from(allDepts)
       .map((code) => {
@@ -735,7 +693,7 @@ router.get(
           code,
           nom: departementsLabels[code] ?? code,
           examinateursActifs: examinateursByDept.get(code)?.size ?? 0,
-          tauxSaisieBph: bph.sviEligible > 0 ? Math.round(deptRate * 1000) / 10 : null, // % avec 1 décimale
+          tauxSaisieBph: bph.sviEligible > 0 ? Math.round(deptRate * 1000) / 10 : null,
           scoreBph: bph.sviEligible > 0 ? computeScore(deptRate) : null,
           sviEligible: bph.sviEligible,
           bphCount: bph.bphCount,
@@ -743,7 +701,6 @@ router.get(
       })
       .sort((a, b) => a.code.localeCompare(b.code));
 
-    // Un examinateur actif dans plusieurs départements du périmètre ne compte qu'une fois.
     const examinateursDuPerimetre = new Set(
       Array.from(examinateursByDept.values()).flatMap((set) => [...set])
     );

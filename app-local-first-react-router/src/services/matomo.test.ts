@@ -10,8 +10,6 @@ import {
 } from './matomo';
 import { MATOMO_EVENTS } from './matomo-events';
 
-// --- Route path inventories ---
-// Landing layout children (under '/')
 const LANDING_PATHS = [
   'pros',
   'demarches',
@@ -28,7 +26,6 @@ const LANDING_PATHS = [
   'quiz',
 ];
 
-// Connexion leaf routes (under '/app/connexion')
 const CONNEXION_LEAF_PATHS = [
   'creation-de-compte',
   'invitation',
@@ -36,10 +33,8 @@ const CONNEXION_LEAF_PATHS = [
   'reset-mot-de-passe',
 ];
 
-// Public routes outside the landing layout
 const STANDALONE_PUBLIC_PATHS = ['/quiz/tv'];
 
-// Non-public paths in App.tsx (wrappers + authenticated app routes)
 const APP_NON_PUBLIC_PATHS = [
   '/',
   'app',
@@ -51,7 +46,6 @@ const APP_NON_PUBLIC_PATHS = [
   'collecteur-pro/*',
 ];
 
-// Full list of public routes (used by the E2E test and exported for reuse)
 export const ALL_PUBLIC_ROUTES = [
   '/',
   ...LANDING_PATHS.map((p) => `/${p}`),
@@ -59,8 +53,6 @@ export const ALL_PUBLIC_ROUTES = [
   '/app/connexion',
   ...CONNEXION_LEAF_PATHS.map((p) => `/app/connexion/${p}`),
 ];
-
-// --- Helpers ---
 
 function extractRoutePaths(source: string): string[] {
   const paths: string[] = [];
@@ -75,8 +67,6 @@ function extractRoutePaths(source: string): string[] {
 function countIndexRoutes(source: string): number {
   return (source.match(/<Route\s+index\b/g) || []).length;
 }
-
-// --- Unit tests: setCustomDimensions ---
 
 describe('setCustomDimensions', () => {
   beforeEach(() => {
@@ -121,8 +111,6 @@ describe('setCustomDimensions', () => {
   });
 });
 
-// --- normalizePathForTracking ---
-
 describe('normalizePathForTracking', () => {
   it('remplace les identifiants par :id', () => {
     expect(normalizePathForTracking('/app/chasseur/fei/ZACH-20261012-ab12c-153000')).toBe(
@@ -150,8 +138,6 @@ describe('normalizePathForTracking', () => {
   });
 });
 
-// --- Catalogue d'événements : conventions de nommage (doc/matomo.md) ---
-
 describe('MATOMO_EVENTS', () => {
   const kebab = /^[a-z0-9]+(-[a-z0-9]+)*$/;
   it('catégories, actions et noms en kebab-case minuscule sans accent', () => {
@@ -166,8 +152,6 @@ describe('MATOMO_EVENTS', () => {
     }
   });
 });
-
-// --- Structural completeness: new routes must appear in the lists above ---
 
 describe('public routes completeness', () => {
   it('App.tsx route paths match known set — update lists above when adding a route', () => {

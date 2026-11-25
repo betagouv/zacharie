@@ -41,7 +41,6 @@ import { isNumeroCfeiHorsFormat, NUMERO_CFEI_FORMAT_MESSAGE } from '@app/utils/n
 const loadData = (userId: string): Promise<AdminUserDataResponse> =>
   API.get({ path: `admin/user/${userId}` }).then((res) => res as AdminUserDataResponse);
 
-// Rôles assignables par un admin (ADMIN est géré à part via la case Administrateur).
 const ROLE_OPTIONS: Array<{ value: UserRoles; label: string }> = [
   { value: UserRoles.CHASSEUR, label: 'Chasseur / Examinateur Initial' },
   { value: UserRoles.COLLECTEUR_PRO, label: 'Collecteur Pro Indépendant' },
@@ -59,7 +58,6 @@ const ROLE_OPTIONS: Array<{ value: UserRoles; label: string }> = [
 
 const FEDERATION_TYPES: EntityTypes[] = [EntityTypes.FDC, EntityTypes.FRC, EntityTypes.FNC];
 
-// Sous-bloc encadré et titré, pour structurer l'onglet Identité.
 function Section({ title, children, className }: { title: string; children: ReactNode; className?: string }) {
   return (
     <section className={`rounded-lg border border-gray-200 bg-white p-4 ${className ?? ''}`}>
@@ -126,8 +124,6 @@ const initialState: State = {
   has_password: true,
 };
 
-// Champ non lié à l'état de la page : sa valeur part dans le FormData lu au blur du formulaire.
-// Il garde sa propre saisie pour afficher l'avertissement de format pendant la frappe.
 function NumeroCfeiInput({ defaultValue, disabled }: { defaultValue: string; disabled: boolean }) {
   const [numeroCfei, setNumeroCfei] = useState(defaultValue);
   return (
@@ -446,7 +442,6 @@ export default function AdminUser() {
         />
       )}
       <header className="rounded-lg border border-gray-200 bg-white p-3 md:p-4">
-        {/* Ligne 1 : identité + actions */}
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="m-0 text-xl font-bold break-words">
@@ -496,7 +491,6 @@ export default function AdminUser() {
           </div>
         </div>
 
-        {/* Ligne 2 : état en un coup d'œil */}
         <div className="mt-2 flex flex-wrap items-center gap-1">
           {!user.deleted_at && (
             <Badge
@@ -538,7 +532,6 @@ export default function AdminUser() {
           )}
         </div>
 
-        {/* Ligne 3 : méta */}
         <p className="mt-2 mb-0 text-xs text-gray-500">
           {user.telephone && <>{user.telephone} · </>}
           Créé le {dayjs(user.created_at).format('DD/MM/YYYY')}
@@ -648,7 +641,6 @@ export default function AdminUser() {
       >
         {selectedTabId === 'Identité' && (
           <div className="flex flex-col gap-4">
-            {/* Rôle & accès — enregistrement direct au changement */}
             <Checkbox
               className="m-0"
               options={[
@@ -720,7 +712,6 @@ export default function AdminUser() {
               </div>
             </Section>
 
-            {/* Coordonnées + examen initial — enregistrement par le bouton */}
             <form
               id="user_data_form"
               method="POST"
@@ -967,7 +958,6 @@ function UserFeis({ userId }: { userId: string }) {
               <th className="p-1">examinateur</th>
               <th className="p-1">premier détenteur</th>
               <th className="p-1">nb carcasses</th>
-              {/* <th className="p-1">SVI</th> */}
               <th className="p-1">created_at</th>
             </tr>
           </thead>
@@ -1002,12 +992,6 @@ function UserFeis({ userId }: { userId: string }) {
                   {row.FeiPremierDetenteurEntity?.nom_d_usage ?? row.FeiPremierDetenteurUser?.email ?? '—'}
                 </td>
                 <td className="p-1">{row._count.Carcasses}</td>
-                {/* <td
-                  className="max-w-[160px] truncate p-1"
-                  title={row.FeiSviEntity?.nom_d_usage ?? ''}
-                >
-                  {row.FeiSviEntity?.nom_d_usage ?? '—'}
-                </td> */}
                 <td className="p-1">{formatDate(row.created_at)}</td>
               </tr>
             ))}
@@ -1239,7 +1223,6 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
       }
     }
     const entities = [];
-    // un utilisateur n'est membre que d'une seule fédération
     const hasFederation = userEntitiesRelations.some((entity) => FEDERATION_TYPES.includes(entity.type));
     for (const entity of allEntities) {
       if (FEDERATION_TYPES.includes(entity.type) !== forFederation) continue;
@@ -1249,11 +1232,6 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
       }
       if (entity.type === EntityTypes.SVI) {
         if (relationType === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY) {
-          // cette relation est définie dans l'ETG:
-          // si un user a un rôle ETG, alors il peut envoyer une fiche
-          // au SVI auquel est rattaché l'ETG via etg_linked_to_svi_id
-          // donc on ne doit pas afficher cette relation dans la liste des entités potentielles
-          // en revanche elle doit être affichée dans la liste des entités, et disabled
           continue;
         }
       }
@@ -1327,10 +1305,8 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
       {userEntitiesRelations
         .filter((entity) => {
           if (!entity) return false;
-          // if (!entity.EntityRelationsWithUsers.some((r) => r.relation === relation)) return false;
           if (forCCG && entity.type !== EntityTypes.CCG) return false;
           if (!forCCG && entity.type === EntityTypes.CCG) return false;
-          // les fédérations ont leur propre onglet
           if (FEDERATION_TYPES.includes(entity.type) !== forFederation) return false;
           return true;
         })
@@ -1369,12 +1345,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
         })}
       {relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY &&
         user.roles.includes(UserRoles.COLLECTEUR_PRO) && (
-          <Highlight
-            className="m-0 mt-8"
-            // classes={{
-            //   root: 'fr-highlight--green-emeraude',
-            // }}
-          >
+          <Highlight className="m-0 mt-8">
             Un collecteur indépendant ne peut pas gérer de fiches pour un ETG. <br />
             Si un ETG a un besoin de transport, c'est dans le profil de l'utilisateur que ça se gère : cet
             utilisateur n'a que le rôle ETG mais peut cocher la case "Gérer le transport dans l'ETG"
@@ -1400,7 +1371,6 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
                       [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
                       relation: relationType,
                       [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
-                      // ajout par un admin Zacharie : validé d'office (le premier devient admin de l'entité)
                       ...(relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
                         ? {
                             [Prisma.EntityAndUserRelationsScalarFieldEnum.status]:

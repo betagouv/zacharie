@@ -8,8 +8,6 @@ import adminRouter from '~/controllers/admin';
 import { adminAuditLog } from '~/middlewares/admin-audit-log';
 import { sendError } from '~/middlewares/errors';
 
-// Références nationales des KPI Metabase : CRUD admin, derrière le garde admin et journalisé.
-
 vi.mock('~/third-parties/sentry', () => ({ capture: vi.fn(), captureException: vi.fn() }));
 
 const app = express();
@@ -22,7 +20,6 @@ app.use(adminAuditLog);
 app.use('/admin', statsRefRouter);
 app.use(sendError);
 
-// Application réelle : le routeur admin applique son authentification avant de monter ses sous-routeurs
 const appAvecGarde = express();
 appAvecGarde.use(express.json());
 appAvecGarde.use('/admin', adminRouter);

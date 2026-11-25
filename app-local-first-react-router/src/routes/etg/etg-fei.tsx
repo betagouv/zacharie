@@ -68,7 +68,6 @@ export default function EtgFei(props: Props) {
         setHasTriedLoading(true);
         console.error(error);
       });
-    // Carcasses refusées/manquantes en amont : hors périmètre du pull delta, on les charge par fiche.
     loadCarcassesRefusees(params.fei_numero!);
   }, [params.fei_numero]);
 
@@ -96,7 +95,6 @@ function EtgFeiLoader(props: Props) {
   const myCarcasses = transmissionWithMetadata.carcasses;
   const transmission = transmissionWithMetadata.content;
 
-  // l'intermédiaire de mon entreprise le plus récent : un collègue a pu prendre en charge la fiche
   const myEntitiesIds = useEntitiesIdsWorkingDirectlyFor();
   const myIntermediaireId =
     intermediaires.find(
@@ -106,8 +104,6 @@ function EtgFeiLoader(props: Props) {
     )?.id ?? null;
   const [selectedIntermediaireId, setSelectedIntermediaireId] = useState<string | null>(myIntermediaireId);
 
-  // une prise en charge crée un intermédiaire plus récent : on le sélectionne, sinon la transmission
-  // s'appliquerait à l'ancien (ex. le transport fait par un collègue de l'ETG)
   useEffect(() => {
     if (myIntermediaireId) setSelectedIntermediaireId(myIntermediaireId);
   }, [myIntermediaireId]);
@@ -150,8 +146,6 @@ function EtgFeiLoader(props: Props) {
         return userWasIntermediaire.intermediaire_role;
       }
     }
-    // La fiche a été sous-traitée par mon entité : je n'ai plus d'action mais je dois
-    // pouvoir consulter la fiche (elle reste dans ma liste « En cours »).
     if (
       transmission.next_owner_sous_traite_by_entity_id &&
       etgsIds.includes(transmission.next_owner_sous_traite_by_entity_id)
@@ -257,7 +251,6 @@ function EtgFeiContent({
   const transmission = transmissionWithMetadata.content;
 
   const originalCarcasses = myCarcasses.sort((a, b) => {
-    // SANS_DECISION en premier, puis tri par type → espèce → n° de bracelet
     const aSansDecision = a.svi_carcasse_status === CarcasseStatus.SANS_DECISION;
     const bSansDecision = b.svi_carcasse_status === CarcasseStatus.SANS_DECISION;
     if (aSansDecision !== bSansDecision) {
@@ -293,7 +286,6 @@ function EtgFeiContent({
   const intermediaireCarcasses = useMemo(() => {
     return allIntermediaireCarcasses
       .sort((carcasseIntermediaireA, carcasseIntermediaireB) => {
-        // sort by espece then by numero_bracelet
         const carcasseA = carcasses[carcasseIntermediaireA.zacharie_carcasse_id]!;
         const carcasseB = carcasses[carcasseIntermediaireB.zacharie_carcasse_id]!;
         if (carcasseA.espece === carcasseB.espece) {
@@ -338,7 +330,6 @@ function EtgFeiContent({
         }
       }
     }
-    // Multi-recipient: check if any carcasse has me as next_owner
     if (
       transmission.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR ||
       transmission.current_owner_role === FeiOwnerRole.COLLECTEUR_PRO
@@ -351,9 +342,6 @@ function EtgFeiContent({
     return false;
   }, [transmission, etgsIds, entities]);
 
-  // Remplace l'ancien flag FEI svi_closed_at : la fiche est verrouillée "pour moi"
-  // quand toutes les carcasses que je gère ont été clôturées par le SVI (manuel ou cron).
-  // ou quand l'intermediaire a lui-même clôturé la fiche en refusant toutes les carcasses
   const allMyCarcassesDone = useMemo(() => {
     return myCarcasses.length > 0 && myCarcasses.every(isCarcasseDone);
   }, [myCarcasses]);
@@ -379,10 +367,6 @@ function EtgFeiContent({
 
   const effectiveCanEdit = canEdit && !props.readOnly;
 
-  // Comme `canEdit`, mais sans le verrou `allMyCarcassesDone` : même quand toutes mes carcasses
-  // sont clôturées (ex. toutes refusées → fiche clôturée par l'intermédiaire), l'ETG doit pouvoir
-  // rouvrir la modale de décision d'une carcasse pour corriger un refus. Le verrou « fiche clôturée »
-  // ne concerne que la prise en charge, la transmission et l'ajout de carcasse (= `effectiveCanEdit`).
   const canEditCarcasseDecision = useMemo(() => {
     if (isEtgWorkingFor) {
       return true;
@@ -400,9 +384,6 @@ function EtgFeiContent({
   }, [transmission, user, intermediaire, isEtgWorkingFor]);
   const effectiveCanEditCarcasseDecision = canEditCarcasseDecision && !props.readOnly;
 
-  // La fiche a été sous-traitée par mon entité : affichage lecture seule + rappel du transporteur choisi.
-  // On ne montre le bloc que tant que la fiche est réellement chez le sous-traitant : on le masque
-  // dès qu'elle me revient (je dois la prendre en charge) ou que je l'ai déjà prise en charge.
   const feiSousTraiteeParMoi = useMemo(() => {
     if (!transmission.next_owner_sous_traite_by_entity_id) {
       return false;
@@ -410,7 +391,6 @@ function EtgFeiContent({
     if (!etgsIds.includes(transmission.next_owner_sous_traite_by_entity_id)) {
       return false;
     }
-    // La fiche m'est renvoyée : je dois la prendre en charge → plus de bloc « sous-traité ».
     if (
       transmission.next_owner_role === FeiOwnerRole.ETG &&
       transmission.next_owner_entity_id &&
@@ -418,7 +398,6 @@ function EtgFeiContent({
     ) {
       return false;
     }
-    // J'ai déjà pris en charge la fiche.
     if (
       transmission.current_owner_role === FeiOwnerRole.ETG &&
       transmission.current_owner_entity_id &&
@@ -453,7 +432,6 @@ function EtgFeiContent({
     const carcassesRejetees: Record<string, Carcasse> = {};
     const carcassesManquantes: Record<string, Carcasse> = {};
     const carcassesEcarteesPourInspection: Record<string, Carcasse> = {};
-    // const carcassesToCheck: Record<string, Carcasse> = {};
     for (const intermediaireCarcasse of intermediaireCarcasses) {
       const checkId = getFeiAndCarcasseAndIntermediaireIds(intermediaireCarcasse);
       const carcasse = carcasses[intermediaireCarcasse.zacharie_carcasse_id];
@@ -464,10 +442,8 @@ function EtgFeiContent({
         if (intermediaireCheckById[checkId].prise_en_charge) {
           carcassesApproved[checkId] = carcasse;
         } else if (intermediaireCheckById[checkId].manquante) {
-          // console.log("MANQUANTE ICI", intermediaireCheckById[checkId]);
           carcassesManquantes[checkId] = carcasse;
         } else if (intermediaireCheckById[checkId].ecarte_pour_inspection) {
-          // console.log("MANQUANTE ICI", intermediaireCheckById[checkId]);
           carcassesEcarteesPourInspection[checkId] = carcasse;
         } else {
           carcassesRejetees[checkId] = carcasse;
@@ -481,8 +457,6 @@ function EtgFeiContent({
               carcassesRejetees[checkId] = carcasse;
             }
           }
-        } else {
-          // carcassesToCheck[checkId] = carcasse;
         }
       }
     }
@@ -491,7 +465,6 @@ function EtgFeiContent({
       carcassesRejetees: Object.values(carcassesRejetees),
       carcassesManquantes: Object.values(carcassesManquantes),
       carcassesEcarteesPourInspection: Object.values(carcassesEcarteesPourInspection),
-      // carcassesToCheck: Object.values(carcassesToCheck),
     };
   }, [intermediaireCarcasses, intermediaire, carcasses]);
 
@@ -587,11 +560,9 @@ function EtgFeiContent({
     if (allMyCarcassesDone) {
       return false;
     }
-    // Il faut au moins une carcasse manquante ou refusée
     if (carcassesSorted.carcassesManquantes.length === 0 && carcassesSorted.carcassesRejetees.length === 0) {
       return false;
     }
-    // Pas de carcasses acceptées ou écartées pour inspection
     if (
       carcassesSorted.carcassesApproved.length > 0 ||
       carcassesSorted.carcassesEcarteesPourInspection.length > 0
@@ -716,40 +687,6 @@ function EtgFeiContent({
             )}
             <FeiSousTraite />
             <CurrentOwnerConfirm />
-            {/* <Section title="Transport" key={intermediaire?.id}>
-        <form
-          method="POST"
-          className="flex flex-col gap-y-4"
-          id="form_intermediaire_check_finished_at"
-          key={JSON.stringify(priseEnChargeAt || '') + JSON.stringify(labelCheckDone)}
-          onSubmit={handleSubmitCheckFinishedAt}
-        >
-          <p>QUi a transporté les carcasses ?</p>
-          {!!canEdit && (
-            <Button type="submit" disabled={!!submitDisabled}>
-              Enregistrer
-            </Button>
-          )}
-          {!carcassesApprovedSorted.length && transmission.intermediaire_closed_at && (
-            <>
-              <Alert
-                severity="info"
-                className="mt-6"
-                description="Vous n'avez pas pris en charge de carcasse acceptée, la fiche est donc clôturée."
-                title="Aucune carcasse acceptée"
-              />
-              <Button
-                className="mt-6"
-                linkProps={{
-                  to: `/app/etg/`,
-                }}
-              >
-                Voir toutes mes fiches
-              </Button>
-            </>
-          )}
-        </form>
-      </Section> */}
             {children}
             {intermediaire ? (
               <Section title={`Carcasses (${intermediaireCarcasses.length})`}>
@@ -775,8 +712,6 @@ function EtgFeiContent({
                   {intermediaireCarcasses.map((intermediaireCarcasse) => {
                     const carcasse = carcasses[intermediaireCarcasse.zacharie_carcasse_id];
                     return (
-                      // Clé sur l'id stable : le numéro de marquage est modifiable (correction par un
-                      // intermédiaire), une clé dessus démonterait la carte en pleine saisie.
                       <Fragment key={carcasse.zacharie_carcasse_id}>
                         <CarcasseIntermediaireComp
                           intermediaire={intermediaire}

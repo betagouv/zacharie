@@ -17,9 +17,8 @@ import { capture } from '~/third-parties/sentry';
 
 const router: express.Router = express.Router();
 
-// Cookie temporaire entre /start et /callback : porte state, nonce et PKCE, signé et périmé en 10 minutes
 const PROCONNECT_STATE_COOKIE = 'zacharie_proconnect';
-const PROCONNECT_STATE_MAX_AGE = 60 * 10; // seconds
+const PROCONNECT_STATE_MAX_AGE = 60 * 10;
 
 interface ProConnectStatePayload {
   userId: string;
@@ -29,7 +28,6 @@ interface ProConnectStatePayload {
   redirect: string;
 }
 
-// Seules les routes internes de l'app sont acceptées comme destination après ProConnect
 function sanitizeRedirect(redirect: unknown): string {
   if (typeof redirect !== 'string') return '/app/admin';
   if (!redirect.startsWith('/app/') || redirect.startsWith('/app//')) return '/app/admin';
@@ -43,7 +41,6 @@ function redirectToProConnectPage(res: express.Response, error: string, redirect
   res.redirect(url.href);
 }
 
-// Route: GET /user/proconnect/start - Redirige un admin connecté vers ProConnect
 router.get(
   '/start',
   authRateLimit,
@@ -76,7 +73,6 @@ router.get(
   })
 );
 
-// Route: GET /user/proconnect/callback - Retour de ProConnect, réémet la session avec proconnect_at
 router.get(
   '/callback',
   authRateLimit,
@@ -117,7 +113,6 @@ router.get(
       return;
     }
 
-    // ProConnect authentifie une personne ; c'est l'égalité avec l'email du compte admin qui autorise
     if (identity.email !== user.email?.toLowerCase().trim()) {
       capture(new Error('ProConnect email mismatch'), {
         extra: { userId: user.id, proconnectEmail: identity.email },

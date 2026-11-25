@@ -16,8 +16,6 @@ test.use({
   launchOptions: { slowMo: 100 },
 });
 
-// Le seed PREMIER_DETENTEUR enregistre un seul destinataire habituel pour premier-detenteur@ :
-// « Commerce de Détail 1 ». « Moi-même » (usage domestique) est toujours proposé en plus.
 const feiId = 'ZACH-20250707-QZ6E0-155242';
 
 test.beforeEach(async ({ page }) => {
@@ -36,10 +34,8 @@ test('Les destinataires habituels se choisissent par boutons radio', async ({ pa
   await expect(moiMeme).toBeVisible();
   await expect(commerce).not.toBeChecked();
   await expect(moiMeme).not.toBeChecked();
-  // la recherche n'est pas affichée tant qu'on ne la demande pas
   await expect(modal.getByPlaceholder('Tapez le nom du destinataire')).toHaveCount(0);
 
-  // Les radios DSFR « rich » : le <label> est l'élément cliquable
   const commerceLabel = modal.locator(`label[for="${await commerce.getAttribute('id')}"]`);
   await commerceLabel.scrollIntoViewIfNeeded();
   await commerceLabel.click();

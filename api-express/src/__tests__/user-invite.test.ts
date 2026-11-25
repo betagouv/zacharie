@@ -105,7 +105,6 @@ describe('POST /user/invite-user — CHASSEUR guard and federations', () => {
   });
 
   test('CHASSEUR with additional roles is still blocked (defense in depth)', async () => {
-    // Project rule: a user shall not have multiple roles, but the guard must hold if it ever happens.
     const multiRoleUser = {
       id: 'user-multi',
       email: 'multi@example.com',
@@ -128,8 +127,8 @@ describe('POST /user/invite-user — CHASSEUR guard and federations', () => {
 
     vi.mocked(prisma.entity.findUnique).mockResolvedValue(federationEntity as any);
     vi.mocked(prisma.entityAndUserRelations.findFirst)
-      .mockResolvedValueOnce({ status: EntityRelationStatus.ADMIN } as any) // my ADMIN relation
-      .mockResolvedValueOnce(null); // no existing relation for the invitee
+      .mockResolvedValueOnce({ status: EntityRelationStatus.ADMIN } as any)
+      .mockResolvedValueOnce(null);
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
     vi.mocked(prisma.user.create).mockResolvedValue({
       id: 'user-new',
@@ -174,8 +173,8 @@ describe('POST /user/invite-user — CHASSEUR guard and federations', () => {
 
     vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
     vi.mocked(prisma.entityAndUserRelations.findFirst)
-      .mockResolvedValueOnce({ status: EntityRelationStatus.ADMIN } as any) // my ADMIN relation
-      .mockResolvedValueOnce(null); // no existing relation for the invitee
+      .mockResolvedValueOnce({ status: EntityRelationStatus.ADMIN } as any)
+      .mockResolvedValueOnce(null);
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
     vi.mocked(prisma.user.create).mockResolvedValue({
       id: 'user-new',
@@ -193,10 +192,8 @@ describe('POST /user/invite-user — CHASSEUR guard and federations', () => {
     expect(res.body.ok).toBe(true);
     expect(inviteUser).toHaveBeenCalledOnce();
     expect(prisma.user.create).toHaveBeenCalledOnce();
-    // invited user inherits inviter's role (not CHASSEUR)
     const createCall = vi.mocked(prisma.user.create).mock.calls[0][0];
     expect((createCall.data as any).roles).toEqual([UserRoles.ETG]);
-    // the new relation triggers a full carcasses reload for the invitee
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: 'user-new' },
       data: { carcasses_reload_version: { increment: 1 } },

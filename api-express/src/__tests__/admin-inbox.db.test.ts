@@ -7,9 +7,6 @@ import prismaClient from '~/prisma';
 import adminInboxRouter from '~/controllers/admin/inbox';
 import { sendError } from '~/middlewares/errors';
 
-// Le SQL brut de GET /admin/inbox tourne ici sur une vraie base Postgres (migrations appliquées).
-// En CI, VITEST_DB_URL pointe sur la base du job `checks` ; en local, le test est sauté sauf si
-// VITEST_DB_URL est posée sur une base jetable (le test y écrit puis supprime ses lignes).
 const VITEST_DB_URL = process.env.VITEST_DB_URL;
 
 vi.mock('~/prisma', async () => {
@@ -21,7 +18,6 @@ const PREFIX = 'inbox-db-test-';
 const minutesAgo = (minutes: number) => new Date(Date.now() - minutes * 60 * 1000);
 
 describe.skipIf(!VITEST_DB_URL)('GET /inbox sur une vraie base', () => {
-  // le client de la route se connecte à sa première requête, après le changement de fuseau de beforeAll
   const prisma = prismaClient as unknown as PrismaClient;
   const app = express();
   app.use(adminInboxRouter);
@@ -29,8 +25,6 @@ describe.skipIf(!VITEST_DB_URL)('GET /inbox sur une vraie base', () => {
   let databaseName: string;
 
   beforeAll(async () => {
-    // Fuseau de session différent d'UTC : la borne de la fenêtre de blocage doit rester juste.
-    // Posé sur la base avant la première connexion du client de la route.
     const admin = new PrismaClient({ datasourceUrl: VITEST_DB_URL });
     const [{ current_database }] = await admin.$queryRaw<
       Array<{ current_database: string }>

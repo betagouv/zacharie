@@ -52,7 +52,6 @@ export default function CardCarcasse({
   const carcasseModal = useLazyModal(`carcasse-modal-${carcasse.zacharie_carcasse_id}`);
 
   const params = useParams();
-  // seulement la date : la fiche change à chaque carcasse ajoutée (updated_at), sans re-rendre les cartes
   const dateMiseAMort = useZustandStore((state) => state.feis[params.fei_numero!]?.date_mise_a_mort);
   const carcassesIntermediaires = useCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id);
   const latestIntermediaire = carcassesIntermediaires[0];
@@ -87,14 +86,9 @@ export default function CardCarcasse({
     }
   }
 
-  // Modifications passées (approuvées / refusées) sur cette carcasse — utilisé pour afficher un
-  // compteur dans le descriptionLine + une icône d'alerte en cas de refus (signal visuel fort).
-  // Les demandes PENDING ne sont pas comptées ici (déjà visualisées via le PendingModificationBanner).
   const modifRequests = useZustandStore(
     (state) => state.modifRequestsByCarcasseId[carcasse.zacharie_carcasse_id]
   );
-  // L'ajout d'une carcasse (NEW_CARCASSE) est porté par une ligne dédiée « Carcasse ajoutée » ;
-  // on l'exclut donc du compteur de modifications pour éviter le double signal.
   const modifsHistory = useMemo(
     () =>
       (modifRequests ?? []).filter(
@@ -107,9 +101,6 @@ export default function CardCarcasse({
   const modifsCount = modifsHistory.length;
   const hasRejectedModif = modifsHistory.some((r) => r.status === CarcasseModificationRequestStatus.REJECTED);
 
-  // Carcasse rajoutée par un intermédiaire (ETG/collecteur) via une demande NEW_CARCASSE.
-  // Un refus soft-delete la carcasse (la carte ne s'affiche alors pas, sauf si le SVI l'a déjà
-  // inspectée), donc filtrer sur !deleted_at couvre les cas pending + approuvée.
   const newCarcasseRequest = useMemo(
     () =>
       (modifRequests ?? []).find(
@@ -331,10 +322,6 @@ export default function CardCarcasse({
   );
 }
 
-// === Helpers et sous-composants pour le contenu de la modale ===
-// Style repris de routes/chasseur/examinateur-carcasse-detail.tsx.
-// A factoriser dans un second temps.
-
 type DecisionColor = {
   cardText: string;
   cardBg: string;
@@ -442,7 +429,6 @@ function buildModalTimeline(args: {
     });
   }
   if (carcasse.svi_ipm2_date) {
-    // la date d'inspection n'a pas d'heure : on la place après les prises en charge et l'assignation au SVI
     const ipm2Date = new Date(carcasse.svi_ipm2_date);
     const previousEventsTimes = events.filter((e) => e.withTime).map((e) => e.date.getTime());
     events.push({

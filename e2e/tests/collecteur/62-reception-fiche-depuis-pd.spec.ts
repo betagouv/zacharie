@@ -8,7 +8,6 @@ test.beforeEach(async () => {
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Scenario 62 — Réception fiche depuis PD : liste /collecteur → ouvrir → "Prendre en charge".
 test('Collecteur reçoit la fiche du PD et peut la prendre en charge', async ({ page }) => {
   const feiId = 'ZACH-20250707-QZ6E0-175242';
   await connectWith(page, 'collecteur-pro@example.fr');
@@ -19,7 +18,6 @@ test('Collecteur reçoit la fiche du PD et peut la prendre en charge', async ({ 
   await link.click();
   await expect(page).toHaveURL(new RegExp(`/app/collecteur/fei/${feiId}`));
 
-  // Collecteur take-charge button has different text than ETG
   const takeCharge = page.getByRole('button', {
     name: /Je contrôle et transporte les carcasses|Prendre en charge/i,
   });

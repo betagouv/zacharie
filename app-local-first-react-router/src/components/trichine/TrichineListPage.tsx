@@ -2,10 +2,6 @@ import type { ReactNode } from 'react';
 import { Input } from '@app/components/Input';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 
-/**
- * Gabarit commun aux listes trichine (échantillons, pools, FTP).
- * En-tête explicite + chiffres clés + barre de filtres, puis la table.
- */
 export default function TrichineListPage({
   titre,
   description,
@@ -52,10 +48,6 @@ export default function TrichineListPage({
   );
 }
 
-/**
- * Filtres d'une liste : la recherche libre couvre les colonnes d'identifiants (références,
- * numéros, noms), les autres colonnes affichées ont chacune leur contrôle dédié (`children`).
- */
 export function TrichineListToolbar({
   query,
   onQueryChange,
@@ -85,7 +77,6 @@ export function TrichineListToolbar({
   );
 }
 
-/** Filtre d'une colonne à valeurs énumérables : une valeur, ou toutes. */
 export function FiltreSelect({
   label,
   value,
@@ -115,7 +106,6 @@ export function FiltreSelect({
   );
 }
 
-/** Filtre d'une colonne date : bornes inclusives, chacune facultative. */
 export function FiltrePeriode({
   label,
   du,

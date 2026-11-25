@@ -9,10 +9,6 @@ import {
   venteDonModal,
 } from '../../utils/vente-don';
 
-// Scenario 161 — Un admin supprime une entité que le premier détenteur a dans sa copie locale.
-// En ligne, elle disparaît de la liste des destinataires au prochain chargement. Hors ligne, il peut
-// encore la choisir : le serveur refuse alors la transmission et le chasseur en est prévenu.
-
 test.use({
   viewport: { width: 350, height: 667 },
   hasTouch: true,
@@ -29,8 +25,6 @@ test.beforeEach(async () => {
   await resetDb('PREMIER_DETENTEUR');
 });
 
-// L'admin agit dans son propre navigateur : la copie locale du chasseur reste intacte.
-// /app/admin exige ProConnect en plus du login mot de passe (voir 136).
 async function supprimerCommerceDepuisAdmin(browser: Browser) {
   const adminContext = await browser.newContext();
   const adminPage = await adminContext.newPage();
@@ -68,7 +62,6 @@ test("161 - une entité supprimée par l'admin n'est plus proposée comme destin
 
   await supprimerCommerceDepuisAdmin(browser);
 
-  // Recharger garde la copie locale (IndexedDB) : seul le chargement des relations peut la purger
   await page.reload();
   await rechercherDestinataire(page, 'Commerce de Détail 1');
   await expect(
@@ -76,7 +69,6 @@ test("161 - une entité supprimée par l'admin n'est plus proposée comme destin
   ).toBeVisible({
     timeout: 10000,
   });
-  // ancré au début : « Créer « Commerce de Détail 1 » » contient aussi le nom
   await expect(venteDonModal(page).getByRole('button', { name: /^Commerce de Détail 1/i })).toHaveCount(0, {
     timeout: 10000,
   });
@@ -96,7 +88,6 @@ test('161 - une transmission hors ligne vers une entité supprimée est refusée
   await context.setOffline(true);
   await supprimerCommerceDepuisAdmin(browser);
 
-  // Hors ligne, la copie locale propose encore le commerce
   await ajouterVenteDon(page, { destinataire: commerceNom });
   const transmettre = page.getByRole('button', { name: /^Transmettre/ });
   await transmettre.scrollIntoViewIfNeeded();

@@ -33,16 +33,13 @@ test('Création CCG inline depuis le formulaire de transmission', async ({ page 
   await allerAEtape(page, 'Stockage');
   await choisirStockage(page, 'ccg');
 
-  // Le PD n'a aucune CCG : la création se fait en ligne dans l'étape Stockage.
   await venteDonModal(page).getByRole('button', { name: 'Renseigner ma chambre froide' }).click();
   await page.getByText("Oui, ma chambre froide a un numéro d'identification").click();
   await page.getByRole('textbox', { name: "Numéro d'identification" }).fill('CCG-01');
   await page.getByRole('button', { name: 'Ajouter cette chambre froide' }).click();
 
-  // La CCG fraîchement créée est sélectionnée automatiquement
   await expect(page.getByText('CCG Chasseurs - CCG-01')).toBeVisible({ timeout: 10000 });
 
-  // Date de dépôt puis transport
   await remplirDateMaintenant(page);
   await allerAEtape(page, 'Transport');
   await choisirTransport(page, 'moi');

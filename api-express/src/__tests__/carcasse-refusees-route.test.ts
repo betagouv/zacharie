@@ -5,21 +5,6 @@ import carcasseRouter from '~/controllers/carcasse';
 import prisma from '~/prisma';
 import { EntityRelationStatus, EntityRelationType, Prisma, UserRoles } from '@prisma/client';
 
-// GET /carcasse/refusees/:fei_numero — carcasses refusées ou manquantes en amont, HORS du périmètre
-// de synchro delta. Une carcasse refusée « sort du circuit » : ses next/current_owner ne suivent
-// plus la transmission et son updated_at ne rebouge pas → le pull delta /carcasse ne la renvoie
-// jamais aux détenteurs suivants ni au SVI. Cette route la fournit à la demande, par fiche.
-//
-// Contrat épinglé ici :
-//  - l'autorisation reste au niveau carcasse : les carcasses de la fiche DANS le périmètre normal
-//    de l'utilisateur (getCarcasseAccessWhere) ; aucune → 403.
-//  - la même requête relève les groupes de dispatch (premier détenteur → prochain détenteur) de
-//    l'utilisateur sur cette fiche.
-//  - la donnée renvoyée est le complément, restreint à CES groupes ET aux refusées/manquantes.
-//    Les autres carcasses de la fiche (parties chez un autre destinataire) ne sortent jamais : hors
-//    du champ de contrôle, et côté client elles pollueraient les vues transverses (recherche,
-//    transmissions) qui bouclent sur le store sans refiltrer.
-
 const etgUser = {
   id: 'user-etg',
   roles: [UserRoles.ETG],
@@ -57,7 +42,6 @@ app.use('/carcasse', carcasseRouter);
 const FEI = 'ZACH-2026-0001';
 const ENTITY_IDS = ['entity-1', 'entity-2'];
 
-// vitest.setup.ts ne fournit pas carcasseIntermediaire.findMany — ajouté pour cette suite.
 (prisma.carcasseIntermediaire as any).findMany = vi.fn().mockResolvedValue([]);
 
 const etgAccessWhere: Prisma.CarcasseWhereInput = {
@@ -73,7 +57,6 @@ const sviAccessWhere: Prisma.CarcasseWhereInput = {
   OR: [{ svi_entity_id: { in: ENTITY_IDS } }, { next_owner_entity_id: { in: ENTITY_IDS } }],
 };
 
-// 1re requête : autorisation + relevé des groupes de dispatch de l'utilisateur sur la fiche.
 function expectedAuthQuery(accessWhere: Prisma.CarcasseWhereInput) {
   return {
     where: { fei_numero: FEI, ...accessWhere },
@@ -82,7 +65,6 @@ function expectedAuthQuery(accessWhere: Prisma.CarcasseWhereInput) {
   };
 }
 
-// 2e requête : le complément, restreint aux groupes de l'utilisateur et aux refusées/manquantes.
 function expectedDataQuery(
   accessWhere: Prisma.CarcasseWhereInput,
   dispatchIds: Array<string>,
@@ -156,9 +138,7 @@ describe('Autorisation par accès à la fiche', () => {
 
     expect(res.status).toBe(403);
     expect(res.body.error).toBe("Vous n'avez pas accès à cette fiche.");
-    // la requête d'autorisation est scopée fiche + périmètre normal de l'utilisateur
     expect(prisma.carcasse.findMany).toHaveBeenCalledWith(expectedAuthQuery(etgAccessWhere));
-    // on ne va PAS chercher les carcasses hors périmètre si l'accès est refusé
     expect(prisma.carcasse.findMany).toHaveBeenCalledTimes(1);
   });
 });
@@ -194,7 +174,6 @@ describe('ETG — récupération des carcasses refusées de la fiche', () => {
       expectedDataQuery(etgAccessWhere, ['etg-moi'])
     );
 
-    // Les CarcasseIntermediaire (record de refus, pour le motif) sont récupérées pour ces carcasses.
     expect(prisma.carcasseIntermediaire.findMany).toHaveBeenCalledWith({
       where: { zacharie_carcasse_id: { in: [`${FEI}_001`] } },
     });
@@ -217,8 +196,6 @@ describe('ETG — récupération des carcasses refusées de la fiche', () => {
       .set('x-test-user', JSON.stringify(etgUser));
 
     expect(res.status).toBe(200);
-    // 'etg-autre' n'est pas dans la liste : les carcasses parties chez un autre destinataire ne
-    // sortent jamais de cette route.
     expect(prisma.carcasse.findMany).toHaveBeenNthCalledWith(
       2,
       expectedDataQuery(etgAccessWhere, ['etg-moi', 'collecteur-moi'])
@@ -270,7 +247,7 @@ describe('SVI — voit les carcasses refusées en amont (champ de contrôle)', (
           zacharie_carcasse_id: `${FEI}_009`,
           fei_numero: FEI,
           svi_carcasse_status: 'REFUS_ETG_COLLECTEUR',
-          svi_assigned_at: null, // refusée en amont → jamais assignée au SVI
+          svi_assigned_at: null,
         } as any,
       ]);
 
@@ -279,9 +256,7 @@ describe('SVI — voit les carcasses refusées en amont (champ de contrôle)', (
       .set('x-test-user', JSON.stringify(sviUser));
 
     expect(res.status).toBe(200);
-    // autorisation : au moins une carcasse de la fiche est bien dans le périmètre SVI
     expect(prisma.carcasse.findMany).toHaveBeenNthCalledWith(1, expectedAuthQuery(sviAccessWhere));
-    // complément : les refusées du même groupe de dispatch (svi_assigned_at null → hors périmètre)
     expect(prisma.carcasse.findMany).toHaveBeenNthCalledWith(
       2,
       expectedDataQuery(sviAccessWhere, ['etg-amont'])

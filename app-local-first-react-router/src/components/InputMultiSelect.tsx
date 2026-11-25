@@ -85,21 +85,6 @@ export default function InputMultiSelect<T extends string>({
           }
         }}
         className="mt-2"
-        // components={{
-        //   MultiValueContainer: (props) => {
-        //     if (props.selectProps?.value?.length <= 1) {
-        //       return <components.MultiValueContainer {...props} />;
-        //     }
-        //     const lastValue = props.selectProps?.value?.[props.selectProps?.value?.length - 1]?.value;
-        //     const isLastValue = props?.data?.value === lastValue;
-        //     return (
-        //       <>
-        //       <components.MultiValueLabel {...props} />
-        //       {!isLastValue && <span className="tw-ml-1 tw-mr-2 tw-inline-block">OU</span>}
-        //       </>
-        //     );
-        //   },
-        // }}
       />
     </div>
   );

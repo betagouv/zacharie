@@ -14,8 +14,6 @@ test.beforeAll(async () => {
 });
 
 test('Empty dashboard — chasseur avec CFEI voit le bouton « Créer une fiche »', async ({ page }) => {
-  // L'examinateur seedé a un numero_cfei : sur le tableau de bord vide, il doit voir
-  // le bouton « Créer une fiche » et la copie qui parle de fiche d'examen initial.
   await connectWith(page, 'examinateur@example.fr');
   await page.goto('http://localhost:3290/app/chasseur/tableau-de-bord');
   await expect(page).toHaveURL(/\/app\/chasseur\/tableau-de-bord/);
@@ -24,7 +22,6 @@ test('Empty dashboard — chasseur avec CFEI voit le bouton « Créer une fiche 
   await expect(page.getByText(/votre première fiche d'examen initial/i)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Créer une fiche' })).toBeVisible();
 
-  // La bottom-nav mobile expose aussi un raccourci « Nouvelle fiche » pour les chasseurs avec CFEI.
   const bottomNav = page.locator('#bottom-navigation');
   await expect(bottomNav.getByText('Nouvelle fiche')).toBeVisible();
 });

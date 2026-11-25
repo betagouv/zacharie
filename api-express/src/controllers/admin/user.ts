@@ -54,7 +54,6 @@ async function getLockoutInfo(email: string): Promise<AdminUserLockoutInfo> {
     prisma.securityLog.count({
       where: { email, action: LOCKOUT_FAILED_ACTIONS, created_at: { gte: failureSince } },
     }),
-    // toutes les tentatives échouées, y compris pendant le blocage : l'admin voit si elles continuent
     prisma.securityLog.findFirst({
       where: { email, action: { startsWith: 'LOGIN_FAILED' }, created_at: { gte: failureSince } },
       orderBy: { created_at: 'desc' },
@@ -99,8 +98,6 @@ router.post(
         return;
       }
       setAdminAuditTarget(res, 'user', user.id);
-      // La session usurpée n'emporte pas le ProConnect de l'admin : si la cible est aussi admin,
-      // elle devra refaire ProConnect pour atteindre /admin
       const token = signSessionToken({ userId: user.id });
       res.cookie(SESSION_COOKIE_NAME, token, cookieOptions(req));
       res.status(200).send({
@@ -314,7 +311,6 @@ router.post(
         where: { id: userId },
         data: nextUser,
       });
-      // User n'a pas de version_user_id : seul ce journal garde la trace de l'admin qui a modifié le compte
       setAdminAuditChanges(res, user, savedUser, Object.keys(nextUser));
       await updateBrevoContact(savedUser, 'ADMIN');
       await updateBrevoChasseurDeal(savedUser);
@@ -322,8 +318,6 @@ router.post(
       const userHasNowAllRequiredFields =
         !hasAllRequiredFields(user, `admin user update ${savedUser.id}`) &&
         hasAllRequiredFields(savedUser, `admin saved user update ${savedUser.id}`);
-      // Pas de notice « numéro CFEI changé » ici : c'est l'équipe elle-même qui édite la fiche
-      // depuis l'admin, elle n'a pas besoin d'être prévenue de sa propre saisie.
       if (userHasNowAllRequiredFields) {
         const subject = `Inscription finie pour ${savedUser.email} (${savedUser.prenom} ${savedUser.nom_de_famille})`;
         await sendEmail({
@@ -342,7 +336,6 @@ ${savedUser.roles.includes(UserRoles.CHASSEUR) && savedUser.est_forme_a_l_examen
         });
       }
 
-      // Mail « compte activé » dédupliqué une seule fois par compte (voir controllers/user.ts).
       if (savedUser.activated && !user.activated) {
         await sendOnboardingEmailOnce({
           user: savedUser,
@@ -357,9 +350,6 @@ ${savedUser.roles.includes(UserRoles.CHASSEUR) && savedUser.est_forme_a_l_examen
   )
 );
 
-// Soft delete : pose deleted_at. L'utilisateur ne peut plus se connecter ni agir
-// (voir middlewares/passport.ts et controllers/user.ts /login), mais ses données
-// historiques (fiches, carcasses) restent référencées.
 router.post(
   '/user/:user_id/soft-delete',
   catchErrors(
@@ -383,7 +373,6 @@ router.post(
   )
 );
 
-// Tous les appareils de l'utilisateur re-téléchargent leur périmètre de carcasses à leur prochaine synchro.
 router.post(
   '/user/:user_id/carcasses-reload',
   catchErrors(
@@ -405,7 +394,6 @@ router.post(
   )
 );
 
-// Restaure un utilisateur soft-deleted : remet deleted_at à null.
 router.post(
   '/user/:user_id/restore',
   catchErrors(
@@ -513,7 +501,6 @@ router.get(
   )
 );
 
-// fiches où l'utilisateur est directement impliqué (créateur, examinateur, premier détenteur ou SVI)
 const feiUserOR = (userId: string): Prisma.FeiWhereInput[] => [
   { created_by_user_id: userId },
   { examinateur_initial_user_id: userId },
@@ -614,18 +601,13 @@ router.get(
       ]);
 
       const notifications = notificationLogs.map((log) => {
-        // Le payload est un JSON stringifié écrit par le service de notification ; on n'en garde
-        // que le titre et le corps, le reste (réponse du provider, params de template) n'a pas
-        // d'intérêt dans la liste.
         let title: string | null = null;
         let body: string | null = null;
         try {
           const payload = JSON.parse(log.payload);
           title = payload.title ?? null;
           body = payload.body ?? null;
-        } catch (error) {
-          // payload illisible : on affiche la ligne sans titre ni corps
-        }
+        } catch (error) {}
         return {
           id: log.id,
           type: log.type,
@@ -652,8 +634,6 @@ router.get(
           last_login_at: { sort: 'desc', nulls: 'last' },
         },
       });
-      // carcasses et fiches (non supprimées) où l'utilisateur apparaît à n'importe quelle étape du circuit :
-      // création, examen initial, premier détenteur, intermédiaire ou SVI
       const countsRows = await prisma.$queryRaw<
         Array<{ user_id: string; carcasses: number; fiches: number }>
       >`
@@ -723,8 +703,6 @@ router.post(
   )
 );
 
-// Lien d'invitation à copier et transmettre à la main : l'utilisateur y choisit son mot de passe.
-// Valable 7 jours (voir /user/signup-with-invitation-token).
 router.post(
   '/user/:user_id/invitation-link',
   catchErrors(

@@ -41,7 +41,6 @@ export default function SviFeiLoader() {
   useLoaderEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
     loadData('svi-fei').then(() => setHasTriedLoading(true));
-    // Carcasses refusées/manquantes en amont : hors périmètre du pull delta, on les charge par fiche.
     loadCarcassesRefusees(params.fei_numero!);
   }, [params.fei_numero]);
 
@@ -109,7 +108,6 @@ function FEI_SVI() {
     [allCarcassesForFei]
   );
 
-  // Clôture par carcasse : la fiche est close "pour ce SVI" quand toutes ses carcasses le sont.
   const mySviClosed = useMemo(
     () => carcassesAAfficher.length > 0 && carcassesAAfficher.every((c) => !!c.svi_closed_at),
     [carcassesAAfficher]
@@ -159,8 +157,6 @@ function FEI_SVI() {
 
   const DateFinInput = canEdit ? Input : InputNotEditable;
 
-  // au moment où le SVI clôture la fiche, il en prend la responsabilité :
-  // l'ownership passe au SVI sur toutes les carcasses du groupe de transmission.
   function closeFiche(sviClosedAt: Date, action: string) {
     for (const carcasse of carcassesAAfficher) {
       const carcasseUpdate: Partial<Carcasse> = {

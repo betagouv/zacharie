@@ -44,7 +44,5 @@ export function getUserOnboardingRoute(user: User): string {
   if (user.isZacharieAdmin) {
     return '/app/admin';
   }
-  // compte sans rôle reconnu : la page d'accueil ne redirige pas un utilisateur connecté,
-  // contrairement à /app/connexion qui le renverrait ici
   return '/';
 }

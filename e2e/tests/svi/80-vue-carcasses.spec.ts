@@ -15,7 +15,6 @@ test('80 - Vue /app/svi/carcasses agrégée', async ({ page }) => {
   await page.goto('http://localhost:3290/app/svi/carcasses');
   await expect(page).toHaveURL(/\/app\/svi\/carcasses/);
 
-  // Les 4 carcasses de la seed doivent figurer
   await expect(page.getByText(/MM-001-001/).first()).toBeVisible({ timeout: 10000 });
   await expect(page.getByText(/MM-001-002/).first()).toBeVisible();
   await expect(page.getByText(/MM-001-003/).first()).toBeVisible();

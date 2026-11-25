@@ -2,10 +2,6 @@ import { describe, test, expect } from 'vitest';
 import { TrichineResultatAnalyse } from '@prisma/client';
 import { estPrelevable, etatsTrichineParCarcasse } from '@app/utils/trichine-prelevabilite';
 
-// Un prélèvement n'a de sens que pour ouvrir une analyse : soit la carcasse n'a jamais été
-// prélevée, soit son analyse a été déclarée impossible, soit elle est dans un pool douteux
-// qu'aucune 2e intention ne couvre encore (cf doc/trichine.md §5.1).
-
 const echantillon = (carcasseId: string) => ({ zacharie_carcasse_id: carcasseId, deleted_at: null });
 
 const pool = ({
@@ -96,7 +92,6 @@ describe('etatsTrichineParCarcasse', () => {
       ]
     );
     expect(etats.get('c-1')?.etat).toBe('BLOQUEE');
-    // la carcasse restée hors de la fille attend toujours sa 2e intention
     expect(etats.get('c-2')?.etat).toBe('DEUXIEME_INTENTION');
   });
 

@@ -1,18 +1,3 @@
-/**
- * Prépare le jeu de données du scénario de test manuel trichine côté SVI.
- * Protocole de test : `doc/trichine-scenario-test-svi.md`.
- *
- * Crée quatre comptes (SVI, LVD, LNR, chasseur), leurs entités, et une fiche de
- * 22 sangliers assignés au service d'inspection — 22 pour que la répartition
- * automatique en pools produise deux pools (19 + 3) et que les écrans soient
- * regardés avec un volume réaliste.
- *
- * Lancer (depuis api-express/) :
- *   tsx ./scripts/seed-trichine-scenario-svi.ts
- *
- * Idempotent : nettoie son propre run précédent (données préfixées `e2e-trichine`).
- * NE PAS lancer contre une base partagée (préprod / prod).
- */
 import { EntityRelationStatus, EntityRelationType, EntityTypes, UserRoles } from '@prisma/client';
 import prisma from '~/prisma';
 import { hashPassword } from '~/service/crypto';
@@ -109,7 +94,6 @@ async function creer() {
         activated: true,
         activated_at: new Date(),
         onboarded_at: new Date(),
-        // Le scénario vérifie que les notifications partent : on garde email + push actifs
         notifications: ['EMAIL', 'PUSH'],
       },
     });

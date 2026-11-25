@@ -9,7 +9,6 @@ test.beforeEach(async () => {
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Scenario 63 — Transmission à ETG : choisir ETG 1 → Transmettre → ETG voit la fiche.
 test('Collecteur transmet à ETG 1 qui la reçoit', async ({ page }) => {
   const feiId = 'ZACH-20250707-QZ6E0-175242';
   await connectWith(page, 'collecteur-pro@example.fr');
@@ -35,7 +34,6 @@ test('Collecteur transmet à ETG 1 qui la reçoit', async ({ page }) => {
   await transmettre.click();
   await expect(page.getByText(/ETG 1.*notifié|fiche.*transmise/i).first()).toBeVisible({ timeout: 10000 });
 
-  // L'ETG 1 voit la fiche.
   await logoutAndConnect(page, 'etg-1@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/etg');
   await expect(page.getByRole('link', { name: new RegExp(feiId) })).toBeVisible({ timeout: 10000 });

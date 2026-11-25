@@ -1,12 +1,5 @@
-// Catalogue des événements métier envoyés à Matomo : catégorie → action → noms autorisés.
-// Règles de nommage et d'évolution : doc/matomo.md.
-// - catégorie = objet métier, au singulier, kebab-case
-// - action = verbe à l'infinitif, kebab-case
-// - nom = contexte pris dans une liste fermée, jamais une saisie ni une donnée personnelle
-// - on ne renomme jamais un événement : on en ajoute un nouveau et on retire l'ancien du code
 export const MATOMO_EVENTS = {
   fiche: {
-    // name = bouton ou page d'où la fiche est créée
     creer: [
       'bouton-flottant',
       'barre-navigation',
@@ -18,12 +11,9 @@ export const MATOMO_EVENTS = {
       'lien-direct',
     ],
     'designer-premier-detenteur': ['moi', 'association', 'autre-utilisateur'],
-    // name = présence d'anomalies sur au moins une carcasse
     'confirmer-examen': ['avec-anomalie', 'sans-anomalie'],
     'valider-examen': ['avec-anomalie', 'sans-anomalie'],
-    // value = nombre de carcasses transmises
     transmettre: ['premier-detenteur', 'destinataire'],
-    // name = premier motif de blocage rencontré
     bloquer: [
       'date-mise-a-mort',
       'commune',
@@ -39,43 +29,34 @@ export const MATOMO_EVENTS = {
       'lien-invalide',
     ],
     supprimer: [],
-    // quitte la fiche en cours de saisie via le bouton « Retour »
     quitter: [],
   },
   carcasse: {
-    // value = nombre d'anomalies saisies
     ajouter: ['grand-gibier', 'petit-gibier'],
     supprimer: [],
     bloquer: ['numero-bracelet-manquant', 'espece-manquante', 'numero-bracelet-deja-utilise'],
     'modifier-anomalie': ['ajout', 'retrait'],
   },
-  // sélecteur d'anomalies (ajout ou modification d'une carcasse)
   anomalie: {
     'ouvrir-selecteur': ['grand-gibier', 'petit-gibier'],
-    // name = d'où l'anomalie est cochée ou retirée
     selectionner: ['liste', 'recherche'],
     retirer: ['liste', 'recherche', 'pastille', 'saisie-libre'],
-    // envoyé une fois la frappe terminée ; le texte recherché n'est jamais envoyé
     rechercher: ['resultat-trouve', 'resultat-vide'],
-    // anomalie hors référentiel ; le texte saisi n'est jamais envoyé
     'saisir-libre': ['famille', 'hors-famille', 'recherche-vide'],
     'agrandir-photo': [],
   },
   'vente-don': {
     enregistrer: ['usage-domestique', 'destinataire'],
     supprimer: [],
-    // name = étape de la modale où l'utilisateur est bloqué
     bloquer: ['destinataire', 'carcasses', 'stockage', 'transport'],
   },
   ccg: {
-    // numero-existant = CCG déjà enregistrée, retrouvée par son numéro ; nouvelle = pré-enregistrement complet
     creer: ['numero-existant', 'nouvelle'],
   },
   partenaire: {
     creer: [],
   },
   laboratoire: {
-    // value = nombre de lignes exportées (cochées, sinon affichées)
     exporter: ['pools-csv', 'pools-json', 'echantillons-csv', 'echantillons-json', 'ftps-csv', 'ftps-json'],
   },
 } as const satisfies Record<string, Record<string, readonly string[]>>;

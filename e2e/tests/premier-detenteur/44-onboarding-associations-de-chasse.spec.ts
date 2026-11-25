@@ -14,7 +14,6 @@ test.beforeEach(async () => {
 });
 
 async function gotoStep3MesInformationsDeChasse(page: Page) {
-  // Étape 1 : coordonnées
   await expect(page).toHaveURL(/\/app\/chasseur\/onboarding\/mes-coordonnees/);
   await page.locator('#nom_de_famille').fill('Dupont');
   await page.locator('#nom_de_famille').blur();
@@ -30,47 +29,38 @@ async function gotoStep3MesInformationsDeChasse(page: Page) {
   await page.locator('#ville').blur();
   await page.getByRole('button', { name: /Enregistrer et continuer/i }).click();
 
-  // Étape 2 : formation
   await expect(page).toHaveURL(/\/app\/chasseur\/onboarding\/formation-examen-initial/);
   await page.locator('label.fr-label:has-text("Oui")').first().click();
   await page.locator('#numero_cfei').fill('CFEI-075-25-999');
   await page.locator('#numero_cfei').blur();
   await page.getByRole('button', { name: /Enregistrer et continuer/i }).click();
 
-  // Étape 3 : infos de chasse — asso form not yet opened (user.checked_has_asso_de_chasse null)
   await expect(page).toHaveURL(/\/app\/chasseur\/onboarding\/mes-informations-de-chasse/);
 }
 
-// Scenario 44a — Onboarding step 3 / Asso : rechercher et sélectionner une entité existante (seed: "Association de chasseurs")
 test("44a - Onboarding asso : recherche et sélection d'une entité existante", async ({ page }) => {
   await connectWith(page, 'examinateur-onboarding@example.fr');
   await gotoStep3MesInformationsDeChasse(page);
 
-  // "Êtes-vous rattaché à une association / société / domaine de chasse ?" — clicking Oui reveals the search form
   await page.locator('label.fr-label:has-text("Oui")').first().click();
   await expect(page.getByText(/Rechercher une association, société ou domaine de chasse/i)).toBeVisible({
     timeout: 5000,
   });
 
-  // Open SelectCustom for raison_sociale and pick the seeded entity
   await page.locator("[class*='raison_sociale'][class*='input-container']").first().click();
   await page.getByRole('option', { name: /Association de chasseurs/i }).click();
 
-  // Preview card + "Me rattacher à cette entité" button appear
   const attachBtn = page.getByRole('button', { name: /Me rattacher à cette entité/i });
   await expect(attachBtn).toBeVisible({ timeout: 5000 });
   await attachBtn.scrollIntoViewIfNeeded();
   await attachBtn.click();
 
-  // After attachment the form closes and the relation appears in the list
   await expect(page.getByRole('button', { name: /Me rattacher à une autre entité/i })).toBeVisible({
     timeout: 10000,
   });
   await expect(page.getByText(/Association de chasseurs/i).first()).toBeVisible({ timeout: 10000 });
 });
 
-// Scenario 44a-bis — sur iOS, le champ de recherche perd le focus avant le tap sur une option
-// (ou au tap sur « ✓ » du clavier) : le texte saisi ne doit pas ouvrir le formulaire de création
 test("44a-bis - Onboarding asso : la perte de focus du champ de recherche n'ouvre pas la création", async ({
   page,
 }) => {
@@ -99,7 +89,6 @@ test("44a-bis - Onboarding asso : la perte de focus du champ de recherche n'ouvr
   });
 });
 
-// Scenario 44b — Onboarding step 3 / Asso : créer une nouvelle association via le formulaire complet
 test("44b - Onboarding asso : création d'une nouvelle association via le formulaire", async ({ page }) => {
   await connectWith(page, 'examinateur-onboarding@example.fr');
   await gotoStep3MesInformationsDeChasse(page);
@@ -109,14 +98,12 @@ test("44b - Onboarding asso : création d'une nouvelle association via le formul
     timeout: 5000,
   });
 
-  // Click dedicated "Créer une nouvelle ..." button under the "ou" divider
   const createBtn = page.getByRole('button', {
     name: /Créer une nouvelle association, société ou domaine de chasse/i,
   });
   await createBtn.scrollIntoViewIfNeeded();
   await createBtn.click();
 
-  // Full creation form appears
   await expect(page.getByRole('button', { name: /Créer et me rattacher à cette entité/i })).toBeVisible({
     timeout: 5000,
   });
@@ -134,13 +121,10 @@ test("44b - Onboarding asso : création d'une nouvelle association via le formul
   await submit.scrollIntoViewIfNeeded();
   await submit.click();
 
-  // After creation the form closes and the new entity appears in the relation list
   await expect(page.getByRole('button', { name: /Me rattacher à une autre entité/i })).toBeVisible({
     timeout: 10000,
   });
   await expect(page.getByText(/Société de Chasse du Test/i).first()).toBeVisible({ timeout: 10000 });
-  // la saisie d'un numéro CFEI met le compte en attente de validation par l'équipe Zacharie :
-  // admin de l'association qu'il vient de créer, il voit quand même qu'il est en attente
   await expect(
     page
       .locator('.bg-contrast-grey')
@@ -149,7 +133,6 @@ test("44b - Onboarding asso : création d'une nouvelle association via le formul
   ).toBeVisible();
 });
 
-// Scenario 44c — "Chercher une entité existante" link toggles the create form back to the search
 test('44c - Onboarding asso : depuis le formulaire de création on peut revenir à la recherche', async ({
   page,
 }) => {

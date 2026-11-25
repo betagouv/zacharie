@@ -30,7 +30,6 @@ export default function ChasseurFeiEnvoyée() {
     const grouped: Record<string, { entityId: string; entityName: string; carcasses: Array<Carcasse> }> = {};
     for (const transmission of transmissions) {
       if (!transmission.content.next_owner_entity_id) continue;
-      // repas de chasse de l'association premier détenteur : les carcasses ne quittent pas l'association
       if (transmission.content.next_owner_entity_id === fei?.premier_detenteur_entity_id) continue;
       if (!grouped[transmission.content.next_owner_entity_id]) {
         const entity = entities[transmission.content.next_owner_entity_id];
@@ -45,8 +44,6 @@ export default function ChasseurFeiEnvoyée() {
     return Object.values(grouped);
   }, [transmissions, entities, fei?.premier_detenteur_entity_id]);
 
-  // Carcasses gardées par le premier détenteur (usage domestique, repas de chasse de son association) :
-  // rien n'est transmis, la fiche est clôturée pour elles.
   const carcassesGardees = useMemo(
     () =>
       carcasses.filter(
@@ -57,8 +54,6 @@ export default function ChasseurFeiEnvoyée() {
     [carcasses, fei?.premier_detenteur_entity_id]
   );
 
-  // La transmission est portée par les carcasses (`updateCarcassesTransmission`), pas par la fiche :
-  // c'est leur état de synchro, et non `fei.is_synced`, qui dit si le destinataire a été notifié.
   const allSentCarcassesSynced = useMemo(
     () => sentByRecipient.every((recipient) => recipient.carcasses.every((c) => c.is_synced)),
     [sentByRecipient]
@@ -74,8 +69,6 @@ export default function ChasseurFeiEnvoyée() {
     );
   }, [transmissions]);
 
-  // Le lot « pas encore transmis » contient aussi les carcasses que le premier détenteur garde pour
-  // son usage domestique privé : elles n'ont pas de destinataire, mais il n'y a plus rien à attribuer.
   const unsendCarcasses = useMemo(() => {
     if (!unsendTransmissions.length) return [];
     const _unsendCarcasses = [];
@@ -85,9 +78,6 @@ export default function ChasseurFeiEnvoyée() {
     return _unsendCarcasses;
   }, [unsendTransmissions]);
 
-  // Quand l'examinateur transmet la fiche au premier détenteur (une personne, pas une entité),
-  // il n'y a ni next_owner_entity_id ni fei_next_owner_entity_id : le PD devient directement
-  // détenteur courant. On résout son nom pour afficher la confirmation de transmission.
   const premierDetenteurName = useMemo(() => {
     if (fei?.premier_detenteur_entity_id) {
       return entities[fei.premier_detenteur_entity_id]?.nom_d_usage ?? null;
@@ -97,7 +87,6 @@ export default function ChasseurFeiEnvoyée() {
       const name = pd ? `${pd.prenom ?? ''} ${pd.nom_de_famille ?? ''}`.trim() : '';
       if (name) return name;
     }
-    // Repli : nom mis en cache sur les carcasses au moment de la transmission au PD.
     return carcasses.find((c) => c.current_owner_user_name_cache)?.current_owner_user_name_cache ?? null;
   }, [fei, entities, users, carcasses]);
 
@@ -209,7 +198,6 @@ export default function ChasseurFeiEnvoyée() {
               {!!user.numero_cfei && (
                 <Button
                   type="button"
-                  // className="bg-white"
                   onClick={async () => {
                     const newFei = await createNewFei('apres-envoi');
                     navigate(`/app/chasseur/fei/${newFei.numero}`);

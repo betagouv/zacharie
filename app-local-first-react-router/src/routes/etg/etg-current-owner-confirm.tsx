@@ -45,7 +45,6 @@ export default function CurrentOwnerConfirm() {
   const nextOwnerEntity = entities[currentTransmission.next_owner_entity_id!];
   const nextOwnerUser = users[currentTransmission.next_owner_user_id!];
 
-  // For multi-recipient dispatch: filter to only carcasses assigned to this user/entity
   const userEntityIds = useMemo(() => {
     return Object.values(entities)
       .filter((e) => e.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY)
@@ -58,7 +57,6 @@ export default function CurrentOwnerConfirm() {
     ? (entities[currentTransmission.next_owner_entity_id]?.nom_d_usage ?? '')
     : '';
 
-  // Detect if user already took charge of their assigned carcasses
   const myAlreadyHandledCarcasses = useMemo(() => {
     return myCarcasses.filter(
       (c) =>
@@ -68,7 +66,6 @@ export default function CurrentOwnerConfirm() {
     );
   }, [myCarcasses, userEntityIds, user.id]);
 
-  // Check if there are remaining carcasses not yet taken in charge by anyone
   const needTransportFromETG = useMemo(() => {
     if (currentTransmission.next_owner_role === FeiOwnerRole.ETG) {
       if (latestIntermediaire) {
@@ -85,9 +82,7 @@ export default function CurrentOwnerConfirm() {
     }
   }, [latestIntermediaire, currentTransmission]);
 
-  const [checkedTransportFromETG /* setCheckedTransportFromETG */] = useState(needTransportFromETG);
-  // Le n° de bon de réception est saisi une fois au contrôle à réception : il est reporté
-  // sur chaque carcasse prise en charge (et seulement celles-là).
+  const [checkedTransportFromETG] = useState(needTransportFromETG);
   const [numeroBonReception, setNumeroBonReception] = useState('');
   const notMyEntitySoutraite = useMemo(() => {
     const sousTraiteEntityId = currentTransmission.next_owner_sous_traite_by_entity_id;
@@ -155,19 +150,13 @@ export default function CurrentOwnerConfirm() {
   if (transmissionMetadata.allCarcassesDone) {
     return null;
   }
-  // Multi-recipient: user already took charge of their assigned carcasses
   if (myCarcasses.length === 0 && myAlreadyHandledCarcasses.length > 0) {
     return null;
   }
 
-  // Handles the case where an ETG reception employee takes charge of carcasses
-  // that also need a transport step recorded. This creates both intermediaires
-  // (transport + reception) and updates the FEI once, avoiding the previous
-  // race condition from two separate handlePriseEnCharge calls with a setTimeout.
   async function handleETGReceptionWithTransport() {
     const entityName = myEntityName;
 
-    // 1. Create the transport intermediaire (COLLECTEUR_PRO role)
     const transportIntermediaireId = `${user.id}_${fei.numero}_${dayjs().format('HHmmss')}_transport`;
     const transportIntermediaire: CarcassesIntermediaire = {
       id: transportIntermediaireId,
@@ -183,8 +172,7 @@ export default function CurrentOwnerConfirm() {
       intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.ETG,
       intermediaire_prochain_detenteur_id_cache: currentTransmission.next_owner_entity_id!,
     };
-    await new Promise((res) => setTimeout(res, 150)); // so that the create_at differ between the two intermediaires
-    // 2. Create the reception intermediaire (ETG role)
+    await new Promise((res) => setTimeout(res, 150));
     const receptionIntermediaireId = `${user.id}_${fei.numero}_${dayjs().format('HHmmss')}_reception`;
     const receptionIntermediaire: CarcassesIntermediaire = {
       id: receptionIntermediaireId,
@@ -201,7 +189,6 @@ export default function CurrentOwnerConfirm() {
       intermediaire_prochain_detenteur_id_cache: null,
     };
 
-    // Create both intermediaires in a single store update (only for my carcasses)
     await createCarcassesIntermediaire([transportIntermediaire, receptionIntermediaire], myCarcasseIds);
     addLog({
       user_id: user.id,
@@ -226,7 +213,6 @@ export default function CurrentOwnerConfirm() {
       carcasse_intermediaire_id: null,
     });
 
-    // 3. Update carcasses transmission (source of truth) - only my carcasses
     const nextTransmission: CarcasseTransmission = {
       current_owner_role: FeiOwnerRole.ETG,
       current_owner_entity_id: currentTransmission.next_owner_entity_id ?? null,
@@ -308,7 +294,6 @@ export default function CurrentOwnerConfirm() {
       prev_owner_entity_id: currentTransmission.current_owner_entity_id || null,
     };
 
-    // deprecated anyway and broken for multi-dispatch
     if (etgEmployeeTransportingToETG) {
       nextTransmission.next_owner_entity_id = currentTransmission.next_owner_entity_id;
       nextTransmission.next_owner_entity_name_cache = myEntityName;
@@ -318,9 +303,6 @@ export default function CurrentOwnerConfirm() {
     }
 
     const newIntermediaireId = getNewCarcasseIntermediaireId(user.id, fei.numero);
-    // nextFei.latest_intermediaire_user_id = user.id;
-    // nextFei.latest_intermediaire_entity_id = nextcurrentTransmission.current_owner_entity_id;
-    // nextFei.latest_intermediaire_name_cache = nextFei.fei_current_owner_entity_name_cache;
     const newIntermediaire: CarcassesIntermediaire = {
       id: newIntermediaireId,
       fei_numero: fei.numero,
@@ -329,7 +311,6 @@ export default function CurrentOwnerConfirm() {
       intermediaire_entity_id: currentTransmission.next_owner_entity_id || '',
       created_at: dayjs().toDate(),
       prise_en_charge_at: dayjs().toDate(),
-      // le transport ne réceptionne pas : pas de bon de réception à ce moment-là
       numero_bon_reception: etgEmployeeTransportingToETG ? null : numeroBonReception || null,
       intermediaire_depot_type: null,
       intermediaire_depot_entity_id: null,
@@ -354,14 +335,12 @@ export default function CurrentOwnerConfirm() {
       intermediaire_id: newIntermediaireId,
       carcasse_intermediaire_id: null,
     });
-    // Update carcasses transmission (source of truth) - only my carcasses
     updateCarcassesTransmission(myCarcasseIds, nextTransmission);
     addLog({
       user_id: user.id,
       user_role: nextTransmission.current_owner_role! as UserRoles,
       fei_numero: fei.numero,
       action: action || 'current-owner-confirm',
-      // FIXME: what history should we use here?
       history: createHistoryInput(currentTransmission, nextTransmission),
       entity_id: currentTransmission.next_owner_entity_id,
       zacharie_carcasse_id: null,
@@ -404,9 +383,6 @@ export default function CurrentOwnerConfirm() {
       next_owner_role: null,
     };
     if (currentTransmission.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) {
-      // Renvoi au premier détenteur : le stockage et le transport étaient ceux de l'envoi annulé, il
-      // les choisira de nouveau. On garde premier_detenteur_prochain_detenteur_id_cache : côté chasseur,
-      // il sert à afficher « Renvoyée par …, à attribuer de nouveau » jusqu'au prochain envoi.
       Object.assign(nextTransmission, {
         premier_detenteur_depot_type: null,
         premier_detenteur_depot_entity_id: null,
@@ -428,8 +404,6 @@ export default function CurrentOwnerConfirm() {
       carcasse_intermediaire_id: null,
       history: createHistoryInput(currentTransmission, nextTransmission),
     });
-    // Sauf si j'ai déjà pris en charge ces carcasses plus tôt dans la chaîne (premier détenteur →
-    // moi → un autre → moi) : la fiche me concerne encore, je continue de la voir.
     const jaiDejaPrisEnCharge = transmissionMetadata.intermediaires.some(
       (i) =>
         i.intermediaire_user_id === user.id ||
@@ -463,7 +437,6 @@ export default function CurrentOwnerConfirm() {
           },
         },
       });
-      // je ne peux pas sous-traiter une fiche si une autre entreprise a déjà décidé de sous-traiter la fiche
       if (needTransportFromETG && !notMyEntitySoutraite) {
         actionButtons.push({
           children: 'Sous-traiter transport',
@@ -494,7 +467,6 @@ export default function CurrentOwnerConfirm() {
       });
     }
   }
-  // Pas de renvoi quand l'expéditeur est le transport de mon propre ETG : la fiche resterait chez nous.
   const expediteurIsMyEntity =
     !!currentTransmission.current_owner_entity_id &&
     userEntityIds.includes(currentTransmission.current_owner_entity_id);
@@ -509,7 +481,6 @@ export default function CurrentOwnerConfirm() {
     });
   }
 
-  // le n° de bon de réception n'est demandé que si l'ETG destinataire l'a activé dans ses paramètres
   const canFillNumeroBonReception =
     currentTransmission.next_owner_role === FeiOwnerRole.ETG &&
     user.etg_role === UserEtgRoles.RECEPTION &&

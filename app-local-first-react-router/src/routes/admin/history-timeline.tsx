@@ -31,8 +31,6 @@ function hasDetails(details: unknown) {
 
 type EventGroup = { key: string; events: Array<AdminHistoryEvent> };
 
-// Événements identiques (même minute, même auteur, mêmes changements) réunis en une ligne : une modification
-// de fiche recopiée sur chacune de ses carcasses n'apparaît qu'une fois
 function groupEvents(events: Array<AdminHistoryEvent>) {
   const groups = new Map<string, EventGroup>();
   for (const event of events) {
@@ -52,7 +50,6 @@ function groupEvents(events: Array<AdminHistoryEvent>) {
   return [...groups.values()];
 }
 
-// Les événements arrivent du plus récent au plus ancien : chaque jour forme un bloc continu
 function groupByDay(events: Array<AdminHistoryEvent>) {
   const days: Array<{ day: string; events: Array<AdminHistoryEvent> }> = [];
   for (const event of events) {
@@ -176,8 +173,6 @@ export function AdminHistoryEvents({ events }: { events: Array<AdminHistoryEvent
   );
 }
 
-// Onglet « Historique » des pages de détail : modifications (tables d'historique), actions métier,
-// notifications et actions admin, de la plus récente à la plus ancienne
 export function AdminHistoryTimeline({
   type,
   id,

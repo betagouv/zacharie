@@ -19,9 +19,6 @@ test.beforeAll(async () => {
   await resetDb('EXAMINATEUR_INITIAL');
 });
 
-// Le premier détenteur est choisi sur la fiche avant les carcasses. Une carcasse ajoutée après la
-// certification de l'examen initial doit le porter aussi : la carte de la fiche lit le nom du
-// premier détenteur sur ses carcasses.
 test('Une carcasse ajoutée après la certification porte le premier détenteur de la fiche', async ({
   page,
 }) => {
@@ -61,7 +58,6 @@ test('Une carcasse ajoutée après la certification porte le premier détenteur 
     .first()
     .click();
 
-  // Carcasse ajoutée après la certification : la certification ne la rattrape plus.
   const ajouterCarcasse = page.getByRole('button', { name: 'Ajouter une carcasse' });
   await ajouterCarcasse.scrollIntoViewIfNeeded();
   await ajouterCarcasse.click();
@@ -70,7 +66,6 @@ test('Une carcasse ajoutée après la certification porte le premier détenteur 
   const numeroBraceletTardif = (await suggestionBracelet.textContent())!.trim();
   await suggestionBracelet.click();
 
-  // Le serveur reçoit la carcasse tardive avec le premier détenteur de la fiche.
   const syncCarcasseTardive = page.waitForResponse(
     (res) =>
       res.url().includes('/sync') &&
@@ -83,8 +78,6 @@ test('Une carcasse ajoutée après la certification porte le premier détenteur 
   await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
   await syncCarcasseTardive;
 
-  // On retire la première carcasse : la fiche ne garde que la carcasse tardive, la carte ne peut
-  // donc lire le premier détenteur que sur elle.
   await expect(page.getByRole('button', { name: /Daim N°/ })).toHaveCount(2, { timeout: 5000 });
   const premiereCarcasse = page
     .getByRole('button', { name: /Daim N°/ })
@@ -104,9 +97,6 @@ test('Une carcasse ajoutée après la certification porte le premier détenteur 
   await expect(carteFiche).toContainText('Association de chasseurs');
 });
 
-// Premier détenteur en son nom propre (pas d'association) : les carcasses de la fiche n'ont pas
-// d'entité détentrice. Une carcasse ajoutée après la certification ne doit pas en porter une non
-// plus, sinon elle diffère des autres carcasses de la même transmission.
 test('Une carcasse ajoutée après la certification, premier détenteur en son nom propre, ne porte pas de nom d’entité', async ({
   page,
 }) => {
@@ -118,7 +108,6 @@ test('Une carcasse ajoutée après la certification, premier détenteur en son n
   await page.getByRole('textbox', { name: 'Commune de prélèvement du gibier' }).fill('CHASS');
   await page.getByRole('button', { name: 'CHASSENARD' }).click();
 
-  // l'examinateur se désigne lui-même premier détenteur
   await page.getByRole('button', { name: 'Marie Martin' }).click();
   await page.getByRole('button', { name: 'Continuer' }).first().click();
 

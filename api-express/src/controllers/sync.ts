@@ -22,19 +22,12 @@ import { redactPersonalData } from '~/utils/redact-personal-data';
 
 const router: express.Router = express.Router();
 
-/**
- * POST /sync
- * Bulk sync endpoint that processes all unsynced data in a single request.
- * Order: FEIs -> Carcasses -> CarcassesIntermediaires -> Logs
- */
 router.post(
   '/',
   passport.authenticate('user', { session: false }),
   catchErrors(async (req: express.Request, res: express.Response<SyncResponse>) => {
     const user = req.user as User;
 
-    // Un chasseur formé (numéro CFEI) non encore activé peut synchroniser ses fiches en
-    // préparation. La transmission reste bloquée plus bas (syncFei / syncCarcasse).
     const isExaminateurInitialNotYetActivated = user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei;
     if (!user.activated && !isExaminateurInitialNotYetActivated) {
       res.status(400).send({
@@ -54,19 +47,9 @@ router.post(
     const syncedLogIds: Array<string> = [];
     const rejected: Array<SyncRejection> = [];
     const shouldRemoveFromLocalStore: Array<SyncRejection> = [];
-    // Le payload des items refusés, données personnelles masquées. Un refus ne laisse aucune trace en base — le serveur n'a rien
-    // écrit — et le client cesse de le pousser, sa copie locale disparaissant.
-    // Cet évènement Sentry est donc le seul endroit où la saisie de l'utilisateur
-    // reste récupérable si le refus s'avère être un faux positif.
     const rejectedBodies: Array<Omit<SyncRejection, 'reason'> & { body: unknown }> = [];
-    // Sentry tronque un extra au-delà de ~16 Ko : sans plafond, un lot massivement refusé ferait
-    // perdre tous les payloads au lieu des premiers.
     const MAX_REJECTED_BODIES = 20;
 
-    // Un refus d'autorisation est définitif : on le renvoie au client pour qu'il cesse de repousser
-    // l'item, et on le remonte à l'équipe en un seul évènement en fin de requête plutôt qu'un par
-    // item. Toute autre erreur est transitoire — on la capture et le client réessaiera, donc son
-    // payload reviendra tout seul et n'a pas à être conservé ici.
     const removeFromLocalStoreReasons: Array<SyncRejectedErrorMessage> = [
       "Vous n'avez pas accès à cette carcasse",
       "Vous n'avez pas accès à cette fiche",
@@ -85,13 +68,8 @@ router.post(
       capture(error as Error, { extra: { ...item, userId: user.id }, user });
     }
 
-    // Périmètre d'écriture du lot : résolu une fois, passé à chaque section. Il se met à jour tout
-    // seul au fil de la requête (une carcasse créée en section 2 entre dans le périmètre pour les
-    // sections suivantes)
     const scope = await createSyncScope(user);
 
-    // Une requête pour tout le lot : les entités supprimées parmi celles que fiches et carcasses
-    // désignent, refusées par syncFei / syncCarcasse.
     const deletedEntityIds = await findDeletedEntityIds(
       [
         ...(feis || []).map((f) => f.premier_detenteur_entity_id),
@@ -103,7 +81,6 @@ router.post(
       ].filter((id): id is string => !!id)
     );
 
-    // 1. Process FEIs first (carcasses depend on them)
     for (const feiData of feis || []) {
       try {
         const result = await syncFei(feiData.numero, feiData as Prisma.FeiUncheckedCreateInput, user, scope, {
@@ -115,10 +92,7 @@ router.post(
       }
     }
 
-    // 2. Process Carcasses (intermediaires depend on them)
     const carcasseList = carcasses || [];
-    // Pré-charge en une requête les fiches ET les carcasses existantes référencées (au lieu d'un
-    // findUnique + findFirst par carcasse), passées ensuite à chaque syncCarcasse.
     const carcasseFeiNumeros = [
       ...new Set(carcasseList.map((c) => c.fei_numero).filter(Boolean)),
     ] as string[];
@@ -140,16 +114,10 @@ router.post(
         })) ?? [];
       for (const c of existingCarcasses) existingCarcasseMap.set(c.zacharie_carcasse_id, c);
     }
-    // Une requête pour tout le lot, au lieu d'une par carcasse dans la boucle ci-dessous.
     await scope.prefetch(carcasseIds);
 
-    // Les carcasses sont traitées en parallèle (chaque syncCarcasse = un update de ligne
-    // distincte, sans dépendance entre elles). La relation CAN_TRANSMIT vers un même destinataire
-    // est partagée par le lot : syncCarcasse la crée une seule fois par entité via cette Map.
     const ensuredRelations = new Map<string, Promise<void>>();
 
-    // Concurrence bornée : on ne sature pas le pool de connexions Prisma (au-delà, les requêtes
-    // sont simplement mises en file).
     const CARCASSE_SYNC_CONCURRENCY = 10;
     for (let i = 0; i < carcasseList.length; i += CARCASSE_SYNC_CONCURRENCY) {
       const chunk = carcasseList.slice(i, i + CARCASSE_SYNC_CONCURRENCY);
@@ -180,7 +148,6 @@ router.post(
       }
     }
 
-    // 3. Process CarcassesIntermediaires
     await scope.prefetch(
       (carcassesIntermediaires || []).map((ci) => ci.zacharie_carcasse_id).filter(Boolean) as string[]
     );
@@ -207,7 +174,6 @@ router.post(
       }
     }
 
-    // 4. Process CarcasseModificationRequests
     await scope.prefetch(
       (carcasseModifRequests || []).map((m) => m.zacharie_carcasse_id).filter(Boolean) as string[]
     );
@@ -227,12 +193,6 @@ router.post(
       }
     }
 
-    // 5. Process Logs
-    // Les logs sont des entrées d'historique immuables à id généré côté client : un seul
-    // createMany (skipDuplicates) au lieu d'un upsert par log. Log n'a aucune contrainte FK,
-    // donc le batch ne peut pas échouer sur une carcasse/fiche manquante.
-    // Un log n'est accepté qu'au nom de l'utilisateur authentifié : sinon on pourrait forger
-    // l'historique d'un autre utilisateur.
     const logsWithId = (logs || []).filter((l) => l.id);
     const logsToSync = logsWithId.filter((l) => l.user_id === user.id);
     const forgedLogs = logsWithId.filter((l) => l.user_id !== user.id);
@@ -290,7 +250,6 @@ router.post(
       }
     }
 
-    // Run side effects AFTER all saves (non-critical)
     for (const feiResult of feiResults) {
       try {
         if (!feiResult.isDeleted && feiResult.existingFei) {
@@ -304,7 +263,6 @@ router.post(
       }
     }
 
-    // Modif-request side effects: apply Carcasse mutations on approve, notify on create/approve/reject.
     for (const r of modifResults) {
       try {
         await runCarcasseModifRequestSideEffects(r, user, r.approvalPayload);
@@ -316,8 +274,6 @@ router.post(
       }
     }
 
-    // Refetch the carcasses touched by a modif-request (numero_bracelet renommé dès la création,
-    // examinateur_signed_at à l'approbation, deleted_at au refus/annulation).
     const touchedCarcasseIds = new Set<string>();
     for (const r of modifResults) {
       if (r.isNew || r.transitionedTo || r.justCancelled)
@@ -329,13 +285,11 @@ router.post(
             where: { zacharie_carcasse_id: { in: [...touchedCarcasseIds] } },
           })
         : [];
-    // Override: refreshed carcasses replace any earlier carcasseResults output for the same id.
     const mergedCarcasses = new Map<string, Carcasse>();
     for (const cr of carcasseResults)
       mergedCarcasses.set(cr.savedCarcasse.zacharie_carcasse_id, cr.savedCarcasse);
     for (const rc of refreshedCarcasses) mergedCarcasses.set(rc.zacharie_carcasse_id, rc);
 
-    // Fetch FEIs for response
     const feiNumeros = feiResults.map((f) => f.savedFei.numero);
     const feisFetched =
       feiNumeros.length > 0
@@ -344,11 +298,6 @@ router.post(
           })
         : [];
 
-    // Une écriture acceptée peut sortir la carcasse du périmètre de son auteur (ex. un renvoi à
-    // l'expéditeur vide next_owner_*). Le client la garde alors `is_synced = false` — le delta ne la
-    // renvoie plus pour basculer le flag — et la repousserait pour se la faire refuser. On lui
-    // demande de la retirer dès maintenant. Seules les carcasses déjà en base avant ce lot sont
-    // concernées : une carcasse créée ici n'a pas de périmètre « avant » à quitter.
     const writtenExistingCarcasseIds = carcasseResults
       .filter((cr) => !cr.isDeleted && existingCarcasseMap.has(cr.savedCarcasse.zacharie_carcasse_id))
       .map((cr) => cr.savedCarcasse.zacharie_carcasse_id);
@@ -362,9 +311,6 @@ router.post(
       }
     }
 
-    // Une carcasse retirée emporte ses lignes d'intermédiaire, et sa fiche si l'utilisateur n'a plus
-    // accès à aucune de ses carcasses : le client ne les renvoie pas forcément (déjà synchronisées),
-    // elles ne seraient donc jamais refusées et resteraient dans son store.
     const removedCarcasseIds = shouldRemoveFromLocalStore
       .filter((item) => item.kind === 'carcasse')
       .map((item) => item.id);
@@ -384,7 +330,6 @@ router.post(
           reason: "Vous n'avez pas accès à cette carcasse",
         });
       }
-      // La carcasse refusée peut ne pas exister en base : sa fiche se lit dans le lot envoyé.
       const removedFeiNumeros = new Set(
         carcasseList
           .filter((c) => removedCarcasseIds.includes(c.zacharie_carcasse_id))
@@ -406,7 +351,6 @@ router.post(
     }
 
     if (rejected.length > 0) {
-      // Message fixe pour que Sentry regroupe : le détail est dans extra.
       capture(new Error('Écritures /sync refusées'), {
         extra: {
           count: rejected.length,
@@ -414,8 +358,6 @@ router.post(
           rejectedBodies,
           bodiesTruncated: rejected.length > rejectedBodies.length,
           userId: user.id,
-          // Distingue un bundle client périmé (mobile hors ligne, onglet jamais rechargé) d'un bug
-          // du code actuel.
           appversion: req.headers.appversion,
           platform: req.headers.platform,
         },

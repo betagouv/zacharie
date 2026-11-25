@@ -7,9 +7,6 @@ import prisma from '~/prisma';
 import { notifyTrichineUsers } from '~/utils/trichine';
 import { dernierEchantillonRetireParLabo, recomputeEchantillonTrichine } from '~/utils/trichine-status';
 
-// POST /laboratoire/echantillon/:id/retirer-du-pool — le laboratoire (LVD ou LNR) sort un
-// échantillon de son pool, à réception ou en cours d'analyse, tant qu'il n'a pas rendu le résultat.
-
 vi.mock('~/third-parties/sentry', () => ({ capture: vi.fn() }));
 vi.mock('~/utils/trichine', async (importOriginal) => ({
   ...(await importOriginal<typeof import('~/utils/trichine')>()),

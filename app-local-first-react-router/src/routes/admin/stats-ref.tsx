@@ -29,8 +29,6 @@ const INDICATEUR_LABELS: Record<StatsRefIndicateur, string> = {
   [StatsRefIndicateur.TAUX_SAISIE_BPH_HORS_ZACHARIE]: 'Taux de saisie BPH hors Zacharie (%)',
 };
 
-// Saisons du 1er juin au 31 mai, de 2020-2021 à deux saisons après la saison en cours (objectifs), la plus
-// récente en premier
 function getSaisons(): Array<string> {
   const now = dayjs();
   const saisonEnCours = now.month() >= 5 ? now.year() : now.year() - 1;

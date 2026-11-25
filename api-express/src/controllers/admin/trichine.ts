@@ -10,28 +10,14 @@ import type {
 
 const router: express.Router = express.Router();
 
-/**
- * Vue d'ensemble trichine pour l'admin : documents, pools, FTP, échantillons.
- *
- * Chaque section a sa route et renvoie des lignes **plates** : le tri et les filtres se font
- * côté client sur les colonnes affichées, comme les listes trichine métier. Les listes sont
- * bornées aux plus récentes — c'est un outil de diagnostic, pas un export.
- */
-
 const LIMITE_PAR_DEFAUT = 200;
 const LIMITE_MAX = 500;
 
 function limite(req: express.Request): number {
   const demande = Number(req.query.limit) || LIMITE_PAR_DEFAUT;
-  // Une valeur négative serait interprétée par Prisma comme « les N derniers, à l'envers »
   return Math.min(Math.max(demande, 1), LIMITE_MAX);
 }
 
-/* -------------------------------------------------------------------------- */
-/* Documents                                                                   */
-/* -------------------------------------------------------------------------- */
-
-// Rapports et photographies déposés par les laboratoires
 router.get(
   '/trichine/documents',
   catchErrors(async (req: express.Request, res: express.Response<AdminTrichineDocumentsResponse>) => {
@@ -62,10 +48,6 @@ router.get(
     res.status(200).send({ ok: true, data: { documents: rows }, error: '' });
   })
 );
-
-/* -------------------------------------------------------------------------- */
-/* Pools                                                                       */
-/* -------------------------------------------------------------------------- */
 
 router.get(
   '/trichine/pools',
@@ -123,10 +105,6 @@ router.get(
   })
 );
 
-/* -------------------------------------------------------------------------- */
-/* FTP                                                                         */
-/* -------------------------------------------------------------------------- */
-
 router.get(
   '/trichine/ftps',
   catchErrors(async (req: express.Request, res: express.Response<AdminTrichineFtpsResponse>) => {
@@ -159,17 +137,12 @@ router.get(
         ftp.ExpediteurUser.email,
       nb_pools: ftp.TrichinePoolFTPs.length,
       pools: ftp.TrichinePoolFTPs.map((lien) => lien.TrichinePool.reference_pool).join(', '),
-      // Une fiche de confirmation est née d'un pool douteux : c'est le signal à repérer
       est_confirmation: !!ftp.ftp_parent_id,
     }));
 
     res.status(200).send({ ok: true, data: { ftps: rows }, error: '' });
   })
 );
-
-/* -------------------------------------------------------------------------- */
-/* Échantillons                                                                */
-/* -------------------------------------------------------------------------- */
 
 router.get(
   '/trichine/echantillons',

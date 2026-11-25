@@ -8,7 +8,6 @@ import { escapeBrevoPlaceholders } from '~/utils/sanitize';
 import { getChasseurDealName } from '~/utils/brevo-chasseur-deal-name';
 
 const DISABLED = ENVIRONMENT === 'test' || IS_DEV_OR_TEST;
-// const DISABLED = false;
 
 const API_KEY = process.env.BREVO_API;
 
@@ -25,11 +24,8 @@ type SendEmailProps = {
   cc?: Array<string>;
 };
 
-// `messageId` est l'identifiant Brevo de l'envoi, `null` quand l'envoi est court-circuité en dev.
 export type SentEmail = { messageId: string | null };
 
-// Renvoie un `SentEmail` si l'email est parti (ou a été volontairement court-circuité en dev), `false`
-// en cas d'échec. L'appelant s'en sert pour ne pas enregistrer un envoi raté comme un succès.
 async function sendEmail(props: SendEmailProps): Promise<SentEmail | false> {
   try {
     if (IS_DEV_OR_TEST) {
@@ -41,7 +37,6 @@ async function sendEmail(props: SendEmailProps): Promise<SentEmail | false> {
       throw new Error('html or text is required');
     }
     const apiInstance = new brevo.TransactionalEmailsApi();
-    // Set the API key for transactional emails
     apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, API_KEY);
 
     const sendSmtpEmail = new brevo.SendSmtpEmail();
@@ -69,7 +64,6 @@ async function sendEmail(props: SendEmailProps): Promise<SentEmail | false> {
     const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
     return { messageId: result.body.messageId ?? null };
   } catch (error) {
-    // Ni contenu ni paramètres : ils portent des liens avec jeton (reset, invitation) et des données personnelles.
     capture(error as Error, {
       extra: {
         subject: props.subject,
@@ -84,9 +78,7 @@ async function sendEmail(props: SendEmailProps): Promise<SentEmail | false> {
 type SendTemplateEmailProps = {
   emails: Array<string>;
   templateId: number;
-  // Variables passées au template Brevo (placeholders {{ params.xxx }}).
   params?: Record<string, unknown>;
-  // Le template Brevo porte son propre expéditeur ; `from` ne sert qu'à le surcharger.
   from?: {
     name: string;
     email: string;
@@ -95,14 +87,8 @@ type SendTemplateEmailProps = {
   cc?: Array<string>;
 };
 
-// Envoi via un template Brevo (sujet + HTML gérés côté dashboard Brevo, remplis par `params`).
-// À utiliser pour tout email migré ; le contenu n'est plus construit dans le code.
-// Même contrat de retour que `sendEmail` : un `SentEmail` si parti, `false` sinon.
 async function sendTemplateEmail(props: SendTemplateEmailProps): Promise<SentEmail | false> {
   try {
-    // Les ids du registre valent `null` tant que le template n'existe pas côté Brevo, et
-    // `strictNullChecks` étant désactivé le compilateur laisse passer ce `null` : sans ce garde
-    // l'appel partirait sans template et Brevo répondrait 400.
     if (!props.templateId) {
       capture(new Error('sendTemplateEmail appelé sans templateId'), {
         extra: {
@@ -149,16 +135,12 @@ async function sendTemplateEmail(props: SendTemplateEmailProps): Promise<SentEma
   }
 }
 
-// Évènements Brevo qui signifient que l'email n'a pas atteint le destinataire.
 const DELIVERY_FAILURE_EVENTS = ['bounces', 'hardBounces', 'softBounces', 'invalid', 'blocked', 'error'];
 
-// Renvoie le premier évènement d'échec connu de Brevo pour cet envoi et ce destinataire, `null` sinon.
-// Une erreur de l'API Brevo renvoie aussi `null` : faute de savoir, on ne signale pas d'échec.
 async function getEmailDeliveryFailure(messageId: string, email: string): Promise<string | null> {
   try {
     const apiInstance = new brevo.TransactionalEmailsApi();
     apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, API_KEY);
-    // `days: 2` couvre un envoi fait juste avant minuit.
     const result = await apiInstance.getEmailEventReport(
       50,
       0,
@@ -170,7 +152,6 @@ async function getEmailDeliveryFailure(messageId: string, email: string): Promis
       undefined,
       messageId
     );
-    // Le SDK type `event` en enum numérique, mais l'API renvoie le nom de l'évènement.
     const failure = (result.body.events ?? []).find((event) =>
       DELIVERY_FAILURE_EVENTS.includes(String(event.event))
     );
@@ -231,11 +212,9 @@ interface BrevoContact extends brevo.GetExtendedContactDetails {
   };
 }
 
-// Attributs de profil du contact Brevo, identiques à la création et à la mise à jour.
 async function formatContactAttributes(
   user: User
 ): Promise<Omit<BrevoContact['attributes'], 'LANDLINE_NUMBER'>> {
-  // let LANDLINE_NUMBER = '';
   let SMS = '';
   let WHATSAPP = '';
   let TELEPHONE_PORTABLE = '';
@@ -244,7 +223,6 @@ async function formatContactAttributes(
     const phoneNumber = parsePhoneNumber(user.telephone, 'FR');
     if (phoneNumber?.isPossible()) {
       if (phoneNumber.number.startsWith('+336') || phoneNumber.number.startsWith('+337')) {
-        // SMS et WHATSAPP sont uniques dans Brevo : on ne les remplit que si un seul compte porte ce numéro
         const existingUsersWithSamePhoneNumber = await prisma.user.findMany({
           where: { telephone: user.telephone },
         });
@@ -254,7 +232,6 @@ async function formatContactAttributes(
         }
         TELEPHONE_PORTABLE = phoneNumber.number;
       } else {
-        // LANDLINE_NUMBER = phoneNumber.number;
         TELEPHONE_FIXE = phoneNumber.number;
       }
     }
@@ -273,7 +250,6 @@ async function formatContactAttributes(
     PRENOM: user.prenom,
     NOM: user.nom_de_famille,
     ROLE: formatRoles(user),
-    // LANDLINE_NUMBER: LANDLINE_NUMBER,
     SMS: SMS,
     WHATSAPP: WHATSAPP,
     TELEPHONE_PORTABLE: TELEPHONE_PORTABLE,
@@ -284,7 +260,6 @@ async function formatContactAttributes(
   };
 }
 
-// `notifyTeam: false` : pas de notice « Nouvelle ouverture de compte » (contact créé lors d'une mise à jour de profil).
 async function createBrevoContact(
   props: User,
   createdBy: 'ADMIN' | 'USER',
@@ -297,7 +272,6 @@ async function createBrevoContact(
     apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, API_KEY);
 
     try {
-      // wrap in try catch for 404
       const getContact = await apiInstance.getContactInfo(props.email);
       const brevoContact = getContact.body as BrevoContact;
       if (brevoContact?.id) {
@@ -324,9 +298,7 @@ async function createBrevoContact(
         }
         return props;
       }
-    } catch (error) {
-      // console.log(error);
-    }
+    } catch (error) {}
 
     const createContact = new brevo.CreateContact();
     createContact.email = props.email;
@@ -339,7 +311,6 @@ async function createBrevoContact(
 
     const result = await apiInstance.createContact(createContact);
 
-    // console.log(result);
     props = await prisma.user.update({
       where: { id: props.id },
       data: { brevo_contact_id: result.body.id },
@@ -377,17 +348,13 @@ async function createBrevoContactFromContactForm(props: ContactForm) {
     apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, API_KEY);
 
     try {
-      // wrap in try catch for 404
       const getContact = await apiInstance.getContactInfo(props.email);
       const brevoContact = getContact.body as BrevoContact;
       if (brevoContact?.id) {
         return;
       }
-    } catch (error) {
-      // console.log(error);
-    }
+    } catch (error) {}
 
-    // pas d'attribut SMS / WHATSAPP : le formulaire est public, le numéro saisi n'est pas vérifié
     let TELEPHONE_PORTABLE = '';
     let TELEPHONE_FIXE = '';
     if (props.telephone) {
@@ -414,25 +381,21 @@ async function createBrevoContactFromContactForm(props: ContactForm) {
 
     const result = await apiInstance.createContact(createContact);
   } catch (error) {
-    // Formulaire de contact : aucune donnée à joindre qui ne soit personnelle.
     capture(error as Error);
   }
 }
 
-// Le SDK Brevo rejette avec l'AxiosError brute : `response.data` porte la raison donnée par Brevo.
 function brevoErrorResponse(error: unknown): { status?: number; data?: unknown } {
   const response = (error as { response?: { status?: number; data?: unknown } })?.response;
   return { status: response?.status, data: response?.data };
 }
 
-// SMS et WHATSAPP doivent être uniques parmi tous les contacts Brevo (y compris ceux créés hors Zacharie).
 function isBrevoDuplicatePhoneError(error: unknown): boolean {
   const { status, data } = brevoErrorResponse(error);
   if (status !== 400) return false;
   return /duplicate|SMS|WHATSAPP/i.test(JSON.stringify(data ?? ''));
 }
 
-// Met à jour le contact Brevo, ou le crée s'il n'existe pas encore dans Brevo.
 async function updateBrevoContact(props: User, createdBy: 'ADMIN' | 'USER'): Promise<User> {
   try {
     if (DISABLED) return props;
@@ -484,12 +447,12 @@ interface BrevoCompany extends brevo.Company {
   attributes: {
     cat_gorie?: Array<
       'premier_d_tenteur__chasseur' | 'collecteur' | 'etg' | 'svi' | 'partenaire' | 'examinateur_initial'
-    >; // Rôle
-    created_at?: string; // Création le
-    d_partement?: string; // Département
-    code_postal?: string; // Code postal
-    compte_transporteur_cr?: boolean; // Compte transporteur créé ?
-    compte_transporteur_utilis?: boolean; // Compte transporteur utilisé ?
+    >;
+    created_at?: string;
+    d_partement?: string;
+    code_postal?: string;
+    compte_transporteur_cr?: boolean;
+    compte_transporteur_utilis?: boolean;
     d_ploiement_zacharie?: Array<
       | 'aucun__change'
       | 'echange__tabli'
@@ -498,52 +461,51 @@ interface BrevoCompany extends brevo.Company {
       | 'ancien_utilisateur___a_chang__d_etg'
       | 'refus___avant_utilisation'
       | 'liste_d_attente'
-    >; // Déploiement Zacharie
+    >;
     etg_contr_l_s_par_ce_svi?: Array<
-      // ETG contrôlés par ce SVI
-      | 'vilette_viandes' // "VILETTE VIANDES"
-      | 'jamet_benoit___plume_2_tout' // "JAMET BENOIT - PLUME 2 TOUT"
-      | 'presta_pin_s___les_pin_s' // "PRESTA PIN'S - LES PIN'S"
-      | 'societe_d_exploitation_des_abattoirs_de_pamiers' // "SOCIETE D'EXPLOITATION DES ABATTOIRS DE PAMIERS -"
-      | 'centre_d_abattage_et_de_transformation_du_couseran' // "CENTRE D'ABATTAGE ET DE TRANSFORMATION DU COUSERAN"
-      | 'maison_conquet' // "MAISON CONQUET"
-      | 'lorraine_de_venaison' // "LORRAINE DE VENAISON"
-      | 'guellier_et_fils' // "GUELLIER ET FILS"
-      | 'sarl_gibiers_du_sud_ouest___sud_ouest_gibier' // "SARL GIBIERS DU SUD OUEST - SUD OUEST GIBIER"
-      | 'eurl_andre_pascal' // "EURL ANDRE PASCAL"
-      | 'l_atelier_du_loup' // "L'ATELIER DU LOUP"
-      | 'regie_abattoir_municipal' // "REGIE ABATTOIR MUNICIPAL"
-      | 'm_a__brochette' // "M.A. BROCHETTE"
-      | 'pyragena' // "PYRAGENA"
-      | 'la_catalane_d_abattage' // "LA CATALANE D'ABATTAGE"
-      | 'abattoir_transfrontalier_cerdagne_capcir' // "ABATTOIR TRANSFRONTALIER CERDAGNE CAPCIR"
-      | 'gibier_marchal' // "GIBIER MARCHAL"
-      | 'damien_de_jong' // "DAMIEN DE JONG"
-      | 'maison_du_gibier' // "MAISON DU GIBIER"
-      | 'gibal_ge' // "GIBAL-GE"
-      | 'nemrod_alsace' // "NEMROD ALSACE"
-      | 'herrscher_michel_production' // "HERRSCHER MICHEL PRODUCTION"
-      | 'chez_laurent___boucherie_charcuterie_traiteur_chez' // "CHEZ LAURENT - BOUCHERIE CHARCUTERIE TRAITEUR CHEZ"
-      | 'societe_d_abattage_des_vosges_saonoises' // "SOCIETE D'ABATTAGE DES VOSGES SAONOISES"
-      | 'federation_departementale_des_chasseurs_de_la_haut' // "FEDERATION DEPARTEMENTALE DES CHASSEURS DE LA HAUT"
-      | 'au_gibier_de_france' // "AU GIBIER DE FRANCE"
+      | 'vilette_viandes'
+      | 'jamet_benoit___plume_2_tout'
+      | 'presta_pin_s___les_pin_s'
+      | 'societe_d_exploitation_des_abattoirs_de_pamiers'
+      | 'centre_d_abattage_et_de_transformation_du_couseran'
+      | 'maison_conquet'
+      | 'lorraine_de_venaison'
+      | 'guellier_et_fils'
+      | 'sarl_gibiers_du_sud_ouest___sud_ouest_gibier'
+      | 'eurl_andre_pascal'
+      | 'l_atelier_du_loup'
+      | 'regie_abattoir_municipal'
+      | 'm_a__brochette'
+      | 'pyragena'
+      | 'la_catalane_d_abattage'
+      | 'abattoir_transfrontalier_cerdagne_capcir'
+      | 'gibier_marchal'
+      | 'damien_de_jong'
+      | 'maison_du_gibier'
+      | 'gibal_ge'
+      | 'nemrod_alsace'
+      | 'herrscher_michel_production'
+      | 'chez_laurent___boucherie_charcuterie_traiteur_chez'
+      | 'societe_d_abattage_des_vosges_saonoises'
+      | 'federation_departementale_des_chasseurs_de_la_haut'
+      | 'au_gibier_de_france'
       | 'nemrod_sologne'
-    >; // "NEMROD SOLOGNE"
+    >;
     last_updated_at?: string;
     linked_contacts?: Array<BrevoContact['id']>;
     mail?: string;
     name?: string;
     next_activity_date?: string;
-    nombre_d_etg_pour_cet_svi?: number; // Nombre d'ETG pour ce SVI
-    number_of_activities?: number; // Nombre d'activités
-    number_of_contacts?: number; // Nombre de contacts
-    num_ro_ccg?: string; // Numéro CCG
-    num_ro_ccg_v_rifi?: boolean; // Numéro CCG vérifié ?
-    number_of_employees?: number; // Nombre d'employés
-    owner?: string; // Propriétaire
-    owner_assign_date?: string; // Date d'attribution du propriétaire
-    phone_number?: string; // Numéro de téléphone
-    revenue?: number; // Chiffre d'affaires
+    nombre_d_etg_pour_cet_svi?: number;
+    number_of_activities?: number;
+    number_of_contacts?: number;
+    num_ro_ccg?: string;
+    num_ro_ccg_v_rifi?: boolean;
+    number_of_employees?: number;
+    owner?: string;
+    owner_assign_date?: string;
+    phone_number?: string;
+    revenue?: number;
   };
 }
 
@@ -611,7 +573,6 @@ async function linkBrevoCompanyToContact(entity: Entity, user: User) {
   try {
     if (DISABLED) return;
     if (entity.for_testing) return;
-    // les fédérations, pré-créées, n'ont pas d'entreprise Brevo
     if (!entity.brevo_id) return;
     const apiInstance = new brevo.CompaniesApi();
     apiInstance.setApiKey(brevo.CompaniesApiApiKeys.apiKey, API_KEY);
@@ -633,7 +594,6 @@ async function unlinkBrevoCompanyToContact(entity: Entity, user: User) {
   try {
     if (DISABLED) return;
     if (entity.for_testing) return;
-    // les fédérations, pré-créées, n'ont pas d'entreprise Brevo
     if (!entity.brevo_id) return;
     const apiInstance = new brevo.CompaniesApi();
     apiInstance.setApiKey(brevo.CompaniesApiApiKeys.apiKey, API_KEY);
@@ -770,9 +730,9 @@ async function updateBrevoChasseurDeal(chasseur: User) {
     apiInstance.setApiKey(brevo.DealsApiApiKeys.apiKey, API_KEY);
 
     const getDealsResult = await apiInstance.crmDealsGet(
-      undefined, // filtersAttributesDealName?: string,
-      undefined, // filtersLinkedCompaniesIds?: string,
-      chasseur.brevo_contact_id.toString() // filtersLinkedContactsIds?: string
+      undefined,
+      undefined,
+      chasseur.brevo_contact_id.toString()
     );
     let deals = getDealsResult?.body?.items as Array<BrevoDeal>;
     const allPipelines = await apiInstance.crmPipelineDetailsAllGet();
@@ -788,8 +748,8 @@ async function updateBrevoChasseurDeal(chasseur: User) {
         created_at: new Date().toISOString(),
         d_patement: chasseur.code_postal?.length > 4 ? Number(chasseur.code_postal.slice(0, 2)) : 0,
         deal_name: getChasseurDealName(chasseur),
-        deal_owner: '67d2cf69c9580538a20d4b95', // fixed owner id, to hack deals system to fit our needs
-        deal_stage: getChasseurPipelineStep(chasseur, chasseurPipeline.stages), // it's an ObjectId
+        deal_owner: '67d2cf69c9580538a20d4b95',
+        deal_stage: getChasseurPipelineStep(chasseur, chasseurPipeline.stages),
         pipeline: chasseurPipeline.pipeline,
       };
       await apiInstance.crmDealsPost({
@@ -828,11 +788,7 @@ async function updateBrevoETGDealPremiereFiche(etg: Entity) {
     const apiInstance = new brevo.DealsApi();
     apiInstance.setApiKey(brevo.DealsApiApiKeys.apiKey, API_KEY);
 
-    const getDealsResult = await apiInstance.crmDealsGet(
-      undefined, // filtersAttributesDealName?: string,
-      etg.brevo_id, // filtersLinkedCompaniesIds?: string,
-      undefined // filtersLinkedContactsIds?: string
-    );
+    const getDealsResult = await apiInstance.crmDealsGet(undefined, etg.brevo_id, undefined);
     let deals = getDealsResult?.body?.items as Array<BrevoDeal>;
     const allPipelines = await apiInstance.crmPipelineDetailsAllGet();
     const pipelines = allPipelines.body as Array<BrevoPipeline>;
@@ -875,11 +831,7 @@ async function updateBrevoSVIDealPremiereFiche(svi: Entity) {
     const apiInstance = new brevo.DealsApi();
     apiInstance.setApiKey(brevo.DealsApiApiKeys.apiKey, API_KEY);
 
-    const getDealsResult = await apiInstance.crmDealsGet(
-      undefined, // filtersAttributesDealName?: string,
-      svi.brevo_id, // filtersLinkedCompaniesIds?: string,
-      undefined // filtersLinkedContactsIds?: string
-    );
+    const getDealsResult = await apiInstance.crmDealsGet(undefined, svi.brevo_id, undefined);
     let deals = getDealsResult?.body?.items as Array<BrevoDeal>;
     const allPipelines = await apiInstance.crmPipelineDetailsAllGet();
     const pipelines = allPipelines.body as Array<BrevoPipeline>;
@@ -914,38 +866,16 @@ async function updateBrevoSVIDealPremiereFiche(svi: Entity) {
 }
 
 export {
-  // services
   sendEmail,
   sendTemplateEmail,
   getEmailDeliveryFailure,
-  // specific to zacharie
-  // contact
   createBrevoContactFromContactForm,
   createBrevoContact,
   updateBrevoContact,
-  // company
   updateOrCreateBrevoCompany,
   linkBrevoCompanyToContact,
   unlinkBrevoCompanyToContact,
-  // deals
   updateBrevoChasseurDeal,
   updateBrevoETGDealPremiereFiche,
   updateBrevoSVIDealPremiereFiche,
 };
-
-// prisma.user
-//   .findMany({
-//     where: {
-//       brevo_contact_id: { not: null },
-//       roles: { has: UserRoles.COLLECTEUR_PRO },
-//     },
-//   })
-//   .then(async (users) => {
-//     console.log(`Updating ${users.length} Brevo contacts`);
-//     for (const user of users) {
-//       console.log(`Updating Brevo contact for ${user.email}`);
-//       await updateBrevoContact(user);
-//       console.log(`Updated Brevo contact for ${user.email}`);
-//     }
-//     console.log('Done');
-//   });

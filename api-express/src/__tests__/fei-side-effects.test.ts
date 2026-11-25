@@ -21,11 +21,8 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-// Les heures/dates de mise à mort vivent sur la Fei mais sont dupliquées sur chaque carcasse
-// (champs `*_fei`). syncCarcasseDates propage un changement Fei vers toutes ses carcasses.
 describe('syncCarcasseDates — propagates fei date/heure changes down to its carcasses', () => {
   test('no change → no carcasse update', async () => {
-    // date_mise_a_mort est comparée par référence (Date) : on partage l'instance pour simuler "inchangé".
     const date = new Date('2026-05-01');
     const existing = makeFei({ date_mise_a_mort: date });
     const saved = makeFei({ date_mise_a_mort: date });

@@ -13,8 +13,6 @@ const circuitCourtTypes: EntityTypes[] = [
   EntityTypes.CIRCUIT_COURT,
 ];
 
-// Plain filter functions (for non-hook contexts like get-fei-sorted.ts)
-
 export function filterEntitiesWorkingDirectlyFor(entities: Record<string, EntityWithUserRelation>): string[] {
   return Object.values(entities)
     .filter((e) => !e.deleted_at && e.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY)
@@ -56,8 +54,6 @@ export function filterCircuitCourt(
 ): EntityWithUserRelation[] {
   return Object.values(entities).filter((e) => !e.deleted_at && circuitCourtTypes.includes(e.type!));
 }
-
-// Hooks (for components)
 
 export function useEntitiesIdsWorkingDirectlyFor(): Array<EntityWithUserRelation['id']> {
   const entities = useZustandStore((state) => state.entities);

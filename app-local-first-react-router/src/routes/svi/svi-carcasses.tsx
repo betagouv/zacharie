@@ -85,7 +85,6 @@ type CatalogColumn = {
   render?: (item: Carcasse, index: number) => React.ReactNode;
 };
 
-// Métadonnées dérivées d'une transmission, mises en cache par transmissionId pour filtrer les carcasses.
 type TransmissionMeta = {
   simpleStatus: TransmissionSimpleStatus;
   premierDetenteurId: string;
@@ -187,9 +186,6 @@ export default function SviCarcasses() {
     itemsPerPage,
   ].join('|');
 
-  // on réinitialise la page seulement quand les filtres changent vraiment :
-  // setSearchParams change d'identité à chaque navigation (react-router), donc on
-  // compare la valeur précédente de filtersKey plutôt que de garder le 1er render.
   const prevFiltersKey = useRef(filtersKey);
   useEffect(() => {
     if (prevFiltersKey.current === filtersKey) return;
@@ -216,7 +212,6 @@ export default function SviCarcasses() {
     saisonOptions,
     metaByTransmissionId,
   } = useMemo(() => {
-    // métadonnées de transmission mises en cache par transmissionId
     const metaByTransmissionId: Record<string, TransmissionMeta> = {};
     const getMeta = (carcasse: Carcasse): TransmissionMeta => {
       const transmissionId = getTransmissionId(carcasse);
@@ -279,7 +274,6 @@ export default function SviCarcasses() {
     const _ccgNames = new Set<string>();
     const _collecteursNamesByFeiNumero: Record<Carcasse['fei_numero'], string> = {};
 
-    // 1re passe : on construit la liste des options de filtres à partir de toutes les carcasses
     for (const carcasse of carcassesRegistry) {
       const meta = getMeta(carcasse);
       if (!_collecteursNamesByFeiNumero[carcasse.fei_numero]) {
@@ -328,7 +322,6 @@ export default function SviCarcasses() {
     };
   }, [carcassesRegistry, transmissions, entities, usersById]);
 
-  // Séparé des options : taper dans un filtre ne recalcule que le filtrage et le tri.
   const filteredData = useMemo(() => {
     const braceletQuery = quickFilterBracelet.trim().toLowerCase();
     const withStatuses = filterStatuses.length > 0;
@@ -714,10 +707,8 @@ export default function SviCarcasses() {
   const toggleInArray = <T,>(array: Array<T>, value: T): Array<T> =>
     array.includes(value) ? array.filter((v) => v !== value) : [...array, value];
 
-  // carcasses sélectionnées (sur l'ensemble filtré, toutes pages confondues)
   const selectedSet = new Set(selectedCarcassesIds);
   const selectedCarcasses = filteredData.filter((c) => selectedSet.has(c.zacharie_carcasse_id));
-  // Prélèvement trichine : seuls les sangliers non encore retirés de leur fiche sont concernés
   const sangliersSelectionnes = selectedCarcasses
     .filter(
       (carcasse) => carcasse.espece === TRICHINE_ESPECE_CONCERNEE && !carcasse.trichine_retire_de_fei_at
@@ -745,7 +736,6 @@ export default function SviCarcasses() {
       if (skipped > 0) parts.push(`${skipped} ignorée${skipped > 1 ? 's' : ''}`);
       if (failed.length > 0) parts.push(`${failed.length} bloquée${failed.length > 1 ? 's' : ''}`);
       const message = parts.join(', ');
-      // on regroupe les blocages par motif : un compteur seul ne dit pas au SVI quoi corriger
       const raisons = failed.reduce<Record<string, number>>((acc, { error }) => {
         acc[error] = (acc[error] ?? 0) + 1;
         return acc;
@@ -820,7 +810,6 @@ export default function SviCarcasses() {
           </button>
         )}
       </div>
-      {/* Filtre Espèce */}
       {especeOptions.length > 1 && (
         <CollapsibleSection
           title="Espèce"
@@ -854,7 +843,6 @@ export default function SviCarcasses() {
           </div>
         </CollapsibleSection>
       )}
-      {/* Filtre Statut carcasse */}
       <CollapsibleSection
         title="Statut carcasse"
         defaultOpen={false}
@@ -888,7 +876,6 @@ export default function SviCarcasses() {
         </div>
       </CollapsibleSection>
 
-      {/* Filtre Statut fiche */}
       <CollapsibleSection
         title="Statut fiche"
         defaultOpen={false}
@@ -925,7 +912,6 @@ export default function SviCarcasses() {
         </div>
       </CollapsibleSection>
 
-      {/* Filtre Saison */}
       {saisonOptions.length > 0 && (
         <CollapsibleSection
           title="Saison"
@@ -960,7 +946,6 @@ export default function SviCarcasses() {
         </CollapsibleSection>
       )}
 
-      {/* Filtre Date de mise à mort */}
       <CollapsibleSection
         title="Date de mise à mort"
         defaultOpen={false}
@@ -1000,7 +985,6 @@ export default function SviCarcasses() {
         </div>
       </CollapsibleSection>
 
-      {/* Filtre Premier détenteur */}
       {premierDetenteurOptions.length > 1 && (
         <CollapsibleSection
           title="Premier détenteur"
@@ -1035,7 +1019,6 @@ export default function SviCarcasses() {
         </CollapsibleSection>
       )}
 
-      {/* Filtre ETG */}
       {etgOptions.length > 1 && (
         <CollapsibleSection
           title="ETG"
@@ -1070,7 +1053,6 @@ export default function SviCarcasses() {
         </CollapsibleSection>
       )}
 
-      {/* Filtre CCG */}
       {ccgOptions.length > 1 && (
         <CollapsibleSection
           title="Centre de collecte (CCG)"
@@ -1105,7 +1087,6 @@ export default function SviCarcasses() {
         </CollapsibleSection>
       )}
 
-      {/* Filtre Collecteur */}
       {collecteurOptions.length > 1 && (
         <CollapsibleSection
           title="Collecteur"
@@ -1140,7 +1121,6 @@ export default function SviCarcasses() {
         </CollapsibleSection>
       )}
 
-      {/* Filtres avancés */}
       <div className="border-b border-gray-200 py-2">
         <div className="flex w-full items-center justify-between py-1 text-sm font-bold text-gray-800">
           <span className="flex items-center gap-2">
@@ -1741,7 +1721,6 @@ export default function SviCarcasses() {
         </p>
       </confirmAcceptModal.Component>
 
-      {/* l'acceptation en masse dure plusieurs secondes : on bloque la page le temps du traitement */}
       {isAccepting && (
         <div
           className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40"

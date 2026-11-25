@@ -15,11 +15,6 @@ import {
 } from '@app/services/trichine-alias';
 import { sitePrelevementLabels } from '@app/utils/trichine';
 
-/**
- * Un échantillon d'un pool reçu au laboratoire : sa projection carcasse, la référence interne
- * que le laboratoire lui donne (modifiable tant que les analyses ne sont pas terminées), les
- * documents qu'il lui joint et, tant que le résultat n'est pas rendu, son retrait du pool.
- */
 export default function EchantillonLabo({
   echantillon,
   mesEntites,
@@ -155,7 +150,6 @@ export default function EchantillonLabo({
   );
 }
 
-/** Échantillon sorti du pool par le laboratoire : en lecture seule, avec le motif. */
 export function EchantillonRetireLabo({ echantillon }: { echantillon: LaboEchantillonDuPool }) {
   return (
     <li className="rounded border border-dashed border-gray-300 p-2 text-gray-600">
@@ -166,7 +160,6 @@ export function EchantillonRetireLabo({ echantillon }: { echantillon: LaboEchant
       Retiré le{' '}
       {echantillon.retire_par_labo_at ? dayjs(echantillon.retire_par_labo_at).format('DD/MM/YYYY') : '—'} —
       motif : {echantillon.retire_par_labo_motif ?? '—'}
-      {/* Retiré du pool : plus de nouveau document, ceux déjà joints restent téléchargeables */}
       <EchantillonDocuments
         echantillonId={echantillon.id}
         referenceEchantillon={echantillon.reference_echantillon}

@@ -1,7 +1,5 @@
 import type { UserForFei, UserPartenaire } from '@api/src/types/user';
 
-// La recherche par email et la liste des partenaires ne donnent ni téléphone ni adresse : on garde
-// ceux déjà reçus avec les fiches (synchro des carcasses) au lieu de les effacer.
 export function mergeUserPartenaire(
   existing: UserForFei | undefined,
   partenaire: UserPartenaire

@@ -59,9 +59,6 @@ let sharedTransmissions: {
   result: ReturnType<typeof computeTransmissions>;
 } | null = null;
 
-// Calcul partagé par tous les composants qui appellent useTransmissions : un useMemo par composant
-// referait la passe complète sur toutes les carcasses autant de fois qu'il y a de composants montés.
-// Le résultat est recalculé dès qu'une des entrées change de référence (le store est immuable).
 export function getTransmissionsShared(inputs: SharedTransmissionsInputs) {
   const previous = sharedTransmissions?.inputs;
   if (
@@ -88,8 +85,6 @@ export function getTransmissionsShared(inputs: SharedTransmissionsInputs) {
   return result;
 }
 
-// Contrôle de cohérence remonté à Sentry : chaque carcasse d'une transmission doit porter les mêmes
-// champs de transmission. On ne contrôle que les transmissions dont une carcasse a changé.
 export function reportTransmissionsInconsistencies(
   previousCarcasses: SharedTransmissionsInputs['carcasses'] | undefined,
   carcasses: SharedTransmissionsInputs['carcasses'],
@@ -111,7 +106,6 @@ export function reportTransmissionsInconsistencies(
   }
 }
 
-// insère l'intermédiaire en gardant la liste en ordre created_at décroissant (le plus récent en tête)
 function insertByCreatedAtDesc(list: Array<CarcassesIntermediaire>, item: CarcassesIntermediaire) {
   const t = new Date(item.created_at).getTime();
   let i = list.length;
@@ -119,8 +113,6 @@ function insertByCreatedAtDesc(list: Array<CarcassesIntermediaire>, item: Carcas
   list.splice(i, 0, item);
 }
 
-// Cœur pur de `useTransmissions` : une seule passe sur toutes les carcasses pour les regrouper en
-// transmissions et leur attribuer un statut. Extrait du hook pour être testable directement.
 export function computeTransmissions({
   carcasses: allCarcasses,
   carcassesIntermediaireById,
@@ -134,7 +126,7 @@ export function computeTransmissions({
   user: User;
   entitiesWorkingDirectlyFor: Record<EntityWithUserRelation['id'], EntityWithUserRelation>;
 }): Record<NonNullable<CarcasseTransmissionWihMetadata['fei']['numero']>, CarcasseTransmissionWihMetadata> {
-  const role = user.roles[0]; // only one role anyway
+  const role = user.roles[0];
   const meIsSvi = user.roles.includes(UserRoles.SVI);
   const meIsChassseur = user.roles.includes(UserRoles.CHASSEUR);
 
@@ -143,8 +135,6 @@ export function computeTransmissions({
 
   const transmissions: Record<string, CarcasseTransmissionWihMetadata> = {};
 
-  // Dernière prise en charge de chaque carcasse, en une seule passe sur tous les intermédiaires.
-  // Sert à calculer les refus partiels (lots de petit gibier dont une partie a été refusée).
   const dernierAccepteParCarcasse = new Map<string, CarcasseIntermediaire>();
   const intermediairesByCarcasseId: Record<string, Array<CarcassesIntermediaire>> = {};
   for (const ci of Object.values(carcassesIntermediaireById)) {
@@ -172,25 +162,6 @@ export function computeTransmissions({
     }
   }
 
-  // Objectif : UN SEUL LOOP sur toutes les carcasses
-  // pourquoi on regarde les "transmissions" et pas les "feis" ?
-  // parce que le dispatch fait que des carcasses d'un même examen initial n'ont pas les mêmes vies par la suite
-  // Défi du tri : chaque carcasse porte ses informations exhaustives + un array de CarcasseIntermédiaire
-  // mais les carcasses ne possèdent pas les infos des autres carcasses, notamment pour savoir si toutes les autres ont été "clôturées" d'une manière ou d'une autre (svi, automatic, manuel, etc.)
-  // donc sans multiplier les loop, pour des raisons de perf, comment faire pour vérifier les autres carcasses
-  // EN NE MAINTENANT QU'UNE SEULE LECTURE
-  // Solution: on va dire que, par défaut, un groupement de carcasse est `done`
-
-  // Les champs de décision de transmission (prochain détenteur, dépôt, n° de bon de réception) ne sont posés que sur les
-  // CarcasseIntermediaire des carcasses prises en charge, jamais sur les refusées/manquantes. Comme
-  // une transmission agrège plusieurs carcasses, on retient pour chaque intermédiaire la valeur
-  // non-nulle de n'importe laquelle de ses carcasses (sinon une carcasse refusée en tête masque la
-  // décision réelle et la sélection du prochain détenteur paraît perdue).
-  // De même, la liste des intermédiaires de la transmission est l'union de ceux de ses carcasses :
-  // une carcasse refusée/manquante n'a pas les prises en charge suivantes, et si elle est la première
-  // rencontrée, la prise en charge en cours (ex. celle de l'ETG) disparaîtrait de la transmission.
-  // Index id → intermédiaire de chaque transmission, construit une fois à sa création : le merge
-  // est alors en O(1) par intermédiaire au lieu d'un .find() linéaire sur la liste à chaque carcasse.
   const intermediaireByIdByTransmission: Record<string, Record<string, CarcassesIntermediaire>> = {};
   const mergeIntermediaires = (
     list: Array<CarcassesIntermediaire>,
@@ -237,13 +208,9 @@ export function computeTransmissions({
       feiDispatches[transmission.fei_numero!]++;
       if (!transmissionIdsByFeiNumero[fei.numero]) transmissionIdsByFeiNumero[fei.numero] = [];
       transmissionIdsByFeiNumero[fei.numero].push(transmissionId);
-      // ordre chronologique décroissant, du plus récent au plus ancien.
-      // Clone : la transmission agrège ensuite les décisions des autres carcasses du groupe
-      // (mergeIntermediaires), sans muter les listes par-carcasse partagées.
       const intermediaires = (intermediairesByCarcasseId[carcasse.zacharie_carcasse_id] || []).map((i) => ({
         ...i,
       }));
-      // index sur les mêmes références que la liste : muter via l'index met à jour la liste
       const intermediaireById: Record<string, CarcassesIntermediaire> = {};
       for (const i of intermediaires) intermediaireById[i.id] = i;
       intermediaireByIdByTransmission[transmissionId] = intermediaireById;
@@ -271,15 +238,11 @@ export function computeTransmissions({
     }
     const partialRefusal = getCarcassePartialRefusal(carcasse, dernierAccepteParCarcasse);
     if (partialRefusal) transmissions[transmissionId].partialRefusals.push(partialRefusal);
-    // rejected, svi accepted, gardée par le chasseur pour son usage domestique privé
     const carcasseDone = isCarcasseDone(carcasse);
     if (!carcasseDone) transmissions[transmissionId].allCarcassesDone = false;
-    // une fois la transmission marquée non-clôturée, inutile de réévaluer son statut
     if (transmissions[transmissionId].labels.simpleStatus !== 'Clôturée') continue;
     if (carcasseDone) continue;
 
-    // FEI UNDER MY RESPONSABILITY
-    // At least one carcasse where current_owner is me/my entity AND no next_owner
     const isUnderMyResponsability = isCarcasseUnderMyResponsability(
       carcasse,
       user,
@@ -297,9 +260,7 @@ export function computeTransmissions({
       continue;
     }
 
-    // FEI TO TAKE
     if (!meIsSvi) {
-      // At least one carcasse where next_owner is me/my entity
       const isToTake = isCarcasseToTake(carcasse, user, entitiesWorkingDirectlyFor);
       if (isToTake) {
         transmissions[transmissionId].labels = getTransmissionLabels(
@@ -313,7 +274,6 @@ export function computeTransmissions({
       }
     }
 
-    // FEI ONGOING
     if (!carcasse.svi_assigned_at && !carcasse.intermediaire_closed_at) {
       if (carcasse.examinateur_initial_user_id === user.id) {
         transmissions[transmissionId].labels = getTransmissionLabels(
@@ -347,7 +307,6 @@ export function computeTransmissions({
           continue;
         }
       }
-      // Check sous-traite at carcasse level
       const hasSousTraite =
         carcasse.next_owner_sous_traite_by_entity_id &&
         entitiesWorkingDirectlyFor[carcasse.next_owner_sous_traite_by_entity_id];
@@ -418,13 +377,8 @@ export function computeTransmissions({
   if (meIsChassseur) {
     for (const fei of Object.values(feis)) {
       if (fei.deleted_at) continue;
-      // la fei vient juste d'être créée, il n'y a pas encore de transmission
-      // ni de prochain détenteur
-      // on simule la transmissionId par fei.numero : aucun risque de conflit encore
       if (transmissionIdsByFeiNumero[fei.numero]) continue;
       const tempTransmissionId = buildTransmissionId(fei.numero);
-      // garde défensive : injoignable en pratique, toute transmission existante pour cette fei a été
-      // créée par une carcasse, ce qui aurait aussi rempli transmissionIdsByFeiNumero[fei.numero] ci-dessus.
       /* v8 ignore next */
       if (transmissions[tempTransmissionId]) continue;
       const transmission: CarcasseTransmissionWihMetadata = {
@@ -432,7 +386,7 @@ export function computeTransmissions({
           ...mapFeiFieldsToCarcasse(fei),
           current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
           current_owner_user_id: user.id,
-        }, // fields like examinateur_initial, etc. that will also exists in carcasses (when they will be created)
+        },
         labels: getTransmissionLabels('À compléter', fei, role, entitiesWorkingDirectlyFor, user.etg_role),
         fei: {
           numero: fei.numero,
@@ -443,7 +397,6 @@ export function computeTransmissions({
         carcasses: [],
         intermediaires: [],
         partialRefusals: [],
-        // pas encore de carcasse : rien n'est terminé
         allCarcassesDone: false,
       };
       transmissions[tempTransmissionId] = transmission;
@@ -458,7 +411,6 @@ export function computeTransmissions({
   return transmissions;
 }
 
-// Refus partiel d'un lot de petit gibier : nombre d'animaux refusés par le dernier détenteur (ex: "3 perdrix")
 function getCarcassePartialRefusal(
   carcasse: {
     type: string | null;
@@ -553,7 +505,6 @@ export function useGetTransmissionsForFei(fei_numero: string) {
 }
 
 export function useGetChasseurStatusAndLabel(fei_numero: string): [TransmissionSimpleStatus, string] {
-  // peut-être qu'il y a eu dispatch ? si c'est le cas, pour les status, on prend les pires scénarios
   const transmissions = useGetTransmissionsForFei(fei_numero);
   const [simpleStatus, currentStepLabelForChasseur] = useMemo(
     () => getWorseLabelsOfTransmissions(transmissions),

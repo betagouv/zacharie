@@ -147,7 +147,7 @@ Once the change is done and verified, before handing back, always propose:
 - Prettier (config in each package.json): `singleQuote: true, trailingComma: "es5", semi: true, printWidth: 110, tabWidth: 2`. The frontend adds `singleAttributePerLine: true` + the `prettier-plugin-tailwindcss` plugin (class sorting) — don't reformat frontend files with the bare root config.
 - Prefer separate API routes for distinct data sections.
 - Default to the simplest option in first iterations; no conditional UX unless explicitly requested.
-- Comments are simple and describe the app's current behavior — only when the code isn't self-explanatory. Never narrate the change or the decision made during a session ("on change d'avis, finalement on fait X au lieu de Y"). Write `// on fait X car ...`, not the story of how we got there.
+- **No comments in code** (`.ts/.tsx/.js`), enforced by `npm run lint:comments` in CI. Only tool directives are allowed (`eslint-disable`, `@ts-expect-error`, `/// <reference>`…). Make the code explicit instead. A non-obvious _why_ goes into an ADR in `doc/adr/` (see `doc/adr/README.md`); a known hack goes into `doc/adr/excuses-a-traiter.md`. Never narrate the change or the session's decisions. `/delete-comment` cleans a path. Prisma schema and SQL migrations are out of scope.
 
 ## Success Criteria
 

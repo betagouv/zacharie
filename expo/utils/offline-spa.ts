@@ -12,7 +12,6 @@ let forceRefreshKey = '1';
 export const checkAndDownloadSpa = async (): Promise<void> => {
   const MANIFEST_URL = `${APP_URL}spa-manifest.json`;
   try {
-    // 1. Get remote version
     console.log('Checking for SPA update...');
     const manifestResponse = await fetch(MANIFEST_URL);
     console.log('manifestResponse: ', manifestResponse);
@@ -24,35 +23,27 @@ export const checkAndDownloadSpa = async (): Promise<void> => {
     const manifestVersioning = JSON.stringify(manifest);
     const assets = manifest.assets;
 
-    // The endpoint returns something like "Hello World at 2026-01-01... version 1.2.3"
-    // We can just use the whole string as a signature, or extract version
-
-    // 2. Get local version
     const localVersioning = await AsyncStorage.getItem('spa-versioning');
     const localForceRefreshKey = await AsyncStorage.getItem('spa-force-refresh-key');
 
     if (manifestVersioning === localVersioning && localForceRefreshKey === forceRefreshKey) {
       console.log('SPA is up to date');
-      // Check if we actually have files, if not, force download
       if (SPA_DIR.exists) return;
     }
 
     console.log('New version detected or missing files. Downloading SPA...');
 
-    // 4. Create directory
     if (!SPA_DIR.exists) {
       SPA_DIR.create();
     }
 
-    // 5. Download files
     let downloadedCount = 0;
 
     for (const asset of assets) {
-      const url = asset.url.startsWith('/') ? asset.url.substring(1) : asset.url; // Remove leading slash
+      const url = asset.url.startsWith('/') ? asset.url.substring(1) : asset.url;
       const remoteUrl = `${APP_URL}${url}`;
 
       const file = new File(SPA_DIR, url);
-      // Ensure parent directory exists
       if (file.parentDirectory && !file.parentDirectory.exists) {
         file.parentDirectory.create({ intermediates: true });
       }
@@ -61,7 +52,6 @@ export const checkAndDownloadSpa = async (): Promise<void> => {
         const assetResponse = await fetch(remoteUrl);
         if (!assetResponse.ok) throw new Error(`Failed to fetch ${remoteUrl}`);
 
-        // Write bytes to file
         const bytes = await assetResponse.bytes();
         await file.write(bytes);
 
@@ -73,7 +63,6 @@ export const checkAndDownloadSpa = async (): Promise<void> => {
 
     console.log(`Downloaded ${downloadedCount} assets`);
 
-    // 6. Update version
     await AsyncStorage.setItem('spa-versioning', manifestVersioning);
     await AsyncStorage.setItem('spa-force-refresh-key', forceRefreshKey);
   } catch (error) {
@@ -81,7 +70,6 @@ export const checkAndDownloadSpa = async (): Promise<void> => {
   }
 };
 
-// Pinned host/port so the API CORS allowlist can include this exact origin.
 export const SPA_SERVER_HOSTNAME = '127.0.0.1';
 export const SPA_SERVER_PORT = 3000;
 export const SPA_SERVER_ORIGIN = `http://${SPA_SERVER_HOSTNAME}:${SPA_SERVER_PORT}`;
@@ -101,7 +89,6 @@ export const startSpaServer = async (): Promise<string | null> => {
       return serverOrigin;
     }
 
-    // Static-server expects a plain absolute path, not a file:// URI
     const fileDir = SPA_DIR.uri.replace(/^file:\/\//, '');
 
     serverInstance = new Server({
@@ -122,9 +109,6 @@ export const startSpaServer = async (): Promise<string | null> => {
         responseHeader: true,
         timeouts: true,
       },
-      // SPA fallback: any URL that doesn't resolve to an existing file
-      // is served from /index.html so
-      // React Router can handle the route on the client.
       extraConfig: `
         server.modules += ("mod_rewrite")
         url.rewrite-if-not-file = ( "^/(.*)$" => "/index.html" )
@@ -159,8 +143,6 @@ export const stopSpaServer = async (): Promise<void> => {
   }
 };
 
-// Compare le manifeste distant à la version installée, sans rien télécharger : les fichiers servis
-// ne doivent pas changer sous la WebView en cours d'utilisation.
 export const isSpaUpdateAvailable = async (): Promise<boolean> => {
   try {
     const manifestResponse = await fetch(`${APP_URL}spa-manifest.json`);

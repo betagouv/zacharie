@@ -81,7 +81,6 @@ const renamePending = {
   updated_at: new Date('2026-04-22T10:00:00Z'),
 } as unknown as CarcasseModificationRequest;
 
-// Périmètre permissif : le cloisonnement est testé dans permissions-sync-write.test.ts.
 const scope = fakeSyncScope({ entityIds: ['entity-etg'] });
 
 const newPending = {
@@ -95,10 +94,6 @@ const newPending = {
 beforeEach(() => {
   vi.clearAllMocks();
 });
-
-// ---------------------------------------------------------------------------
-// syncCarcasseModifRequest
-// ---------------------------------------------------------------------------
 
 describe('syncCarcasseModifRequest — validation', () => {
   test('missing id → throws', async () => {
@@ -222,7 +217,6 @@ describe('syncCarcasseModifRequest — create', () => {
 
   test("RENAME par l'auteur de la carcasse → le numéro d'origine vient de la demande", async () => {
     vi.mocked(prisma.carcasseModificationRequest.findUnique).mockResolvedValueOnce(null);
-    // la carcasse, synchronisée juste avant dans le même lot, porte déjà le nouveau numéro
     vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce({
       ...baseCarcasse,
       numero_bracelet: 'BR-NEW',
@@ -341,7 +335,6 @@ describe('syncCarcasseModifRequest — rejection', () => {
     );
 
     expect(result.transitionedTo).toBe(CarcasseModificationRequestStatus.REJECTED);
-    // La décision est signée par le serveur : reviewed_by = l'utilisateur qui refuse.
     const updateArgs = vi.mocked(prisma.carcasseModificationRequest.update).mock.calls[0][0];
     expect(updateArgs.data).toMatchObject({
       status: CarcasseModificationRequestStatus.REJECTED,
@@ -442,7 +435,6 @@ describe('syncCarcasseModifRequest — idempotence', () => {
     );
 
     expect(result.transitionedTo).toBeNull();
-    // No carcasse lookup needed because there's no PENDING→non-PENDING transition.
     expect(prisma.carcasse.findUnique).not.toHaveBeenCalled();
   });
 
@@ -459,17 +451,11 @@ describe('syncCarcasseModifRequest — idempotence', () => {
       scope
     );
 
-    // willTransition requires existing.status === PENDING; here existing is APPROVED → not a
-    // transition, et le statut du client n'est pas réécrit en base.
     expect(result.transitionedTo).toBeNull();
     const updateArgs = vi.mocked(prisma.carcasseModificationRequest.update).mock.calls[0][0];
     expect(updateArgs.data).not.toHaveProperty('status');
   });
 });
-
-// ---------------------------------------------------------------------------
-// runCarcasseModifRequestSideEffects
-// ---------------------------------------------------------------------------
 
 describe('runCarcasseModifRequestSideEffects — create', () => {
   test('isNew → notifies examinateur, no carcasse mutation', async () => {
@@ -550,7 +536,6 @@ describe('runCarcasseModifRequestSideEffects — rejection', () => {
   test('NEW rejected → soft-deletes carcasse', async () => {
     vi.mocked(prisma.carcasse.update).mockResolvedValue({} as any);
     vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(requester);
-    // 1er findUnique : contrôle "carcasse gelée par le SVI ?" ; 2e : notifyRequester.
     vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
     vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
 
@@ -673,10 +658,6 @@ describe('runCarcasseModifRequestSideEffects — cancellation', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Notification content
-// ---------------------------------------------------------------------------
-
 describe('notification content', () => {
   test('notifyExaminateur uses "Chasse du DD/MM" title + entity name + marquage swap', async () => {
     vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
@@ -702,7 +683,6 @@ describe('notification content', () => {
     expect(call.email).toContain('BR-OLD');
     expect(call.email).toContain('https://zacharie.beta.gouv.fr/app/chasseur/demandes-de-modification');
     expect(call.notificationLogAction).toBe(`MODIF_CREATED_${renamePending.id}`);
-    // Le push est un wording à part : pas de lien, une phrase.
     expect(call.push.body).toContain('BR-NEW');
     expect(call.push.body).not.toContain('https://');
   });

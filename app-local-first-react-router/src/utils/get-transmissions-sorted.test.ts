@@ -24,12 +24,6 @@ import { capture } from '@app/services/sentry';
 vi.mock('@app/services/sentry', () => ({ capture: vi.fn() }));
 const mockedCapture = vi.mocked(capture);
 
-// ---------------------------------------------------------------------------
-// Factories — only the fields computeTransmissions (and the pure helpers it
-// calls) actually read. svi_carcasse_status defaults to SANS_DECISION so the
-// baseline carcasse is "not done"; owners default to nobody.
-// ---------------------------------------------------------------------------
-
 function carcasse(overrides: Partial<Carcasse> = {}): Carcasse {
   return {
     zacharie_carcasse_id: 'CARC',
@@ -64,8 +58,6 @@ function carcasse(overrides: Partial<Carcasse> = {}): Carcasse {
   } as unknown as Carcasse;
 }
 
-// Full CarcasseIntermediaire shape (the store's carcassesIntermediaireById value),
-// not the trimmed CarcassesIntermediaire — it carries zacharie_carcasse_id + intermediaire_id.
 function intermediaire(overrides: Partial<CarcasseIntermediaire> = {}): CarcasseIntermediaire {
   return {
     zacharie_carcasse_id: 'CARC',
@@ -100,18 +92,15 @@ function user(roles: UserRoles[], id = 'me'): User {
   return { id, roles } as unknown as User;
 }
 
-// A key present means "an entity I work directly for".
 function working(...ids: string[]): Record<string, EntityWithUserRelation> {
   return Object.fromEntries(ids.map((id) => [id, {} as EntityWithUserRelation]));
 }
 const noEntities: Record<string, EntityWithUserRelation> = {};
 
-const admin = user([UserRoles.ADMIN], 'admin'); // generic viewer → generic labels, meIsSvi=false
+const admin = user([UserRoles.ADMIN], 'admin');
 const svi = user([UserRoles.SVI], 'svi');
 const chasseur = user([UserRoles.CHASSEUR], 'chasseur');
 
-// Thin wrapper: arrays in, record out. Intermediaire keys are arbitrary (function only
-// does Object.values), so we index by position to preserve input order.
 function run({
   carcasses = [],
   intermediaires = [],
@@ -134,11 +123,7 @@ function run({
   });
 }
 
-const TID = buildTransmissionId('FEI-1'); // 'FEI-1__'
-
-// ---------------------------------------------------------------------------
-// A. Status sorting — one assertion per terminal / label branch
-// ---------------------------------------------------------------------------
+const TID = buildTransmissionId('FEI-1');
 
 describe('computeTransmissions — Clôturée (carcasse done)', () => {
   it.each([
@@ -199,8 +184,6 @@ describe('computeTransmissions — À compléter', () => {
 });
 
 describe('computeTransmissions — En cours (in transit, I have a stake)', () => {
-  // Base carcasse that reaches the "En cours" block: not done, not mine to act on
-  // (current owner someone else, next owner someone else), not at SVI, not closed.
   const inTransit = (ov: Partial<Carcasse> = {}) =>
     carcasse({
       current_owner_user_id: 'other',
@@ -264,10 +247,6 @@ describe('computeTransmissions — En cours (in transit, I have a stake)', () =>
   });
 });
 
-// ---------------------------------------------------------------------------
-// B. Intermédiaire shapes — ordering and the decision-field merge
-// ---------------------------------------------------------------------------
-
 describe('computeTransmissions — intermédiaires', () => {
   it('a carcasse with no intermédiaires yields an empty intermediaires list', () => {
     const t = run({ carcasses: [carcasse({ current_owner_user_id: 'admin' })], user: admin });
@@ -277,7 +256,6 @@ describe('computeTransmissions — intermédiaires', () => {
   it('3 distinct intermédiaires are listed most-recent first', () => {
     const t = run({
       carcasses: [carcasse({ current_owner_user_id: 'admin' })],
-      // fed out of order on purpose
       intermediaires: [
         intermediaire({ intermediaire_id: 'b', created_at: new Date('2024-02-02T00:00:00Z') }),
         intermediaire({ intermediaire_id: 'a', created_at: new Date('2024-02-01T00:00:00Z') }),
@@ -316,9 +294,6 @@ describe('computeTransmissions — intermédiaires', () => {
   });
 
   it('merges decision fields across carcasses: a refused carcasse does not mask the real next détenteur', () => {
-    // Two carcasses, same transmission, sharing intermédiaire id INT1.
-    // Oldest carcasse (CARC_A, listed first) has a refused intermédiaire: no decision.
-    // Sibling CARC_B carries the real prochain détenteur + dépôt on the same INT1.
     const t = run({
       carcasses: [carcasse({ zacharie_carcasse_id: 'CARC_A' }), carcasse({ zacharie_carcasse_id: 'CARC_B' })],
       intermediaires: [
@@ -349,8 +324,6 @@ describe('computeTransmissions — intermédiaires', () => {
   });
 
   it('a refused carcasse listed first does not hide the next prise en charge of its siblings', () => {
-    // CARC_A was refused by the collecteur (INT1) so the ETG (INT2) only took charge of CARC_B.
-    // The transmission must list INT2 (most recent first) whatever the carcasse order in the store.
     const t = run({
       carcasses: [carcasse({ zacharie_carcasse_id: 'CARC_A' }), carcasse({ zacharie_carcasse_id: 'CARC_B' })],
       intermediaires: [
@@ -377,10 +350,6 @@ describe('computeTransmissions — intermédiaires', () => {
     expect(t[TID].intermediaires[0].intermediaire_prochain_detenteur_id_cache).toBe('dest-2');
   });
 });
-
-// ---------------------------------------------------------------------------
-// C. Many carcasses — all / some / none in a terminal state
-// ---------------------------------------------------------------------------
 
 describe('computeTransmissions — terminal mixes within one transmission', () => {
   const actionable = (id: string) => carcasse({ zacharie_carcasse_id: id, current_owner_user_id: 'admin' });
@@ -415,10 +384,6 @@ describe('computeTransmissions — terminal mixes within one transmission', () =
   });
 });
 
-// ---------------------------------------------------------------------------
-// Partial refusal (getCarcassePartialRefusal) — petit gibier lots
-// ---------------------------------------------------------------------------
-
 describe('computeTransmissions — partial refusal of a petit gibier lot', () => {
   const perdrix = (ov: Partial<Carcasse> = {}) =>
     carcasse({ type: CarcasseType.PETIT_GIBIER, espece: 'Perdrix', nombre_d_animaux: 5, ...ov });
@@ -437,7 +402,6 @@ describe('computeTransmissions — partial refusal of a petit gibier lot', () =>
   it('keeps the most recent prise en charge when several accepted (older one ignored)', () => {
     const t = run({
       carcasses: [perdrix()],
-      // most recent first (accepts 3), then an older one (accepts 5) that must NOT win
       intermediaires: [
         accepted(3, { prise_en_charge_at: new Date('2024-04-03T00:00:00Z') }),
         accepted(5, { prise_en_charge_at: new Date('2024-04-02T00:00:00Z') }),
@@ -499,10 +463,6 @@ describe('computeTransmissions — partial refusal of a petit gibier lot', () =>
   });
 });
 
-// ---------------------------------------------------------------------------
-// D. Dispatch (one FEI → several transmissions) and the chasseur fresh-FEI loop
-// ---------------------------------------------------------------------------
-
 describe('computeTransmissions — dispatch', () => {
   it('one FEI split across two prochains détenteurs makes two transmissions, each counting 2', () => {
     const t = run({
@@ -538,8 +498,8 @@ describe('computeTransmissions — chasseur fresh FEI (no carcasses yet)', () =>
       feis: [fei({ numero: 'FEI-1' }), fei({ numero: 'FEI-FRESH' })],
       user: chasseur,
     });
-    expect(t[TID].carcasses).toHaveLength(1); // real transmission kept
-    expect(t[buildTransmissionId('FEI-FRESH')].carcasses).toEqual([]); // only the empty FEI gets a temp one
+    expect(t[TID].carcasses).toHaveLength(1);
+    expect(t[buildTransmissionId('FEI-FRESH')].carcasses).toEqual([]);
   });
 
   it('a non-chasseur never gets temp transmissions for empty FEIs', () => {
@@ -547,10 +507,6 @@ describe('computeTransmissions — chasseur fresh FEI (no carcasses yet)', () =>
     expect(t).toEqual({});
   });
 });
-
-// ---------------------------------------------------------------------------
-// E. Skips / guards
-// ---------------------------------------------------------------------------
 
 describe('computeTransmissions — skips', () => {
   it('excludes deleted carcasses', () => {
@@ -581,10 +537,6 @@ describe('computeTransmissions — skips', () => {
     expect(Object.keys(t)).toEqual([buildTransmissionId('FEI-FRESH')]);
   });
 });
-
-// ---------------------------------------------------------------------------
-// Pure sibling helpers (the hooks need a React renderer and are left out)
-// ---------------------------------------------------------------------------
 
 function meta(
   simpleStatus: TransmissionSimpleStatus,
@@ -637,7 +589,7 @@ describe('sortTransmissions — most recent approbation/creation first', () => {
   it('orders by approbation date descending (both comparator directions)', () => {
     const older = withDates('2024-01-01T00:00:00Z', '2024-01-01T00:00:00Z');
     const newer = withDates('2024-06-01T00:00:00Z', '2024-06-01T00:00:00Z');
-    expect(sortTransmissions(newer, older)).toBe(-1); // newer before older
+    expect(sortTransmissions(newer, older)).toBe(-1);
     expect(sortTransmissions(older, newer)).toBe(1);
     expect([older, newer].sort(sortTransmissions)).toEqual([newer, older]);
   });
@@ -761,8 +713,6 @@ describe('reportTransmissionsInconsistencies', () => {
   });
 
   it('ne signale pas deux ventes / dons vers le même destinataire avec des dates de dépôt différentes', () => {
-    // cas réel (ZACH-20260923-AMBRO-174847) : deux lots vers le même ETG, transmis en une fois,
-    // dépôt en chambre froide à 14:50 pour l'un et 14:51 pour l'autre
     const lot = {
       premier_detenteur_prochain_detenteur_id_cache: 'etg-1',
       premier_detenteur_prochain_detenteur_role_cache: 'ETG',
@@ -781,7 +731,6 @@ describe('reportTransmissionsInconsistencies', () => {
       premier_detenteur_depot_ccg_at: new Date('2026-09-23T14:51:00.000Z'),
     });
     const transmissions = run({ carcasses: [lot1, lot2], user: admin });
-    // les deux lots tombent dans la même transmission
     expect(transmissions[buildTransmissionId('FEI-1', 'etg-1')].carcasses).toHaveLength(2);
 
     reportTransmissionsInconsistencies(undefined, byId([lot1, lot2]), transmissions);

@@ -28,14 +28,10 @@ test.beforeEach(async () => {
   await resetDb('EXAMINATEUR_INITIAL');
 });
 
-// Changer le propriétaire initial réécrit next_owner sur toutes les carcasses : une fois la fiche
-// transmise en aval, cela annulait la transmission sans prévenir (le destinataire perdait la fiche).
-
 function proprietaireInitialSelect(page: Page) {
   return page.locator('select[name="next_owner"]');
 }
 
-// Examinateur == PD via l'association : l'examen initial passe en ligne à la vue « vente / don ».
 async function creerFicheJusquAuPremierDetenteur(page: Page) {
   await connectWith(page, 'examinateur-premier-detenteur@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
@@ -70,7 +66,6 @@ async function creerFicheJusquAuPremierDetenteur(page: Page) {
     .first()
     .click();
   await page.getByRole('button', { name: 'Transmettre', exact: true }).click();
-  // bascule en ligne vers la vue du premier détenteur
   await expect(page.getByRole('button', { name: /Ajouter un destinataire/i }).first()).toBeVisible({
     timeout: 15000,
   });
@@ -79,7 +74,6 @@ async function creerFicheJusquAuPremierDetenteur(page: Page) {
 test('Premier détenteur désigné, fiche pas encore transmise : le propriétaire initial reste modifiable', async ({
   page,
 }) => {
-  // l'association est désignée (next_owner_entity_id renseigné) mais rien n'est parti en aval
   await creerFicheJusquAuPremierDetenteur(page);
 
   const select = proprietaireInitialSelect(page);
@@ -105,7 +99,6 @@ test('Fiche transmise à un ETG pas encore prise en charge : le propriétaire in
   await transmettre.click();
   await expect(page.getByText(/ETG 1 a été notifié/i)).toBeVisible({ timeout: 10000 });
 
-  // la transmission mène à la page de confirmation /envoyée : on revient sur la fiche
   await expect(page).toHaveURL(/\/envoy%C3%A9e$|\/envoyée$/);
   await page.goBack();
   await expect(page).toHaveURL(/\/app\/chasseur\/fei\/ZACH-[^/]+$/);

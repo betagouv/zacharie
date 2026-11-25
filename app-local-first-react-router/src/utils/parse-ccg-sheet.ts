@@ -1,7 +1,6 @@
 import { utils, type WorkSheet } from '@e965/xlsx';
 import type { CcgPreviewRow } from '@api/src/types/responses';
 
-// Collapse all whitespace (spaces, \r, \n) into a single space, then trim
 const normalize = (s: string) => s.replace(/[\s]+/g, ' ').trim();
 
 const NUMERO_DDECPP_HEADERS = [
@@ -10,8 +9,6 @@ const NUMERO_DDECPP_HEADERS = [
   'Numéro DDECPP',
 ].map(normalize);
 
-// L'export RESYTAL commence par des lignes de notes dont le nombre varie :
-// on prend comme en-têtes la première ligne qui contient la colonne du numéro DDECPP
 function findHeaderRowIndex(sheet: WorkSheet): number {
   const rows = utils.sheet_to_json<unknown[]>(sheet, { header: 1, defval: '', blankrows: true });
   return rows.findIndex((row) => row.some((cell) => NUMERO_DDECPP_HEADERS.includes(normalize(String(cell)))));
@@ -25,7 +22,6 @@ export function parseCcgSheet(sheet: WorkSheet): CcgPreviewRow[] {
     range: headerRowIndex,
   });
 
-  // Find the first matching normalized target
   const col = (normalizedRow: Map<string, string>, ...targets: string[]) => {
     for (const t of targets) {
       const v = normalizedRow.get(normalize(t));

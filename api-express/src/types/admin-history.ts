@@ -1,5 +1,3 @@
-// Historique admin (voir utils/admin-history.ts)
-
 export type AdminHistorySubjectType =
   | 'fei'
   | 'carcasse'
@@ -8,7 +6,6 @@ export type AdminHistorySubjectType =
   | 'entity'
   | 'user_entity';
 
-// Pages de détail de l'admin vers lesquelles un événement peut renvoyer
 export type AdminHistoryLinkType = 'fei' | 'carcasse' | 'user' | 'entity';
 
 export type AdminHistoryKind = 'modification' | 'suppression' | 'action' | 'notification' | 'admin';

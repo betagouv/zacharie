@@ -1,10 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Carcasse, CarcasseType } from '@prisma/client';
 
-/**
- * Bloc compact et masquable affichant le total du nombre de carcasses par espèce.
- * Le total est calculé à partir de la liste fournie (donc en fonction des filtres actifs).
- */
 export default function CarcassesEspeceSummary({
   carcasses,
   storageKey,

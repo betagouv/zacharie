@@ -1,22 +1,13 @@
 import { Link } from 'react-router';
 
 export type ChaineEtape = {
-  /** Ce que représente l'étape : Carcasse, Échantillon, Pool, FTP, Laboratoire */
   label: string;
-  /** Sa référence, ou le texte à afficher quand l'étape n'existe pas encore */
   value: string;
   to?: string;
-  /** Étape correspondant à la page affichée */
   current?: boolean;
-  /** Étape pas encore franchie (pas de pool, pas de FTP...) */
   absent?: boolean;
 };
 
-/**
- * Chaîne de traçabilité carcasse → échantillon → pool → FTP → laboratoire, affichée sur
- * chaque page de détail. C'est ce qui permet de circuler d'un objet à l'autre sans repasser
- * par les listes, et de comprendre d'un coup d'œil où en est une analyse.
- */
 export default function TrichineChaine({ etapes }: { etapes: Array<ChaineEtape> }) {
   return (
     <nav

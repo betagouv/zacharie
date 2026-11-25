@@ -2,13 +2,6 @@ import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Scenario 166 — Page d'un pool côté laboratoire : le rapport d'analyse se joint par un bouton (pas de
-// zone de dépôt affichée d'office) et la référence interne du laboratoire passe avant celle de Zacharie.
-// Seed LABORATOIRE_FTP_RECUE : laboratoire@example.fr (Laboratoire 1, LVD) a réceptionné la FTP
-// F-26-SVI01-0001 du SVI 1. Le pool P-26-SVI01-0001 est sans résultat et sans référence interne.
-// Le stockage Cellar n'est pas configuré en test : le dépôt atteint la route et le serveur répond que
-// le stockage n'est pas disponible.
-
 test.setTimeout(120_000);
 test.use({ launchOptions: { slowMo: 100 } });
 
@@ -26,7 +19,6 @@ test('Le laboratoire joint le rapport par un bouton et retrouve le pool sous sa 
     timeout: 10000,
   });
 
-  // Une seule action principale, le rapport se joint à la demande
   await expect(page.getByRole('button', { name: 'Saisir le résultat' })).toBeVisible();
   await expect(page.getByText(/Glissez-déposez/)).toHaveCount(0);
   await expect(page.getByRole('button', { name: "Joindre le rapport d'analyse" })).toBeVisible();
@@ -39,7 +31,6 @@ test('Le laboratoire joint le rapport par un bouton et retrouve le pool sous sa 
     timeout: 10000,
   });
 
-  // La référence du laboratoire devient le titre, celle de Zacharie passe en sous-titre
   await page.getByLabel('Ma référence').fill('LAB-2026-001');
   await page.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page.getByText('Référence enregistrée')).toBeVisible({ timeout: 10000 });
@@ -48,7 +39,6 @@ test('Le laboratoire joint le rapport par un bouton et retrouve le pool sous sa 
   });
   await expect(page.getByText('Pool reçu au laboratoire · Réf. Zacharie P-26-SVI01-0001')).toBeVisible();
 
-  // Même ordre dans la liste des pools
   await page.goto('/app/laboratoire/pools');
   const ligne = page.getByRole('row').filter({ hasText: 'LAB-2026-001' });
   await expect(ligne).toBeVisible({ timeout: 10000 });

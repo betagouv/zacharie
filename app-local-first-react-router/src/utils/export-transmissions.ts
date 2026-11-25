@@ -26,8 +26,6 @@ type CarcasseExcelData = {
   "Nombre d'animaux": number | null | undefined;
   "Nombre d'animaux acceptés": number | null;
   'Numéro suivi trichine': string | null;
-  // Estampille: string | null;
-  // infos de SVI
   'SVI - Consigne': string | null;
   'SVI - Motif Consigne': string | null;
   'SVI - Pièces Consigne': string | null;
@@ -38,7 +36,6 @@ type CarcasseExcelData = {
   'SVI - Saisie motif': string;
   'SVI - Certificat de saisie OK': string | null;
   "SVI - Date d'examen": Date | null;
-  // infos de chasse
   'Premier détenteur': string;
   'Premier détenteur téléphone': string | null;
   'Premier détenteur email': string | null;
@@ -48,26 +45,13 @@ type CarcasseExcelData = {
   'Date de la chasse': string;
   'Commune de la chasse': string | null;
   'Numéro de fiche': string;
-  // Observations ETG
   'Commentaires ETG / Transporteurs': string | null;
   'Nom du collecteur': string | null;
-  // Plus d'infos
   'Heure de première mise à mort': string | null;
   'Heure de dernière éviscération': string | null;
   Réceptionnée: string | null;
-  // zacharie_carcasse_id: string;
-  // 'Type de gibier': string;
-  // 'Examen initial - Anomalies carcasse': string;
-  // 'Examen initial - Anomalies abats': string;
-  // 'Examen initial - Commentaire': string | null;
-  // Manquante: string;
-  // 'Refusée par un destinataire': string;
-  // Commentaires: string;
 };
 
-// Catalogue des colonnes exportables (1 entrée par champ de CarcasseExcelData).
-// `key` = slug stable mémorisé dans localStorage, `label` = en-tête FR de la feuille.
-// L'ordre du catalogue définit l'ordre de l'export complet (preset par défaut).
 export const EXPORT_COLUMNS_CATALOG: Array<{ key: string; label: keyof CarcasseExcelData }> = [
   { key: 'premier_detenteur', label: 'Premier détenteur' },
   { key: 'date_chasse', label: 'Date de la chasse' },
@@ -105,10 +89,8 @@ const catalogByKey: Record<string, (typeof EXPORT_COLUMNS_CATALOG)[number]> = Ob
   EXPORT_COLUMNS_CATALOG.map((c) => [c.key, c])
 );
 
-// Preset "export complet" = toutes les colonnes dans l'ordre du catalogue.
 export const DEFAULT_EXPORT_COLUMN_KEYS = EXPORT_COLUMNS_CATALOG.map((c) => c.key);
 
-// Preset "export simplifié" = ancien export simplifié (4 colonnes).
 export const SIMPLIFIED_EXPORT_COLUMN_KEYS = [
   'premier_detenteur',
   'date_chasse',
@@ -117,15 +99,7 @@ export const SIMPLIFIED_EXPORT_COLUMN_KEYS = [
 ];
 
 function createSheet(data: Array<Record<string, unknown>>) {
-  /*
-  [
-    [the, first, array, is, the, header],
-    [then, its, the, data],
-  ]
-   */
-
   const header = [
-    //   const wscols = header.map((col: keyof CarcasseExcelData | keyof FeiExcelData) => {
     ...data.reduce((columns: Array<string>, item: Record<string, unknown>) => {
       for (let key of Object.keys(item)) {
         if (!columns.find((col) => col === key)) columns.push(key);
@@ -134,7 +108,7 @@ function createSheet(data: Array<Record<string, unknown>>) {
     }, []),
   ];
 
-  const rowHeights: Array<{ hpx: number }> = [{ hpx: 20 }]; // first line is header
+  const rowHeights: Array<{ hpx: number }> = [{ hpx: 20 }];
   const sheet = data.reduce(
     (xlsxData: Array<Array<string | null>>, item: Record<string, unknown>) => {
       const row = [];
@@ -146,7 +120,6 @@ function createSheet(data: Array<Record<string, unknown>>) {
           continue;
         }
         if (typeof value === 'string') {
-          // https://stackoverflow.com/questions/26837514/a-new-idea-on-how-to-beat-the-32-767-text-limit-in-excel
           row.push(value.substring(0, 32766));
           continue;
         }
@@ -167,7 +140,6 @@ function createSheet(data: Array<Record<string, unknown>>) {
   const worksheet = utils.aoa_to_sheet(sheet);
   worksheet['!rows'] = rowHeights;
 
-  // Add cell styling for all cells
   const range = utils.decode_range(worksheet['!ref'] || 'A1');
   for (let R = range.s.r; R <= range.e.r; ++R) {
     for (let C = range.s.c; C <= range.e.c; ++C) {
@@ -176,13 +148,10 @@ function createSheet(data: Array<Record<string, unknown>>) {
       worksheet[cell_address].s = {
         alignment: { wrapText: true, vertical: 'top' },
       };
-      // Force text format
       worksheet[cell_address].z = '@';
     }
   }
 
-  // Set column widths
-  // col is key of CarcasseExcelData
   const wscols = header.map((col) => {
     switch (col) {
       case 'Donnée':
@@ -199,8 +168,7 @@ function createSheet(data: Array<Record<string, unknown>>) {
       case 'Examinateur initial email':
       case 'Commune de la chasse':
       case 'Numéro de fiche':
-        return { wch: 40 }; // wider columns for comments
-      // case 'Numéro de marquage':
+        return { wch: 40 };
       case 'Poids':
       case 'SVI - Saisie totale':
       case 'SVI - Certificat de saisie OK':
@@ -212,7 +180,6 @@ function createSheet(data: Array<Record<string, unknown>>) {
       case 'Heure de première mise à mort':
       case 'Heure de dernière éviscération':
         return { wch: 15 };
-      // case 'Refusée par un destinataire':
       case 'Numéro suivi trichine':
       case 'Numéro de marquage':
       case 'Éspèce':
@@ -221,22 +188,10 @@ function createSheet(data: Array<Record<string, unknown>>) {
       case 'SVI - Motifs Consigne':
       case "SVI - Date d'examen":
       default:
-        return { wch: 20 }; // default width
+        return { wch: 20 };
     }
   });
   worksheet['!cols'] = wscols;
-
-  // Add cell styling for all cells
-  // const range = utils.decode_range(worksheet['!ref'] || 'A1');
-  // for (let R = range.s.r; R <= range.e.r; ++R) {
-  //   for (let C = range.s.c; C <= range.e.c; ++C) {
-  //     const cell_address = utils.encode_cell({ r: R, c: C });
-  //     if (!worksheet[cell_address]) continue;
-  //     worksheet[cell_address].s = {
-  //       alignment: { wrapText: true },
-  //     };
-  //   }
-  // }
 
   return worksheet;
 }
@@ -277,7 +232,6 @@ export default function useExportTransmissions() {
 
   async function onExportToXlsx(transmissionsIds: Array<string>, columnKeys: Array<string>) {
     setIsExporting(true);
-    // just to trigger the loading state, sorry Raph :)
     await new Promise((res) => setTimeout(res));
 
     const carcassesWorkbook = utils.book_new();
@@ -384,7 +338,6 @@ export default function useExportTransmissions() {
             if (intermediaireCarcasse?.intermediaire_poids) {
               poids = intermediaireCarcasse.intermediaire_poids;
             }
-            // Récupérer le nom du collecteur pro si présent
             if (intermediaire.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO) {
               const collecteurEntity = entities[intermediaire.intermediaire_entity_id];
               if (collecteurEntity?.nom_d_usage) {
@@ -392,7 +345,6 @@ export default function useExportTransmissions() {
               }
             }
           }
-          // Petit gibier : nombre d'animaux acceptés par le dernier détenteur qui l'a renseigné
           const nombreAnimauxAcceptes =
             carcasse.type === CarcasseType.PETIT_GIBIER
               ? (filterCarcassesIntermediairesForCarcasse(
@@ -415,12 +367,10 @@ export default function useExportTransmissions() {
             "Nombre d'animaux": carcasse.nombre_d_animaux || 1,
             "Nombre d'animaux acceptés": nombreAnimauxAcceptes,
             'Numéro suivi trichine': '',
-            // Estampille: '',
-            // infos de SVI
             'SVI - Consigne': carcasse.svi_ipm1_decision?.includes(IPM1Decision.MISE_EN_CONSIGNE)
               ? 'Oui'
               : '',
-            'SVI - Motif Consigne': 'BA P S OA CA pap', // colonne pré-remplie pour entourage manuscrit à l'impression
+            'SVI - Motif Consigne': 'BA P S OA CA pap',
             'SVI - Pièces Consigne': carcasse.svi_ipm1_pieces.join('\n') || null,
             'SVI - Motifs Consigne': carcasse.svi_ipm1_lesions_ou_motifs.join('\n') || null,
             'SVI - Commentaire': carcasse.svi_carcasse_commentaire,
@@ -433,7 +383,6 @@ export default function useExportTransmissions() {
             'SVI - Saisie motif': carcasse.svi_ipm2_lesions_ou_motifs.join('\n'),
             'SVI - Certificat de saisie OK': '',
             "SVI - Date d'examen": carcasse.svi_ipm2_date,
-            // infos de chasse
             'Commune de la chasse': fei.commune_mise_a_mort,
             'Numéro de fiche': fei.numero,
             'Premier détenteur téléphone': premierDetenteur?.telephone || '',
@@ -443,24 +392,15 @@ export default function useExportTransmissions() {
               : '',
             'Examinateur initial téléphone': examinateurInitial?.telephone || '',
             'Examinateur initial email': examinateurInitial?.email || '',
-            // Observations ETG
             Réceptionnée: carcasse.latest_intermediaire_signed_at
               ? dayjs(carcasse.latest_intermediaire_signed_at).format('DD/MM/YYYY HH:mm')
               : null,
-            // Plus d'infos
             'Heure de première mise à mort': fei.heure_mise_a_mort_premiere_carcasse,
             'Heure de dernière éviscération': fei.heure_evisceration_derniere_carcasse,
-            // 'Examen initial - Anomalies carcasse': carcasse.examinateur_anomalies_carcasse.join(', '),
-            // 'Examen initial - Anomalies abats': carcasse.examinateur_anomalies_abats.join(', '),
-            // 'Examen initial - Commentaire': carcasse.examinateur_commentaire,
-            // Manquante: '';
-            // 'Refusée par un destinataire': '';
-            // Commentaires: '';
           });
         }
       }
 
-      // Projection sur les colonnes choisies, dans l'ordre choisi.
       const keys = columnKeys?.length ? columnKeys : DEFAULT_EXPORT_COLUMN_KEYS;
       const labelsInOrder = keys
         .map((k) => catalogByKey[k]?.label)
@@ -485,8 +425,6 @@ export default function useExportTransmissions() {
       });
       setIsExporting(false);
       return true;
-
-      // actions
     } catch (e: unknown) {
       capture(e as Error);
       alert(

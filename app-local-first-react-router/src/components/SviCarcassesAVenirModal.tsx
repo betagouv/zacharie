@@ -8,8 +8,6 @@ import {
   sviCarcassesAVenirModal,
 } from '@app/utils/svi-carcasses-a-venir';
 
-// Modale partagée (dashboard + registre SVI) : détail des carcasses acceptées par un ETG
-// rattaché au SVI mais pas encore transmises.
 export default function SviCarcassesAVenirModal({ carcasses }: { carcasses: Array<SviCarcasseAVenir> }) {
   const isOpen = useIsModalOpen(sviCarcassesAVenirModal);
   const fiches = useMemo(() => groupCarcassesAVenirByFiche(carcasses), [carcasses]);

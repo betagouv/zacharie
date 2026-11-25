@@ -35,7 +35,6 @@ const entity = {
   deleted_at: null as Date | null,
 };
 
-// le routeur admin est monté derrière la stratégie `admin` (ProConnect), simulée ici
 const app = express();
 app.use(express.json());
 app.use((req: any, _res, next) => {
@@ -60,8 +59,8 @@ describe('/admin/user-entity', () => {
 
   test('POST: first member of the entity becomes its admin, Brevo links the target user', async () => {
     vi.mocked(prisma.entityAndUserRelations.findFirst)
-      .mockResolvedValueOnce(null) // no duplicate
-      .mockResolvedValueOnce(null); // entity has no users yet
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null);
     vi.mocked(prisma.entityAndUserRelations.create).mockImplementation(
       (args: any) => Promise.resolve({ id: 'rel-1', ...args.data }) as any
     );

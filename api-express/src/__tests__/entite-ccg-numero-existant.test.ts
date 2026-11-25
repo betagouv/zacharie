@@ -19,7 +19,6 @@ vi.mock('~/third-parties/sentry', () => ({
   captureException: vi.fn(),
 }));
 
-// vitest.setup.ts ne mocke pas entity.create, utilisé par POST /ccg
 (prisma.entity as any).create = vi.fn();
 
 const app = express();

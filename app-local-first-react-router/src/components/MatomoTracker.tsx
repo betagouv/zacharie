@@ -10,12 +10,10 @@ export function MatomoTracker() {
 
   useEffect(() => {
     setCustomDimensions(user ? { isZacharieAdmin: user.isZacharieAdmin, roles: user.roles } : null);
-    // les jetons d'invitation / de réinitialisation et les emails passent en paramètre d'URL
     trackPageView(scrubString(location.pathname + location.search), document.title);
   }, [location, user]);
 
   useEffect(() => {
-    // capture : le clic est compté même si le bouton stoppe la propagation
     const onClick = (event: MouseEvent) => {
       const element = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-matomo]');
       if (element) {

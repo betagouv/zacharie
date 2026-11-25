@@ -3,14 +3,10 @@ import type { Page } from '@playwright/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Scenario 164 — Les filtres des listes admin vivent dans l'URL : une vue prédéfinie filtre la liste,
-// le rechargement et le bouton retour retrouvent la même liste.
-
 test.beforeEach(async () => {
   await resetDb();
 });
 
-// Le login mot de passe ouvre une session normale ; /app/admin exige en plus ProConnect (voir 136)
 async function openAdminUsers(page: Page) {
   await connectWith(page, 'admin@example.fr');
   await expect(page).toHaveURL(/\/app\/chasseur/);

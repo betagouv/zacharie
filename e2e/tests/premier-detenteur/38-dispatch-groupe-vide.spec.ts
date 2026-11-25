@@ -31,10 +31,8 @@ test('Vente / don sans carcasse — « Suivant » reste désactivé', async ({ p
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
 
-  // Vente / don 1 : ETG 1, toutes les carcasses.
   await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris' });
 
-  // Vente / don 2 : aucune carcasse reprise à l'ETG 1.
   await openVenteDon(page);
   await selectDestinataire(page, 'ETG 2 - 75000 Paris');
   await allerAEtape(page, 'Carcasses');
@@ -49,15 +47,11 @@ test('Une vente / un don vidé par une autre reste visible et bloque la transmis
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
 
-  // Vente / don 1 : ETG 1, toutes les carcasses.
   await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris' });
 
-  // Vente / don 2 : ETG 2 les reprend toutes — l'ETG 1 se retrouve sans carcasse.
   await openVenteDon(page);
   await selectDestinataire(page, 'ETG 2 - 75000 Paris');
   await allerAEtape(page, 'Carcasses');
-  // « Toutes les carcasses restantes » ne prend rien à l'ETG 1 : pour le vider il faut reprendre
-  // explicitement ses carcasses dans « Part ailleurs ».
   await garderCarcasses(page, [0, 1, 2, 3]);
   await expect(carcassesRetenues(page)).toHaveCount(4);
   await allerAEtape(page, 'Stockage');
@@ -66,7 +60,6 @@ test('Une vente / un don vidé par une autre reste visible et bloque la transmis
   await choisirTransport(page, 'moi');
   await enregistrerVenteDon(page);
 
-  // La carte ETG 1 n'est pas supprimée en silence : elle est signalée comme vide.
   await expect(page.getByText('Aucune carcasse')).toBeVisible();
 
   const transmettre = page.getByRole('button', { name: /Transmettre/ });

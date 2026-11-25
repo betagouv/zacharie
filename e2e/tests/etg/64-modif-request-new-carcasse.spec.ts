@@ -9,23 +9,12 @@ test.beforeEach(async () => {
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Scenario 64 — Modification request NEW_CARCASSE, full multi-actor.
-// ETG adds a missing carcasse with the "Ajouter une carcasse manquante" button → the carcasse
-// appears in the main intermediaire list (NOT in "Carcasses déjà refusées") with a pending banner →
-// examinateur fills the sanitary exam form and signs → the carcasse joins the FEI as a signed
-// (`examinateur_signed_at`) row.
 test('Ajout carcasse manquante : ETG ajoute → examinateur signe → carcasse rejoint la fiche', async ({
   page,
 }) => {
   const feiId = 'ZACH-20250707-QZ6E0-235242';
   const newBracelet = 'MM-ADDED-99';
 
-  // Note: the added carcasse legitimately differs from its siblings only on per-carcasse fields
-  // (created_by_user_id, approbation + approbation date), so it must NOT trip
-  // `capture('Transmssion differs from one of the carcasses')`. That is enforced globally for every
-  // test by the shared `test` fixture (utils/test.ts) — no per-test assertion needed here.
-
-  // ETG side: add a missing carcasse.
   await connectWith(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
 
@@ -38,16 +27,12 @@ test('Ajout carcasse manquante : ETG ajoute → examinateur signe → carcasse r
   await page.getByLabel("Commentaire pour l'examinateur (optionnel)").fill('Trouvée à part du lot');
   await page.getByRole('button', { name: 'Envoyer la demande' }).click();
 
-  // The carcasse appears in the main list immediately, with the pending banner attached.
   await expect(page.getByRole('button', { name: `Cerf élaphe N° ${newBracelet}` })).toBeVisible({
     timeout: 10000,
   });
   await expect(page.getByText("Carcasse ajoutée après l'examen initial").first()).toBeVisible();
-  // The card itself carries a permanent "Carcasse ajoutée par {entité}" marker (distinct from the
-  // pending banner above, whose title is "Carcasse ajoutée après l'examen initial").
   await expect(page.getByText(/Carcasse ajoutée par/).first()).toBeVisible();
 
-  // Examinateur signs.
   await logoutAndConnect(page, 'examinateur@example.fr');
   await expect(page.getByRole('heading', { name: 'Modifications signalées sur vos carcasses' })).toBeVisible({
     timeout: 10000,
@@ -56,22 +41,17 @@ test('Ajout carcasse manquante : ETG ajoute → examinateur signe → carcasse r
   await page.getByRole('link', { name: 'Voir la demande' }).first().click();
 
   await expect(page.getByRole('heading', { name: "Examen initial d'une carcasse ajoutée" })).toBeVisible();
-  // Approve mise sur le marché is pre-checked. Approve "sans anomalie" then sign. The DSFR "En ligne"
-  // status indicator sits at the bottom of the viewport with z-50 and can intercept clicks on form
-  // fields, so we scroll the checkbox into view first.
   const sansAnomalieCheckbox = page.getByText('Aucune anomalie constatée');
   await sansAnomalieCheckbox.scrollIntoViewIfNeeded();
   await sansAnomalieCheckbox.check();
   await page.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page).toHaveURL(/\/app\/chasseur\/demandes-de-modification$/);
 
-  // ETG side: banner gone, the carcasse is now a signed regular member of the FEI.
   await logoutAndConnect(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await expect(page.getByRole('button', { name: `Cerf élaphe N° ${newBracelet}` })).toBeVisible({
     timeout: 10000,
   });
   await expect(page.getByText("Carcasse ajoutée après l'examen initial")).toHaveCount(0);
-  // The "Carcasse ajoutée par {entité}" marker on the card persists after approval.
   await expect(page.getByText(/Carcasse ajoutée par/).first()).toBeVisible();
 });

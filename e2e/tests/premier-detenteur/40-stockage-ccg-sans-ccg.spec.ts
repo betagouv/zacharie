@@ -32,7 +32,6 @@ test('Stockage CCG choisi mais aucune CCG renseignée → transmission bloquée'
   await allerAEtape(page, 'Stockage');
   await choisirStockage(page, 'ccg');
 
-  // Le PD n'a aucune CCG : on lui propose d'en renseigner une, et il ne peut pas avancer sans.
   await expect(venteDonModal(page).getByRole('button', { name: 'Renseigner ma chambre froide' })).toBeVisible(
     { timeout: 10000 }
   );

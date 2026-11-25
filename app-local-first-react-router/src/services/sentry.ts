@@ -13,22 +13,22 @@ type ErrorType = Error | string;
 
 interface PerformanceMetrics {
   network: {
-    effectiveType?: string; // Chrome/Edge only - Returns '4g', '3g', '2g', 'slow-2g'
-    downlink?: number; // Chrome/Edge only - Effective bandwidth in Mbps
-    rtt?: number; // Chrome/Edge only - Round-trip time in ms
-    saveData?: boolean; // Chrome/Edge only - User's reduced data usage preference
+    effectiveType?: string;
+    downlink?: number;
+    rtt?: number;
+    saveData?: boolean;
   };
   timing: {
-    ttfb: number | null; // All browsers - Time to First Byte
-    domContentLoaded: number | null; // All browsers - DOM Content Loaded time
-    loadComplete: number | null; // All browsers - Full page load time
+    ttfb: number | null;
+    domContentLoaded: number | null;
+    loadComplete: number | null;
   };
   memory: {
-    used: number; // Chrome/Edge only - Used JS heap size in MB
-    limit: number; // Chrome/Edge only - JS heap size limit in MB
-    percentage: string; // Chrome/Edge only - Memory usage percentage
-  } | null; // null if not Chrome/Edge
-  slowResources: Array<{ name: string; duration: number }>; // All browsers - Resources taking >2s to load
+    used: number;
+    limit: number;
+    percentage: string;
+  } | null;
+  slowResources: Array<{ name: string; duration: number }>;
 }
 
 interface PerformanceTags {
@@ -44,16 +44,14 @@ function getConnectionQuality(
   effectiveType?: string,
   rtt?: number
 ): PerformanceTags['connection_quality'] {
-  // Priority 1: Use TTFB if available (most reliable)
   if (ttfb !== null) {
-    if (ttfb < 100) return 'excellent'; // < 100ms
-    if (ttfb < 200) return 'good'; // 100-200ms
-    if (ttfb < 500) return 'ok'; // 200-500ms
-    if (ttfb < 1000) return 'bad'; // 500-1000ms
-    return 'very_bad'; // > 1000ms
+    if (ttfb < 100) return 'excellent';
+    if (ttfb < 200) return 'good';
+    if (ttfb < 500) return 'ok';
+    if (ttfb < 1000) return 'bad';
+    return 'very_bad';
   }
 
-  // Priority 2: Use Network Information API
   if (effectiveType) {
     if (effectiveType === '4g') return 'good';
     if (effectiveType === '3g') return 'ok';
@@ -61,7 +59,6 @@ function getConnectionQuality(
     if (effectiveType === 'slow-2g') return 'very_bad';
   }
 
-  // Priority 3: Use RTT
   if (rtt !== undefined) {
     if (rtt < 100) return 'excellent';
     if (rtt < 300) return 'good';
@@ -81,10 +78,10 @@ function getPageLoadSpeed(
 
   if (metric === null) return 'unknown';
 
-  if (metric < 1000) return 'fast'; // < 1s
-  if (metric < 2500) return 'ok'; // 1-2.5s
-  if (metric < 4000) return 'slow'; // 2.5-4s
-  return 'very_slow'; // > 4s
+  if (metric < 1000) return 'fast';
+  if (metric < 2500) return 'ok';
+  if (metric < 4000) return 'slow';
+  return 'very_slow';
 }
 
 function getMemoryPressure(memory: PerformanceMetrics['memory']): PerformanceTags['memory_pressure'] {
@@ -129,7 +126,6 @@ export function getPerformanceContext(): {
     (navigator as NavigatorWithConnection).mozConnection ||
     (navigator as NavigatorWithConnection).webkitConnection;
 
-  // Navigation timing
   const navTiming = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
 
   const timing = {
@@ -140,7 +136,6 @@ export function getPerformanceContext(): {
     loadComplete: navTiming ? Math.round(navTiming.loadEventEnd - navTiming.fetchStart) : null,
   };
 
-  // Network info
   const network = {
     effectiveType: connection?.effectiveType,
     downlink: connection?.downlink ? Math.round(connection.downlink * 10) / 10 : undefined,
@@ -148,12 +143,11 @@ export function getPerformanceContext(): {
     saveData: connection?.saveData,
   };
 
-  // Memory
   const performanceWithMemory = performance as PerformanceWithMemory;
   const memory = performanceWithMemory.memory
     ? {
-        used: Math.round(performanceWithMemory.memory.usedJSHeapSize / 1024 / 1024), // MB
-        limit: Math.round(performanceWithMemory.memory.jsHeapSizeLimit / 1024 / 1024), // MB
+        used: Math.round(performanceWithMemory.memory.usedJSHeapSize / 1024 / 1024),
+        limit: Math.round(performanceWithMemory.memory.jsHeapSizeLimit / 1024 / 1024),
         percentage: (
           (performanceWithMemory.memory.usedJSHeapSize / performanceWithMemory.memory.jsHeapSizeLimit) *
           100
@@ -161,17 +155,15 @@ export function getPerformanceContext(): {
       }
     : null;
 
-  // Slow resources
   const slowResources = performance
     .getEntriesByType('resource')
     .filter((r) => r.duration > 2000)
     .slice(0, 5)
     .map((r) => ({
-      name: r.name.split('?')[0].substring(0, 100), // Remove query params and limit length
+      name: r.name.split('?')[0].substring(0, 100),
       duration: Math.round(r.duration),
     }));
 
-  // Generate metrics object
   const metrics: PerformanceMetrics = {
     network,
     timing,
@@ -179,7 +171,6 @@ export function getPerformanceContext(): {
     slowResources,
   };
 
-  // Generate easy-to-read tags
   const tags: PerformanceTags = {
     connection_quality: getConnectionQuality(timing.ttfb, network.effectiveType, network.rtt),
     page_load_speed: getPageLoadSpeed(timing.domContentLoaded, timing.loadComplete),
@@ -220,7 +211,6 @@ export function capture(err: ErrorType, context: Context | string = {}): void {
     }
   }
 
-  // Add performance context
   try {
     const { metrics, tags } = getPerformanceContext();
 
@@ -246,8 +236,6 @@ export function capture(err: ErrorType, context: Context | string = {}): void {
   }
 }
 
-// Branché en `beforeSend` : masque les secrets (mots de passe, jetons) et données personnelles, y compris
-// dans l'URL et le Referer ajoutés automatiquement par Sentry. De l'utilisateur, on ne garde que id et rôle.
 export function scrubSentryEvent(event: ErrorEvent): ErrorEvent {
   if (event.message) event.message = scrubString(event.message);
   for (const exception of event.exception?.values ?? []) {

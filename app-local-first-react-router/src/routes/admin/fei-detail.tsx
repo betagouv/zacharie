@@ -226,7 +226,6 @@ function AdminFeiDetailContent() {
       >
         {selectedTab === 'infos' && (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {/* 1. Identité fiche */}
             <Section
               title="Identité"
               onEdit={canCorrect && !editing ? () => setEditing('identite') : undefined}
@@ -255,7 +254,6 @@ function AdminFeiDetailContent() {
               </FieldGrid>
             </Section>
 
-            {/* 2. Examinateur initial */}
             <Section title="Examinateur initial">
               <FieldGrid>
                 <Field label="Examinateur">{fei.FeiExaminateurInitialUser?.email ?? '—'}</Field>
@@ -279,7 +277,6 @@ function AdminFeiDetailContent() {
               </FieldGrid>
             </Section>
 
-            {/* 3. Premier détenteur */}
             <Section
               title="Premier détenteur"
               onEdit={canCorrect && !editing ? () => setEditing('premier-detenteur') : undefined}
@@ -298,20 +295,11 @@ function AdminFeiDetailContent() {
                 <Field label="Entité">{fei.FeiPremierDetenteurEntity?.nom_d_usage ?? '—'}</Field>
               </FieldGrid>
             </Section>
-
-            {/* 4. SVI */}
-            {/* <Section title="SVI">
-              <FieldGrid>
-                <Field label="Entité SVI">{fei.FeiSviEntity?.nom_d_usage ?? '—'}</Field>
-                <Field label="Utilisateur SVI">{fei.FeiSviUser?.email ?? '—'}</Field>
-              </FieldGrid>
-            </Section> */}
           </div>
         )}
 
         {selectedTab === 'carcasses' && (
           <div className="pt-2">
-            {/* 5. Carcasses */}
             <Section title={`Carcasses (${fei.Carcasses.length})`}>
               {fei.Carcasses.length === 0 ? (
                 <p className="text-sm text-gray-500">Aucune carcasse</p>
@@ -403,7 +391,6 @@ function AdminFeiDetailContent() {
 
         {selectedTab === 'intermediaires' && (
           <div className="flex flex-col gap-4 pt-2">
-            {/* 6. Destinataires, lus sur les carcasses : couvre aussi ceux qui n'ont pas pris en charge et le circuit court */}
             <Section title="Destinataires">
               {destinataires.length === 0 ? (
                 <p className="text-sm text-gray-500">Aucune carcasse</p>
@@ -441,7 +428,6 @@ function AdminFeiDetailContent() {
               )}
             </Section>
 
-            {/* 7. Intermédiaires */}
             {fei.CarcasseIntermediaire.length === 0 ? (
               <p className="py-4 text-sm text-gray-500">Aucun intermédiaire</p>
             ) : (

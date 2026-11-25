@@ -1,8 +1,6 @@
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 
-// Affiché quand l'utilisateur n'a plus aucune action à effectuer sur la fiche
-// (ex: fiche renvoyée à l'expéditeur, fiche gérée par d'autres détenteurs).
 export default function FeiAucuneAction({ backTo }: { backTo: string }) {
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">

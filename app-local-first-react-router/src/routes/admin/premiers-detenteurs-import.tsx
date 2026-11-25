@@ -25,7 +25,6 @@ export default function PremiersDetenteursImport() {
 
   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    // on vide l'input pour pouvoir choisir à nouveau le même fichier après une erreur
     e.target.value = '';
     if (!file) return;
 
@@ -68,7 +67,6 @@ export default function PremiersDetenteursImport() {
 
     const response = (await API.post({
       path: 'admin/premiers-detenteurs/import',
-      // on envoie aussi les existants : le serveur les ignore et les compte
       body: { premiers_detenteurs: [...nouveaux, ...existants] },
     })) as AdminPremiersDetenteursImportResponse;
 

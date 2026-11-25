@@ -9,9 +9,6 @@ test.beforeEach(async () => {
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Scenario 65 — Le demandeur annule sa propre correction de marquage.
-// L'annulation défait ce que la demande avait appliqué : le numéro d'origine est rétabli, la
-// bannière disparaît et le bouton de correction réapparaît.
 test('Annulation : le demandeur peut annuler sa propre demande pendante', async ({ page }) => {
   const feiId = 'ZACH-20250707-QZ6E0-235242';
 
@@ -26,7 +23,6 @@ test('Annulation : le demandeur peut annuler sa propre demande pendante', async 
   await page.getByLabel('Numéro de marquage correct').fill('MM-001-FIX');
   await page.getByRole('button', { name: 'Corriger le numéro' }).click();
 
-  // Pending banner attached under the card + numéro déjà corrigé.
   await expect(page.getByText('Numéro de marquage corrigé').first()).toBeVisible({ timeout: 10000 });
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-FIX Mise à' })).toBeVisible({
     timeout: 10000,
@@ -38,7 +34,6 @@ test('Annulation : le demandeur peut annuler sa propre demande pendante', async 
   );
   await page.getByRole('button', { name: 'Annuler la correction' }).click();
 
-  // Banner gone + numéro d'origine rétabli.
   await expect(page.getByText('Numéro de marquage corrigé')).toHaveCount(0, { timeout: 10000 });
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' })).toBeVisible({
     timeout: 10000,
@@ -46,7 +41,6 @@ test('Annulation : le demandeur peut annuler sa propre demande pendante', async 
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-FIX Mise à' })).toHaveCount(0);
   await syncResponse;
 
-  // Reconnexion : le rétablissement a bien été persisté côté serveur.
   await logoutAndConnect(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' })).toBeVisible({
@@ -54,8 +48,6 @@ test('Annulation : le demandeur peut annuler sa propre demande pendante', async 
   });
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-FIX Mise à' })).toHaveCount(0);
 
-  // The rename button is available again (one-pending-per-carcasse rule no longer applies).
-  // En dernier : la modale reste ouverte, elle masquerait le menu de déconnexion.
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
   await expect(page.getByRole('button', { name: 'Corriger le numéro de marquage' })).toBeVisible();
 });

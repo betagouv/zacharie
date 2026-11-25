@@ -1,8 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { sendExpoPushNotification } from '~/third-parties/expo-push';
 
-// Hors production l'envoi est court-circuité : on force les deux drapeaux à false pour tester le
-// vrai chemin. SENTRY_KEY est lu par third-parties/sentry.ts.
 vi.mock('~/config', () => ({
   IS_DEV_OR_TEST: false,
   IS_STAGING: false,
@@ -22,8 +20,6 @@ describe('sendExpoPushNotification', () => {
     vi.clearAllMocks();
   });
 
-  // Expo rejette la requête entière si un seul `to` est malformé : les tokens invalides ne doivent
-  // jamais partir, et il faut les purger sinon ils cassent le push de l'utilisateur pour toujours.
   test('n’envoie pas les tokens au mauvais format et les remonte à purger', async () => {
     mockExpoResponse([{ status: 'ok', id: '1' }]);
 
@@ -74,7 +70,6 @@ describe('sendExpoPushNotification', () => {
     expect(result.tokensToRemove).toEqual([]);
   });
 
-  // L'app mobile lit `data.url` pour ouvrir la bonne page quand on touche la notification.
   test('transmet le chemin à ouvrir dans `data.url`', async () => {
     mockExpoResponse([{ status: 'ok', id: '1' }]);
 

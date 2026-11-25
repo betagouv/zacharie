@@ -12,15 +12,12 @@ type AdminAuditLocals = {
 };
 
 const METHODES_JOURNALISEES = ['POST', 'PUT', 'PATCH', 'DELETE'];
-// Routes en POST qui n'écrivent rien
 const ROUTES_NON_JOURNALISEES = ['/ccg/preview', '/premiers-detenteurs/preview'];
 
-// Les captures d'écran en base64 et les gros imports ne sont pas recopiés en entier
 const LONGUEUR_MAX_TEXTE = 1000;
 const LONGUEUR_MAX_LISTE = 100;
 const VALEUR_MASQUEE = '[masqué]';
 
-// Cible déduite des paramètres de la route, quand la route ne l'a pas posée elle-même
 const CIBLE_PAR_PARAMETRE: Record<string, AdminAuditTargetType> = {
   user_id: 'user',
   entity_id: 'entity',
@@ -36,7 +33,6 @@ export function setAdminAuditTarget(res: express.Response, type: AdminAuditTarge
   (res.locals as AdminAuditLocals).adminAuditTarget = { type, id };
 }
 
-// Ne garde que les champs dont la valeur a changé
 export function setAdminAuditChanges(
   res: express.Response,
   before: Record<string, unknown>,
@@ -87,16 +83,11 @@ function toJson(value: unknown): Prisma.InputJsonValue | undefined {
   return value as Prisma.InputJsonValue;
 }
 
-// Journalise chaque écriture faite depuis /admin, une fois la réponse envoyée, qu'elle ait réussi ou
-// non. Monté après l'authentification admin : req.user est l'admin.
 export function adminAuditLog(req: express.Request, res: express.Response, next: express.NextFunction) {
   if (!METHODES_JOURNALISEES.includes(req.method)) return next();
   const admin = req.user as User | undefined;
   if (!admin) return next();
 
-  // La route et ses paramètres ne sont lisibles que pendant que la route répond : une erreur passée à
-  // next() remonte hors du sous-routeur, qui remet req.params à zéro. On les lit donc au premier
-  // res.status() ou res.send() de la route.
   let routePath: string | null = null;
   let params: Record<string, string> = {};
   const captureRoute = () => {

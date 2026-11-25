@@ -44,10 +44,7 @@ export function mapCarcasseStatusLabelToValue(label: (typeof carcasseStatusOptio
   }
 }
 
-const carcasseTypeOptions = [
-  'Grand gibier', // Gros gibier
-  'Petit gibier',
-];
+const carcasseTypeOptions = ['Grand gibier', 'Petit gibier'];
 
 export function mapCarcasseTypeLabelToValue(label: (typeof carcasseTypeOptions)[number]): string {
   switch (label) {
@@ -116,7 +113,6 @@ export function carcasseFilterableFields(
       label: 'Date dernière décision destinataire',
       type: 'date-with-time',
     },
-    // TODO: Décision destinataire
     { name: 'intermediaire_carcasse_refus_motif', label: 'Motif de refus d’un destinataire', type: 'text' },
     { name: 'svi_closed_at', label: 'Date de clôture manuelle de la fiche', type: 'date-with-time' },
     {
@@ -151,7 +147,6 @@ export type CarcasseFilter = Filter & {
 export const filterCarcassesInRegistre =
   (filters: Array<CarcasseFilter>, debug = false) =>
   (carcasse: Carcasse, fei?: Partial<Fei>) => {
-    // for now an carcasse needs to fulfill ALL items to be displayed
     if (!filters?.filter((f) => Boolean(f?.value)).length) return carcasse;
     for (const filter of filters) {
       if (debug) console.log('filter', filter);
@@ -170,9 +165,6 @@ export const filterCarcassesInRegistre =
           if (typeof itemNumber === 'number') return false;
           continue;
         }
-        // be careful:
-        // now we want to exclude everything that is not a number
-        // BUT we can't use `isNaN` here because if itemValue is `null`, isNaN(null) === false, because `Number(null) === 0`
         if (typeof itemNumber !== 'number') return false;
         if (comparator === 'between') {
           if (Number(number) < Number(number2)) {
@@ -196,7 +188,6 @@ export const filterCarcassesInRegistre =
           return false;
         }
       }
-      // now we know that itemValue is not a number
       if (typeof itemValue === 'number') {
         console.error('itemValue is a number', itemValue);
         return;
@@ -242,7 +233,6 @@ export const filterCarcassesInRegistre =
 
       const arrayFilterValue = Array.isArray(filter.value) ? filter.value : [filter.value];
       if (!arrayFilterValue.length) continue;
-      // here the carcasse needs to fulfill at least one filter value
       let isSelected = false;
       for (let filterValue of arrayFilterValue) {
         if (filter.field === 'svi_carcasse_status') {
@@ -256,7 +246,6 @@ export const filterCarcassesInRegistre =
           break;
         }
         if (typeof itemValue === 'string') {
-          // For type text we trim and lower case the value.
           if (filter.type === 'text') {
             const trimmedItemValue = (itemValue || '').trim().toLowerCase();
             const trimmedFilterValue = (filterValue || '').trim().toLowerCase();

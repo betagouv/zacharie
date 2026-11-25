@@ -8,7 +8,6 @@ test.use({
   hasTouch: true,
   isMobile: true,
   launchOptions: { slowMo: 100 },
-  // sans service worker, page.route voit directement la requête d'enregistrement du profil
   serviceWorkers: 'block',
 });
 
@@ -20,9 +19,6 @@ const isUserUrl = (url: URL) => /\/user\/[^/?]+$/.test(url.pathname);
 const isSaveUserRequest = (request: Request) =>
   request.method() === 'POST' && isUserUrl(new URL(request.url()));
 
-// Scenario 35 — Le formulaire de coordonnées s'enregistre quand le champ perd le focus. Choisir une
-// commune dans la liste ne doit pas enregistrer la saisie partielle : sa réponse, arrivée après
-// le choix, remplacerait la commune choisie.
 test('Coordonnées : la commune choisie dans la liste reste affichée et enregistrée', async ({ page }) => {
   await connectWith(page, 'examinateur@example.fr');
   await page.goto('http://localhost:3290/app/chasseur/profil/coordonnees');
@@ -36,7 +32,6 @@ test('Coordonnées : la commune choisie dans la liste reste affichée et enregis
   const commune = page.getByRole('button', { name: '34000 MONTPELLIER', exact: true });
   await expect(commune).toBeVisible({ timeout: 10000 });
 
-  // On retient les enregistrements déclenchés par le choix, pour que leur réponse arrive après lui.
   const heldRoutes: Array<Route> = [];
   await page.route(isUserUrl, (route) => {
     if (!isSaveUserRequest(route.request())) return route.continue();

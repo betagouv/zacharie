@@ -1,7 +1,5 @@
 import type { ReactNode } from 'react';
 
-// 'page' : pleine largeur, au centre d'un écran de liste
-// 'inline' : compact, à l'intérieur d'un conteneur existant (dropdown, modale, section)
 type EmptyStateVariant = 'page' | 'inline';
 
 export default function FichesEmptyState({

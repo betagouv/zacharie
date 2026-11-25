@@ -27,9 +27,6 @@ import {
   sortByLabel,
 } from '~/utils/admin-list-filters';
 
-// Détenteurs actuels et destinataires des fiches, lus sur les carcasses : c'est là que vit la propriété,
-// et une même fiche peut partir vers plusieurs destinataires. On ignore les carcasses supprimées, sauf
-// sur une fiche supprimée (ses carcasses l'ont été avec elle) que l'admin affiche toujours.
 async function getFeisDestinataires(feiNumeros: Array<string>) {
   const groups = await prisma.carcasse.groupBy({
     by: [
@@ -70,7 +67,6 @@ async function getFeisDestinataires(feiNumeros: Array<string>) {
   for (const entity of entities) ownerLabels[entity.id] = entityLabel(entity);
   for (const user of users) ownerLabels[user.id] = userLabel(user);
 
-  // L'entité prime sur l'utilisateur : c'est elle qui détient, l'utilisateur agit pour elle.
   function ownerLabel(entityId: string | null, userId: string | null) {
     const id = entityId ?? userId;
     if (!id) return null;
@@ -107,8 +103,6 @@ router.get(
       const dateMiseAMort = parseDateRange(req.query.date_mise_a_mort_from, req.query.date_mise_a_mort_to);
       const createdAt = parseDateTimeRange(req.query.created_at_from, req.query.created_at_to);
 
-      // Chaque filtre est un bloc indépendant : on les empile dans un AND pour ne pas
-      // écraser le OR de la recherche.
       const and: Array<Prisma.FeiWhereInput> = [];
       if (search) {
         and.push({
@@ -130,7 +124,6 @@ router.get(
       if (creationContexts.length) and.push({ creation_context: { in: creationContexts } });
       if (dateMiseAMort) and.push({ date_mise_a_mort: dateMiseAMort });
       if (createdAt) and.push({ created_at: createdAt });
-      // Les deux cases cochées ne filtrent rien, comme n'en cocher aucune.
       if (avecCarcasses.length === 1) {
         and.push(
           avecCarcasses[0] === 'avec'
@@ -139,7 +132,6 @@ router.get(
         );
       }
 
-      // Les fiches supprimées restent listées ici : les routes admin les affichent, badgées.
       const where: Prisma.FeiWhereInput = and.length ? { AND: and } : {};
 
       const [feis, total] = await Promise.all([
@@ -171,8 +163,6 @@ router.get(
   )
 );
 
-// Options des listes déroulantes de filtres : uniquement les acteurs qui apparaissent
-// réellement dans des fiches, pour garder des listes courtes.
 router.get(
   '/feis/filter-options',
   catchErrors(
@@ -300,10 +290,6 @@ router.get(
   )
 );
 
-// Soft delete d'une fiche de test ou de démo, avec ses carcasses et lignes d'intermédiaire, comme la
-// suppression par l'examinateur initial (syncFei). `nextVersion` rend périmée toute écriture hors
-// ligne d'un client sur ces lignes, et le bump d'updated_at leur propage la suppression au prochain pull.
-// Les stats (vues matérialisées, Metabase) excluent déjà les lignes où deleted_at est renseigné.
 router.post(
   '/fei/:fei_numero/soft-delete',
   catchErrors(
@@ -346,14 +332,12 @@ const adminFeiCorrectionsSchema = z.object({
   date_mise_a_mort: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date invalide')
-    // écarte les dates impossibles (2025-02-30, 2025-13-01) que la regex laisse passer
     .refine((value) => {
       const date = new Date(value);
       return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value);
     }, 'Date invalide')
     .optional(),
   commune_mise_a_mort: z.string().trim().min(1, 'Commune vide').optional(),
-  // l'examinateur ou un autre chasseur (par email), ou une association de chasse de l'examinateur
   premier_detenteur: z
     .union([
       z.object({ email: z.string().trim().toLowerCase().email('Email invalide') }),
@@ -362,8 +346,6 @@ const adminFeiCorrectionsSchema = z.object({
     .optional(),
 });
 
-// La fiche attend son premier détenteur : on prévient le nouveau, et l'ancien qu'elle ne lui est plus
-// attribuée, comme si l'examinateur avait fait le choix dans l'app (c'est lui l'expéditeur affiché).
 async function notifyNouveauPremierDetenteur(carcasseAvant: Carcasse, savedFei: Fei) {
   const carcasseApres: Carcasse = {
     ...carcasseAvant,
@@ -388,10 +370,6 @@ async function notifyNouveauPremierDetenteur(carcasseAvant: Carcasse, savedFei: 
   }
 }
 
-// Correction par l'admin des champs de base d'une fiche déjà transmise, que l'examinateur ne peut plus
-// modifier dans l'app. Les champs recopiés sur les carcasses (date, premier détenteur) le sont aussi,
-// comme mapFeiFieldsToCarcasse côté client et syncCarcasseDates côté serveur. `nextVersion` fait
-// redescendre la correction par la synchro delta et rend périmée toute copie locale plus ancienne.
 router.post(
   '/fei/:fei_numero/corrections',
   catchErrors(
@@ -417,11 +395,8 @@ router.post(
 
       const feiData: Prisma.FeiUncheckedUpdateInput = {};
       const carcasseUpdates: Array<Prisma.CarcasseUpdateManyArgs> = [];
-      // les champs recopiés de la fiche le sont sur toutes ses carcasses, supprimées comprises, comme
-      // syncCarcasseDates ; l'état de transmission ne concerne que les carcasses encore sur la fiche
       const toutesLesCarcasses: Prisma.CarcasseWhereInput = { fei_numero: numero };
       const carcassesDeLaFiche: Prisma.CarcasseWhereInput = { fei_numero: numero, deleted_at: null };
-      // détenteur suivant avant correction, pour prévenir le nouveau premier détenteur et l'ancien
       let carcasseEnAttenteDuPremierDetenteur: Carcasse | null = null;
 
       if (body.date_mise_a_mort) {
@@ -448,7 +423,6 @@ router.post(
             });
             return;
           }
-          // comme dans l'app : l'examinateur agit pour son association
           premierDetenteur = {
             user_id: fei.examinateur_initial_user_id,
             entity_id: association.id,
@@ -480,7 +454,6 @@ router.post(
         carcasseEnAttenteDuPremierDetenteur = await prisma.carcasse.findFirst({
           where: { ...carcassesDeLaFiche, next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR },
         });
-        // fiche pas encore transmise par le premier détenteur : il est aussi le détenteur suivant ou actuel
         carcasseUpdates.push({
           where: { ...carcassesDeLaFiche, next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR },
           data: {
@@ -499,7 +472,6 @@ router.post(
             current_owner_entity_name_cache: premierDetenteur.entity_id ? premierDetenteur.name : null,
           },
         });
-        // fiche déjà transmise par le premier détenteur : il en reste l'expéditeur pour le détenteur suivant
         carcasseUpdates.push({
           where: { ...carcassesDeLaFiche, prev_owner_role: FeiOwnerRole.PREMIER_DETENTEUR },
           data: {
@@ -534,14 +506,10 @@ router.post(
 const adminNewCarcasseSchema = z.object({
   numero_bracelet: z.string().trim().min(1, 'Numéro de marquage vide'),
   espece: z.string().trim().min(1, 'Espèce vide'),
-  // la liste des espèces de petit gibier vit côté client (data/petit-gibier.json)
   type: z.enum([CarcasseType.GROS_GIBIER, CarcasseType.PETIT_GIBIER]),
   nombre_d_animaux: z.number().int().min(1).optional(),
 });
 
-// Ajout par l'admin d'une carcasse oubliée sur une fiche pas encore prise en charge par un intermédiaire.
-// Elle reprend l'état de transmission d'une autre carcasse de la fiche (détenteur actuel et suivant,
-// dépôt, transport) pour suivre le même chemin. Pas de notification : elle arrive par la synchro.
 router.post(
   '/fei/:fei_numero/carcasse',
   catchErrors(

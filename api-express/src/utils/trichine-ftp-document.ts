@@ -9,12 +9,6 @@ import {
 import { getFtpPdfBuffer } from '~/templates/get-ftp-pdf';
 import { TrichineDocumentType } from '~/utils/trichine';
 
-/**
- * PDF de la FTP : document de référence de ce qui a été effectivement envoyé au laboratoire.
- * Il est figé au moment de l'envoi et archivé sur Cellar (cf doc/trichine.md §12.2).
- * Sans Cellar (dev, test), rien n'est stocké et le PDF est régénéré à la demande.
- */
-
 async function findFtpPdfDocument(ftpId: string) {
   return prisma.trichineDocument.findFirst({
     where: { ftp_id: ftpId, type: TrichineDocumentType.FTP_PDF, deleted_at: null },
@@ -22,11 +16,6 @@ async function findFtpPdfDocument(ftpId: string) {
   });
 }
 
-/**
- * Génère le PDF de la FTP au moment de son envoi et l'archive.
- * Renvoie le buffer (pour la pièce jointe de la notification) même si l'archivage échoue :
- * l'envoi de la FTP ne doit pas échouer parce que le stockage est indisponible.
- */
 export async function archiveFtpPdf(ftpId: string, userId: string): Promise<Buffer | null> {
   const pdf = await getFtpPdfBuffer(ftpId);
   if (!pdf || !IS_CELLAR_CONFIGURED) return pdf;
@@ -53,10 +42,6 @@ export async function archiveFtpPdf(ftpId: string, userId: string): Promise<Buff
   return pdf;
 }
 
-/**
- * PDF à servir en téléchargement : la version archivée si elle existe, sinon une génération
- * à la volée (FTP encore en brouillon, ou archivage indisponible au moment de l'envoi).
- */
 export async function getArchivedOrFreshFtpPdf(ftpId: string): Promise<Buffer | null> {
   if (IS_CELLAR_CONFIGURED) {
     const document = await findFtpPdfDocument(ftpId);

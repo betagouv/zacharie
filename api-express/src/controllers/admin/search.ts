@@ -6,7 +6,6 @@ import type { AdminSearchResponse } from '~/types/responses';
 
 const RESULTS_PER_TYPE = 10;
 
-// Recherche globale (⌘K) : quelques résultats par type, éléments supprimés inclus
 router.get(
   '/search',
   catchErrors(

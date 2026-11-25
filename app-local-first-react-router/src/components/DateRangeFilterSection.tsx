@@ -8,8 +8,6 @@ interface DateRangeFilterSectionProps {
   defaultOpen?: boolean;
 }
 
-// Section de filtre « Du / Au », même design que la page « Mes fiches ».
-// Les deux bornes se limitent mutuellement pour empêcher une plage inversée.
 export default function DateRangeFilterSection({
   title,
   from,

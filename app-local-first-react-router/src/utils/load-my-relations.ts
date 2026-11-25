@@ -17,7 +17,6 @@ export function abortLoadMyRelations(reason: string = 'aborted') {
 }
 
 export async function loadMyRelations() {
-  // on attend le store local : sinon le résultat serait écrasé par la réhydratation
   await hydrationPromise;
   if (isLocalTeardownInProgress()) {
     console.log('not loading relations because local state is being cleared');
@@ -40,12 +39,8 @@ export async function loadMyRelations() {
     const myRelationsData = await API.get({ path: 'user/my-relations', signal }).then(
       (res) => res as UserMyRelationsResponse | { ok: false }
     );
-    // API.get ne lève pas d'erreur : en cas d'échec on garde les relations déjà en mémoire
     if (signal.aborted || !myRelationsData.ok) return;
 
-    // Seed with the entities referenced by fiches only (relation NONE, loaded by load-carcasses). The
-    // user's own relations come from the server alone: one the server no longer returns (entity
-    // deleted by an admin, relation removed) leaves the store and the pickers.
     const entities: Record<EntityWithUserRelation['id'], EntityWithUserRelation> = {};
     for (const entity of Object.values(useZustandStore.getState().entities)) {
       if (entity.relation === EntityRelationType.NONE) {

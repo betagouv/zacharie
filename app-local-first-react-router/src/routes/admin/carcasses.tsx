@@ -23,7 +23,6 @@ const emptyFilterOptions: FilterOptions = {
   examinateurs: [],
 };
 
-// Libellés repris de `mapCarcasseStatusLabelToValue` (@app/utils/filter-carcasse).
 const statusLabels: Record<CarcasseStatus, string> = {
   [CarcasseStatus.REFUS_ETG_COLLECTEUR]: 'Refusée par l’ETG ou le collecteur',
   [CarcasseStatus.MANQUANTE_ETG_COLLECTEUR]: 'Manquante pour l’ETG ou le collecteur',

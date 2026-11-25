@@ -5,7 +5,6 @@ interface Props {
   accent?: 'blue' | 'amber' | 'green' | 'red' | 'purple' | 'gray';
 }
 
-// La couleur ne sert qu'à repérer la tuile : un filet vertical, pas un aplat.
 const ACCENT_RULE: Record<NonNullable<Props['accent']>, string> = {
   blue: 'bg-blue-600',
   amber: 'bg-amber-500',

@@ -8,13 +8,6 @@ import {
   TrichineObjetType,
 } from '~/utils/trichine';
 
-/**
- * Recalcul des statuts trichine (cf doc/trichine.md §4.11).
- * Les fonctions compute* sont pures (testables sans DB), les fonctions
- * recompute* persistent + alimentent TrichineHistoriqueStatut.
- */
-
-// DOUTEUX n'est PAS terminal : la confirmation LNR est obligatoire.
 const TERMINAL_RESULTS: TrichineResultatAnalyse[] = [
   TrichineResultatAnalyse.NEGATIF,
   TrichineResultatAnalyse.ANALYSE_IMPOSSIBLE,
@@ -27,10 +20,6 @@ export function isTerminalResult(resultat: TrichineResultatAnalyse | null): bool
   return !!resultat && TERMINAL_RESULTS.includes(resultat);
 }
 
-/* -------------------------------------------------------------------------- */
-/* Fonctions pures                                                             */
-/* -------------------------------------------------------------------------- */
-
 export function computePoolStatut({
   resultatAnalyse,
   hasChildEnCours,
@@ -40,10 +29,8 @@ export function computePoolStatut({
   hasChildEnCours: boolean;
   isInSentFtp: boolean;
 }): TrichineStatutAnalyse {
-  // Règle pool mère : pas ANALYSES_TERMINEES tant qu'une fille / petite-fille est EN_COURS
   if (hasChildEnCours) return TrichineStatutAnalyse.EN_COURS_ANALYSES;
   if (isTerminalResult(resultatAnalyse)) return TrichineStatutAnalyse.ANALYSES_TERMINEES;
-  // DOUTEUX = en attente de confirmation LNR
   if (resultatAnalyse === TrichineResultatAnalyse.DOUTEUX) return TrichineStatutAnalyse.EN_COURS_ANALYSES;
   if (isInSentFtp) return TrichineStatutAnalyse.EN_COURS_ANALYSES;
   return TrichineStatutAnalyse.A_COMPLETER;
@@ -72,8 +59,6 @@ export function computeFtpStatutLogistique({
   current: TrichineStatutLogistiqueFTP;
   poolResults: Array<TrichineResultatAnalyse | null>;
 }): TrichineStatutLogistiqueFTP {
-  // Auto-clôture : une FTP reçue passe à TRAITEE dès que tous les résultats sont saisis
-  // (question ouverte §11.6 tranchée côté simple : automatique, pas d'action manuelle labo)
   if (
     current === TrichineStatutLogistiqueFTP.RECUE &&
     poolResults.length &&
@@ -92,11 +77,6 @@ type CarcassePoolView = {
   created_at: Date;
 };
 
-/**
- * Calcule Carcasse.trichine_action_requise à partir des pools contenant un
- * échantillon de la carcasse. Retourne null quand il n'y a rien à signaler
- * (pas d'échantillon, ou échantillon/pool pas encore expédié).
- */
 export function computeCarcasseActionRequise(
   pools: CarcassePoolView[],
   hasEchantillon: boolean
@@ -106,8 +86,6 @@ export function computeCarcasseActionRequise(
   const hasResult = (resultat: TrichineResultatAnalyse) =>
     pools.some((pool) => pool.resultat_analyse === resultat);
 
-  // Résultat final LNR (favorable ou non) : plus d'action de prélèvement attendue,
-  // le retrait éventuel de la FEI est une décision affichée depuis le résultat.
   if (
     hasResult(TrichineResultatAnalyse.POSITIF) ||
     hasResult(TrichineResultatAnalyse.NON_NEGATIF) ||
@@ -120,15 +98,12 @@ export function computeCarcasseActionRequise(
   if (douteux.length) {
     const douteuxIds = new Set(douteux.map((pool) => pool.id));
     const filles = pools.filter((pool) => pool.pool_parent_id && douteuxIds.has(pool.pool_parent_id));
-    // Une 2e intention couvre cette carcasse et est au labo
     if (filles.some((pool) => pool.statut === TrichineStatutAnalyse.EN_COURS_ANALYSES)) {
       return TrichineActionRequise.ANALYSE_EN_COURS_LVD;
     }
-    // Pas de 2e intention engagée (ou pas terminée d'être constituée) : à l'émetteur d'agir
     if (!filles.length || filles.some((pool) => pool.statut === TrichineStatutAnalyse.A_COMPLETER)) {
       return TrichineActionRequise.PRELEVEMENT_COMPLEMENTAIRE;
     }
-    // 2e intention terminée sans résultat défavorable : reste la confirmation LNR
     return TrichineActionRequise.CONFIRMATION_EN_COURS_LNR;
   }
 
@@ -143,24 +118,15 @@ export function computeCarcasseActionRequise(
   if (latest.resultat_analyse === TrichineResultatAnalyse.ANALYSE_IMPOSSIBLE) {
     return TrichineActionRequise.PRELEVEMENT_COMPLEMENTAIRE;
   }
-  // Pool constitué mais pas encore expédié
   return null;
 }
 
-/**
- * Le prélèvement le plus récent de la carcasse a été retiré de son pool par le laboratoire :
- * la carcasse n'a pas été analysée, elle est à re-prélever. Un nouveau prélèvement lève l'action.
- */
 export function dernierEchantillonRetireParLabo(
   echantillons: Array<{ created_at: Date; retire_par_labo_at: Date | null }>
 ): boolean {
   const dernier = [...echantillons].sort((a, b) => b.created_at.getTime() - a.created_at.getTime())[0];
   return !!dernier?.retire_par_labo_at;
 }
-
-/* -------------------------------------------------------------------------- */
-/* Recompute persistants                                                       */
-/* -------------------------------------------------------------------------- */
 
 export async function recomputeCarcasseTrichine(zacharieCarcasseId: string, userId: string) {
   const carcasse = await prisma.carcasse.findUnique({
@@ -186,7 +152,6 @@ export async function recomputeCarcasseTrichine(zacharieCarcasseId: string, user
     if (pool && !pool.deleted_at) poolsById.set(pool.id, pool);
   }
 
-  // Carcasse retirée de la FEI : plus aucune action trichine attendue
   const actionRequise = carcasse.trichine_retire_de_fei_at
     ? TrichineActionRequise.AUCUNE
     : dernierEchantillonRetireParLabo(carcasse.TrichineEchantillons)
@@ -269,7 +234,6 @@ export async function recomputePoolTrichine(poolId: string, userId: string) {
     });
   }
 
-  // Cache du statut/résultat du pool sur ses échantillons
   for (const echantillon of pool.TrichineEchantillons) {
     if (echantillon.statut !== statut || echantillon.resultat_analyse !== pool.resultat_analyse) {
       await prisma.trichineEchantillon.update({
@@ -291,7 +255,6 @@ export async function recomputePoolTrichine(poolId: string, userId: string) {
     await recomputeCarcasseTrichine(carcasseId, userId);
   }
 
-  // La hiérarchie remonte : un changement sur une fille peut débloquer/bloquer la mère
   if (pool.pool_parent_id) {
     await recomputePoolTrichine(pool.pool_parent_id, userId);
   }
@@ -303,7 +266,6 @@ export async function recomputeFTPTrichine(ftpId: string, userId: string) {
     include: { TrichinePoolFTPs: { include: { TrichinePool: true } } },
   });
   if (!ftp || ftp.deleted_at) return;
-  // Une fiche annulée est figée : ses pools sont retournés à l'émetteur
   if (ftp.statut_logistique === TrichineStatutLogistiqueFTP.ANNULEE) return;
 
   const poolResults = ftp.TrichinePoolFTPs.filter(({ TrichinePool: pool }) => !pool.deleted_at).map(
@@ -341,11 +303,6 @@ export async function recomputeFTPTrichine(ftpId: string, userId: string) {
   }
 }
 
-/**
- * Recompute le pool + TOUTES les FTP qui le référencent : un pool peut être dans
- * deux FTP successives (émetteur → LVD puis LVD → LNR), et la FTP d'origine doit
- * aussi se clôturer quand le LNR rend son résultat.
- */
 export async function recomputePoolAndLinkedFTPs(poolId: string, userId: string) {
   await recomputePoolTrichine(poolId, userId);
   const links = await prisma.trichinePoolFTP.findMany({ where: { pool_id: poolId } });

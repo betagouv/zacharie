@@ -6,10 +6,6 @@ import laboratoireRouter from '~/controllers/laboratoire';
 import prisma from '~/prisma';
 import { getFromCellar } from '~/third-parties/cellar';
 
-// GET /laboratoire/ftp/:ftp_id/document/:document_id — photographie de larve jointe à la FTP de
-// confirmation. Servie au LVD qui l'envoie et au LNR qui la reçoit, et seulement si elle est
-// rattachée à cette FTP.
-
 vi.mock('~/third-parties/cellar', () => ({
   IS_CELLAR_CONFIGURED: true,
   getFromCellar: vi.fn(),

@@ -8,7 +8,6 @@ test.beforeEach(async () => {
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Clés idb-keyval (base 'keyval-store', store 'keyval') où le store Zustand persiste ses slices zs:*.
 async function getIdbKeys(page: Page): Promise<string[]> {
   return page.evaluate(
     () =>
@@ -33,9 +32,6 @@ async function getIdbKeys(page: Page): Promise<string[]> {
   );
 }
 
-// Scenario 147 — les carcasses sont persistées une par une (zs:carcasses/<id>), sans seconde copie
-// (zs:carcassesRegistry) : la liste est dérivée des carcasses. La liste ETG des carcasses doit rester
-// complète après un rechargement hors ligne.
 test('ETG : la liste des carcasses reste affichée après un rechargement hors ligne', async ({
   page,
   context,
@@ -46,7 +42,6 @@ test('ETG : la liste des carcasses reste affichée après un rechargement hors l
   await expect(page.getByText('MM-001-001').first()).toBeVisible({ timeout: 10000 });
   await expect(page.getByText('MM-001-004').first()).toBeVisible();
 
-  // Les carcasses sont écrites dans IndexedDB une par une, sans seconde copie.
   await expect
     .poll(async () => (await getIdbKeys(page)).filter((key) => key.startsWith('zs:carcasses/')).length, {
       timeout: 10000,
@@ -55,8 +50,6 @@ test('ETG : la liste des carcasses reste affichée après un rechargement hors l
   expect(await getIdbKeys(page)).not.toContain('zs:carcasses');
   expect(await getIdbKeys(page)).not.toContain('zs:carcassesRegistry');
 
-  // Hors ligne côté app : navigator.onLine à false dès le chargement et API injoignable. Le serveur
-  // Vite (dev) doit rester joignable pour servir l'app au rechargement, donc pas de context.setOffline.
   await page.addInitScript(() => {
     Object.defineProperty(Navigator.prototype, 'onLine', { get: () => false, configurable: true });
   });

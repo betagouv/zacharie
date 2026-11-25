@@ -1,9 +1,8 @@
 import rateLimit from 'express-rate-limit';
 import type { RequestWithUser } from '~/types/request';
 
-// Compté par utilisateur connecté : à monter après passport.authenticate, sinon req.user est absent
 export const uploadRateLimit = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 60,
   keyGenerator: (req) => (req as RequestWithUser).user.id,
   standardHeaders: true,

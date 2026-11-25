@@ -4,64 +4,52 @@ import type { Carcasse } from '@prisma/client';
 
 export function getCarcasseTransmission(carcasseRef: Carcasse): CarcasseTransmission {
   return {
-    // fei metadata:
     fei_numero: carcasseRef.fei_numero,
     date_mise_a_mort: carcasseRef.date_mise_a_mort,
     consommateur_final_usage_domestique: carcasseRef.consommateur_final_usage_domestique,
     is_synced: carcasseRef.is_synced,
     created_at: carcasseRef.created_at,
     updated_at: carcasseRef.updated_at,
-    // created by:
     created_by_user_id: carcasseRef.created_by_user_id,
-    // examinateur:
     examinateur_initial_user_id: carcasseRef.examinateur_initial_user_id,
     examinateur_initial_approbation_mise_sur_le_marche:
       carcasseRef.examinateur_initial_approbation_mise_sur_le_marche,
     examinateur_initial_date_approbation_mise_sur_le_marche:
       carcasseRef.examinateur_initial_date_approbation_mise_sur_le_marche,
-    // premier detenteur:
     premier_detenteur_user_id: carcasseRef.premier_detenteur_user_id,
     premier_detenteur_offline: carcasseRef.premier_detenteur_offline,
     premier_detenteur_entity_id: carcasseRef.premier_detenteur_entity_id,
     premier_detenteur_name_cache: carcasseRef.premier_detenteur_name_cache,
-    // premier detenteur dépôt:
     premier_detenteur_depot_type: carcasseRef.premier_detenteur_depot_type,
     premier_detenteur_depot_entity_id: carcasseRef.premier_detenteur_depot_entity_id,
     premier_detenteur_depot_entity_name_cache: carcasseRef.premier_detenteur_depot_entity_name_cache,
     premier_detenteur_depot_ccg_at: carcasseRef.premier_detenteur_depot_ccg_at,
-    // premier detenteur transport:
     premier_detenteur_transport_type: carcasseRef.premier_detenteur_transport_type,
     premier_detenteur_transport_date: carcasseRef.premier_detenteur_transport_date,
-    // premier détenteur prochain détenteur:
     premier_detenteur_prochain_detenteur_role_cache:
       carcasseRef.premier_detenteur_prochain_detenteur_role_cache,
     premier_detenteur_prochain_detenteur_id_cache: carcasseRef.premier_detenteur_prochain_detenteur_id_cache,
-    // refus intermediaire:
     intermediaire_carcasse_refus_intermediaire_id: carcasseRef.intermediaire_carcasse_refus_intermediaire_id,
     intermediaire_carcasse_refus_motif: carcasseRef.intermediaire_carcasse_refus_motif,
     intermediaire_carcasse_manquante: carcasseRef.intermediaire_carcasse_manquante,
     intermediaire_closed_at: carcasseRef.intermediaire_closed_at,
     intermediaire_closed_by_user_id: carcasseRef.intermediaire_closed_by_user_id,
     intermediaire_closed_by_entity_id: carcasseRef.intermediaire_closed_by_entity_id,
-    // latest intermediaire:
     latest_intermediaire_signed_at: carcasseRef.latest_intermediaire_signed_at,
     latest_intermediaire_user_id: carcasseRef.latest_intermediaire_user_id,
     latest_intermediaire_entity_id: carcasseRef.latest_intermediaire_entity_id,
     latest_intermediaire_name_cache: carcasseRef.latest_intermediaire_name_cache,
-    // svi:
     svi_assigned_at: carcasseRef.svi_assigned_at,
     svi_entity_id: carcasseRef.svi_entity_id,
     svi_user_id: carcasseRef.svi_user_id,
     svi_closed_at: carcasseRef.svi_closed_at,
     svi_automatic_closed_at: carcasseRef.svi_automatic_closed_at,
     svi_closed_by_user_id: carcasseRef.svi_closed_by_user_id,
-    // current owner:
     current_owner_user_id: carcasseRef.current_owner_user_id,
     current_owner_user_name_cache: carcasseRef.current_owner_user_name_cache,
     current_owner_entity_id: carcasseRef.current_owner_entity_id,
     current_owner_entity_name_cache: carcasseRef.current_owner_entity_name_cache,
     current_owner_role: carcasseRef.current_owner_role,
-    // next owner:
     next_owner_wants_to_sous_traite: carcasseRef.next_owner_wants_to_sous_traite,
     next_owner_sous_traite_at: carcasseRef.next_owner_sous_traite_at,
     next_owner_sous_traite_by_user_id: carcasseRef.next_owner_sous_traite_by_user_id,
@@ -71,7 +59,6 @@ export function getCarcasseTransmission(carcasseRef: Carcasse): CarcasseTransmis
     next_owner_entity_id: carcasseRef.next_owner_entity_id,
     next_owner_entity_name_cache: carcasseRef.next_owner_entity_name_cache,
     next_owner_role: carcasseRef.next_owner_role,
-    // prev owner:
     prev_owner_user_id: carcasseRef.prev_owner_user_id,
     prev_owner_entity_id: carcasseRef.prev_owner_entity_id,
     prev_owner_role: carcasseRef.prev_owner_role,
@@ -85,8 +72,6 @@ const ALWAYS_SAME_FIELDS: Partial<Record<keyof CarcasseTransmission, boolean>> =
   created_at: true,
   updated_at: true,
   examinateur_initial_user_id: true,
-  // examinateur_initial_approbation_mise_sur_le_marche: true,
-  // examinateur_initial_date_approbation_mise_sur_le_marche: true,
   premier_detenteur_user_id: true,
   premier_detenteur_offline: true,
   premier_detenteur_entity_id: true,
@@ -94,21 +79,16 @@ const ALWAYS_SAME_FIELDS: Partial<Record<keyof CarcasseTransmission, boolean>> =
   premier_detenteur_prochain_detenteur_role_cache: true,
   premier_detenteur_prochain_detenteur_id_cache: true,
 };
-// champs techniques propres à chaque carcasse : ils diffèrent légitimement entre carcasses d'une même transmission
-// on ne les compare pas
 const PER_CARCASSE_METADATA_FIELDS: Partial<Record<keyof CarcasseTransmission, boolean>> = {
   created_at: true,
   updated_at: true,
   is_synced: true,
-  created_by_user_id: true, // because a carcasse can have been created from RequestNewCarcasseForm
-  examinateur_initial_approbation_mise_sur_le_marche: true, // because a carcasse can have been created from RequestNewCarcasseForm
-  examinateur_initial_date_approbation_mise_sur_le_marche: true, // a carcasse from RequestNewCarcasseForm is approved later, so its approbation date differs legitimately
-  consommateur_final_usage_domestique: true, // le premier détenteur garde une partie seulement de ses carcasses : le champ est propre au lot, pas à la transmission
+  created_by_user_id: true,
+  examinateur_initial_approbation_mise_sur_le_marche: true,
+  examinateur_initial_date_approbation_mise_sur_le_marche: true,
+  consommateur_final_usage_domestique: true,
 };
 
-// stockage et transport sont propres à chaque vente / don : le premier détenteur peut envoyer plusieurs
-// lots au même destinataire (en une fois ou en plusieurs transmissions), chacun avec sa chambre froide,
-// sa date de dépôt et son transport. Ces lots partagent le même id de transmission, on ne les compare pas.
 const PER_LOT_FIELDS: Partial<Record<keyof CarcasseTransmission, boolean>> = {
   premier_detenteur_depot_type: true,
   premier_detenteur_depot_entity_id: true,
@@ -119,16 +99,16 @@ const PER_LOT_FIELDS: Partial<Record<keyof CarcasseTransmission, boolean>> = {
 };
 
 const REFUSAL_FIELDS: Partial<Record<keyof CarcasseTransmission, boolean>> = {
-  intermediaire_carcasse_refus_intermediaire_id: true, // when a carcasse is refused, this field is set per carcasse, not per transmission
-  intermediaire_carcasse_refus_motif: true, // same
-  intermediaire_carcasse_manquante: true, // same
-  intermediaire_closed_at: true, // same
-  intermediaire_closed_by_user_id: true, // same
-  intermediaire_closed_by_entity_id: true, // same
-  latest_intermediaire_signed_at: true, // same
-  svi_closed_at: true, // might be automatic closed
-  svi_automatic_closed_at: true, // might be manual closed
-  svi_closed_by_user_id: true, // might be different from carcasse to carcasse
+  intermediaire_carcasse_refus_intermediaire_id: true,
+  intermediaire_carcasse_refus_motif: true,
+  intermediaire_carcasse_manquante: true,
+  intermediaire_closed_at: true,
+  intermediaire_closed_by_user_id: true,
+  intermediaire_closed_by_entity_id: true,
+  latest_intermediaire_signed_at: true,
+  svi_closed_at: true,
+  svi_automatic_closed_at: true,
+  svi_closed_by_user_id: true,
 };
 
 export function checkCarcasseAgainstTransmission(
@@ -146,7 +126,7 @@ export function checkCarcasseAgainstTransmission(
   > = {};
   let shouldNOTdifferButDiffer = false;
   for (let field of transmissionKeys) {
-    if (PER_CARCASSE_METADATA_FIELDS[field]) continue; // always differ, we dont care
+    if (PER_CARCASSE_METADATA_FIELDS[field]) continue;
     if (PER_LOT_FIELDS[field]) continue;
     if (ALWAYS_SAME_FIELDS[field]) {
       if (carcasse[field] !== transmission[field]) {
@@ -169,9 +149,6 @@ export function checkCarcasseAgainstTransmission(
       for (const field of Object.keys(differ)) {
         // @ts-expect-error might not be refusal field, so typescript is yelling
         if (REFUSAL_FIELDS[field]) {
-          // si une carcasse est refusée, elle sort du circuit
-          // donc potentiellement les autres champs comme `next_owner_entity_id` sont légitimement différents
-          // donc on arrête de comparer la carcasse avec la transmission
           return;
         }
       }

@@ -48,7 +48,6 @@ export function getCountCarcassesByEspece(carcasses: Array<CarcasseForCounting>)
             CarcasseStatus.REFUS_ETG_COLLECTEUR,
             CarcasseStatus.MANQUANTE_SVI,
             CarcasseStatus.SAISIE_TOTALE,
-            // CarcasseStatus.SAISIE_PARTIELLE,
           ] as Array<CarcasseStatus>
         ).includes(carcasse.svi_carcasse_status!)
       ) {
@@ -92,18 +91,15 @@ export function formatCountCarcasseByEspece(carcasses: Array<CarcasseForCounting
 
   const formatted = Object.entries(countCarcassesByEspece)
     .sort(([especeA, countA], [especeB, countB]) => {
-      // Put refus entries at the end
       if (especeA.includes('refus') && !especeB.includes('refus')) {
         return 1;
       }
       if (!especeA.includes('refus') && especeB.includes('refus')) {
         return -1;
       }
-      // For non-refus entries, sort by nombre_d_animaux in descending order
       if (!especeA.includes('refus') && !especeB.includes('refus')) {
         return countB.nombre_d_animaux - countA.nombre_d_animaux;
       }
-      // Keep the original order for refus entries relative to each other
       return 0;
     })
     .map(([espece, { carcasses, nombre_d_animaux, lots }]) => {

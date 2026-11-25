@@ -25,10 +25,6 @@ const departementToRegion = (departementsRegions as { departementToRegion: Recor
 
 export const FEDERATION_ENTITY_TYPES: EntityTypes[] = [EntityTypes.FDC, EntityTypes.FRC, EntityTypes.FNC];
 
-/**
- * Toutes les fédérations, pré-créées : une FDC par département, une FRC par région, la FNC.
- * Ids fixes pour que la création soit idempotente.
- */
 export function getAllFederationEntities(): Array<Prisma.EntityCreateManyInput> {
   const fnc: Prisma.EntityCreateManyInput = {
     id: 'federation-fnc',
@@ -60,10 +56,6 @@ export function getAllFederationEntities(): Array<Prisma.EntityCreateManyInput> 
   return [fnc, ...frcs, ...fdcs];
 }
 
-/**
- * Fédération dont l'utilisateur est membre (MEMBER ou ADMIN), ou null.
- * Un utilisateur n'est membre que d'une seule fédération (contrainte portée par le frontend).
- */
 export async function getUserFederationEntity(userId: string): Promise<Entity | null> {
   const relation = await prisma.entityAndUserRelations.findFirst({
     where: {
@@ -78,11 +70,6 @@ export async function getUserFederationEntity(userId: string): Promise<Entity | 
   return relation?.EntityRelatedWithUser ?? null;
 }
 
-/**
- * Une fédération peut consulter le tableau de bord d'une autre fédération si tous les départements
- * de celle-ci sont dans son propre périmètre : la FNC voit toutes les FRC/FDC, une FRC voit ses FDC,
- * une FDC ne voit qu'elle-même.
- */
 export function canAccessFederation(
   viewer: Pick<Entity, 'scope_departements_codes'>,
   target: Pick<Entity, 'scope_departements_codes'>
@@ -93,10 +80,6 @@ export function canAccessFederation(
   return targetDepts.every((code) => viewerDepts.has(code));
 }
 
-/**
- * Fédération dont on affiche le tableau de bord : celle de l'utilisateur par défaut, ou
- * `targetFederationId` si l'utilisateur a le droit de la consulter. null = accès refusé.
- */
 export async function getViewableFederationEntity(
   userId: string,
   targetFederationId: string | undefined
@@ -122,13 +105,6 @@ export const circuitCourtRoles: FeiOwnerRole[] = [
 
 export type CircuitValorisation = 'agree' | 'nonAgree' | 'domestique';
 
-/**
- * Circuit de valorisation d'une carcasse pour le tableau de bord des fédérations :
- *  - domestique : gardée par le premier détenteur pour son usage domestique
- *  - agree      : passée par un ETG
- *  - nonAgree   : transmise à un destinataire du circuit court (commerce de détail, repas associatif…)
- *  - null       : pas encore transmise, ou en route vers un collecteur / un ETG
- */
 export function getCircuitValorisation(
   carcasse: Pick<
     Carcasse,
@@ -148,8 +124,6 @@ export function getCircuitValorisation(
     carcasse.prev_owner_role === FeiOwnerRole.SVI ||
     carcasse.CarcasseIntermediaire.some((ci) => ci.intermediaire_role === FeiOwnerRole.ETG);
   if (wasInEtg) return 'agree';
-  // le destinataire du circuit court ne prend jamais en charge dans Zacharie : son rôle reste en
-  // `next_owner_role`, le premier détenteur reste propriétaire courant
   const destinataireRole = carcasse.next_owner_role ?? carcasse.current_owner_role;
   if (destinataireRole && circuitCourtRoles.includes(destinataireRole)) return 'nonAgree';
   return null;
@@ -175,13 +149,6 @@ export function hasBphMotif(motifs: string[] | null): boolean {
   });
 }
 
-/**
- * Extrait le code département depuis le champ `Fei.commune_mise_a_mort`
- * (format attendu : "<code_postal> <COMMUNE>").
- *  - DOM/COM : 3 premiers chiffres (97x, 98x)
- *  - Corse : 2A si CP ≤ 20190, 2B sinon
- *  - Métropole : 2 premiers chiffres
- */
 export function extractDepartementFromCommune(commune: string | null | undefined): string | null {
   if (!commune) return null;
   const cp = commune.trim().split(/\s+/)[0];
@@ -195,9 +162,6 @@ export function extractDepartementFromCommune(commune: string | null | undefined
   return cp.slice(0, 2);
 }
 
-/**
- * Saison de chasse en cours (1er juillet → 30 juin).
- */
 export function getCurrentSeason() {
   const now = dayjs();
   const seasonStartYear = now.month() >= 6 ? now.year() : now.year() - 1;
@@ -210,14 +174,6 @@ export function getCurrentSeason() {
 
 export type FederationScope = 'national' | 'regional' | 'departemental';
 
-/**
- * Le périmètre est entièrement déclaratif : la seule source de vérité est
- * `entity.scope_departements_codes` de la fédération.
- *  - 0 département       → aucun accès (jamais "tout")
- *  - 1 département       → départemental
- *  - 101 départements    → national (équivalent à `null` pour le filtre)
- *  - sinon               → régional / multi-départemental
- */
 export function resolveScope(federation: Pick<Entity, 'scope_departements_codes'>): {
   isNational: boolean;
   scopeDepts: string[] | null;
@@ -227,8 +183,6 @@ export function resolveScope(federation: Pick<Entity, 'scope_departements_codes'
   const isNational =
     explicit.length === ALL_DEPARTEMENT_CODES.length &&
     explicit.every((c) => ALL_DEPARTEMENT_CODES_SET.has(c));
-  // Le filtre côté stats traite `null` comme "pas de filtre" (= toutes les depts).
-  // On renvoie `null` uniquement quand la liste explicite couvre tous les départements.
   const scopeDepts: string[] | null = isNational ? null : explicit;
   const scope: FederationScope = isNational
     ? 'national'

@@ -9,7 +9,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   version,
   orientation: 'portrait',
   icon: './assets/icon.png',
-  // userInterfaceStyle: 'light', // userInterfaceStyle: Install expo-system-ui in your project to enable this feature.
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'fr.gouv.zacharie.v1',

@@ -39,10 +39,6 @@ function destinataireDisplay(ftp: LaboFTPListItem): string {
   return ftp.DestinataireEntity.is_lnr ? `${nom} (LNR)` : nom;
 }
 
-/**
- * Émetteur et destinataire sont affichés tels quels : le sens de la fiche se lit dans les
- * données, sans étiquette supplémentaire. Le côté qui est le laboratoire connecté est marqué.
- */
 function Correspondant({ nom, estVous }: { nom: string; estVous: boolean }) {
   return (
     <span className="flex flex-wrap items-baseline gap-1">
@@ -56,7 +52,6 @@ function isClosed(ftp: LaboFTPListItem): boolean {
   return ftp.statut_logistique === TrichineStatutLogistiqueFTP.TRAITEE;
 }
 
-// Point coloré devant le n° de fiche : rouge (positif) / orange (non négatif) / rien
 function NumeroCell({ ftp }: { ftp: LaboFTPListItem }) {
   const niveau = ftpTrichineNiveau(ftp);
   return (
@@ -72,7 +67,6 @@ function NumeroCell({ ftp }: { ftp: LaboFTPListItem }) {
   );
 }
 
-// Résumé coloré des résultats des pools (met en avant la trichine)
 function ResultatsCell({ ftp }: { ftp: LaboFTPListItem }) {
   const resume = ftpResultatsResume(ftp);
   if (!resume.length) return <span className="fr-text--sm m-0 text-gray-500">En attente</span>;
@@ -137,11 +131,9 @@ export default function LaboratoireFTPs() {
     if (vue === 'tous') return ftps;
     if (vue === 'envoyees') return ftps.filter((ftp) => ftp.direction === 'envoyee');
     if (vue === 'trichine') return ftps.filter((ftp) => ftpTrichineNiveau(ftp) !== null);
-    // Fiches trichine dont au moins une carcasse attend encore la décision du SVI (IPM2)
     if (vue === 'trichine-en-attente') {
       return ftps.filter((ftp) => ftpTrichineNiveau(ftp) !== null && ftp.carcasses_sans_ipm2 > 0);
     }
-    // Les autres vues suivent la réception : elles ne concernent que les fiches reçues
     const recues = ftps.filter((ftp) => ftp.direction === 'recue');
     return recues.filter((ftp) => filtreLaboFTP(ftp) === vue);
   }, [ftps, vue]);

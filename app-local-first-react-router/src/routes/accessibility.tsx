@@ -157,12 +157,6 @@ export default function Accessibility() {
                 zacharie.beta.gouv.fr
               </a>
             </li>
-            {/* <li>
-              page création de compte{' '}
-              <a href="zacharie.beta.gouv.fr/app/connexion?type=creation-de-compte" className="text-blue-600 hover:underline">
-                zacharie.beta.gouv.fr/app/connexion?type=creation-de-compte
-              </a>
-            </li> */}
             <li>
               page connexion{' '}
               <a

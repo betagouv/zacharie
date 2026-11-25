@@ -12,9 +12,6 @@ import {
   MAX_FAILED_ATTEMPTS,
 } from '~/utils/login-lockout';
 
-// POST /user/login tourne ici sur une vraie base Postgres (migrations appliquées). En CI, VITEST_DB_URL
-// pointe sur la base du job `checks` ; en local, le test est sauté sauf si VITEST_DB_URL est posée sur
-// une base jetable (le test y écrit puis supprime ses lignes).
 const VITEST_DB_URL = process.env.VITEST_DB_URL;
 
 vi.mock('~/prisma', async () => {

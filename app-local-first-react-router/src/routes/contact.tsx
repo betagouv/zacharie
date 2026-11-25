@@ -64,7 +64,6 @@ export default function Stats() {
                       defaultValue: user?.nom_de_famille ?? '',
                     }}
                   />
-                  {/* honey pot */}
                   <Input
                     label="Profession *"
                     className="hidden"
@@ -112,7 +111,6 @@ export default function Stats() {
                     }}
                   >
                     <option value="">-- Sélectionnez un objet --</option>
-                    {/* <hr /> */}
                     <option>Je veux plus d'informations sur Zacharie</option>
                     <option>Je souhaite ajouter une entreprise à mon profil</option>
                     <option>Je souhaite activer mon compte</option>

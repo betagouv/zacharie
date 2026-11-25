@@ -9,9 +9,6 @@ test.beforeEach(async () => {
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Scenario 48 — L'ETG renvoie la fiche à l'expéditeur : next_owner est vidé mais le destinataire choisi
-// par le premier détenteur reste en cache. Côté chasseur, les carcasses ne sont plus « Envoyée à ETG 1 »
-// mais « Renvoyée par ETG 1, à attribuer de nouveau ».
 test("Carcasses renvoyées par l'ETG : le premier détenteur les voit à attribuer de nouveau", async ({
   page,
 }) => {

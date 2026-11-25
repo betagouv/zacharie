@@ -87,7 +87,6 @@ const statusColors: Record<TransmissionSimpleStatus, { bg: string; text: string 
 function OnboardingChasseInfoBanner() {
   const user = useUser((state) => state.user)!;
 
-  // Ne pas afficher si l'utilisateur n'est pas chasseur ou a déjà répondu
   if (user.onboarding_chasse_info_done_at !== null) {
     return null;
   }
@@ -128,7 +127,6 @@ function OnboardingChasseInfoBanner() {
   );
 }
 
-// En mode test (Playwright) on baisse la pagination pour pouvoir la tester avec peu de fiches.
 const ITEMS_PER_PAGE = import.meta.env.VITE_TEST_PLAYWRIGHT === 'true' ? 3 : 100;
 
 export default function ChasseurFiches() {
@@ -168,10 +166,8 @@ export default function ChasseurFiches() {
     const feisToToggle = visibleFeis || [];
     const allSelected = feisToToggle.every((numero) => selectedTransmissions.includes(numero));
     if (allSelected) {
-      // Désélectionner toutes les fiches visibles
       setSelectedTransmissions((prev) => prev.filter((numero) => !feisToToggle.includes(numero)));
     } else {
-      // Sélectionner toutes les fiches visibles
       setSelectedTransmissions((prev) => {
         const newSelection = [...prev];
         feisToToggle.forEach((numero) => {
@@ -188,9 +184,7 @@ export default function ChasseurFiches() {
     try {
       const saved = localStorage.getItem('chasseur-fiches-filter-statuses');
       if (saved) return JSON.parse(saved) as TransmissionSimpleStatus[];
-    } catch {
-      // ignore
-    }
+    } catch {}
     return [];
   });
 
@@ -214,9 +208,7 @@ export default function ChasseurFiches() {
     try {
       const saved = localStorage.getItem('chasseur-fiches-filter-premier-detenteurs');
       if (saved) return JSON.parse(saved) as string[];
-    } catch {
-      // ignore
-    }
+    } catch {}
     return [];
   });
 
@@ -231,9 +223,7 @@ export default function ChasseurFiches() {
     try {
       const saved = localStorage.getItem('chasseur-fiches-filter-saisons');
       if (saved) return JSON.parse(saved) as number[];
-    } catch {
-      // ignore
-    }
+    } catch {}
     return [];
   });
 
@@ -260,9 +250,7 @@ export default function ChasseurFiches() {
     try {
       const saved = localStorage.getItem('chasseur-fiches-filter-ccgs');
       if (saved) return JSON.parse(saved) as string[];
-    } catch {
-      // ignore
-    }
+    } catch {}
     return [];
   });
 
@@ -274,9 +262,7 @@ export default function ChasseurFiches() {
     try {
       const saved = localStorage.getItem('chasseur-fiches-filter-collecteurs');
       if (saved) return JSON.parse(saved) as string[];
-    } catch {
-      // ignore
-    }
+    } catch {}
     return [];
   });
 
@@ -478,7 +464,6 @@ export default function ChasseurFiches() {
 
   const sidebarContent = (
     <>
-      {/* Recherche */}
       <div className="relative">
         <span
           className="fr-icon--sm fr-icon-search-line absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"
@@ -496,7 +481,6 @@ export default function ChasseurFiches() {
         />
       </div>
 
-      {/* Compteur */}
       <div className="mt-2 flex items-center justify-between border-b border-gray-200 pb-3">
         <span className="text-sm font-medium text-gray-600">
           {filteredTransmissions.length} fiche{filteredTransmissions.length > 1 ? 's' : ''}
@@ -511,7 +495,6 @@ export default function ChasseurFiches() {
         )}
       </div>
 
-      {/* Filtre Statut */}
       <CollapsibleSection
         title="Statut"
         badge={
@@ -551,7 +534,6 @@ export default function ChasseurFiches() {
         </div>
       </CollapsibleSection>
 
-      {/* Filtre Saison */}
       {(saisonOptions.length > 0 || filterSaisons.length > 0) && (
         <CollapsibleSection
           title="Saison"
@@ -589,7 +571,6 @@ export default function ChasseurFiches() {
         </CollapsibleSection>
       )}
 
-      {/* Filtre Date de mise à mort */}
       <CollapsibleSection
         title="Date de mise à mort"
         badge={
@@ -628,7 +609,6 @@ export default function ChasseurFiches() {
         </div>
       </CollapsibleSection>
 
-      {/* Filtre Premier détenteur */}
       {(premierDetenteurOptions.length > 1 || filterPremierDetenteurs.length > 0) && (
         <CollapsibleSection
           title="Premier détenteur"
@@ -666,7 +646,6 @@ export default function ChasseurFiches() {
         </CollapsibleSection>
       )}
 
-      {/* Filtre CCG */}
       {(ccgOptions.length > 1 || filterCCGs.length > 0) && (
         <CollapsibleSection
           title="Centre de collecte (CCG)"
@@ -704,7 +683,6 @@ export default function ChasseurFiches() {
         </CollapsibleSection>
       )}
 
-      {/* Filtre Collecteur */}
       {(collecteurOptions.length > 1 || filterCollecteurs.length > 0) && (
         <CollapsibleSection
           title="Collecteur"
@@ -754,7 +732,6 @@ export default function ChasseurFiches() {
 
       <PendingModifRequestsAlertModal />
 
-      {/* Mobile : bouton filtres sticky */}
       <div className="fr-background-alt--blue-france sticky top-0 z-30 flex items-center justify-between px-4 py-2 md:hidden">
         <span className="text-sm font-medium">
           {filteredTransmissions.length} fiche{filteredTransmissions.length > 1 ? 's' : ''}
@@ -813,7 +790,6 @@ export default function ChasseurFiches() {
         </div>
       </div>
 
-      {/* Mobile : panneau filtres */}
       {showMobileFilters && (
         <div className="fixed inset-0 z-[800] md:hidden">
           <div
@@ -835,14 +811,11 @@ export default function ChasseurFiches() {
         </div>
       )}
 
-      {/* Layout principal */}
       <div className="flex">
-        {/* Sidebar gauche - desktop, collée au bord */}
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 overflow-y-auto border-r border-gray-200 bg-white p-4 md:block">
           {sidebarContent}
         </aside>
 
-        {/* Contenu principal */}
         <div className="mx-auto max-w-5xl min-w-0 flex-1 px-4 pt-4 md:px-6">
           {!user.activated && (
             <CompteEnAttenteValidationAlert
@@ -1061,7 +1034,6 @@ function FeisTableRow({
   const simpleStatus = transmission.labels.simpleStatus;
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
 
-  // Notifier le parent de la visibilité de cette ligne
   useEffect(() => {
     const isVisible = !filter || filter === 'Toutes les fiches' || filter === simpleStatus;
     onVisibilityChange?.(getTransmissionIdFromMetadata(transmission), isVisible);
@@ -1075,7 +1047,6 @@ function FeisTableRow({
       if (line.includes('refusé')) {
         _carcassesOuLotsRefusés = line.split(' (')[0];
       } else {
-        // Enrichir les carcasses acceptées pour afficher le nombre accepté pour le petit gibier
         let enrichedLine = line;
         for (const [espece, abbreviation] of Object.entries(abbreviations)) {
           if (line.toLowerCase().includes(abbreviation.toLowerCase())) {
@@ -1103,7 +1074,6 @@ function FeisTableRow({
     return [_carcassesAcceptées, _carcassesOuLotsRefusés];
   }, [transmission.carcasses, carcassesIntermediaireById]);
 
-  // Filtrer selon le statut si un filtre est défini - APRÈS tous les hooks
   if (filter && filter !== 'Toutes les fiches' && filter !== simpleStatus) {
     return null;
   }

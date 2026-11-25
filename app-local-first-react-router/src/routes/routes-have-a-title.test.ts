@@ -3,16 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// Chaque page doit poser son propre <title> : sans ça le navigateur affiche l'URL brute
-// dans l'onglet, l'historique et les favoris. React 19 remonte le <title> rendu dans le <head>.
-// Ce test lit les routeurs, résout chaque composant de route et vérifie qu'il contient un <title>.
-
 const srcDir = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 
-// Composants de route qui n'ont pas à poser de titre :
-// - Navigate / Outlet / RootDisplay : pas des pages
-// - TableauDeBordRedirect : redirection pure, la page cible pose le titre
-// - les *Layout : ils enveloppent un <Outlet />, le titre vient de la page enfant
 const NOT_A_PAGE = new Set(['Navigate', 'Outlet', 'RootDisplay', 'TableauDeBordRedirect', 'TestSentry']);
 
 function listFilesRecursively(dir: string): Array<string> {
@@ -34,7 +26,6 @@ function resolveModule(fromFile: string, specifier: string): string | null {
 
 function defaultImportsOf(file: string, source: string): Map<string, string> {
   const imports = new Map<string, string>();
-  // `import X from '…'` et `import X, { Y } from '…'` (imports nommés éventuellement sur plusieurs lignes)
   for (const match of source.matchAll(/^import\s+([^\s,{}]+)\s*(?:,\s*\{[^}]*\})?\s+from\s+'([^']+)';/gm)) {
     const resolved = resolveModule(file, match[2]);
     if (resolved) imports.set(match[1], resolved);
@@ -42,7 +33,6 @@ function defaultImportsOf(file: string, source: string): Map<string, string> {
   return imports;
 }
 
-// `fnc-tableau-de-bord.tsx` n'est qu'un `export { default } from '…'` : on suit la réexportation.
 function followReExport(file: string): string {
   let current = file;
   for (let depth = 0; depth < 5; depth++) {
@@ -85,7 +75,6 @@ describe('toutes les pages posent un <title>', () => {
   it.each([...pages.keys()].sort())('%s rend un <title>', (pageFile) => {
     const file = path.join(srcDir, pageFile);
     const source = fs.readFileSync(file, 'utf8');
-    // Le <title> peut venir d'un gabarit que la page rend (ex. TrichineListPage, TrichineDetailPage)
     const gabaritsAvecTitre = [...defaultImportsOf(file, source)]
       .filter(([componentName]) => source.includes(`<${componentName}`))
       .filter(([, componentFile]) => fs.readFileSync(componentFile, 'utf8').includes('<title>'));

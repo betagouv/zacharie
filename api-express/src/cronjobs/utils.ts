@@ -5,22 +5,12 @@ import prisma from '~/prisma';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
-/*
-*
-*
-Launch Cron Job function
-
-In order to prevent the same cron to be launched twice, we use a cronJob table in the database.
-If a cron is already running, we don't launch it again.
-
-*/
 type TaskFn = () => Promise<void>;
 
 export async function launchCronJob(name: string, job: TaskFn): Promise<boolean> {
   try {
     const uniqueKey = `${dayjs().utc().format('YYYY-MM-DD:HH:mm')}_${name}`;
     console.log('uniqueKey', uniqueKey);
-    // plusieurs instances lancent le cron en même temps : la contrainte unique sur unique_key sert de verrou
     const cronJob = await prisma.cronJob
       .create({
         data: {
@@ -54,17 +44,6 @@ export async function launchCronJob(name: string, job: TaskFn): Promise<boolean>
   }
   return false;
 }
-
-/*
-*
-*
-Setpup Cron Job function
-Each cron job has the same parameters:
-- we launch it on init
-- we start it (all are activated)
-- we set the timezone to Europe/Paris
-
-*/
 
 interface SetupCronJob {
   cronTime: string;

@@ -4,10 +4,6 @@ import { describe, test, expect } from 'vitest';
 import * as Sentry from '@sentry/node';
 import { SENTRY_SCRUB_OPTIONS } from '~/third-parties/sentry';
 
-// Les transactions de performance (tracesSampleRate) joignent le body et les en-têtes de la requête,
-// et `beforeSend` ne s'applique qu'aux erreurs : sans `beforeSendTransaction`, un fichier déposé
-// partirait en entier chez Sentry.
-
 describe('Sentry — transactions de performance', () => {
   test("n'envoient ni le contenu d'un fichier déposé ni l'en-tête Authorization", async () => {
     const envelopes: string[] = [];

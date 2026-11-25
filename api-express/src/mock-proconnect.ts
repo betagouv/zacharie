@@ -3,9 +3,6 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { PROCONNECT_CLIENT_ID, PROCONNECT_CLIENT_SECRET, PROCONNECT_ISSUER } from '~/config';
 
-// Fournisseur OIDC factice qui imite ProConnect, monté en dev/test quand PROCONNECT_ISSUER est absent.
-// La page /authorize laisse saisir l'email renvoyé, ce qui permet de tester le cas "email différent".
-
 const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
 const KID = 'zacharie-mock-proconnect';
 const jwk = { ...publicKey.export({ format: 'jwk' }), kid: KID, use: 'sig', alg: 'RS256' };
@@ -17,7 +14,7 @@ interface PendingCode {
   codeChallenge: string | null;
 }
 const codes = new Map<string, PendingCode>();
-const accessTokens = new Map<string, string>(); // access_token -> email
+const accessTokens = new Map<string, string>();
 
 function subFor(email: string) {
   return crypto.createHash('sha256').update(email).digest('hex').slice(0, 32);

@@ -3,14 +3,10 @@ import type { Page } from '@playwright/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Scenario 169 — La page « À traiter » de l’admin compte ce qui attend une action, chaque carte mène
-// à la liste filtrée ; /app/admin et l'ancien /app/admin/dashboard y mènent aussi.
-
 test.beforeEach(async () => {
   await resetDb();
 });
 
-// Le login mot de passe ouvre une session normale ; /app/admin exige en plus ProConnect (voir 136)
 async function openAdminATraiter(page: Page) {
   await connectWith(page, 'admin@example.fr');
   await expect(page).toHaveURL(/\/app\/chasseur/);
@@ -36,12 +32,10 @@ test('les cartes comptent ce qui est à traiter et mènent à la liste filtrée'
     await expect(main.getByText(titre, { exact: true })).toBeVisible();
   }
 
-  // Seed par défaut : tous les comptes viennent d'être créés, aucun n'a plus de 7 jours
   const onboardingIncomplet = main.getByText('Onboarding incomplet > 7 j', { exact: true }).locator('..');
   await expect(onboardingIncomplet.getByText('0', { exact: true })).toBeVisible();
   await expect(main.getByRole('link', { name: /Onboarding incomplet/ })).toHaveCount(0);
 
-  // Seed par défaut : seul le CFEI de Moreau Lucie (CFEI-075-25-003) manque à la liste officielle
   const cfeiIntrouvable = main.getByRole('link', { name: /CFEI introuvable/ });
   await expect(cfeiIntrouvable.getByText('1', { exact: true })).toBeVisible();
   await cfeiIntrouvable.click();
@@ -50,7 +44,6 @@ test('les cartes comptent ce qui est à traiter et mènent à la liste filtrée'
   await expect(page.getByRole('link', { name: 'Martin Marie', exact: true })).toHaveCount(0);
   await page.goBack();
 
-  // Seed par défaut : Moreau Lucie et Girard Hugo ont fini l'onboarding sans être activés
   const enAttente = main.getByRole('link', { name: /En attente d'activation/ });
   await expect(enAttente.getByText('2', { exact: true })).toBeVisible();
   await enAttente.click();
@@ -89,7 +82,6 @@ test("/app/admin et l'ancien tableau de bord mènent à « À traiter », les st
   await page.goto('http://localhost:3290/app/admin/dashboard');
   await expect(page).toHaveURL(/\/app\/admin\/a-traiter/, { timeout: 10000 });
 
-  // le pied de page a aussi un lien « Statistiques » (/stats) : on clique celui du menu admin
   await page.getByRole('navigation').getByRole('link', { name: 'Statistiques', exact: true }).click();
   await expect(page).toHaveURL(/\/app\/admin\/statistiques/);
   await expect(page.getByRole('heading', { name: 'Statistiques' })).toBeVisible({ timeout: 10000 });

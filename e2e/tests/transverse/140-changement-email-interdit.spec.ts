@@ -3,10 +3,6 @@ import type { Page } from '@playwright/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Scenario 140 — Un utilisateur ne peut pas changer son email.
-// Aucun écran ne le permet (le champ est en lecture seule) et l'email sert d'identité pour ProConnect
-// et pour la traçabilité : on vérifie donc le contrat directement sur `POST /user/:user_id`.
-
 test.use({
   viewport: { width: 350, height: 667 },
   hasTouch: true,
@@ -52,18 +48,15 @@ test('140 - Changer mon email : refusé, même avec le mot de passe', async ({ p
   const me = await getMe(page, cookie);
   expect(me.email).toBe(EMAIL_ACTUEL);
 
-  // 1. email inchangé (les formulaires de coordonnées le renvoient à chaque enregistrement) : accepté
   const inchange = await updateUser(page, cookie, me.id, { email: EMAIL_ACTUEL, prenom: 'Jean' });
   expect(inchange.status).toBe(200);
   expect(inchange.body.data.user.email).toBe(EMAIL_ACTUEL);
 
-  // 2. nouvel email : refusé
   const nouvelEmail = await updateUser(page, cookie, me.id, { email: NOUVEL_EMAIL });
   expect(nouvelEmail.status).toBe(403);
   expect(nouvelEmail.body.error).toBe("L'email ne peut pas être modifié");
   expect((await getMe(page, cookie)).email).toBe(EMAIL_ACTUEL);
 
-  // 3. nouvel email avec le mot de passe actuel : refusé aussi
   const avecMotDePasse = await updateUser(page, cookie, me.id, {
     email: NOUVEL_EMAIL,
     currentPassword: MOT_DE_PASSE,

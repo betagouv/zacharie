@@ -1,18 +1,8 @@
-// sw.ts
 /// <reference lib="webworker" />
 
 import * as IDB from 'idb-keyval';
 
-// le cache ne contient que les fichiers statiques de l'app (même origine), jamais de réponses de l'API
 const CACHE_NAME = 'zacharie-pwa-cache-v4';
-
-/*
-
-CACHE ALL ASSETS TO NAVIGATE OFFLINE
-
-
-
-*/
 
 declare interface PrecacheEntry {
   integrity?: string;
@@ -21,7 +11,6 @@ declare interface PrecacheEntry {
 }
 declare let self: ServiceWorkerGlobalScope;
 
-// This array will be populated at build time with the list of all assets in build-spa/client
 const ASSETS_TO_CACHE: Array<PrecacheEntry | string> = self.__WB_MANIFEST || [];
 
 self.addEventListener('install', (event: ExtendableEvent) => {
@@ -61,14 +50,7 @@ self.addEventListener('activate', (event: ExtendableEvent) => {
   );
 });
 
-/*
-
-HANDLE GET REQUESTS
-
-*/
-
 self.addEventListener('fetch', (event: FetchEvent) => {
-  // les requêtes vers l'API (autre origine) et les requêtes non-GET vont directement au réseau
   if (event.request.method !== 'GET') return;
   if (new URL(event.request.url).origin !== self.location.origin) return;
   event.respondWith(handleFetchRequest(event.request));
@@ -134,25 +116,6 @@ interface SerializedRequest {
   timestamp: number;
 }
 
-// async function queuePostRequest(request: Request) {
-//   const clonedRequest = request.clone();
-//   const bodyText = await clonedRequest.text();
-
-//   const now = Date.now();
-
-//   const serialized: SerializedRequest = {
-//     url: clonedRequest.url,
-//     method: clonedRequest.method,
-//     credentials: clonedRequest.credentials,
-//     headers: Object.fromEntries(clonedRequest.headers),
-//     body: bodyText,
-//     timestamp: now,
-//   };
-
-//   await IDB.set(now, serialized, store);
-//   console.log('Request queued', serialized);
-// }
-
 async function processOfflineQueue(processingFrom: string) {
   console.log('Processing offline queue from', processingFrom);
   if (!navigator.onLine) {
@@ -161,7 +124,6 @@ async function processOfflineQueue(processingFrom: string) {
   }
   const allKeys = await IDB.keys(store);
 
-  // Process requests in order: fei, carcasse, then others
   for (const key of allKeys.sort((a, b) => Number(a) - Number(b))) {
     console.log('processing key', key);
     const request = (await IDB.get(key, store)) satisfies SerializedRequest | undefined;
@@ -191,16 +153,8 @@ async function processOfflineQueue(processingFrom: string) {
   console.log('Finished processing offline queue');
 }
 
-/*
-
-
-BRIDGE BETWEEN SERVICE WORKER AND CLIENT
-
-
-*/
 async function syncBackOnline(calledFrom: string) {
   await processOfflineQueue(calledFrom);
-  // await fetchAllFeis(calledFrom);
 }
 
 self.addEventListener('message', (event: ExtendableMessageEvent) => {
@@ -209,7 +163,6 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
   }
 
   if (event.data === 'SW_MESSAGE_CLEAR_CACHE') {
-    // CACHE_NAME ne contient aucune donnée utilisateur : on le garde pour que l'app démarre hors ligne
     event.waitUntil(
       caches
         .keys()
@@ -242,42 +195,9 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
   }
 });
 
-/*
-
-
-PUSH NOTIFICATIONS
-
-
-*/
 self.addEventListener('push', (event: PushEvent) => {
   event.waitUntil(
     (async () => {
-      // const data = event.data?.json() ?? {
-      //   title: 'Zacharie Notification',
-      //   body: 'No payload',
-      //   img: '/pwa-192x192.png',
-      // };
-
-      // Fetch all FEIs first
-      // await fetchAllFeis('PUSH_NOTIFICATION');
-
-      // Get the cached FEI data
-      // const cache = await caches.open(CACHE_NAME);
-      // const feiResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/feis`);
-      // const feiResponseCloned = feiResponse?.clone();
-      // const feiData = await feiResponseCloned?.json();
-
-      // // Calculate the badge count
-      // const badgeCount =
-      //   (feiData?.feisUnderMyResponsability?.length || 0) + (feiData?.feisToTake?.length || 0);
-
-      // const options: NotificationOptions = {
-      //   body: data.body,
-      //   icon: data.img || '/favicon.svg',
-      //   badge: badgeCount,
-      // };
-
-      // await self.registration.showNotification(data.title, options);
       await processOfflineQueue('PUSH_NOTIFICATION');
     })()
   );

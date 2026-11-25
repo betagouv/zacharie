@@ -131,8 +131,6 @@ const typeLabels: Record<string, string> = {
   CONFIRMATION: 'Confirmation LNR',
 };
 
-// Projection identique à celle du labo (cf doc/trichine.md §10.2) : la fiche imprimée
-// ne montre pas plus que ce que le laboratoire est autorisé à voir.
 async function getFtpForPdf(ftpId: string) {
   return prisma.trichineFTP.findUnique({
     where: { id: ftpId },
@@ -203,11 +201,6 @@ async function getFtpForPdf(ftpId: string) {
 
 export type FtpForPdf = NonNullable<Awaited<ReturnType<typeof getFtpForPdf>>>;
 
-// Code 128 : les douchettes de laboratoire le saisissent directement dans le champ
-// « référence client » du LIMS, sans re-frappe.
-// `paddingwidth: 10` réserve la zone silencieuse de 10 modules exigée de chaque côté par
-// l'ISO/IEC 15417 : sans elle, le filet de bordure du bloc pool colle aux barres et les
-// lecteurs stricts refusent de décoder.
 export async function barcodeDataUrl(text: string): Promise<string> {
   const png = await bwipjs.toBuffer({
     bcid: 'code128',
@@ -224,7 +217,6 @@ function formatAdresse(parts: Array<string | null>) {
   return parts.filter(Boolean).join(', ');
 }
 
-// Références internes de chaque acteur, à côté de celle de Zacharie : « SVI 35 : A-12 · LVD 35 : 2026-87 »
 export function formatAliases(aliases: Array<TrichineAliasProjection>): string {
   return aliases
     .map((alias) => `${alias.Entity.nom_d_usage || alias.Entity.raison_sociale || '—'} : ${alias.reference}`)
@@ -363,7 +355,6 @@ export function TrichineFtpDocument({
                 {pool.Aliases.length > 0 && (
                   <Text style={styles.poolMeta}>Réf. internes : {formatAliases(pool.Aliases)}</Text>
                 )}
-                {/* Fiche de confirmation LVD → LNR : seuls les laboratoires la consultent */}
                 {!!ftp.ftp_parent_id && pool.nombre_larves_lvd != null && (
                   <Text style={styles.poolMeta}>
                     Larves comptées par le laboratoire agréé : {pool.nombre_larves_lvd}
@@ -425,10 +416,6 @@ export function TrichineFtpDocument({
   );
 }
 
-/**
- * PDF de la fiche de transmission des prélèvements, imprimé par l'émetteur et joint au colis.
- * Renvoie null si la FTP n'existe pas / est supprimée.
- */
 export async function getFtpPdfBuffer(ftpId: string): Promise<Buffer | null> {
   const ftp = await getFtpForPdf(ftpId);
   if (!ftp || ftp.deleted_at) return null;

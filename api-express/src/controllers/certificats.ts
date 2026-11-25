@@ -24,8 +24,6 @@ import { generateSaisieDocx } from '~/templates/get-saisie-docx';
 import { generateLeveeSaisieDocx } from '~/templates/get-levee-saisie-docx';
 import { generateLaissezPasserSanitaireDocx } from '~/templates/get-laissez-passer-sanitaire';
 
-// Une carcasse est dans le périmètre de l'utilisateur SVI si elle est assignée (ou en cours d'assignation)
-// à une entité pour laquelle il travaille.
 async function getUserCarcasseScope(user: User): Promise<Prisma.CarcasseWhereInput> {
   const userEntityRelations = await prisma.entityAndUserRelations.findMany({
     where: {
@@ -49,7 +47,6 @@ async function isCarcasseInUserScope(user: User, zacharie_carcasse_id: string): 
   return !!carcasse;
 }
 
-// Génère le .docx d'un certificat + son nom de fichier, selon son type.
 async function generateDocxForCertificat(
   certificat: CarcasseCertificat,
   user: User
@@ -248,10 +245,8 @@ router.get(
   })
 );
 
-// Au-delà, la génération des .docx et le zip en mémoire bloquent trop longtemps le serveur.
 const MAX_CARCASSES_PAR_ZIP = 200;
 
-// Regroupe dans un seul .zip les certificats actifs des carcasses sélectionnées (registre SVI).
 router.post(
   '/bulk-zip',
   passport.authenticate('user', { session: false }),
@@ -293,7 +288,6 @@ router.post(
       },
       orderBy: { created_at: 'desc' },
     });
-    // on ne garde que les certificats actifs (non remplacés par un autre) et générables
     const replacedIds = new Set(
       certificats.map((certificat) => certificat.remplace_certificat_id).filter(Boolean) as Array<string>
     );
@@ -304,7 +298,6 @@ router.post(
     const zip = new JSZip();
     let filesCount = 0;
     for (const certificat of activeCertificats) {
-      // un certificat qui ne peut pas être généré ne doit pas faire échouer tout le zip
       try {
         const { buffer, filename } = await generateDocxForCertificat(certificat, user);
         zip.file(filename, buffer);

@@ -3,10 +3,6 @@ import type { Page } from '@playwright/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Scenario 154 — Zacharie dans plusieurs onglets.
-// En ligne, chaque onglet recharge ses données quand on revient dessus, et une déconnexion dans un
-// onglet déconnecte les autres. Hors ligne, seul le premier onglet utilisé fonctionne.
-
 const feiId = 'ZACH-20250707-QZ6E0-165242';
 const blockedTitle = "Hors ligne, Zacharr'ête de fonctionner sur plusieurs onglets";
 
@@ -58,7 +54,6 @@ test('Hors ligne, le second onglet utilisé est bloqué jusqu’au retour en lig
   const page2 = await openSecondTab(page);
 
   await context.setOffline(true);
-  // le premier onglet utilisé hors ligne prend la main
   await page.keyboard.press('Shift');
   await page2.keyboard.press('Shift');
 

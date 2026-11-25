@@ -44,7 +44,6 @@ const RESULTATS = [
   })),
 ];
 
-// Numéros des FTP auxquelles le pool est rattaché (une FTP supprimée ne compte plus)
 function ftpNumerosListe(pool: TrichinePoolPopulated): Array<string> {
   return pool.TrichinePoolFTPs.filter((link) => !link.TrichineFTP.deleted_at).map(
     (link) => link.TrichineFTP.numero_fiche
@@ -111,7 +110,6 @@ export default function TrichinePools() {
     if (resultat === 'DEFAVORABLE') {
       filtered = filtered.filter((pool) => isResultatDefavorable(pool.resultat_analyse));
     } else if (resultat === 'DEFAVORABLE_SANS_IPM2') {
-      // Défavorables sur lesquels le SVI n'a pas encore statué : ce que signale l'alerte d'accueil
       filtered = filtered.filter(
         (pool) => isResultatDefavorable(pool.resultat_analyse) && poolEnAttenteIpm2(pool, carcassesAvecIpm2)
       );
@@ -212,7 +210,6 @@ export default function TrichinePools() {
         withCheckbox
         checked={selectedIds}
         onCheck={setSelectedIds}
-        // Un pool déjà rattaché à une FTP ne peut pas être transmis une seconde fois
         checkboxDisabled={(pool) => !poolSansFTP(pool)}
         onRowClick={(pool) => navigate(`${basePath}/pools/${pool.reference_pool}`)}
         noData={pools.length ? 'Aucun pool ne correspond aux filtres' : 'Aucun pool constitué'}
@@ -276,7 +273,6 @@ export default function TrichinePools() {
             small: true,
             render: (pool) => pool.TrichineEchantillons.length,
           },
-          // dataKey arbitraire (clé de colonne unique) : la cellule est rendue via render()
           {
             dataKey: 'updated_at',
             title: 'FTP',
@@ -306,7 +302,6 @@ export default function TrichinePools() {
                 '—'
               ),
           },
-          // dataKey arbitraire (clé de colonne unique) : la cellule est rendue via render()
           {
             dataKey: 'cree_par_user_id',
             title: 'Suivi',

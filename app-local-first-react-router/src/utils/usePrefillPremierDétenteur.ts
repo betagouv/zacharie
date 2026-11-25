@@ -15,8 +15,6 @@ interface PrefillPremierDétenteurInfos {
   premier_detenteur_entity_id: Carcasse['premier_detenteur_entity_id'];
 }
 
-// Une entité que l'utilisateur ne peut plus choisir (supprimée par l'admin, relation retirée, ou
-// connue seulement via une ancienne fiche) n'est pas reprise : le serveur refuserait la transmission.
 function isPickable(entityId: string | null, entities: Record<string, EntityWithUserRelation>) {
   if (!entityId) return false;
   const entity = entities[entityId];

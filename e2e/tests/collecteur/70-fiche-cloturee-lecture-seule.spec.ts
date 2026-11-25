@@ -8,7 +8,6 @@ test.beforeEach(async () => {
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Scenario 70 — Fiche clôturée : lecture seule, pas d'action.
 test('Collecteur ne peut plus agir sur une fiche clôturée', async ({ page }) => {
   await connectWith(page, 'collecteur-pro@example.fr');
   const anyFeiLink = page.getByRole('link', { name: /ZACH-/ }).first();

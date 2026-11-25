@@ -14,8 +14,6 @@ interface InputDestinataireProps {
   onCreate: (query: string) => void;
 }
 
-// Même principe que InputVille : un champ texte DSFR et la liste des résultats en dessous.
-// Quand la recherche ne donne rien de sûr, on propose de créer le destinataire.
 export default function InputDestinataire({
   label,
   hintText,
@@ -31,8 +29,6 @@ export default function InputDestinataire({
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // un destinataire choisi ailleurs (bouton, création) s'affiche dans le champ ; une saisie en cours,
-  // qui remet la sélection à vide, n'est pas écrasée
   useEffect(() => {
     if (value) setSearch(selectedLabel);
   }, [value, selectedLabel]);
@@ -48,8 +44,6 @@ export default function InputDestinataire({
   }, [isOpen]);
 
   const results = useMemo(() => searchDestinataires(options, search), [options, search]);
-  // une correspondance trouvée seulement grâce à une faute de frappe peut être fausse :
-  // on laisse alors la possibilité de créer le destinataire
   const canCreate = results.every((result) => result.isFuzzy);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -59,7 +53,6 @@ export default function InputDestinataire({
   };
 
   const query = search.trim();
-  // comme InputVille : la liste n'apparaît qu'une fois la saisie commencée
   const isVisible = isOpen && !!query;
 
   return (
@@ -81,8 +74,6 @@ export default function InputDestinataire({
           },
         }}
       />
-      {/* la liste reste montée même vide : sans elle le champ devient `:last-child` et le DSFR
-          lui retire sa marge basse */}
       <div
         className={
           isVisible ? '-mt-6 flex max-h-60 w-full flex-col overflow-y-auto border border-gray-200' : 'hidden'

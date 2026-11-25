@@ -5,15 +5,12 @@ import crypto from 'crypto';
 import { SENTRY_SECRET, BREVO_BEARER } from '~/config';
 import { capture } from '~/third-parties/sentry';
 
-// Comparaison à durée constante : un `!==` sur une chaîne s'arrête au premier caractère différent,
-// ce qui laisse fuiter le secret caractère par caractère à qui mesure les temps de réponse.
 function memeSecret(recu: string, attendu: string): boolean {
   const a = Buffer.from(recu);
   const b = Buffer.from(attendu);
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
-/** Auth des webhooks Brevo : Bearer posé à la création du webhook (cf curl ci-dessous). */
 function brevoBearerIsValid(req: express.Request, res: express.Response): boolean {
   const authHeader = req.headers.authorization;
 
@@ -37,7 +34,6 @@ function brevoBearerIsValid(req: express.Request, res: express.Response): boolea
   }
 
   if (!memeSecret(parts[1], BREVO_BEARER)) {
-    // Quelqu'un connaît l'URL du webhook sans en connaître le secret : ça se surveille
     capture('Brevo webhook: token invalide', {
       extra: { path: req.path, ip: req.ip ?? '', userAgent: req.get('user-agent') ?? '' },
     });
@@ -51,12 +47,10 @@ function brevoBearerIsValid(req: express.Request, res: express.Response): boolea
 router.post(
   '/sentry',
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    // verify the signature
     const hmac = crypto.createHmac('sha256', SENTRY_SECRET as string);
     hmac.update(JSON.stringify(req.body), 'utf8');
     const digest = hmac.digest('hex');
     if (digest !== req.headers['sentry-hook-signature']) {
-      // wrong signature, do nothing
       res.status(200).send({
         ok: true,
         error: '',
@@ -71,26 +65,6 @@ router.post(
   })
 );
 
-/* 
-To create the webhook with Bearer Auth, you can use the following curl command:
-
-curl --request POST \
-  --url https://api.brevo.com/v3/webhooks \
-  --header 'accept: application/json' \
-  --header 'api-key: YOUR_API_KEY' \
-  --header 'content-type: application/json' \
-  --data '{
-    "url": "https://api.zacharie.beta.gouv.fr/webhooks/brevo",
-    "description": "My application webhook for Brevo contact updates with Bearer Auth",
-    "events": ["contactUpdated", "contactDeleted"], // beware of camelCase, it's not properly documented
-    "type": "marketing",
-    "channel": "email",
-    "auth": {
-      "type": "bearer",
-      "token": "YOUR_BEARER_TOKEN"
-    }
-  }'
-*/
 router.post(
   '/brevo',
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -98,7 +72,7 @@ router.post(
 
     res.status(200).send({
       ok: true,
-      message: 'Webhook received and validated', // More descriptive success message
+      message: 'Webhook received and validated',
     });
   })
 );

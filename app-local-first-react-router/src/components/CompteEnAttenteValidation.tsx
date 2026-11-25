@@ -1,14 +1,5 @@
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 
-// ----------------------------------------------------------------------------
-// Compte chasseur en attente de validation (user.activated === false).
-// Deux publics selon le profil :
-// - 'examinateur' : chasseur avec un numéro CFEI en attente de validation
-//   manuelle. Il peut préparer ses fiches mais pas les transmettre (le front
-//   désactive les boutons de transmission).
-// - 'chasseur' : chasseur sans CFEI. Il ne peut ni créer ni consulter de
-//   fiche tant que son compte n'est pas validé.
-// ----------------------------------------------------------------------------
 type CompteEnAttenteVariant = 'examinateur' | 'chasseur';
 
 const descriptionByVariant: Record<CompteEnAttenteVariant, string> = {

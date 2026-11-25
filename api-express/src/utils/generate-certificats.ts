@@ -25,7 +25,6 @@ function checkDatesAreEqual(oldDate: Date, newDate: Date) {
   return dayjs(oldDate).toISOString() === dayjs(newDate).toISOString();
 }
 
-// Certificat émis pour chaque décision IPM2 qui en donne un.
 const certificatTypeByIpm2Decision: Partial<Record<IPM2Decision, CarcasseCertificatType>> = {
   [IPM2Decision.SAISIE_PARTIELLE]: CarcasseCertificatType.CSP,
   [IPM2Decision.SAISIE_TOTALE]: CarcasseCertificatType.CST,
@@ -50,7 +49,6 @@ export async function checkGenerateCertificat(oldCarcasse: Carcasse, newCarcasse
 
 export async function generateCertficatId(entity: Entity, type: CarcasseCertificatType) {
   const year = dayjs().format('YYYY');
-  // incrément atomique : deux générations simultanées ne peuvent pas obtenir le même numéro
   const { inc_certificat: inc } = await prisma.entity.update({
     where: { id: entity.id },
     data: { inc_certificat: { increment: 1 } },
@@ -210,7 +208,6 @@ export async function generateDBCertificat(
   ).join(', ');
 
   if (!certificat) {
-    // l'ETG qui a reçu CETTE carcasse (en dispatch multi-destinataires, une fiche peut avoir plusieurs ETG)
     const etg = (
       await prisma.carcasseIntermediaire.findFirst({
         where: {
@@ -230,8 +227,6 @@ export async function generateDBCertificat(
       };
     }
 
-    // Le n° de bon de réception est saisi par l'ETG au contrôle à réception, sur ses propres carcasses.
-    // On le lit sur l'intermédiaire ETG de CETTE carcasse qui l'a saisi.
     const intermediaireEtgDeLaCarcasse = await prisma.carcasseIntermediaire.findFirst({
       where: {
         zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,

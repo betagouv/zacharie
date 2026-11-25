@@ -4,23 +4,15 @@ import type { CarcasseTransmission } from '@app/types/carcasse';
 import { capture } from '@app/services/sentry';
 import { checkCarcasseAgainstTransmission, getCarcasseTransmission } from './get-carcasses-transmission';
 
-// checkCarcasseAgainstTransmission reports (via Sentry `capture`) when two carcasses of the SAME
-// transmission diverge on a field that should be identical across the lot. Some divergences are
-// legitimate (a carcasse added via RequestNewCarcasseForm, a refused carcasse leaving the circuit)
-// and must NOT be reported. We mock `capture` and assert exactly whether it fired.
 vi.mock('@app/services/sentry', () => ({ capture: vi.fn() }));
 const mockedCapture = vi.mocked(capture);
 
 beforeEach(() => mockedCapture.mockClear());
 
-// Shared Date instances so equal date fields compare `===` (a fresh `new Date()` per carcasse would
-// look like a divergence). Override with a *different* instance to simulate a real divergence.
 const D_MORT = new Date('2024-01-01T00:00:00.000Z');
 const D_APPRO = new Date('2024-02-01T00:00:00.000Z');
 const D_META = new Date('2024-02-02T00:00:00.000Z');
 
-// A carcasse already approved and in transit towards an ETG — every field getCarcasseTransmission
-// reads is present so the comparison exercises the real key set.
 const BASE = {
   fei_numero: 'FEI-1',
   date_mise_a_mort: D_MORT,
@@ -83,8 +75,6 @@ function carc(overrides: Partial<Carcasse> = {}): Carcasse {
   return { ...BASE, ...overrides } as unknown as Carcasse;
 }
 
-// Mirror the real caller (reportTransmissionsInconsistencies): the transmission is derived from
-// the reference carcasse, and every carcasse of the lot is checked against it.
 function check(ref: Carcasse, carcasse: Carcasse) {
   const transmission = getCarcasseTransmission(ref);
   const keys = Object.keys(transmission) as Array<keyof CarcasseTransmission>;
@@ -95,10 +85,6 @@ function differKeys(): string[] {
   const ctx = mockedCapture.mock.calls[0][1] as { extra: { differ: Record<string, unknown> } };
   return Object.keys(ctx.extra.differ);
 }
-
-// ---------------------------------------------------------------------------
-// A. capture must stay silent — legitimate divergences
-// ---------------------------------------------------------------------------
 
 describe('checkCarcasseAgainstTransmission — silent (no false positive)', () => {
   it('identical carcasses never report', () => {
@@ -142,7 +128,6 @@ describe('checkCarcasseAgainstTransmission — silent (no false positive)', () =
   });
 
   it('a refused carcasse leaving the circuit (downstream owner differs) does not report', () => {
-    // The refused carcasse legitimately diverges on next_owner_* because it exits the flow.
     check(
       carc(),
       carc({
@@ -156,7 +141,6 @@ describe('checkCarcasseAgainstTransmission — silent (no false positive)', () =
   });
 
   it('two lots sent to the same recipient with different storage and transport do not report', () => {
-    // Same recipient = same transmission id, but each vente / don has its own CCG, depot date and transport.
     check(
       carc({
         premier_detenteur_depot_type: 'CCG',
@@ -183,10 +167,6 @@ describe('checkCarcasseAgainstTransmission — silent (no false positive)', () =
   });
 });
 
-// ---------------------------------------------------------------------------
-// B. capture must fire — real divergences
-// ---------------------------------------------------------------------------
-
 describe('checkCarcasseAgainstTransmission — reports (real divergence)', () => {
   it('an always-same field (date_mise_a_mort) diverging reports', () => {
     check(carc(), carc({ date_mise_a_mort: new Date('2024-12-31') }));
@@ -211,8 +191,6 @@ describe('checkCarcasseAgainstTransmission — reports (real divergence)', () =>
   });
 
   it('a refused carcasse still reports when an always-same field also diverges', () => {
-    // Refusal alone would be silenced, but a genuine always-same divergence (date_mise_a_mort)
-    // overrides that: shouldNOTdifferButDiffer wins and we report.
     check(
       carc(),
       carc({

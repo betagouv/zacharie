@@ -48,7 +48,6 @@ const targetUser = {
   isZacharieAdmin: false,
 };
 
-// Mount the admin user router with a simple auth middleware
 const app = express();
 app.use(express.json());
 app.use((req: any, _res, next) => {
@@ -111,10 +110,9 @@ describe('Admin lockout management', () => {
       const unlockDate = new Date('2026-09-18T16:55:00Z');
       (prisma.user.findUnique as any).mockResolvedValue(targetUser);
       (prisma.entity.findMany as any).mockResolvedValue([]);
-      // First findFirst: lastUnlock exists
       (prisma.securityLog.findFirst as any)
         .mockResolvedValueOnce({ action: 'LOGIN_UNLOCK_FROM_ADMIN', created_at: unlockDate })
-        .mockResolvedValue(null); // no failures after unlock
+        .mockResolvedValue(null);
       (prisma.securityLog.count as any).mockResolvedValue(0);
 
       const res = await request(app).get('/user/target-1');
@@ -129,7 +127,6 @@ describe('Admin lockout management', () => {
     test('creates LOGIN_UNLOCK_FROM_ADMIN security log', async () => {
       (prisma.user.findUnique as any).mockResolvedValue(targetUser);
       (prisma.securityLog.create as any).mockResolvedValue({});
-      // After unlock: getLockoutInfo calls
       (prisma.securityLog.findFirst as any).mockResolvedValue(null);
       (prisma.securityLog.count as any).mockResolvedValue(0);
 

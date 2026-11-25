@@ -18,7 +18,6 @@ function setupDB() {
 }
 
 async function deleteDB() {
-  // On n'arrive pas à supprimer la base de données, on va donc supprimer les données une par une
   if (!customStore) {
     return;
   }
@@ -26,8 +25,6 @@ async function deleteDB() {
   return await delMany(ks, customStore);
 }
 
-// Le JWT natif joue le rôle du cookie de session web : clearCache ne le supprime pas, c'est
-// disconnect() qui l'efface. Le connect-as garde ainsi le jeton qu'il vient de recevoir.
 export const NATIVE_TOKEN_KEY = 'zacharie_native_jwt';
 
 function getClearableLocalStorageKeys() {
@@ -41,7 +38,6 @@ function getClearableLocalStorageKeys() {
   return clearableKeys;
 }
 
-// Résout toujours (false après 10 tentatives) pour ne jamais bloquer une déconnexion.
 export async function clearCache(calledFrom = 'not defined', iteration = 0): Promise<boolean> {
   console.log(`clearing cache from ${calledFrom}, iteration ${iteration}`);
   if (iteration > 10) {
@@ -56,20 +52,15 @@ export async function clearCache(calledFrom = 'not defined', iteration = 0): Pro
   }
 
   console.log('cleared localStorage');
-  // window.sessionStorage?.clear();
 
-  // wait 200ms to make sure the cache is cleared
   await new Promise((resolve) => setTimeout(resolve, 200));
 
-  // Check if the cache is empty
   const remainingLocalStorageKeys = getClearableLocalStorageKeys();
   const localStorageEmpty = remainingLocalStorageKeys.length === 0;
-  // const sessionStorageEmpty = window.sessionStorage.length === 0;
   const indexedDBEmpty = customStore ? (await keys(customStore)).length === 0 : true;
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.controller?.postMessage('SW_MESSAGE_CLEAR_CACHE');
   }
-  // if (localStorageEmpty && sessionStorageEmpty && indexedDBEmpty) {
   if (localStorageEmpty && indexedDBEmpty) {
     setupDB();
     return true;
@@ -77,11 +68,9 @@ export async function clearCache(calledFrom = 'not defined', iteration = 0): Pro
   if (!localStorageEmpty) {
     console.log(`localStorage not empty ${remainingLocalStorageKeys[0]}`);
   }
-  // if (!sessionStorageEmpty) console.log("sessionStorage not empty");
   if (!indexedDBEmpty) {
     console.log('indexedDB not empty');
   }
-  // If the cache is not empty, try again
   return clearCache('try again clearCache', iteration + 1);
 }
 
@@ -97,8 +86,6 @@ export async function setCacheItem(key: CacheKeys, value: unknown) {
     }
   } catch (error: any) {
     if (error instanceof Error && error?.message?.includes('connection is closing')) {
-      // Si on a une erreur de type "connection is closing", on va essayer de réinitialiser
-      // la connexion à la base de données et de sauvegarder la donnée à nouveau
       setupDB();
       try {
         await set(key, value, customStore);
@@ -120,8 +107,6 @@ export async function getCacheItem(key: CacheKeys) {
     return data;
   } catch (error: any) {
     if (error instanceof Error && error?.message?.includes('connection is closing')) {
-      // Si on a une erreur de type "connection is closing", on va essayer de réinitialiser
-      // la connexion à la base de données et de récupérer la donnée à nouveau
       setupDB();
       try {
         const data = await get(key, customStore);

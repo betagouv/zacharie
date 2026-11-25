@@ -31,7 +31,6 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
         - paragraph: fin de liste
       `);
   await page.getByRole('link', { name: feiId }).click();
-  // La fiche s'hydrate depuis le store local : on attend son rendu avant de la photographier.
   await expect(page.getByText('Fiche reçue, pas encore prise en charge')).toBeVisible({
     timeout: 15000,
   });
@@ -76,7 +75,7 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   await expect(
     page.getByText('Sélection du prochain destinataireProchain détenteur des carcassesIndiquez')
   ).toBeVisible();
-  await new Promise((resolve) => setTimeout(resolve, 500)); // if not, react-dsfr modal is having a bad time cause too many re-renders (I think)
+  await new Promise((resolve) => setTimeout(resolve, 500));
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
   await page.getByText('Anomalies abats:Abcès - Système').click();
   await page.getByLabel('Daim - N° MM-001-001').getByText('Carcasse acceptée').click();
@@ -99,16 +98,11 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   ).toBeVisible();
   await expect(page.getByText('Refus de 1 carcasse.')).toBeVisible();
   await expect(page.getByText('Je signale 1 carcasse manquante.')).toBeVisible();
-  // await new Promise((resolve) => setTimeout(resolve, 200)); // to maybe prevent cache-lookup bug from postgres in backend
   await page.getByRole('button', { name: 'Cliquez ici pour définir' }).click();
-  // await new Promise((resolve) => setTimeout(resolve, 200)); // to maybe prevent cache-lookup bug from postgres in backend
-  // await page.getByRole("button", { name: "Enregistrer" }).click();
-  // await new Promise((resolve) => setTimeout(resolve, 200)); // to maybe prevent cache-lookup bug from postgres in backend
   await expect(page.getByText('Il manque le prochain dé')).toBeVisible();
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
   await page.getByRole('option', { name: 'SVI 1 - 75000 Paris (Service' }).click();
   await page.getByRole('button', { name: 'Transmettre la fiche' }).click();
-  // await new Promise((resolve) => setTimeout(resolve, 200)); // to maybe prevent cache-lookup bug from postgres in backend
   await expect(page.getByText('SVI 1 a été notifié')).toBeVisible({ timeout: 5000 });
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
       - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Acceptée par ETG 1 1 anomalie/':
@@ -218,7 +212,7 @@ test('Pas de stockage - Je transfère à un autre collecteur', async ({ page }) 
   await expect(
     page.getByText('Sélection du prochain destinataireProchain détenteur des carcassesIndiquez')
   ).toBeVisible();
-  await new Promise((resolve) => setTimeout(resolve, 500)); // if not, react-dsfr modal is having a bad time cause too many re-renders (I think)
+  await new Promise((resolve) => setTimeout(resolve, 500));
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
   await page.getByText('Anomalies abats:Abcès - Système').click();
   await page.getByLabel('Daim - N° MM-001-001').getByText('Carcasse acceptée').click();
@@ -243,12 +237,9 @@ test('Pas de stockage - Je transfère à un autre collecteur', async ({ page }) 
   await expect(page.getByText('Refus de 1 carcasse.')).toBeVisible();
   await expect(page.getByText('Je signale 1 carcasse manquante.')).toBeVisible();
   await page.getByRole('button', { name: 'Cliquez ici pour définir' }).click();
-  // await page.getByRole("button", { name: "Enregistrer" }).click();
   await expect(page.getByText('Il manque le prochain dé')).toBeVisible();
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
   await page.getByRole('option', { name: 'Collecteur Pro 2 - 75000' }).click();
-  // on attend que le prochain détenteur soit pris en compte (l'alerte d'erreur disparaît)
-  // avant de transmettre
   await expect(page.getByText('Il manque le prochain dé')).toBeHidden();
   await page.getByRole('button', { name: 'Transmettre la fiche' }).click();
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
@@ -274,10 +265,6 @@ test('Pas de stockage - Je transfère à un autre collecteur', async ({ page }) 
 });
 
 test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }) => {
-  // const cdpSession = await context.newCDPSession(page);
-  // // @ts-ignore
-  // await cdpSession.send("Network.emulateNetworkConditions", NETWORK_PRESETS.PrettyGood);
-
   const feiId = 'ZACH-20250707-QZ6E0-165242';
   await connectWith(page, 'etg-1@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/etg');
@@ -338,7 +325,7 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
   await expect(
     page.getByText('Sélection du prochain destinataireProchain détenteur des carcassesIndiquez')
   ).toBeVisible();
-  await new Promise((resolve) => setTimeout(resolve, 500)); // if not, react-dsfr modal is having a bad time cause too many re-renders (I think)
+  await new Promise((resolve) => setTimeout(resolve, 500));
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
   await page.getByText('Anomalies abats:Abcès - Système').click();
   await page.getByLabel('Daim - N° MM-001-001').getByText('Carcasse acceptée').click();
@@ -361,7 +348,6 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
   await expect(page.getByText('Refus de 1 carcasse.')).toBeVisible();
   await expect(page.getByText('Je signale 1 carcasse manquante.')).toBeVisible();
   await page.getByRole('button', { name: 'Cliquez ici pour définir' }).click();
-  // await page.getByRole("button", { name: "Enregistrer" }).click();
   await expect(page.getByText('Il manque le prochain dé')).toBeVisible();
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
   await page.getByRole('option', { name: 'ETG 2 - 75000 Paris (' }).click();
@@ -407,168 +393,4 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
   await expect(page.getByRole('button', { name: 'Prendre en charge' })).toBeVisible();
   await expect(page.getByRole('button', { name: "Renvoyer à l'expéditeur" })).toBeVisible();
   await page.getByRole('button', { name: 'Prendre en charge' }).click();
-  // FIXME: work in local not in ci
-  // await expect(page.locator("#content")).toMatchAriaSnapshot(`
-  //   - heading "Réception par mon établissement de traitement Étape 4 sur 5" [level=2]
-  //   - paragraph: "Étape suivante : Inspection par le SVI"
-  //   - navigation "vous êtes ici :":
-  //     - list:
-  //       - listitem
-  //       - listitem:
-  //         - button "ETG 1"
-  //       - listitem:
-  //         - button "ETG 2"
-  //   - group:
-  //     - heading "Données de traçabilité" [level=3]
-  //     - paragraph: Espèces
-  //     - paragraph: Pigeons, Daim
-  //     - paragraph: Informations clés
-  //     - list:
-  //       - listitem:
-  //         - paragraph: "/Commune de prélèvement du gibier : \\\\d+ CHASSENARD/"
-  //       - listitem:
-  //         - paragraph: "/Date de mise à mort : lundi 7 juillet \\\\d+/"
-  //       - listitem:
-  //         - paragraph: "/Heure du prélèvement de la première carcasse de la fiche : \\\\d+:\\\\d+/"
-  //       - listitem:
-  //         - paragraph: "/Heure d’éviscération de la dernière carcasse derniÃ¨re carcasse de la fiche : \\\\d+:\\\\d+/"
-  //       - listitem:
-  //         - paragraph: "Nom du Centre de Collecte (CCG) : CCG Chasseurs"
-  //       - listitem:
-  //         - paragraph: "/Date et heure de dépôt dans le CCG : lundi 7 juillet \\\\d+ à \\\\d+:\\\\d+/"
-  //       - listitem:
-  //         - paragraph: "/Date et heure de prise en charge par l'ETG : vendredi \\\\d+ novembre \\\\d+ à \\\\d+:\\\\d+/"
-  //     - paragraph: Acteurs
-  //     - paragraph: Examinateur Initial
-  //     - list:
-  //       - listitem:
-  //         - paragraph: Marie Martin
-  //       - listitem:
-  //         - paragraph: /\\d+/
-  //       - listitem:
-  //         - paragraph: examinateur@example.fr
-  //       - listitem:
-  //         - paragraph: /CFEI-\\d+-\\d+-\\d+/
-  //       - listitem:
-  //         - paragraph: /\\d+ Paris/
-  //     - paragraph: Premier Détenteur
-  //     - list:
-  //       - listitem:
-  //         - paragraph: Pierre Petit
-  //       - listitem:
-  //         - paragraph: /\\d+/
-  //       - listitem:
-  //         - paragraph: premier-detenteur@example.fr
-  //       - listitem:
-  //         - paragraph: /\\d+ Paris/
-  //     - paragraph: ETG 1
-  //     - list:
-  //       - listitem:
-  //         - paragraph: Réception des carcasses
-  //       - listitem:
-  //         - paragraph: /\\d+/
-  //       - listitem:
-  //         - paragraph: /\\d+ Paris/
-  //       - listitem:
-  //         - paragraph: "/Prise en charge : vendredi \\\\d+ novembre à \\\\d+:\\\\d+/"
-  //     - paragraph: ETG 2
-  //     - list:
-  //       - listitem:
-  //         - paragraph: Réception des carcasses
-  //       - listitem:
-  //         - paragraph: /\\d+/
-  //       - listitem:
-  //         - paragraph: /\\d+ Paris/
-  //       - listitem:
-  //         - paragraph: "/Prise en charge : vendredi \\\\d+ novembre à \\\\d+:\\\\d+/"
-  //   - group:
-  //     - heading "Carcasses (2)" [level=3]
-  //     - paragraph: Veuillez cliquer sur une carcasse pour la refuser, la signaler, l'annoter
-  //     - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ 1 anomalie en cours de traitement/':
-  //       - paragraph: Daim
-  //       - paragraph: /N° MM-\\d+-\\d+/
-  //       - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
-  //       - paragraph: 1 anomalie
-  //       - paragraph: en cours de traitement
-  //     - 'button /Pigeons \\(\\d+\\) N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Aucune anomalie en cours de traitement/':
-  //       - paragraph: /Pigeons \\(\\d+\\)/
-  //       - paragraph: /N° MM-\\d+-\\d+/
-  //       - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
-  //       - paragraph: Aucune anomalie
-  //       - paragraph: en cours de traitement
-  //     - button "Afficher les carcasses déjà refusées (2)"
-  //   - group:
-  //     - heading "Prise en charge des carcasses acceptées" [level=3]
-  //     - paragraph /Prise en charge des carcasses acceptées ou non refusées \\(\\d+ pigeons, 1 daim\\)\\./ [checked] [disabled]
-  //     - text: /Prise en charge des carcasses acceptées ou non refusées \\(\\d+ pigeons, 1 daim\\)\\. Date de prise en charge/
-  //     - button "Cliquez ici pour définir cette date comme étant aujourd'hui et maintenant"
-  //     - textbox "Date de prise en charge Cliquez ici pour définir cette date comme étant aujourd'hui et maintenant"
-  //     - button "Enregistrer" [disabled]
-  //   - group:
-  //     - heading "Sélection du prochain destinataire" [level=3]
-  //     - text: Prochain détenteur des carcasses * Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le gibier.
-  //     - button "SVI 2"
-  //     - log
-  //     - text: Sélectionnez le prochain détenteur des carcasses
-  //     - combobox "Prochain détenteur des carcasses * Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le gibier. SVI 2"
-  //     - button "Transmettre la fiche"
-  //     - heading "Attention" [level=3]
-  //     - paragraph: Il manque le prochain détenteur des carcasses
-  //   - link "Voir toutes mes fiches":
-  //     - /url: /app/etg/
-  //   `);
-
-  // TODO (régression connue, à retravailler — cf. carte Notion) :
-  // les intermédiaires d'une transmission sont désormais lus PAR CARCASSE et non plus par fiche.
-  // Conséquence : quand l'ETG 1 refuse une partie de son chargement et transmet le reste à l'ETG 2,
-  // l'ETG 2 ne récupère pas les carcasses refusées en amont (elles ne portent pas son intermédiaire).
-  // Tout le parcours ETG 2 (panneau « carcasses déjà refusées » puis transmission au SVI) en dépend,
-  // donc on le neutralise tant que le sujet n'est pas tranché. La partie ETG 1 ci-dessus reste couverte.
-  /*
-  await page.getByRole('button', { name: 'Afficher les carcasses déjà' }).click();
-  await expect(page.locator('#content')).toMatchAriaSnapshot(`
-      - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Refusée par ETG 1 1 anomalie, 1 commentaire/':
-        - paragraph: Daim
-        - paragraph: /N° MM-\\d+-\\d+/
-        - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
-        - paragraph: Refusée par ETG 1
-        - paragraph: 1 anomalie, 1 commentaire
-      `);
-  await expect(page.locator('#content')).toMatchAriaSnapshot(`
-    - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Manquante pour ETG 1/':
-      - paragraph: Daim
-      - paragraph: /N° MM-\\d+-\\d+/
-      - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
-      - paragraph: Manquante pour ETG 1
-    `);
-  await expect(
-    page.locator('p').filter({
-      hasText: 'Prise en charge des carcasses acceptées ou non refusées (10 pigeons, 1 daim).',
-    })
-  ).toBeVisible();
-  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
-  await page.getByRole('option', { name: 'SVI 2 - 75000 Paris (Service' }).click();
-  await page.getByRole('button', { name: 'Transmettre la fiche' }).click();
-  await expect(page.locator('#content')).toMatchAriaSnapshot(`
-    - heading "Attribution effectuée" [level=3]
-    - paragraph: SVI 2 a été notifié.
-    `);
-
-  await page.getByRole('link', { name: 'Voir toutes mes fiches' }).click();
-  await expect(page.locator('#content')).toMatchAriaSnapshot(`
-    - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard ETG 1 \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
-      - /url: /\\/app\\/etg\\/fei\\/ZACH-\\d+-QZ6E0-\\d+/
-      - paragraph: En cours
-      - img
-      - paragraph: chassenard
-      - img
-      - paragraph: ETG 1
-      - img
-      - paragraph: /\\d+ pigeons/
-      - paragraph: 3 daims
-      - paragraph: fin de liste
-      - img
-      - paragraph: 2 carcasses refusées
-    `);
-  */
 });

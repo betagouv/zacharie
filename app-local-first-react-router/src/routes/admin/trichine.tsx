@@ -17,11 +17,6 @@ import { TrichineListToolbar, FiltreSelect } from '@app/components/trichine/Tric
 import { filterTrichineRows } from '@app/utils/trichine';
 import API from '@app/services/api';
 
-/**
- * Vue d'ensemble trichine pour l'admin : ce qui est stocké, et l'état des analyses.
- * Les listes sont bornées aux plus récentes côté serveur, les filtres sont locaux.
- */
-
 const RESULTAT_SEVERITY: Record<string, 'success' | 'error' | 'warning' | undefined> = {
   NEGATIF: 'success',
   DOUTEUX: 'warning',
@@ -31,7 +26,6 @@ const RESULTAT_SEVERITY: Record<string, 'success' | 'error' | 'warning' | undefi
   ANALYSE_IMPOSSIBLE: undefined,
 };
 
-/** Options d'un filtre, construites sur les valeurs réellement présentes dans la liste. */
 function optionsDe<T>(rows: T[], getValue: (row: T) => string | null | undefined, tous = 'Tous') {
   const valeurs = [...new Set(rows.map(getValue).filter((valeur): valeur is string => !!valeur))].sort();
   return [{ value: '', label: tous }, ...valeurs.map((valeur) => ({ value: valeur, label: valeur }))];
@@ -48,10 +42,6 @@ function Resultat({ resultat }: { resultat: string | null }) {
     </Badge>
   );
 }
-
-/* -------------------------------------------------------------------------- */
-/* Documents                                                                   */
-/* -------------------------------------------------------------------------- */
 
 function OngletDocuments() {
   const [documents, setDocuments] = useState<AdminTrichineDocumentRow[]>([]);
@@ -126,10 +116,6 @@ function OngletDocuments() {
     </>
   );
 }
-
-/* -------------------------------------------------------------------------- */
-/* Pools                                                                       */
-/* -------------------------------------------------------------------------- */
 
 function OngletPools() {
   const [pools, setPools] = useState<AdminTrichinePoolRow[]>([]);
@@ -241,10 +227,6 @@ function OngletPools() {
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* FTP                                                                         */
-/* -------------------------------------------------------------------------- */
-
 function OngletFtps() {
   const [ftps, setFtps] = useState<AdminTrichineFtpRow[]>([]);
   const [query, setQuery] = useState('');
@@ -355,10 +337,6 @@ function OngletFtps() {
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Échantillons                                                                */
-/* -------------------------------------------------------------------------- */
-
 function OngletEchantillons() {
   const [echantillons, setEchantillons] = useState<AdminTrichineEchantillonRow[]>([]);
   const [query, setQuery] = useState('');
@@ -458,8 +436,6 @@ function OngletEchantillons() {
     </>
   );
 }
-
-/* -------------------------------------------------------------------------- */
 
 const ONGLETS: TabsProps.Controlled['tabs'] = [
   { tabId: 'documents', label: 'Documents' },

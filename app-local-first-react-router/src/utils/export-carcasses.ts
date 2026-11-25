@@ -19,8 +19,6 @@ type CarcasseExcelData = {
   Poids: string | null;
   "Nombre d'animaux": number | null | undefined;
   'Numéro suivi trichine': string | null;
-  // Estampille: string | null;
-  // infos de SVI
   'Archivé(e)': string | null;
   'SVI - Consigne': string | null;
   'SVI - Motif Consigne': string | null;
@@ -32,7 +30,6 @@ type CarcasseExcelData = {
   'SVI - Saisie motif': string;
   'SVI - Certificat de saisie OK': string | null;
   "SVI - Date d'examen": Date | null;
-  // infos de chasse
   'Premier détenteur': string;
   'Premier détenteur téléphone': string | null;
   'Premier détenteur email': string | null;
@@ -42,20 +39,10 @@ type CarcasseExcelData = {
   'Date de la chasse': string;
   'Commune de la chasse': string | null;
   'Numéro de fiche': string;
-  // Observations ETG
   'Commentaires ETG / Transporteurs': string | null;
-  // Plus d'infos
   'Heure de première mise à mort': string | null;
   'Heure de dernière éviscération': string | null;
   Réceptionnée: string | null;
-  // zacharie_carcasse_id: string;
-  // 'Type de gibier': string;
-  // 'Examen initial - Anomalies carcasse': string;
-  // 'Examen initial - Anomalies abats': string;
-  // 'Examen initial - Commentaire': string | null;
-  // Manquante: string;
-  // 'Refusée par un destinataire': string;
-  // Commentaires: string;
 };
 
 function sortCarcassesApprovedForExcel(carcasseA: CarcasseExcelData, carcasseB: CarcasseExcelData) {
@@ -71,15 +58,7 @@ function sortCarcassesApprovedForExcel(carcasseA: CarcasseExcelData, carcasseB: 
 function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
   data: Array<Record<T, unknown>>
 ) {
-  /*
-  [
-    [the, first, array, is, the, header],
-    [then, its, the, data],
-  ]
-   */
-
   const header = [
-    //   const wscols = header.map((col: keyof CarcasseExcelData | keyof FeiExcelData) => {
     ...data.reduce((columns: Array<T>, item: Record<T, unknown>) => {
       for (let key of Object.keys(item)) {
         if (!columns.find((col) => col === key)) columns.push(key as T);
@@ -88,7 +67,7 @@ function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
     }, []),
   ];
 
-  const rowHeights: Array<{ hpx: number }> = [{ hpx: 20 }]; // first line is header
+  const rowHeights: Array<{ hpx: number }> = [{ hpx: 20 }];
   const sheet = data.reduce(
     (xlsxData: Array<Array<string | null>>, item: Record<string, unknown>) => {
       const row = [];
@@ -100,7 +79,6 @@ function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
           continue;
         }
         if (typeof value === 'string') {
-          // https://stackoverflow.com/questions/26837514/a-new-idea-on-how-to-beat-the-32-767-text-limit-in-excel
           row.push(value.substring(0, 32766));
           continue;
         }
@@ -121,7 +99,6 @@ function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
   const worksheet = utils.aoa_to_sheet(sheet);
   worksheet['!rows'] = rowHeights;
 
-  // Add cell styling for all cells
   const range = utils.decode_range(worksheet['!ref'] || 'A1');
   for (let R = range.s.r; R <= range.e.r; ++R) {
     for (let C = range.s.c; C <= range.e.c; ++C) {
@@ -130,13 +107,10 @@ function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
       worksheet[cell_address].s = {
         alignment: { wrapText: true, vertical: 'top' },
       };
-      // Force text format
       worksheet[cell_address].z = '@';
     }
   }
 
-  // Set column widths
-  // col is key of CarcasseExcelData
   const wscols = header.map((col) => {
     switch (col) {
       case 'Donnée':
@@ -152,9 +126,7 @@ function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
       case 'Examinateur initial email':
       case 'Commune de la chasse':
       case 'Numéro de fiche':
-        return { wch: 40 }; // wider columns for comments
-      // case 'Numéro de marquage':
-      // case 'Estampille':
+        return { wch: 40 };
       case 'SVI - Saisie totale':
       case 'SVI - Certificat de saisie OK':
       case 'Archivé(e)':
@@ -166,7 +138,6 @@ function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
       case 'Heure de dernière éviscération':
       case 'Poids':
         return { wch: 15 };
-      // case 'Refusée par un destinataire':
       case 'Numéro suivi trichine':
       case 'Numéro de marquage':
       case 'Éspèce':
@@ -175,22 +146,10 @@ function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
       case 'SVI - Motifs Consigne':
       case "SVI - Date d'examen":
       default:
-        return { wch: 20 }; // default width
+        return { wch: 20 };
     }
   });
   worksheet['!cols'] = wscols;
-
-  // Add cell styling for all cells
-  // const range = utils.decode_range(worksheet['!ref'] || 'A1');
-  // for (let R = range.s.r; R <= range.e.r; ++R) {
-  //   for (let C = range.s.c; C <= range.e.c; ++C) {
-  //     const cell_address = utils.encode_cell({ r: R, c: C });
-  //     if (!worksheet[cell_address]) continue;
-  //     worksheet[cell_address].s = {
-  //       alignment: { wrapText: true },
-  //     };
-  //   }
-  // }
 
   return worksheet;
 }
@@ -204,7 +163,6 @@ export default function useExportCarcasses() {
 
   async function onExportToXlsx(carcasses: Array<Carcasse>) {
     setIsExporting(true);
-    // just to trigger the loading state, sorry Raph :)
     await new Promise((res) => setTimeout(res));
 
     const carcassesWorkbook = utils.book_new();
@@ -248,11 +206,9 @@ export default function useExportCarcasses() {
           Poids: poids ? poids.toString() : null,
           "Nombre d'animaux": carcasse.nombre_d_animaux || 1,
           'Numéro suivi trichine': '',
-          // Estampille: '',
-          // infos de SVI
           'Archivé(e)': isCarcasseSviArchived(carcasse) ? 'Oui' : '',
           'SVI - Consigne': carcasse.svi_ipm1_decision?.includes(IPM1Decision.MISE_EN_CONSIGNE) ? 'Oui' : '',
-          'SVI - Motif Consigne': 'BA P S OA CA pap', // colonne pré-remplie pour entourage manuscrit à l'impression
+          'SVI - Motif Consigne': 'BA P S OA CA pap',
           'SVI - Pièces Consigne': carcasse.svi_ipm1_pieces.join('\n') || null,
           'SVI - Motifs Consigne': carcasse.svi_ipm1_lesions_ou_motifs.join('\n') || null,
           'SVI - Commentaire': carcasse.svi_carcasse_commentaire,
@@ -265,7 +221,6 @@ export default function useExportCarcasses() {
           'SVI - Saisie motif': carcasse.svi_ipm2_lesions_ou_motifs.join('\n'),
           'SVI - Certificat de saisie OK': '',
           "SVI - Date d'examen": carcasse.svi_ipm2_date || carcasse.svi_ipm1_date,
-          // infos de chasse
           'Commune de la chasse': fei.commune_mise_a_mort,
           'Numéro de fiche': carcasse.fei_numero,
           'Premier détenteur téléphone': premierDetenteur?.telephone || '',
@@ -273,19 +228,11 @@ export default function useExportCarcasses() {
           'Examinateur initial': examinateur ? `${examinateur.prenom} ${examinateur.nom_de_famille}` : '',
           'Examinateur initial téléphone': examinateur?.telephone || '',
           'Examinateur initial email': examinateur?.email || '',
-          // Observations ETG
           Réceptionnée: carcasse.latest_intermediaire_signed_at
             ? dayjs(carcasse.latest_intermediaire_signed_at).format('DD/MM/YYYY HH:mm')
             : null,
-          // Plus d'infos
           'Heure de première mise à mort': fei.heure_mise_a_mort_premiere_carcasse,
           'Heure de dernière éviscération': fei.heure_evisceration_derniere_carcasse,
-          // 'Examen initial - Anomalies carcasse': carcasse.examinateur_anomalies_carcasse.join(', '),
-          // 'Examen initial - Anomalies abats': carcasse.examinateur_anomalies_abats.join(', '),
-          // 'Examen initial - Commentaire': carcasse.examinateur_commentaire,
-          // Manquante: '';
-          // 'Refusée par un destinataire': '';
-          // Commentaires: '';
         });
       }
 
@@ -301,8 +248,6 @@ export default function useExportCarcasses() {
         bookSST: true,
       });
       return setIsExporting(false);
-
-      // actions
     } catch (e: unknown) {
       capture(e as Error);
       alert(

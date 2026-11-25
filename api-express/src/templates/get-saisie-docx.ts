@@ -94,7 +94,6 @@ export async function generateSaisieDocx(data: CarcasseCertificat, user: User): 
           default: await generateHeaderDocx(data),
         },
         children: [
-          // notification de consigne
           new Paragraph({
             children: [
               new TextRun({
@@ -109,7 +108,6 @@ export async function generateSaisieDocx(data: CarcasseCertificat, user: User): 
             ],
             alignment: AlignmentType.CENTER,
           }),
-          // annule et remplace la notification
           data.remplace_certificat_id
             ? new Paragraph({
                 children: [
@@ -126,7 +124,6 @@ export async function generateSaisieDocx(data: CarcasseCertificat, user: User): 
                 alignment: AlignmentType.CENTER,
               })
             : new Paragraph(''),
-          // Legal texts
           new Paragraph({
             children: [
               'Vu le Règlement (CE) n°1069/2009 du Parlement européen et du Conseil du 21 octobre 2009.',
@@ -136,7 +133,6 @@ export async function generateSaisieDocx(data: CarcasseCertificat, user: User): 
               "Vu l’arrêté du 18 décembre 2009 relatif aux règles sanitaires applicables aux produits d'origine animale et aux denrées alimentaires en contenant.",
             ].map((text) => new TextRun({ text, break: 1, font: 'Marianne' })),
           }),
-          // L'agent des services vétérinaires soussigné certifie que les denrées désignées ci-dessous sont consignées, en l'attente d'informations complémentaires :
           new Paragraph({
             children: [
               data.numero_decision_ipm1
@@ -153,7 +149,6 @@ export async function generateSaisieDocx(data: CarcasseCertificat, user: User): 
               }),
             ].filter((textRun) => textRun !== null),
           }),
-          // Premier tableau: Le vétérinaire officiel soussigné certifie que les denrées désignées ci-dessous sont retirées de la consommation :
           new Table({
             columnWidths: [5250, 5250],
             margins: {
@@ -207,7 +202,6 @@ export async function generateSaisieDocx(data: CarcasseCertificat, user: User): 
               }),
             ],
           }),
-          // Signalement de la carcasse ou du lot de carcasses :
           new Paragraph({
             children: [
               new TextRun({
@@ -218,7 +212,6 @@ export async function generateSaisieDocx(data: CarcasseCertificat, user: User): 
               }),
             ],
           }),
-          // Deuxième tableau: Signalement de la carcasse ou du lot de carcasses
           new Table({
             columnWidths: [4000, 3500, 3000],
             margins: {
@@ -290,7 +283,6 @@ export async function generateSaisieDocx(data: CarcasseCertificat, user: User): 
                   }),
                   data.nombre_d_animaux! > 0
                     ? new TableCell({
-                        // columnSpan: 2,
                         children: [
                           new Paragraph({
                             children: [
@@ -407,7 +399,6 @@ export async function generateSaisieDocx(data: CarcasseCertificat, user: User): 
               }),
             ].filter((row) => row !== null),
           }),
-          // Référence de la décision de saisie
           new Paragraph({
             children: [
               new TextRun({
@@ -416,7 +407,6 @@ export async function generateSaisieDocx(data: CarcasseCertificat, user: User): 
               }),
             ],
           }),
-          // Désignation des denrées consignées
           new Paragraph({
             children: [
               new TextRun({
@@ -427,7 +417,6 @@ export async function generateSaisieDocx(data: CarcasseCertificat, user: User): 
               }),
             ],
           }),
-          // Troisième tableau: Désignation des denrées consignées
           new Table({
             columnWidths:
               data.type === CarcasseCertificatType.CSP ? [1500, 3500, 4000, 1500] : [3500, 5500, 1500],
@@ -620,7 +609,6 @@ export async function generateSaisieDocx(data: CarcasseCertificat, user: User): 
                 : null,
             ].filter((row) => row !== null),
           }),
-          // Espacement
           new Paragraph({
             children: [
               new TextRun({
@@ -630,7 +618,6 @@ export async function generateSaisieDocx(data: CarcasseCertificat, user: User): 
               }),
             ],
           }),
-          // Signature et cachet
           new Table({
             columnWidths: [5500, 5500],
             margins: {
@@ -702,7 +689,6 @@ Se déclarant détenteur-propriétaire (1) ou son mandataire, responsable de la 
               }),
             ],
           }),
-          // Rayer les mentions inutiles
           new Paragraph({
             children: [
               new TextRun({
@@ -712,7 +698,6 @@ Se déclarant détenteur-propriétaire (1) ou son mandataire, responsable de la 
               }),
             ],
           }),
-          // Explication de la consigne
           new Paragraph({
             children: [
               new TextRun({

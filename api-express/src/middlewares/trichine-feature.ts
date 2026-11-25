@@ -1,7 +1,6 @@
 import type express from 'express';
 import { TRICHINE_FEATURE_ENABLED } from '~/config';
 
-// Recherche de trichine : tant que le feature flag n'est pas posé, ses routes n'existent pas.
 export function requireTrichineFeature(
   _req: express.Request,
   res: express.Response,

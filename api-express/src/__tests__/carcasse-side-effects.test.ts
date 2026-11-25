@@ -41,8 +41,6 @@ vi.mock('~/third-parties/brevo', () => ({
   updateBrevoETGDealPremiereFiche: vi.fn().mockResolvedValue(undefined),
   updateBrevoSVIDealPremiereFiche: vi.fn().mockResolvedValue(undefined),
 }));
-// Mock partiel : les `format*TemplateEmail` gardent leur vraie implémentation, ce sont les params
-// envoyés à Brevo qu'on veut vérifier.
 vi.mock('~/utils/formatCarcasseEmail', async (importOriginal) => ({
   ...((await importOriginal()) as object),
   formatManualValidationSviChasseurEmail: vi
@@ -74,7 +72,6 @@ vi.mock('~/third-parties/sentry', () => ({ capture: vi.fn() }));
 const feiNumero = 'ZACH-TEST-001';
 const sviUserId = 'svi-user-1';
 
-// Carcasse close au SVI (svi_closed_at posé) → isCarcasseDone court-circuite à true.
 const makeClosedCarcasse = (overrides: any = {}) => ({
   zacharie_carcasse_id: `${feiNumero}_BR-A`,
   fei_numero: feiNumero,
@@ -88,7 +85,6 @@ const makeClosedCarcasse = (overrides: any = {}) => ({
   ...overrides,
 });
 
-// Carcasse non terminale (CONSIGNE en attente IPM2, pas de clôture) → isCarcasseDone false.
 const makeOpenCarcasse = (overrides: any = {}) =>
   makeClosedCarcasse({
     zacharie_carcasse_id: `${feiNumero}_BR-OPEN`,
@@ -140,7 +136,6 @@ describe('closeFeiAndNotifyChasseurOnSviCarcasseClose — early returns', () => 
   test('does not notify when one carcasse of the transmission is still not terminal', async () => {
     const existing = makeClosedCarcasse({ svi_closed_at: null, svi_closed_by_user_id: null });
     const updated = makeClosedCarcasse();
-    // La clôture/notif n'est déclenchée que si TOUTES les carcasses du lot sont terminales.
     vi.mocked(prisma.carcasse.findMany).mockResolvedValueOnce([
       makeClosedCarcasse(),
       makeOpenCarcasse(),
@@ -161,7 +156,6 @@ describe('closeFeiAndNotifyChasseurOnSviCarcasseClose — full close', () => {
       premier_detenteur_user_id: premierDetenteur.id,
       premier_detenteur_prochain_detenteur_id_cache: 'etg-entity-1',
     });
-    // Toutes les carcasses du lot sont terminales → clôture par carcasse + notif.
     vi.mocked(prisma.carcasse.findMany).mockResolvedValueOnce([
       makeClosedCarcasse(),
       makeClosedCarcasse({ zacharie_carcasse_id: `${feiNumero}_BR-B` }),
@@ -172,7 +166,6 @@ describe('closeFeiAndNotifyChasseurOnSviCarcasseClose — full close', () => {
 
     await closeFeiAndNotifyChasseurOnSviCarcasseClose(existing as any, updated as any);
 
-    // La clôture vit désormais par carcasse : plus de Fei.update ici.
     expect(prisma.fei.update).not.toHaveBeenCalled();
     expect(sendNotificationToUser).toHaveBeenCalledTimes(2);
     expect(sendWebhook).toHaveBeenCalledWith(examinateur.id, 'CARCASSE_CLOTUREE', {
@@ -199,8 +192,6 @@ describe('closeFeiAndNotifyChasseurOnSviCarcasseClose — full close', () => {
   });
 });
 
-// Renvoi : le destinataire (ETG/collecteur, ici next_owner = ETG) vide le next_owner ; le current_owner
-// (l'expéditeur, ici le premier détenteur) reste inchangé.
 const expediteurUser = { id: 'pd-1', email: 'pd@example.org', notifications: [] as string[] };
 
 const makeRenvoiExisting = (overrides: any = {}) => ({
@@ -239,7 +230,6 @@ describe('notifyRenvoiExpediteur', () => {
     const arg = vi.mocked(sendNotificationToUser).mock.calls[0][0] as any;
     expect(arg.user).toBe(expediteurUser);
     expect(arg.notificationLogAction).toBe(`FEI_RENVOYEE_${feiNumero}_etg-entity-1`);
-    // le formateur reçoit le rôle de l'expéditeur + le nom du destinataire qui renvoie
     expect(formatRenvoiExpediteurEmail).toHaveBeenCalledWith(
       expect.objectContaining({ numero: feiNumero }),
       FeiOwnerRole.PREMIER_DETENTEUR,
@@ -286,7 +276,6 @@ describe('notifyRenvoiExpediteur', () => {
     const actions = vi
       .mocked(sendNotificationToUser)
       .mock.calls.map((c) => (c[0] as any).notificationLogAction);
-    // clé identique pour les 2 carcasses → la dédup notificationLog n'enverra qu'une notif
     expect(actions).toEqual([
       `FEI_RENVOYEE_${feiNumero}_etg-entity-1`,
       `FEI_RENVOYEE_${feiNumero}_etg-entity-1`,
@@ -321,8 +310,6 @@ describe('closeFeiAndNotifyChasseurOnSviCarcasseClose — idempotency', () => {
   });
 });
 
-// Clôture par intermédiaire (circuit court agréé) : quand intermediaire_closed_at passe de null à une
-// date, on prévient examinateur + premier détenteur par webhook CARCASSE_CLOTUREE.
 describe('webhookIntermediaireClose', () => {
   const makeIntermediaireCarcasse = (overrides: any = {}) => ({
     zacharie_carcasse_id: `${feiNumero}_BR-A`,
@@ -447,7 +434,6 @@ describe('notifyCircuitCourt', () => {
     const result = await notifyCircuitCourt(existing as any, updated as any, actingUser);
 
     expect(result).toBe(true);
-    // seul le destinataire (≠ acteur) est notifié
     expect(sendNotificationToUser).toHaveBeenCalledOnce();
     expect(sendNotificationToUser).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -460,11 +446,9 @@ describe('notifyCircuitCourt', () => {
         },
       })
     );
-    // le PDF de la fiche est joint, rendu une seule fois pour tous les destinataires
     expect(vi.mocked(sendNotificationToUser).mock.calls[0][0].attachments).toEqual([
       { content: 'base64pdf', name: `${feiNumero}.pdf` },
     ]);
-    // tout le lot est en circuit court → clôture automatique par carcasse
     expect(prisma.carcasse.updateMany).toHaveBeenCalledWith({
       where: {
         fei_numero: feiNumero,
@@ -615,7 +599,6 @@ describe('notifyCircuitCourt — copie à l’expéditeur et alerte de non-réce
 
     await notifyCircuitCourt(existing as any, updated as any, sender);
 
-    // la vérification n'est pas lancée avant le délai
     expect(getEmailDeliveryFailure).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(CIRCUIT_COURT_DELIVERY_CHECK_DELAY_MS);
 
@@ -650,10 +633,6 @@ describe('notifyCircuitCourt — copie à l’expéditeur et alerte de non-réce
   });
 });
 
-// Le side-effect tourne une fois par carcasse alors que l'email couvre toute la fiche : c'est la
-// dédup de sendNotificationToUser sur `notificationLogAction` qui garantit un seul envoi par user
-// SVI. Contourner le service (envoi Brevo direct) rendrait le nombre d'emails proportionnel au
-// nombre de carcasses.
 describe('notifySviAssignment', () => {
   const sviEntityId = 'svi-entity-1';
 
@@ -708,7 +687,6 @@ describe('notifySviAssignment', () => {
         notificationLogAction: expectedAction,
       })
     );
-    // l'envoi doit passer par le service (dédup + préférence EMAIL + push), jamais par Brevo direct
     expect(sendTemplateEmail).not.toHaveBeenCalled();
   });
 
@@ -721,7 +699,6 @@ describe('notifySviAssignment', () => {
       await notifySviAssignment({ ...updated, next_owner_role: null } as any, updated as any);
     }
 
-    // 3 carcasses × 2 users SVI = 6 appels, tous sur la même action → 2 emails après dédup
     expect(sendNotificationToUser).toHaveBeenCalledTimes(6);
     const actions = vi.mocked(sendNotificationToUser).mock.calls.map(([p]) => p.notificationLogAction);
     expect(new Set(actions)).toEqual(new Set([expectedAction]));
@@ -740,8 +717,6 @@ describe('notifySviAssignment', () => {
   });
 });
 
-// Le `cta` du template porte le seul lien de l'email : s'il perd le préfixe `/app`, le destinataire
-// tombe sur la page 404 du site vitrine. D'où l'URL assertée en entier.
 describe('notifyNextOwnerUser', () => {
   const actingUser = { id: 'pd-1', prenom: 'Pierre', nom_de_famille: 'Petit' } as any;
 
@@ -846,7 +821,6 @@ describe('notifyNextOwnerEntity', () => {
           native_push_tokens: [],
         },
       },
-      // l'acteur travaille aussi pour l'entité : il ne se notifie pas lui-même
       { UserRelatedWithEntity: { id: 'pd-1', email: 'pd@example.fr', roles: [UserRoles.CHASSEUR] } },
     ] as any);
 
@@ -871,8 +845,6 @@ describe('notifyNextOwnerEntity', () => {
   });
 });
 
-// Premier détenteur = entité (association) : premier_detenteur_user_id est null. Aucune requête Prisma
-// ne doit partir avec un id null (PrismaClientValidationError "Argument id must not be null").
 describe('premier détenteur entité (premier_detenteur_user_id null)', () => {
   const expectNoFindUniqueWithNullId = () => {
     for (const [args] of vi.mocked(prisma.user.findUnique).mock.calls) {
@@ -968,7 +940,6 @@ describe('runCarcasseUpdateSideEffects', () => {
       },
       user: { id: 'svi-user-1' },
     });
-    // webhookIntermediaireClose, en fin de chaîne, a bien tourné
     expect(sendWebhook).toHaveBeenCalledWith('exam-1', 'CARCASSE_CLOTUREE', {
       carcasseZacharieId: updated.zacharie_carcasse_id,
     });
@@ -995,8 +966,6 @@ describe('formatSviAssignedEmail', () => {
   });
 });
 
-// Le passage du deal Brevo en « 1ère fiche traitée / reçue » ne doit partir qu'une fois par entité,
-// pas à chaque carcasse : `at_least_one_fei_treated` sert de marqueur.
 describe('trackEtgFirstFei', () => {
   const updatedAt = new Date('2026-11-10T10:00:00.000Z');
   const existing = { current_owner_role: FeiOwnerRole.ETG, current_owner_entity_id: 'etg-1' };

@@ -29,7 +29,6 @@ vi.mock('~/third-parties/sentry', () => ({
   captureException: vi.fn(),
 }));
 
-// vitest.setup.ts ne mocke pas entity.create ni user.create, utilisés par POST /partenaire
 (prisma.entity as any).create = vi.fn();
 (prisma.user as any).create = vi.fn();
 (prisma.entity as any).update = vi.fn();
@@ -95,20 +94,17 @@ describe('GET /entite/partenaires', () => {
     const res = await authed(request(app).get('/entite/partenaires'));
 
     expect(res.status).toBe(200);
-    // une seule requête : il n'existe plus de liste de tous les partenaires de Zacharie
     expect(prisma.entity.findMany).toHaveBeenCalledTimes(1);
     expect(res.body.data.allEntitiesById).toBeUndefined();
 
     const args = vi.mocked(prisma.entity.findMany).mock.calls[0][0] as any;
     expect(args.where.type.in).toEqual(PARTENAIRE_TYPES);
     expect(args.where.deleted_at).toBeNull();
-    // toute relation active compte, quel que soit son statut
     expect(args.where.EntityRelationsWithUsers.some).toEqual({
       owner_id: regularUser.id,
       relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
       deleted_at: null,
     });
-    // seule ma relation est incluse, jamais le contact du partenaire ni les autres chasseurs
     expect(args.include.EntityRelationsWithUsers.where).toEqual({
       owner_id: regularUser.id,
       relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
@@ -166,7 +162,6 @@ describe('POST /entite/partenaire', () => {
     const res = await authed(request(app).post('/entite/partenaire').send(validBody));
 
     expect(res.status).toBe(200);
-    // recherche par SIRET normalisé (sans espaces)
     const findArgs = vi.mocked(prisma.entity.findFirst).mock.calls[0][0] as any;
     expect(findArgs.where).toEqual({
       deleted_at: null,
@@ -190,7 +185,6 @@ describe('POST /entite/partenaire', () => {
     expect(prisma.user.findUnique).not.toHaveBeenCalled();
     expect(inviteUser).not.toHaveBeenCalled();
 
-    // ma relation est créée sans statut particulier
     expect(prisma.entityAndUserRelations.create).toHaveBeenCalledTimes(1);
     expect(vi.mocked(prisma.entityAndUserRelations.create).mock.calls[0][0].data).toEqual({
       owner_id: regularUser.id,
@@ -199,7 +193,6 @@ describe('POST /entite/partenaire', () => {
       deleted_at: null,
     });
 
-    // l'équipe est prévenue, jamais le chasseur
     expect(sendEmail).toHaveBeenCalledTimes(1);
     const email = vi.mocked(sendEmail).mock.calls[0][0] as any;
     expect(email.emails).toEqual(['contact@zacharie.beta.gouv.fr']);
@@ -207,7 +200,6 @@ describe('POST /entite/partenaire', () => {
     expect(email.text).toContain('boucher@example.com');
     expect(email.text).toContain('admin-existant@example.com');
 
-    // la réponse a la même forme qu'une création : rien ne révèle que le partenaire existait
     expect(res.body.data.entity.id).toBe('boucherie-existante');
     expect(res.body.data.relation.id).toBe('rel-created');
     expect(JSON.stringify(res.body)).not.toContain('admin-existant@example.com');
@@ -392,7 +384,6 @@ describe('POST /entite/partenaire', () => {
       where: { id: 'pro-created' },
       data: { type: EntityTypes.COMMERCE_DE_DETAIL },
     });
-    // le représentant garde un seul rôle, égal au type de son entité
     expect(vi.mocked(prisma.user.update).mock.calls[0][0]).toEqual({
       where: { id: 'owner-1' },
       data: { roles: [UserRoles.COMMERCE_DE_DETAIL] },

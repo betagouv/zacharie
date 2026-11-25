@@ -8,7 +8,6 @@ test.beforeEach(async () => {
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Scenario 53 — Notifications : toggle EMAIL notification and submit, verify persistence.
 test('ETG toggle notification email et enregistre', async ({ page }) => {
   await connectWith(page, 'etg-1@example.fr');
   await expect(page).toHaveURL(/\/app\/etg/, { timeout: 15000 });
@@ -17,20 +16,17 @@ test('ETG toggle notification email et enregistre', async ({ page }) => {
   await expect(page).toHaveURL(/\/app\/etg\/profil\/notifications/);
   await expect(page.getByRole('heading', { name: 'Notifications' })).toBeVisible({ timeout: 10000 });
 
-  // EMAIL checkbox must always render for an ETG user. Hard-fail if missing — that's a regression.
   const emailCheckbox = page.getByRole('checkbox', { name: /Notification par email/i });
   await expect(emailCheckbox).toBeVisible({ timeout: 10000 });
 
   const before = await emailCheckbox.isChecked();
   await emailCheckbox.click({ force: true });
-  // le toast s'affiche au clic, avant la fin du POST : on attend la réponse pour ne pas l'annuler au reload
   const saved = page.waitForResponse(
     (res) => res.request().method() === 'POST' && /\/user\/[^/]+$/.test(res.url()) && res.ok()
   );
   await page.getByRole('button', { name: 'Enregistrer' }).click();
   await saved;
 
-  // Reload and verify persistence
   await page.reload();
   await expect(page).toHaveURL(/\/app\/etg\/profil\/notifications/);
   const reloadedCheckbox = page.getByRole('checkbox', { name: /Notification par email/i });

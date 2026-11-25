@@ -2,11 +2,6 @@ import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Scénario 174 — URLs qui finissaient sur la page 404 (Sentry « PageNotFound 404 ») :
-// - les anciens liens `/app/tableau-de-bord/...` (profil, fiche envoyée) redirigent vers le
-//   tableau de bord du rôle ;
-// - un lien ouvert avec la ponctuation qui le suit (`/)`) est corrigé vers la bonne page.
-
 test.use({
   viewport: { width: 350, height: 667 },
   hasTouch: true,

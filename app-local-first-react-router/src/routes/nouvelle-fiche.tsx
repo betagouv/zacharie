@@ -15,10 +15,8 @@ import { z } from 'zod';
 import grandGibier from '@app/data/grand-gibier.json';
 import petitGibier from '@app/data/petit-gibier.json';
 
-// All valid species from both petit and grand gibier
 const allSpecies: string[] = [...grandGibier.especes, ...petitGibier.especes];
 
-// Zod schema for individual carcasse
 const carcasseSchema = z.object({
   numero_bracelet: z.string().min(1, 'Numéro de marquage requis'),
   espece: z.enum(allSpecies as [string, ...string[]], {
@@ -27,9 +25,7 @@ const carcasseSchema = z.object({
   nombre_d_animaux: z.string(),
 });
 
-// Zod schema for search params validation
 const searchParamsSchema = z.object({
-  // slug de la clé API du partenaire : le serveur ignore un slug inconnu
   contexte: z.string().optional(),
   date_mise_a_mort: z
     .string()
@@ -56,7 +52,6 @@ const searchParamsSchema = z.object({
     .optional()
     .transform((val) => {
       if (!val) return [];
-      // Handle both single string and array of strings (for multiple carcasse params)
       const values = Array.isArray(val) ? val : [val];
       return values.map((carcasseString) => {
         const parts = carcasseString.split(',');
@@ -78,19 +73,15 @@ const searchParamsSchema = z.object({
 
 type SearchParams = z.infer<typeof searchParamsSchema>;
 
-// Lien de création de fiche pré-remplie, ouvert par une application tierce : sans secret dans l'URL.
-// Non connecté, l'utilisateur passe par la connexion puis revient ici avec les mêmes paramètres.
 export default function NouvelleFiche() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const user = useUser((state) => state.user);
-  // le store est relu depuis IndexedDB de façon asynchrone : une fiche créée avant serait écrasée
   const hasHydrated = useZustandStore((state) => state._hasHydrated);
   const isExaminateurInitial = !!user?.roles.includes(UserRoles.CHASSEUR) && !!user?.numero_cfei;
   const [error, setError] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
-  // la fiche n'est créée qu'une fois : l'effet ne doit pas être rejoué (StrictMode en dev)
   const hasCreatedFei = useRef(false);
 
   useEffect(() => {
@@ -101,7 +92,6 @@ export default function NouvelleFiche() {
     }
     if (hasCreatedFei.current) return;
     hasCreatedFei.current = true;
-    // Object.fromEntries ne garde que le dernier `carcasse` : on les récupère tous avec getAll
     const searchParamsObject = {
       ...Object.fromEntries(searchParams.entries()),
       carcasse: searchParams.getAll('carcasse'),
@@ -141,13 +131,11 @@ export default function NouvelleFiche() {
             fei: newFei,
           });
         } catch (carcasseError) {
-          // on crée quand même les autres carcasses
           capture(carcasseError as Error);
         }
       }
 
       syncData('nouvelle-fiche');
-      // replace : le retour arrière ne repasse pas par ce lien, qui créerait une seconde fiche
       navigate(`/app/chasseur/fei/${newFei.numero}`, { replace: true });
     })().catch((error) => {
       capture(error);

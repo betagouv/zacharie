@@ -28,10 +28,6 @@ function expediteurDisplay(ftp: LaboFTPListItem): string {
   return entity ? `${user} (${entity})` : user;
 }
 
-/**
- * Point d'entrée de l'espace laboratoire. Comme côté émetteur, l'écran suit le parcours réel
- * d'un colis — réceptionner puis analyser — plutôt que d'aligner des compteurs à déchiffrer.
- */
 export default function LaboratoireIndex() {
   const [ftps, setFtps] = useState<Array<LaboFTPListItem>>([]);
   const [pools, setPools] = useState<Array<LaboPoolRegistre>>([]);
@@ -52,7 +48,6 @@ export default function LaboratoireIndex() {
 
   const etapes = useMemo(() => {
     const parFiltre = { 'a-traiter': 0, 'en-cours': 0, cloturees: 0 };
-    // Une fiche que le labo a émise vers le LNR n'est pas une réception à venir
     for (const ftp of ftps) if (ftp.direction === 'recue') parFiltre[filtreLaboFTP(ftp)]++;
     return [
       {
@@ -83,8 +78,6 @@ export default function LaboratoireIndex() {
     ];
   }, [ftps, pools]);
 
-  // Le LNR ne reçoit que des confirmations de résultats non négatifs : l'alerte n'y a pas de sens.
-  // Ailleurs, une fiche dont toutes les carcasses ont une IPM2 a été traitée par le SVI.
   const trichine = useMemo(
     () => (isLnr ? [] : ftps.filter((ftp) => ftpTrichineNiveau(ftp) !== null && ftp.carcasses_sans_ipm2 > 0)),
     [ftps, isLnr]
@@ -247,7 +240,6 @@ export default function LaboratoireIndex() {
         )}
       </section>
 
-      {/* Les listes complètes sont dans le menu latéral : ici, un simple rappel des volumes */}
       <p className="fr-text--sm fr-mb-0 text-gray-600">
         <Link
           to="/app/laboratoire/ftp?vue=tous"

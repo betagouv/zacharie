@@ -4,15 +4,6 @@ import { connectWith } from '../../utils/connect-with';
 import { ajouterVenteDon } from '../../utils/vente-don';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
-// Scenario 124 — Deux chaînes SVI parallèles.
-// Dispatch 2+2 to ETG 1 + ETG 2. ETG 1 → SVI 1, ETG 2 → SVI 2 in parallel. Each SVI must only
-// see its own branch's carcasses.
-//
-// Now passing: the transmission/SVI-assignment data (`svi_assigned_at`, `svi_entity_id`,
-// `current_owner_*`, `next_owner_*`) lives PER-CARCASSE instead of on the Fei row, so the two
-// branches no longer clobber each other — ETG 1→SVI 1 and ETG 2→SVI 2 stay isolated, and each
-// SVI sees only its own branch's carcasses.
-
 test.use({ launchOptions: { slowMo: 100 } });
 test.setTimeout(240_000);
 
@@ -24,22 +15,18 @@ test('SVI 1 et SVI 2 voient chacun leur branche seulement', async ({ page }) => 
   page.on('dialog', (d) => d.accept().catch(() => {}));
   const feiId = 'ZACH-20250707-QZ6E0-155242';
 
-  // 1. PD dispatches 2+2 to ETG 1 + ETG 2 (mobile viewport)
   await page.setViewportSize({ width: 350, height: 667 });
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
 
-  // Group 1 → ETG 1 (keeps MM-001-003 + MM-001-004 by default)
   await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris' });
 
-  // Add group 2 → moves MM-001-001 + MM-001-002 to ETG 2
   await ajouterVenteDon(page, { destinataire: 'ETG 2 - 75000 Paris', carcasses: [0, 1] });
   const transmettreBtn = page.getByRole('button', { name: /Transmettre/ });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
   await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 15000 });
 
-  // 2. ETG 1: take charge → accept MM-001-003 (Pigeons) + MM-001-004 (Daim) → transmit to SVI 1
   await page.setViewportSize({ width: 1280, height: 900 });
   await logoutAndConnect(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
@@ -48,7 +35,6 @@ test('SVI 1 et SVI 2 voient chacun leur branche seulement', async ({ page }) => 
     timeout: 10000,
   });
 
-  // Accept MM-001-003 (Pigeons → Lot accepté)
   await page.getByRole('button', { name: /Pigeons.*MM-001-003/ }).click();
   await page
     .getByLabel(/Pigeons.*MM-001-/)
@@ -56,7 +42,6 @@ test('SVI 1 et SVI 2 voient chacun leur branche seulement', async ({ page }) => 
     .click();
   await expect(page.getByRole('button', { name: /Pigeons.*MM-001-003/ })).toBeVisible();
 
-  // Accept MM-001-004 (Daim → Carcasse acceptée)
   await page.getByRole('button', { name: 'Daim N° MM-001-004 Mise à' }).click();
   await page.getByLabel('Daim - N° MM-001-004').getByText('Carcasse acceptée').click();
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-004 Mise à' })).toBeVisible();
@@ -67,7 +52,6 @@ test('SVI 1 et SVI 2 voient chacun leur branche seulement', async ({ page }) => 
   await page.getByRole('button', { name: 'Transmettre la fiche' }).click();
   await expect(page.getByText('SVI 1 a été notifié')).toBeVisible({ timeout: 15000 });
 
-  // 3. ETG 2: take charge → accept MM-001-001 (Daim) + MM-001-002 (Daim) → transmit to SVI 2
   await logoutAndConnect(page, 'etg-2@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await page.getByRole('button', { name: 'Prendre en charge' }).click();
@@ -75,12 +59,10 @@ test('SVI 1 et SVI 2 voient chacun leur branche seulement', async ({ page }) => 
     timeout: 10000,
   });
 
-  // Accept MM-001-001 (Daim)
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
   await page.getByLabel('Daim - N° MM-001-001').getByText('Carcasse acceptée').click();
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' })).toBeVisible();
 
-  // Accept MM-001-002 (Daim)
   await page.getByRole('button', { name: 'Daim N° MM-001-002 Mise à' }).click();
   await page.getByLabel('Daim - N° MM-001-002').getByText('Carcasse acceptée').click();
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-002 Mise à' })).toBeVisible();
@@ -91,7 +73,6 @@ test('SVI 1 et SVI 2 voient chacun leur branche seulement', async ({ page }) => 
   await page.getByRole('button', { name: 'Transmettre la fiche' }).click();
   await expect(page.getByText('SVI 2 a été notifié')).toBeVisible({ timeout: 15000 });
 
-  // 4. SVI 1: sees only ETG 1's carcasses (MM-001-003, MM-001-004), not ETG 2's
   await logoutAndConnect(page, 'svi@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await expect(page).toHaveURL(new RegExp(`/app/svi/fei/${feiId}`));
@@ -100,7 +81,6 @@ test('SVI 1 et SVI 2 voient chacun leur branche seulement', async ({ page }) => 
   await expect(page.getByText('MM-001-001')).not.toBeVisible();
   await expect(page.getByText('MM-001-002')).not.toBeVisible();
 
-  // 5. SVI 2: sees only ETG 2's carcasses (MM-001-001, MM-001-002), not ETG 1's
   await logoutAndConnect(page, 'svi-2@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await expect(page).toHaveURL(new RegExp(`/app/svi/fei/${feiId}`));

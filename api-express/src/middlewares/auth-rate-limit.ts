@@ -1,10 +1,8 @@
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import type { RequestWithUser } from '~/types/request';
 
-// On compte les tentatives par email (ou par jeton de réinitialisation) : plusieurs utilisateurs
-// peuvent partager la même IP (réseau d'une administration, d'une entreprise)
 export const authRateLimit = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: process.env.NODE_ENV === 'production' ? 10 : 1000,
   keyGenerator: (req) => {
     const email = req.body?.email;
@@ -23,10 +21,6 @@ export const authRateLimit = rateLimit({
   },
 });
 
-// Second limiteur, par IP seule : sans lui, une IP peut essayer un mot de passe courant sur des milliers
-// d'emails (le limiteur par email ne la freine jamais). La limite est large car une administration
-// ou une entreprise peut faire passer beaucoup d'utilisateurs par la même IP. Un compteur par route :
-// une rafale d'inscriptions ne doit pas bloquer les connexions de la même IP
 export function createAuthIpRateLimit({
   limit,
   skip,
@@ -37,7 +31,7 @@ export function createAuthIpRateLimit({
   skipSuccessfulRequests?: boolean;
 }) {
   return rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
+    windowMs: 15 * 60 * 1000,
     max: limit,
     keyGenerator: (req) => ipKeyGenerator(req.ip ?? ''),
     skipSuccessfulRequests,
@@ -52,8 +46,6 @@ export function createAuthIpRateLimit({
   });
 }
 
-// à appeler une fois par route : chaque appel a son propre compteur
-// skipSuccessfulRequests : sur /user/login, seules les connexions échouées comptent
 export function authIpRateLimit({ skipSuccessfulRequests = false } = {}) {
   return createAuthIpRateLimit({
     limit: process.env.NODE_ENV === 'production' ? 100 : 10000,
@@ -62,10 +54,8 @@ export function authIpRateLimit({ skipSuccessfulRequests = false } = {}) {
   });
 }
 
-// Les routes /admin sont appelées en rafale par l'interface d'administration (listes, dashboard) :
-// la limite est large, elle sert seulement à freiner un balayage automatisé
 export const adminRateLimit = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
+  windowMs: 60 * 1000,
   max: process.env.NODE_ENV === 'production' ? 300 : 10000,
   standardHeaders: true,
   legacyHeaders: false,
@@ -77,10 +67,8 @@ export const adminRateLimit = rateLimit({
   },
 });
 
-// Recherche d'un propriétaire initial par email : on compte par utilisateur connecté, pour freiner
-// un balayage d'adresses mail
 export const trouverPremierDetenteurRateLimit = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 heure
+  windowMs: 60 * 60 * 1000,
   max: process.env.NODE_ENV === 'production' ? 20 : 1000,
   keyGenerator: (req) => {
     const userId = (req as RequestWithUser).user?.id;

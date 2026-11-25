@@ -7,7 +7,6 @@ import type { AdminAuditLogResponse } from '~/types/responses';
 
 const router: express.Router = express.Router();
 
-// Journal des écritures faites depuis /admin (voir middlewares/admin-audit-log.ts)
 router.get(
   '/audit-log',
   catchErrors(async (req: express.Request, res: express.Response<AdminAuditLogResponse>) => {
@@ -42,7 +41,6 @@ router.get(
       }),
     ]);
 
-    // Libellés lisibles des admins et des cibles, résolus en une requête par type
     const idsOf = (type: string) =>
       logs.filter((log) => log.target_type === type).map((log) => log.target_id!);
     const [users, entities, carcasses] = await Promise.all([

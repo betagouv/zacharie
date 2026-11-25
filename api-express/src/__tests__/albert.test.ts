@@ -12,7 +12,6 @@ import { albertChatCompletion } from '~/third-parties/albert';
 function sseResponse(chunks: Array<unknown>) {
   const body = chunks.map((chunk) => `data: ${JSON.stringify(chunk)}\n\n`).join('') + 'data: [DONE]\n\n';
   const encoded = new TextEncoder().encode(body);
-  // on coupe le flux au milieu d'une ligne pour vérifier le réassemblage
   const middle = Math.floor(encoded.length / 2);
   const stream = new ReadableStream({
     start(controller) {

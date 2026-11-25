@@ -7,12 +7,6 @@ dayjs.locale('fr');
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Scenario 149 — Les détenteurs initiaux chargés par load-my-relations survivent à un rechargement
-// hors ligne. L'examinateur (examinateur@example.fr) a une relation PREMIER_DETENTEUR vers
-// Pierre Petit (premier-detenteur@example.fr, id 0Y545) dans le seed : Pierre n'est connu du store
-// que par user/my-relations. Après rechargement, user/my-relations est coupé puis le réseau aussi :
-// Pierre doit encore être proposé comme propriétaire initial, donc lu depuis IndexedDB.
-
 test.use({
   viewport: { width: 350, height: 667 },
   hasTouch: true,
@@ -61,12 +55,10 @@ test('Les détenteurs initiaux restent proposés après un rechargement hors lig
   await connectWith(page, 'examinateur@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
 
-  // Les relations sont chargées et écrites dans IndexedDB (même écriture que la tranche `users`).
   await expect
     .poll(() => persistedDetenteursInitiauxIds(page), { timeout: 15000 })
     .toContain(PIERRE_PETIT_ID);
 
-  // Au rechargement, user/my-relations ne répond plus : Pierre ne peut venir que du stockage local.
   await page.route(/\/user\/my-relations/, (route) => route.abort('internetdisconnected'));
   await page.reload();
   await expect(page.getByRole('button', { name: 'Nouvelle fiche' }).first()).toBeVisible({

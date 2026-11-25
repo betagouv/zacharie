@@ -1,10 +1,5 @@
 import { Button } from '@codegouvfr/react-dsfr/Button';
 
-/**
- * Référence saisie ou collée qui ne correspond à rien (faute de frappe, référence d'un
- * collègue, objet supprimé). On explique ce qui s'est passé et on propose la suite,
- * plutôt que d'afficher une page vide qui donne l'impression d'un bug.
- */
 export default function TrichineIntrouvable({
   objet,
   reference,

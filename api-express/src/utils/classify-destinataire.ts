@@ -3,8 +3,6 @@ import { ALBERT_API_KEY } from '~/config';
 import { albertChatCompletion } from '~/third-parties/albert';
 import { capture } from '~/third-parties/sentry';
 
-// les types qu'Albert peut attribuer à un destinataire professionnel saisi par un chasseur ;
-// CIRCUIT_COURT reste le type générique quand la saisie ne permet pas de trancher
 export const CLASSIFIABLE_TYPES = [
   EntityTypes.COMMERCE_DE_DETAIL,
   EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
@@ -26,7 +24,6 @@ Réponds par UN SEUL mot parmi :
 - CIRCUIT_COURT : si tu as un doute, ou si aucune catégorie ne correspond clairement
 Ne réponds rien d'autre que ce mot.`;
 
-// on ne retient la réponse d'Albert que si elle est exactement une des catégories attendues
 export function parseClassification(content: string | null | undefined): ClassifiableType | 'CIRCUIT_COURT' {
   const answer = (content ?? '')
     .trim()

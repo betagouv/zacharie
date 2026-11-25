@@ -36,8 +36,6 @@ function authed(req: request.Test, user: object) {
   return req.set('x-test-user', JSON.stringify(user));
 }
 
-// A non-CHASSEUR onboarding user (ETG / SVI / COLLECTEUR_PRO / circuit-court all share this code path:
-// the only step left to finish onboarding is POST /user/:id { onboarding_finished: true }).
 const baseUser = {
   id: 'user-etg',
   email: 'arnaud-etg-bouce@ambroselli.io',
@@ -51,7 +49,6 @@ const baseUser = {
   onboarded_at: null as Date | null,
 };
 
-// Saved user returned by prisma.user.update — onboarded_at is now set, every required field present.
 const savedUser = {
   ...baseUser,
   onboarded_at: new Date('2026-06-17T07:15:30.000Z'),
@@ -91,19 +88,16 @@ describe('POST /user/:id — onboarding_finished', () => {
     expect(res.status).toBe(200);
     expect(res.body.ok).toBe(true);
 
-    // onboarded_at is stamped at write time.
     expect(prisma.user.update).toHaveBeenCalledOnce();
     const updateData = vi.mocked(prisma.user.update).mock.calls[0][0].data as Record<string, unknown>;
     expect(updateData.onboarded_at).toBeInstanceOf(Date);
 
-    // Internal notice "Inscription finie" to the Zacharie team.
     expect(sendEmail).toHaveBeenCalledOnce();
     const internalEmail = vi.mocked(sendEmail).mock.calls[0][0];
     expect(internalEmail.emails).toEqual(['contact@zacharie.beta.gouv.fr']);
     expect(internalEmail.subject).toMatch(/Inscription finie/i);
     expect(internalEmail.text).toContain(baseUser.email);
 
-    // "Inscription en examen" mail to the user, deduplicated once per account.
     expect(sendOnboardingEmailOnce).toHaveBeenCalledOnce();
     expect(vi.mocked(sendOnboardingEmailOnce).mock.calls[0][0]).toMatchObject({
       user: savedUser,
@@ -127,7 +121,6 @@ describe('POST /user/:id — onboarding_finished', () => {
     );
 
     expect(res.status).toBe(200);
-    // The write still happens, but no onboarding email is (re)triggered.
     expect(prisma.user.update).toHaveBeenCalledOnce();
     expect(sendOnboardingEmailOnce).not.toHaveBeenCalled();
     expect(sendEmail).not.toHaveBeenCalled();

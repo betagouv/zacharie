@@ -1,13 +1,7 @@
 import type { CarcasseIntermediaire } from '@prisma/client';
 
 export type CarcassesIntermediaire = {
-  // updated_at: Date;
-  // is_synced: boolean;
-  // deleted_at: Date | null;
-  // received_at: Date | null;
-  // handover_at: Date | null;
-  // commentaire: string | null;
-  id: CarcasseIntermediaire['intermediaire_id']; // {user_id}_{HHMMSS} // because a user could be multiple times intermediaire for a same fei
+  id: CarcasseIntermediaire['intermediaire_id'];
   created_at: CarcasseIntermediaire['created_at'];
   fei_numero: CarcasseIntermediaire['fei_numero'];
   intermediaire_user_id: CarcasseIntermediaire['intermediaire_user_id'];

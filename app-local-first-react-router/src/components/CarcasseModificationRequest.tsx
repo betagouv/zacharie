@@ -15,8 +15,6 @@ import { syncData } from '@app/utils/sync-data';
 import useUser from '@app/zustand/user';
 import { getPendingModifRequest } from '@app/utils/modif-requests';
 
-// Une carcasse déjà inspectée par le SVI n'est plus modifiable par une demande : un certificat a pu
-// être émis dessus. Même règle que côté serveur (isCarcasseFrozenBySvi).
 function isFrozenBySvi(carcasse: Carcasse) {
   return !!(
     carcasse.svi_ipm1_signed_at ||
@@ -26,12 +24,6 @@ function isFrozenBySvi(carcasse: Carcasse) {
   );
 }
 
-// ----------------------------------------------------------------------------
-// PendingModificationBanner
-// Affiché sur la carcasse, côté intermédiaire/ETG/SVI, quand une demande de
-// modification est en cours. Purement informatif : la modification est déjà
-// appliquée, elle ne bloque ni la transmission ni l'inspection SVI.
-// ----------------------------------------------------------------------------
 export function PendingModificationBanner({ carcasse }: { carcasse: Carcasse }) {
   const user = useUser((state) => state.user);
   const modifRequests = useZustandStore(
@@ -51,8 +43,6 @@ export function PendingModificationBanner({ carcasse }: { carcasse: Carcasse }) 
 
   const isRename = pending.type === CarcasseModificationRequestType.BRACELET_RENAME;
 
-  // La demande est purement indicative : elle ne bloque ni la transmission ni l'inspection SVI.
-  // Sévérité info dans les deux cas — rien n'est en attente de déblocage.
   const title = isRename ? `Numéro de marquage corrigé` : `Carcasse ajoutée après l'examen initial`;
 
   const detail = isRename
@@ -68,14 +58,9 @@ export function PendingModificationBanner({ carcasse }: { carcasse: Carcasse }) 
         ).format('DD/MM/YYYY HH:mm')}.`
       : '';
 
-  // On ne peut annuler que tant que le SVI n'est pas passé sur la carcasse (mêmes gardes qu'au
-  // serveur), sinon l'annulation supprimerait une carcasse déjà inspectée / certifiée.
   const canCancel = user?.id === pending.requested_by_user_id && !isFrozenBySvi(carcasse);
 
   const onCancel = () => {
-    // Soft-delete the modif request et on défait ce qu'elle avait appliqué : NEW_CARCASSE →
-    // soft-delete de la carcasse (elle n'existait que pour cette demande), RENAME → retour au
-    // numéro de marquage d'origine.
     updateCarcasseModifRequest(pending.zacharie_carcasse_id, { deleted_at: dayjs().toDate() });
     if (pending.type === CarcasseModificationRequestType.NEW_CARCASSE) {
       updateCarcasse(carcasse.zacharie_carcasse_id, { deleted_at: dayjs().toDate() });
@@ -117,16 +102,6 @@ export function PendingModificationBanner({ carcasse }: { carcasse: Carcasse }) 
   );
 }
 
-// ----------------------------------------------------------------------------
-// RequestBraceletRenameButton
-// Bouton + formulaire en accordéon côté intermédiaire pour corriger un numéro
-// de marquage. La correction est appliquée immédiatement (l'intermédiaire a la
-// carcasse sous les yeux) ; l'examinateur initial en est seulement informé.
-// Pas de modal imbriquée : DSFR ne supporte pas modal dans modal (le contenu du
-// parent disparaît à la fermeture du modal enfant) ; on étale donc le
-// formulaire dans le même conteneur que le bouton.
-// Masqué si une demande est déjà en cours sur la carcasse.
-// ----------------------------------------------------------------------------
 export function RequestBraceletRenameButton({
   carcasse,
   requestedByEntityId,
@@ -184,7 +159,6 @@ export function RequestBraceletRenameButton({
       is_synced: false,
     };
     createCarcasseModifRequest(modifRequest);
-    // Le renommage est appliqué tout de suite, la demande ne sert qu'à informer l'examinateur.
     updateCarcasse(carcasse.zacharie_carcasse_id, { numero_bracelet: newBracelet.trim() });
     syncData('RequestBraceletRenameButton.onSubmit');
     setNewBracelet('');
@@ -254,25 +228,18 @@ export function RequestBraceletRenameButton({
   );
 }
 
-// ----------------------------------------------------------------------------
-// HistoriqueDesModifications
-// Liste les demandes approuvées/refusées sur une carcasse.
-// ----------------------------------------------------------------------------
 export function HistoriqueDesModifications({ carcasse }: { carcasse: Carcasse }) {
   const requests = useZustandStore((state) => state.modifRequestsByCarcasseId[carcasse.zacharie_carcasse_id]);
   const users = useZustandStore((state) => state.users);
   const entities = useZustandStore((state) => state.entities);
 
-  // Flatten each modif into two timeline events: one for the request, one for the decision. This
-  // keeps each timestamp on its own dot (request date != decision date). Sorted oldest → newest like
-  // Traçabilité.
   type TimelineEvent = {
     key: string;
     date: Date;
     label: string;
     actorLine: string;
     extraLine: string | null;
-    dotColor: string; // hex
+    dotColor: string;
   };
 
   const events = useMemo<Array<TimelineEvent>>(() => {
@@ -293,7 +260,6 @@ export function HistoriqueDesModifications({ carcasse }: { carcasse: Carcasse })
         ? [reviewer.prenom, reviewer.nom_de_famille].filter(Boolean).join(' ')
         : null;
 
-      // 1) Request event (always)
       out.push({
         key: `${r.id}:req`,
         date: new Date(r.requested_at),
@@ -302,18 +268,17 @@ export function HistoriqueDesModifications({ carcasse }: { carcasse: Carcasse })
           : "Ajout d'une carcasse",
         actorLine: `Par ${requesterName}${entityName ? ` (${entityName})` : ''}`,
         extraLine: r.comment_intermediaire ? `Commentaire : ${r.comment_intermediaire}` : null,
-        dotColor: '#6a6af4', // DSFR blue
+        dotColor: '#6a6af4',
       });
 
-      // 2) Decision event — pending shows a placeholder; approved/rejected shows the result.
       if (pending) {
         out.push({
           key: `${r.id}:pending`,
-          date: new Date(r.updated_at), // approximate; placed near the request marker by sort
+          date: new Date(r.updated_at),
           label: "En attente du retour de l'examinateur initial",
           actorLine: 'La carcasse continue son parcours',
           extraLine: null,
-          dotColor: '#0063cb', // DSFR info blue — même sévérité que la bannière, la demande est indicative
+          dotColor: '#0063cb',
         });
       } else if (r.reviewed_at) {
         out.push({
@@ -347,8 +312,6 @@ export function HistoriqueDesModifications({ carcasse }: { carcasse: Carcasse })
 
   if (events.length === 0) return null;
 
-  // Renders content only (no collapsible/heading wrapper). Parents wrap in a Section / modal block /
-  // <details> as appropriate to their layout.
   return (
     <div className="relative border-l-2 border-gray-300 pl-4">
       {events.map((event) => (

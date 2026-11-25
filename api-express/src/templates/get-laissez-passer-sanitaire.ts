@@ -60,21 +60,21 @@ export async function generateLaissezPasserSanitaireDocx(
               name: 'Marianne',
             },
             bold: true,
-            color: 'FFFFFF', // White text color
+            color: 'FFFFFF',
           },
           paragraph: {
             spacing: {
-              before: 480, // 12pt spacing before (240 twips = 12pt)
-              after: 240, // 12pt spacing after
+              before: 480,
+              after: 240,
             },
-            alignment: AlignmentType.CENTER, // Center text
+            alignment: AlignmentType.CENTER,
             shading: {
               type: 'solid',
-              color: '7B7B7B', // Gray background
+              color: '7B7B7B',
             },
             border: {
               top: {
-                color: '000000', // Black border
+                color: '000000',
                 style: 'single',
                 size: 1,
               },
@@ -114,7 +114,6 @@ export async function generateLaissezPasserSanitaireDocx(
           default: await generateHeaderDocx(data),
         },
         children: [
-          // notification de consigne
           new Paragraph({
             children: [
               new TextRun({
@@ -129,7 +128,6 @@ export async function generateLaissezPasserSanitaireDocx(
             ],
             alignment: AlignmentType.CENTER,
           }),
-          // annule et remplace la notification
           data.remplace_certificat_id
             ? new Paragraph({
                 children: [
@@ -146,7 +144,6 @@ export async function generateLaissezPasserSanitaireDocx(
                 alignment: AlignmentType.CENTER,
               })
             : new Paragraph(''),
-          // Legal texts
           new Paragraph({
             children: [
               'Vu le Règlement (CE) n°1069/2009 du Parlement européen et du Conseil du 21 octobre 2009.',
@@ -156,7 +153,6 @@ export async function generateLaissezPasserSanitaireDocx(
               "Vu l'arrêté du 18 décembre 2009 relatif aux règles sanitaires applicables aux produits d'origine animale et aux denrées alimentaires en contenant.",
             ].map((text) => new TextRun({ text, break: 1, font: 'Marianne' })),
           }),
-          // L'agent des services vétérinaires soussigné certifie que les denrées désignées ci-dessous sont consignées, en l'attente d'informations complémentaires :
           new Paragraph({
             children: [
               data.numero_decision_ipm1
@@ -173,7 +169,6 @@ export async function generateLaissezPasserSanitaireDocx(
               }),
             ].filter((textRun) => textRun !== null),
           }),
-          // Premier tableau: Le vétérinaire officiel soussigné certifie que les denrées désignées ci-dessous doivent faire l'objet d'un traitement assainissant obligatoire dans les conditions détaillées dans la présente notification :
           new Paragraph({
             style: 'subtitle-before-table',
             children: [
@@ -255,7 +250,6 @@ export async function generateLaissezPasserSanitaireDocx(
               }),
             ],
           }),
-          // Signalement de la carcasse ou du lot de carcasses :
           new Paragraph({
             children: [
               new TextRun({
@@ -266,7 +260,6 @@ export async function generateLaissezPasserSanitaireDocx(
               }),
             ],
           }),
-          // Deuxième tableau: Signalement de la carcasse ou du lot de carcasses
           new Table({
             columnWidths: [4000, 3500, 3000],
             margins: {
@@ -338,7 +331,6 @@ export async function generateLaissezPasserSanitaireDocx(
                   }),
                   data.nombre_d_animaux! > 0
                     ? new TableCell({
-                        // columnSpan: 2,
                         children: [
                           new Paragraph({
                             children: [
@@ -455,7 +447,6 @@ export async function generateLaissezPasserSanitaireDocx(
               }),
             ].filter((row) => row !== null),
           }),
-          // Référence de la décision de saisie
           new Paragraph({
             children: [
               new TextRun({
@@ -464,7 +455,6 @@ export async function generateLaissezPasserSanitaireDocx(
               }),
             ],
           }),
-          // Désignation des denrées consignées
           new Paragraph({
             children: [
               new TextRun({
@@ -475,7 +465,6 @@ export async function generateLaissezPasserSanitaireDocx(
               }),
             ],
           }),
-          // Troisième tableau: Désignation des denrées consignées
           new Table({
             columnWidths: [2500, 8000],
             margins: {
@@ -607,7 +596,6 @@ export async function generateLaissezPasserSanitaireDocx(
                 : null,
             ].filter((row) => row !== null),
           }),
-          // Établissement destinataire
           new Paragraph({
             style: 'subtitle-before-table',
             children: [
@@ -617,7 +605,6 @@ export async function generateLaissezPasserSanitaireDocx(
               }),
             ],
           }),
-          // Quatrième tableau: Établissement destinataire
           new Table({
             columnWidths: [10500],
             margins: {
@@ -690,7 +677,6 @@ export async function generateLaissezPasserSanitaireDocx(
               }),
             ],
           }),
-          // Traitement assainissant
           new Paragraph({
             style: 'subtitle-before-table',
             children: [
@@ -700,7 +686,6 @@ export async function generateLaissezPasserSanitaireDocx(
               }),
             ],
           }),
-          // Cinquième tableau: Traitement assainissant
           new Table({
             columnWidths: [10500],
             margins: {
@@ -741,7 +726,6 @@ export async function generateLaissezPasserSanitaireDocx(
               }),
             ],
           }),
-          // Espacement
           new Paragraph({
             children: [
               new TextRun({
@@ -751,7 +735,6 @@ export async function generateLaissezPasserSanitaireDocx(
               }),
             ],
           }),
-          // Signature et cachet
           new Table({
             columnWidths: [11000],
             margins: {
@@ -798,7 +781,6 @@ export async function generateLaissezPasserSanitaireDocx(
               }),
             ],
           }),
-          // Explication de la consigne
           new Paragraph({
             children: [
               new TextRun({

@@ -3,10 +3,6 @@ import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { getLaboMe, type LaboEntity } from '@app/services/laboratoire';
 
-/**
- * « Mon laboratoire » — lecture seule : les coordonnées et l'accréditation COFRAC
- * sont gérées par l'administration Zacharie (cf doc/trichine.md §3.2, annuaire LVD).
- */
 export default function LaboratoireProfil() {
   const [laboratoires, setLaboratoires] = useState<Array<LaboEntity>>([]);
   const [hasTriedLoading, setHasTriedLoading] = useState(false);

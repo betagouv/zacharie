@@ -50,8 +50,6 @@ export async function syncFei(
   });
 
   if (!existingFei) {
-    // Un chasseur formé (numéro CFEI) peut créer une fiche même si son compte n'est pas
-    // encore activé : il peut la préparer, mais pas la transmettre (voir gate ci-dessous).
     const isExaminateurInitial = user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei;
     if (!isExaminateurInitial) {
       capture(new Error('Tentative de hack: seul un examinateur initial peut créer une fiche'), {
@@ -78,8 +76,6 @@ export async function syncFei(
     if (!canDelete) {
       throw new SyncRejectedError('Vous ne pouvez pas supprimer cette fiche');
     }
-    // Une fois une carcasse prise en charge en aval, la fiche ne peut plus être supprimée par le
-    // chasseur.
     const carcassesPrisesEnChargeEnAval = await prisma.carcasse.count({
       where: { fei_numero: numero, deleted_at: null, ...carcassePriseEnChargeEnAvalWhere },
     });
@@ -105,44 +101,24 @@ export async function syncFei(
     return { savedFei: deletedFei, existingFei, isDeleted: true };
   }
 
-  // Deny by default : jusqu'ici seules la création et la suppression étaient gardées, n'importe
-  // quel compte activé pouvait écraser les champs d'une fiche tierce en connaissant son numéro.
   if (existingFei && !(await scope.canWriteFei(existingFei))) {
     throw new SyncRejectedError("Vous n'avez pas accès à cette fiche");
   }
 
-  // Version périmée : on ne l'écrit pas. Le delta du client (/carcasse) se fonde sur
-  // `carcasse.updated_at` et charge les fiches par leurs carcasses : on touche donc les carcasses pour
-  // qu'il récupère la version à jour.
   if (existingFei && isStaleWrite(existingFei, body.version, user)) {
     await prisma.carcasse.updateMany({ where: { fei_numero: numero }, data: { updated_at: new Date() } });
     throw new SyncRejectedError('Version obsolète');
   }
 
-  // Les colonnes de rattachement (créateur, examinateur initial, premier détenteur) sont celles sur
-  // lesquelles `canWriteFei` accorde l'écriture : un détenteur aval, qui n'accède à la fiche que
-  // parce qu'il en détient des carcasses, ne peut pas s'y inscrire — il garderait l'accès une fois
-  // les carcasses parties et évincerait le premier détenteur désigné. Comme pour les colonnes
-  // réservées au SVI dans `sync-carcasse`, on ignore la valeur au lieu de rejeter la fiche.
   const canWriteOwnership = !existingFei || scope.isFeiOwner(existingFei);
   if (canWriteOwnership) {
     await assertNoNewDeletedEntity(body, existingFei, ['premier_detenteur_entity_id'], opts.deletedEntityIds);
   }
 
-  // L'approbation de mise sur le marché est la signature réglementaire de l'examinateur initial.
-  // Elle est portée par la fiche, donc `canWriteFei` seul l'ouvrirait à tout détenteur aval qui
-  // détient une carcasse — un ETG pourrait la poser ou l'effacer sans que rien ne le signale, cette
-  // écriture-là réussissant silencieusement. `isFeiOwner` seul serait à l'inverse trop strict :
-  // quand une asso est désignée premier détenteur, c'est un de ses membres qui valide, et il n'est
-  // rattaché à la fiche que par son entité (voir `isPremierDetenteur`, chasseur-fei.tsx).
   const canWriteApprobationExaminateur =
     !existingFei || scope.isFeiOwner(existingFei) || scope.isPremierDetenteur(existingFei);
 
-  // Les données de l'examen initial (date, lieu, heures) n'appartiennent qu'à l'examinateur qui l'a
-  // fait. Elles sont recopiées sur toutes les carcasses de la fiche (`syncCarcasseDates`), donc un
-  // détenteur aval qui pourrait les écrire réécrirait toute la fiche. Valeur ignorée, comme plus haut.
   const isExaminateur = !existingFei || existingFei.examinateur_initial_user_id === user.id;
-  // Ce que le premier détenteur garde pour sa consommation est son choix à lui.
   const isPremierDetenteur = !existingFei || scope.isPremierDetenteur(existingFei);
 
   const nextFei: Prisma.FeiUncheckedUpdateInput = {
@@ -162,8 +138,6 @@ export async function syncFei(
   }
   if (isExaminateur && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.creation_context)) {
     const contextSlug = body.creation_context;
-    // le slug vient d'un paramètre d'URL libre (lien de création de fiche) : un slug inconnu est ignoré,
-    // il ne doit pas bloquer la synchro de la fiche
     const isKnownContext =
       contextSlug === 'zacharie' ||
       (!!contextSlug && !!(await prisma.apiKey.findFirst({ where: { slug_for_context: contextSlug } })));
@@ -187,18 +161,6 @@ export async function syncFei(
       : null;
   }
 
-  /*
-  *
-  *
-  * *
-
-  Examinateur initial
-
-  */
-
-  // L'examinateur initial est celui qui crée la fiche, et il ne change plus ensuite : c'est lui qui
-  // signe l'examen et peut supprimer la fiche. La valeur du corps est toujours ignorée, sinon le
-  // premier détenteur pourrait se déclarer examinateur, ou le créateur imputer la fiche à un autre.
   if (!existingFei) {
     nextFei.examinateur_initial_user_id = user.id;
   }
@@ -220,15 +182,6 @@ export async function syncFei(
       body.examinateur_initial_date_approbation_mise_sur_le_marche || null;
   }
 
-  /*
-  *
-  *
-  * *
-
-  Premier détenteur
-
-  */
-
   if (
     canWriteOwnership &&
     body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id) &&
@@ -242,7 +195,6 @@ export async function syncFei(
       ? sanitize(body.premier_detenteur_user_id as string)
       : null;
   }
-  // Posé par celui qui valide pour le premier détenteur, membre de l'asso désignée compris.
   if (
     canWriteApprobationExaminateur &&
     body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_offline)

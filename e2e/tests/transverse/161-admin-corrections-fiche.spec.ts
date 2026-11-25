@@ -3,13 +3,9 @@ import type { Page } from '@playwright/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Scenario 161 — Corrections admin d'une fiche transmise, depuis la page fiche de l'admin : date de mise
-// à mort, premier détenteur, ajout et suppression de carcasse. Une fiche clôturée ne se corrige plus.
-
 const feiAuPremierDetenteur = 'ZACH-20250707-QZ6E0-155242';
 const feiCloturee = 'ZACH-20250707-QZ6E0-205242';
 
-// Le login mot de passe ouvre une session normale ; /app/admin exige en plus ProConnect (voir 136)
 async function openAdmin(page: Page, path: string) {
   await connectWith(page, 'admin@example.fr');
   await expect(page).toHaveURL(/\/app\/chasseur/);
@@ -57,7 +53,6 @@ test.describe('fiche pas encore prise en charge', () => {
     const nouvelleCarcasse = page.getByRole('row').filter({ hasText: 'MM-999' });
     await expect(nouvelleCarcasse).toContainText('Chevreuil', { timeout: 10000 });
 
-    // un numéro déjà utilisé est refusé
     await page.getByLabel('Marquage').fill('MM-999');
     await page.getByLabel('Espèce').selectOption('Chevreuil');
     await page.getByRole('button', { name: 'Ajouter' }).click();

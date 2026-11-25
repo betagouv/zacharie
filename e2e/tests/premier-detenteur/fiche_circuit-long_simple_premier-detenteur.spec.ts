@@ -32,8 +32,6 @@ test('Pas de stockage - Transporter les carcasses soi-même', async ({ page }) =
   await expect(page.getByRole('link', { name: feiId })).toContainText('10 pigeons');
   await expect(page.getByRole('link', { name: feiId })).toContainText('3 daims');
   await page.getByRole('link', { name: feiId }).click();
-  // L'examinateur désigne directement le premier détenteur : plus d'étape « prendre en charge »,
-  // le PD arrive directement sur la fiche éditable.
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-002 Mise à' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Pigeons (10) N° MM-001-003 Mise à' })).toBeVisible();
@@ -59,7 +57,6 @@ test('Pas de stockage - Transporter les carcasses soi-même', async ({ page }) =
   await allerAEtape(page, 'Stockage');
   await choisirStockage(page, 'aucun');
   await allerAEtape(page, 'Transport');
-  // Validation au niveau du champ : les erreurs ne sont révélées qu'au clic sur Enregistrer.
   await venteDonModal(page).getByRole('button', { name: 'Enregistrer', exact: true }).click();
   await expect(page.getByText('Veuillez indiquer le mode de transport des carcasses')).toBeVisible();
   await choisirTransport(page, 'moi');
@@ -84,7 +81,6 @@ test('Stockage - Transporter les carcasses soi-même', async ({ page }) => {
   await page.getByText("Oui, ma chambre froide a un numéro d'identification").click();
   await page.getByRole('textbox', { name: "Numéro d'identification" }).fill('CCG-01');
   await page.getByRole('button', { name: 'Ajouter cette chambre froide' }).click();
-  // La CCG fraîchement créée est sélectionnée automatiquement
   await expect(page.getByText('CCG Chasseurs - CCG-01')).toBeVisible();
   await remplirDateMaintenant(page);
   await allerAEtape(page, 'Transport');
@@ -111,7 +107,6 @@ test('Stockage - Le transport est réalisé par un collecteur professionnel', as
   await page.getByText("Oui, ma chambre froide a un numéro d'identification").click();
   await page.getByRole('textbox', { name: "Numéro d'identification" }).fill('CCG-01');
   await page.getByRole('button', { name: 'Ajouter cette chambre froide' }).click();
-  // La CCG fraîchement créée est sélectionnée automatiquement
   await expect(page.getByText('CCG Chasseurs - CCG-01')).toBeVisible();
   await remplirDateMaintenant(page);
   await allerAEtape(page, 'Transport');

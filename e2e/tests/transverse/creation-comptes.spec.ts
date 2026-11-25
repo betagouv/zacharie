@@ -163,7 +163,6 @@ test('Création de compte SVI', async ({ page }) => {
 });
 
 test('Examinateur initial ajoute une association de chasse depuis son profil', async ({ page }) => {
-  // First complete basic onboarding
   await page.goto('http://localhost:3290/');
   await page.getByRole('link', { name: 'Créer un compte' }).first().click();
   await page
@@ -185,7 +184,6 @@ test('Examinateur initial ajoute une association de chasse depuis son profil', a
   await page.getByRole('button', { name: 'Enregistrer et terminer' }).click();
   await expect(page.getByText('Pas encore de fiches cette saison')).toBeVisible();
 
-  // Navigate to profile to add hunting associations
   await page.getByRole('button', { name: 'Paramètres' }).click();
   await page.getByRole('link', { name: 'Informations de chasse' }).click();
   await expect(page.getByRole('heading', { name: 'Informations de chasse' })).toBeVisible();
@@ -200,7 +198,6 @@ test('Examinateur initial ajoute une association de chasse depuis son profil', a
   await page.locator('#association_data_form #code_postal').fill('75012');
   await page.getByRole('button', { name: 'PARIS 12' }).click();
   await page.getByRole('button', { name: 'Créer et me rattacher à cette entité', exact: true }).click();
-  // Verify the association was added - check for button "Retirer" which appears next to added associations
   await expect(page.getByRole('button', { name: 'Retirer' })).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Chambres froides (Centres de Collecte du Gibier sauvage)' })
@@ -215,7 +212,6 @@ test('Examinateur initial ajoute une association de chasse depuis son profil', a
 });
 
 test('Examinateur initial ajoute une association de chasse existante depuis son profil', async ({ page }) => {
-  // First complete basic onboarding
   await page.goto('http://localhost:3290/');
   await page.getByRole('link', { name: 'Créer un compte' }).first().click();
   await page
@@ -237,12 +233,10 @@ test('Examinateur initial ajoute une association de chasse existante depuis son 
   await page.getByRole('button', { name: 'Enregistrer et terminer' }).click();
   await expect(page.getByText('Pas encore de fiches cette saison')).toBeVisible();
 
-  // Navigate to profile to add hunting associations
   await page.getByRole('button', { name: 'Paramètres' }).click();
   await page.getByRole('link', { name: 'Informations de chasse' }).click();
   await expect(page.getByRole('heading', { name: 'Informations de chasse' })).toBeVisible();
 
-  // Select existing association
   await page.getByText('Oui').nth(1).click();
   await page.locator('.raison_sociale__input-container').click();
   await page.locator('.raison_sociale__input').fill('Association de chasseurs');
@@ -252,7 +246,6 @@ test('Examinateur initial ajoute une association de chasse existante depuis son 
 });
 
 test('Examinateur initial ajoute une chambre froide (CCG) depuis son profil', async ({ page }) => {
-  // First complete basic onboarding
   await page.goto('http://localhost:3290/');
   await page.getByRole('link', { name: 'Créer un compte' }).first().click();
   await page
@@ -274,12 +267,10 @@ test('Examinateur initial ajoute une chambre froide (CCG) depuis son profil', as
   await page.getByRole('button', { name: 'Enregistrer et terminer' }).click();
   await expect(page.getByText('Pas encore de fiches cette saison')).toBeVisible();
 
-  // Navigate to profile to add CCG
   await page.getByRole('button', { name: 'Paramètres' }).click();
   await page.getByRole('link', { name: 'Informations de chasse' }).click();
   await expect(page.getByRole('heading', { name: 'Informations de chasse' })).toBeVisible();
 
-  // Add a CCG without official number - use radio button selector
   await page.getByText('Oui mais').nth(0).click();
   await page.getByRole('textbox', { name: 'Nom usuel *' }).fill('Ma Chambre Froide');
   await page.getByRole('textbox', { name: "SIRET Si vous n'en n'avez pas" }).fill('122345');
@@ -291,7 +282,6 @@ test('Examinateur initial ajoute une chambre froide (CCG) depuis son profil', as
 });
 
 test('Premier détenteur devient examinateur initial depuis son profil', async ({ page }) => {
-  // First complete basic onboarding as non-examinateur
   await page.goto('http://localhost:3290/');
   await page.getByRole('link', { name: 'Créer un compte' }).first().click();
   await page
@@ -307,26 +297,22 @@ test('Premier détenteur devient examinateur initial depuis son profil', async (
   await page.getByRole('textbox', { name: 'Ville ou commune * Exemple :' }).fill('Paris');
   await page.getByRole('button', { name: '75001 PARIS 01' }).click();
   await page.getByRole('button', { name: 'Enregistrer et continuer' }).click();
-  await page.getByText('Non').click(); // Not trained initially
+  await page.getByText('Non').click();
   await page.getByRole('button', { name: 'Enregistrer et continuer' }).click();
   await page.getByRole('button', { name: 'Enregistrer et terminer' }).click();
   await expect(page.getByText('Pas encore de fiches cette saison')).toBeVisible();
 
-  // Navigate to profile to become examinateur initial
   await page.getByRole('button', { name: 'Paramètres' }).click();
   await page.getByLabel('Menu principal').getByRole('link', { name: 'Informations de chasse' }).click();
   await expect(page.getByRole('heading', { name: 'Informations de chasse' })).toBeVisible();
 
-  // Change to examinateur initial
-  await page.getByText('Oui').first().click(); // Now trained
+  await page.getByText('Oui').first().click();
   await page.getByRole('textbox', { name: "Numéro d'attestation de" }).fill('CFEI-075-00-444');
   await page.getByRole('textbox', { name: "Numéro d'attestation de" }).blur();
 
-  // Verify the CFEI number was saved
   await page.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page.getByText('Informations de chasse enregistrées')).toBeVisible();
 
-  // Refresh and verify the change persisted
   await page.reload();
   await expect(page.getByRole('textbox', { name: "Numéro d'attestation de" })).toHaveValue('CFEI-075-00-444');
 });
@@ -352,21 +338,16 @@ test('Premier détenteur ajoute association et CCG depuis son profil', async ({ 
   await page.getByRole('button', { name: 'Enregistrer et terminer' }).click();
   await expect(page.getByText('Pas encore de fiches cette saison')).toBeVisible();
 
-  // Navigate to profile
   await page.getByRole('button', { name: 'Paramètres' }).click();
   await page.getByLabel('Menu principal').getByRole('link', { name: 'Informations de chasse' }).click();
 
-  // Add an existing association - use input name selector for the "Oui" radio
   await page.getByText('Oui').nth(1).click();
-  // React Select: click to focus, type to filter, then select existing option
   await page.locator('.raison_sociale__input-container').click();
   await page.locator('.raison_sociale__input').fill('Association de chasseurs');
   await page.getByRole('option', { name: /Association de chasseurs -/i }).click();
   await page.getByRole('button', { name: 'Me rattacher à cette entité', exact: true }).click();
-  // Verify association was added - button "Me rattacher à une autre entité" appears
   await expect(page.getByRole('button', { name: 'Me rattacher à une autre entité' })).toBeVisible();
 
-  // Add a CCG - use radio button selector
   await page.getByText('Oui mais').nth(0).click();
   await page.getByRole('textbox', { name: 'Nom usuel *' }).fill('CCG du Détenteur');
   await page.getByRole('textbox', { name: "SIRET Si vous n'en n'avez pas" }).fill('122345');
@@ -374,10 +355,8 @@ test('Premier détenteur ajoute association et CCG depuis son profil', async ({ 
   await page.getByRole('textbox', { name: 'Code postal * 5 chiffres' }).fill('75020');
   await page.getByRole('button', { name: 'PARIS 20' }).click();
   await page.getByRole('button', { name: 'Enregistrer ma chambre froide (CCG)', exact: true }).click();
-  // Verify CCG was added - check for at least 2 Retirer buttons (one for association, one for CCG)
   await expect(page.getByRole('button', { name: 'Retirer' }).first()).toBeVisible();
 
-  // Check visibility and save
   await page
     .getByText(
       "Autoriser Zacharie à faire apparaître dans les champs de transmission des fiches les sociétés ou associations pour lesquelles l'utilisateur travaille ou auxquelles il appartient."

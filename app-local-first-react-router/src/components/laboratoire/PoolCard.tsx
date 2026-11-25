@@ -36,37 +36,24 @@ import {
   statutAnalyseLabels,
 } from '@app/utils/trichine';
 
-/**
- * Saisie du résultat d'un pool par le laboratoire.
- * Partagée par la fiche de transmission et la page de détail d'un pool : c'est le même geste,
- * il ne doit pas exister en deux exemplaires.
- *
- * Une fiche porte plusieurs pools : la carte se lit d'un coup d'œil (référence, statut, résultat),
- * le détail des échantillons se déplie à la demande et la saisie s'ouvre en modale.
- */
 export const resultatModal = createModal({ isOpenedByDefault: false, id: 'labo-resultat-pool-modal' });
 export const retraitModal = createModal({ isOpenedByDefault: false, id: 'labo-retrait-echantillon-modal' });
 
-/** Échantillon que le laboratoire s'apprête à retirer de son pool */
 export type RetraitEchantillon = { echantillon: LaboEchantillon; referencePool: string };
 
-// Résultats autorisés par type de laboratoire (cf doc/trichine.md §3.2)
 const LVD_RESULTS = [TrichineResultatAnalyse.NEGATIF, TrichineResultatAnalyse.DOUTEUX];
 const LNR_RESULTS = [
   TrichineResultatAnalyse.NON_NEGATIF,
   TrichineResultatAnalyse.PRESENCE_PARASITE_NON_IDENTIFIE,
   TrichineResultatAnalyse.POSITIF,
 ];
-// Résultats sur lesquels le laboratoire a vu des larves et peut indiquer leur nombre
 const RESULTATS_AVEC_LARVES: Array<TrichineResultatAnalyse> = [
   TrichineResultatAnalyse.DOUTEUX,
   ...LNR_RESULTS,
 ];
 
-/** Saisie d'un premier résultat, ou correction d'un résultat déjà rendu. */
 export type ResultatMode = 'saisie' | 'correction';
 
-/** FTP par laquelle le laboratoire a transmis ce pool non négatif au LNR */
 export type PoolConfirmation = {
   id: string;
   numero_fiche: string;
@@ -89,7 +76,6 @@ export default function PoolCard({
   isLnr: boolean;
   confirmation: PoolConfirmation | null;
   saisieActive: boolean;
-  /** Sur la page du pool, la référence et le statut sont déjà dans le titre */
   entete?: boolean;
   onSaisirResultat: () => void;
   onCorrigerResultat: () => void;
@@ -102,12 +88,9 @@ export default function PoolCard({
   const maReference = monAlias(pool.Aliases, mesEntites);
   const autresReferences = pool.Aliases.filter((alias) => alias.id !== maReference?.id);
   const resultatSaisi = pool.resultat_analyse !== null;
-  // Le LNR confirme les pools non négatifs : la saisie reste ouverte sur un DOUTEUX
   const peutSaisir =
     saisieActive && (!resultatSaisi || (isLnr && pool.resultat_analyse === TrichineResultatAnalyse.DOUTEUX));
-  // Une fois le pool parti en confirmation, son résultat appartient au LNR
   const transmisAuLnr = !isLnr && !!confirmation && confirmation.statut_logistique !== 'ANNULEE';
-  // Un DOUTEUX n'est pas corrigeable : la confirmation est déjà partie au LNR
   const peutCorriger =
     saisieActive &&
     resultatSaisi &&
@@ -116,8 +99,6 @@ export default function PoolCard({
     pool.resultat_analyse !== TrichineResultatAnalyse.DOUTEUX;
   const nombre = pool.TrichineEchantillons.length;
   const nombreRetires = pool.EchantillonsRetires.length;
-  // Retrait possible tant que le résultat peut être saisi. Le dernier échantillon ne se retire
-  // pas : c'est alors le pool qu'on refuse.
   const peutRetirer = peutSaisir && nombre > 1;
   const carcasses = pool.TrichineEchantillons.map((echantillon) => echantillon.Carcasse.numero_bracelet)
     .filter(Boolean)
@@ -290,14 +271,12 @@ export function ResultatModalContent({
   const [raison, setRaison] = useState('');
   const [raisonRefus, setRaisonRefus] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // Sur un non négatif, la modale reste ouverte pour guider l'envoi au LNR
   const [ftpConfirmation, setFtpConfirmation] = useState<FtpConfirmationCreee | null>(null);
   const [photos, setPhotos] = useState<Array<TrichineDocument>>([]);
   const { isDownloading, onDownloadFtpPdf } = useDownloadFtpPdf('laboratoire');
   const mesEntites = useMesEntitesAlias();
   const maReference = monAlias(pool?.Aliases, mesEntites)?.reference ?? '';
 
-  // Une fiche porte plusieurs pools : rien de ce qui a été saisi pour l'un ne doit rester pour le suivant
   useEffect(() => {
     setFtpConfirmation(null);
     setPhotos([]);
@@ -316,14 +295,11 @@ export function ResultatModalContent({
     setRaison('');
     setRaisonRefus('');
   }, [pool?.id]);
-  // Pré-remplit avec la référence déjà posée, qui peut arriver après l'ouverture : sans écraser
-  // ce que le laboratoire a commencé à saisir
   useEffect(() => {
     setReferenceLabo((saisie) => saisie || maReference);
   }, [pool?.id, maReference]);
 
   const correction = mode === 'correction';
-  // Analyse impossible : un résultat comme un autre pour le laboratoire, enregistré par la route de refus
   const options = isLnr ? LNR_RESULTS : LVD_RESULTS;
   const choix = correction ? options : [...options, TrichineResultatAnalyse.ANALYSE_IMPOSSIBLE];
   const analyseImpossible = resultat === TrichineResultatAnalyse.ANALYSE_IMPOSSIBLE;
@@ -334,7 +310,6 @@ export function ResultatModalContent({
     !!nombreLarves &&
     !(Number.isInteger(Number(nombreLarves)) && Number(nombreLarves) >= 1);
   const versLnr = resultat === TrichineResultatAnalyse.DOUTEUX;
-  // La FTP de confirmation part au LNR avec ce qu'il doit savoir de l'échantillon
   const envoiLnrIncomplet = versLnr && (!nombreLarves || !conditionsConservationLnr.trim());
   const aujourdhui = dayjs().format('YYYY-MM-DD');
   const dateFuture = (date: string) => !!date && date > aujourdhui;
@@ -418,8 +393,6 @@ export function ResultatModalContent({
       nombre_larves: larvesSaisissables && nombreLarves ? Number(nombreLarves) : undefined,
       date_debut_analyse: dateDebut || undefined,
       date_fin_analyse: dateFin || undefined,
-      // Seulement si le laboratoire l'a changée : celle déjà posée n'a pas à être revérifiée.
-      // Une chaîne vide retire la référence déjà posée.
       reference_labo: referenceLabo.trim() !== maReference ? referenceLabo.trim() : undefined,
       commentaire: commentaire.trim() || undefined,
       ...(versLnr && {
@@ -428,7 +401,6 @@ export function ResultatModalContent({
         conditions_conservation_lnr: conditionsConservationLnr.trim(),
       }),
     };
-    // Seule une première saisie peut générer une FTP de confirmation vers le LNR
     const request: Promise<{
       ok: boolean;
       data: { pool: TrichinePool; ftp_confirmation?: FtpConfirmationCreee | null } | null;
@@ -469,7 +441,6 @@ export function ResultatModalContent({
             ? `Résultat de confirmation du pool ${reference}`
             : `Résultat du pool ${reference}`
       }
-      // Le bouton dans le pied de la modale reste visible quel que soit le contenu affiché
       buttons={{
         children: correction
           ? 'Enregistrer la correction'
@@ -649,7 +620,6 @@ export function ResultatModalContent({
               onChange: (event) => setCommentaire(event.target.value),
             }}
           />
-          {/* Une correction intervient analyses terminées : la référence est alors figée */}
           {!correction && (
             <Input
               label="Ma référence interne (optionnel)"
@@ -676,7 +646,6 @@ export function RetraitEchantillonModalContent({
   const [motif, setMotif] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Évite qu'un motif saisi pour un échantillon ne reste pré-rempli pour le suivant
   useEffect(() => {
     setMotif('');
   }, [retrait?.echantillon.id]);

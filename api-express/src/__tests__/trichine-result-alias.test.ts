@@ -1,9 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { TrichineResultatAnalyse } from '@prisma/client';
 
-// applyPoolResult — la référence labo saisie avec un résultat devient l'alias du pool. Refusée
-// (format, déjà prise), elle bloque une saisie manuelle mais jamais un résultat lu automatiquement.
-
 vi.mock('~/utils/trichine-status', async (importOriginal) => ({
   ...(await importOriginal<typeof import('~/utils/trichine-status')>()),
   recomputePoolAndLinkedFTPs: vi.fn().mockResolvedValue(undefined),
@@ -48,7 +45,6 @@ const appliquer = (reference_labo: string, origine: ApplyPoolResultOrigine) =>
     origine,
   });
 
-// La référence est déjà donnée par ce labo à un autre pool
 const referenceDejaPrise = () =>
   vi.mocked(prisma.trichineAlias.findMany).mockResolvedValueOnce([
     {

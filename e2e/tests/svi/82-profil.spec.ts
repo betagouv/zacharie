@@ -20,8 +20,6 @@ test('82 - Profil SVI : entreprise, utilisateurs, notifications accessibles', as
   await expect(page).toHaveURL(/\/app\/svi\/entreprise\/utilisateurs/);
   await expect(page.getByText(/svi@example\.fr/i).first()).toBeVisible({ timeout: 10000 });
 
-  // Profil notifications / partage
   await page.goto('http://localhost:3290/app/svi/profil/mes-notifications');
-  // TODO: verify exact profile sub-routes (may be /profil/mes-coordonnees, etc.)
   await expect(page).toHaveURL(/\/app\/svi\/profil/);
 });

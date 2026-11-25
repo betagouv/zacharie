@@ -2,10 +2,6 @@ import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Scenario 170 — Un chasseur est rattaché à 5 associations de chasse au maximum (demandes en attente
-// comprises). Seed CHASSEUR_5_ASSOCIATIONS : examinateur@ est admin de « Association limite 1 » à 4,
-// et a une demande en attente pour « Association limite 5 ».
-
 test.use({
   viewport: { width: 350, height: 667 },
   hasTouch: true,
@@ -32,7 +28,6 @@ test("170 - à 5 associations, le chasseur ne peut plus en ajouter tant qu'il n'
   await expect(page.getByText(LIMIT_TEXT)).toBeVisible();
   await expect(page.getByRole('button', { name: /Me rattacher à une autre entité/i })).toHaveCount(0);
 
-  // retirer une association libère une place
   const card = page.locator('.bg-contrast-grey').filter({ hasText: 'Association limite 1' }).first();
   const retirer = card.getByRole('button', { name: 'Retirer' });
   await retirer.scrollIntoViewIfNeeded();

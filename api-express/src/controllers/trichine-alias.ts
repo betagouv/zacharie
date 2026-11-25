@@ -21,12 +21,6 @@ import {
 
 const router: express.Router = express.Router();
 
-/**
- * Références internes (alias) des échantillons, pools et FTP, posées par le SVI émetteur et par
- * les laboratoires (LVD, LNR). Chacun ne peut écrire que l'alias de sa propre entité, sur un
- * objet qu'il voit déjà dans son espace.
- */
-
 function sendError(res: express.Response, status: number, error: string) {
   res.status(status).send({ ok: false, data: null, error });
 }
@@ -53,22 +47,14 @@ const liensFtp = {
   TrichinePoolFTPs: { include: { TrichineFTP: { select: { deleted_at: true, statut_logistique: true } } } },
 } as const;
 
-// FTP par laquelle un laboratoire voit un objet : envoyée (ou annulée après envoi), pas brouillon
 function ftpVisibleParLabo(ftp: { deleted_at: Date | null; statut_logistique: TrichineStatutLogistiqueFTP }) {
   return !ftp.deleted_at && ftp.statut_logistique !== TrichineStatutLogistiqueFTP.BROUILLON;
 }
 
-// `fige` porte le motif du gel, null si la référence est encore modifiable
 type Cible =
   | { kind: 'ok'; entityId: string; fige: string | null }
   | { kind: 'error'; status: number; error: string };
 
-/**
- * Résout l'entité au nom de laquelle l'utilisateur pose l'alias, en vérifiant qu'il voit l'objet :
- * - SVI : l'objet a été prélevé / constitué / expédié par son équipe ;
- * - laboratoire : l'objet lui est arrivé par une FTP dont il est destinataire (ou expéditeur,
- *   pour la FTP de confirmation qu'un LVD envoie au LNR).
- */
 async function resoudreCible(
   req: RequestWithUser,
   objetType: TrichineAliasObjet,
@@ -158,7 +144,6 @@ async function resoudreCible(
   };
 }
 
-// Entités dont l'utilisateur porte l'alias : sert à distinguer « ma référence » des autres
 router.get(
   '/mes-entites',
   passport.authenticate('user', { session: false }),

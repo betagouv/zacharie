@@ -9,12 +9,6 @@ import {
 } from '@prisma/client';
 import API from '@app/services/api';
 
-/**
- * Références internes (alias) des échantillons, pools et FTP : chaque entité qui manipule
- * l'objet (SVI, LVD, LNR) peut lui donner la sienne, et tous les acteurs les voient.
- * Le backend arbitre les droits et le gel (cf api-express/src/controllers/trichine-alias.ts).
- */
-
 type ApiResponse<T> = { ok: boolean; data: T | null; error: string };
 
 export type TrichineAlias = {
@@ -47,10 +41,6 @@ export function retirerAlias(objet: TrichineAliasObjet, objetId: string) {
   >;
 }
 
-/**
- * Entités au nom desquelles l'utilisateur pose ses alias (son SVI ou son laboratoire).
- * Pas de cache module : il survivrait à une déconnexion (navigation sans rechargement).
- */
 export function useMesEntitesAlias(): Array<string> {
   const [entityIds, setEntityIds] = useState<Array<string>>([]);
   useEffect(() => {
@@ -75,17 +65,14 @@ export function nomEntiteAlias(alias: TrichineAlias): string {
   return alias.Entity.nom_d_usage || alias.Entity.raison_sociale || '—';
 }
 
-// « SVI 35 : A-12 · LVD 35 : 2026-87 »
 export function formatAliases(aliases: Array<TrichineAlias> | undefined): string {
   return (aliases ?? []).map((alias) => `${nomEntiteAlias(alias)} : ${alias.reference}`).join(' · ');
 }
 
-/** Toutes les références d'un objet, pour la recherche libre des listes. */
 export function aliasesRecherche(aliases: Array<TrichineAlias> | undefined): string {
   return (aliases ?? []).map((alias) => alias.reference).join(' ');
 }
 
-// Mêmes règles que le backend : figé une fois les analyses terminées, ou la FTP clôturée
 export function aliasAnalysesFige(objet: Pick<TrichinePool | TrichineEchantillon, 'statut'>): boolean {
   return objet.statut === TrichineStatutAnalyse.ANALYSES_TERMINEES;
 }

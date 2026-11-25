@@ -12,9 +12,6 @@ const FICHE_PIERRE_COLLECTEUR_1 = 'ZACH-20250707-QZ6E0-600001';
 const FICHE_MARIE_DIRECT = 'ZACH-20250707-QZ6E0-600002';
 const FICHE_MARIE_COLLECTEUR_2 = 'ZACH-20250707-QZ6E0-600003';
 
-// Scenario 162 — un filtre enregistré dans le navigateur (session précédente, autre compte) dont la
-// valeur ne correspond à aucune fiche de la liste : il n'a pas de case à cocher, il ne doit donc
-// cacher aucune fiche.
 test('ETG : un filtre enregistré qui ne correspond à aucune fiche ne cache pas les fiches', async ({
   page,
 }) => {
@@ -40,7 +37,6 @@ test('ETG : un filtre enregistré qui ne correspond à aucune fiche ne cache pas
   await expect(fiche(FICHE_MARIE_COLLECTEUR_2)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Réinitialiser' })).toBeHidden();
 
-  // Cocher puis décocher un collecteur ne fait pas disparaître les autres fiches.
   await page.getByRole('button', { name: 'Collecteur', exact: true }).click();
   const collecteur1 = page.getByRole('checkbox', { name: 'Collecteur Pro 1' });
   await collecteur1.scrollIntoViewIfNeeded();

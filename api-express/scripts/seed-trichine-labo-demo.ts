@@ -1,22 +1,3 @@
-/**
- * Seed de démonstration pour tester l'import de résultats LIMS (cf doc/trichine-import-lims.md).
- *
- * Crée, sur la base pointée par POSTGRESQL_ADDON_URI :
- *  - une entité LVD + une entité LNR (nécessaire à la génération auto de FTP sur DOUTEUX)
- *  - un utilisateur laboratoire  : labo-demo@example.fr / secret-secret
- *  - un utilisateur émetteur (chasseur), une FEI et 3 carcasses sanglier
- *  - 3 pools (P-26-EMTDM-0001/002/003), 1 échantillon par pool (E-26-EMTDM-0001/002/003)
- *  - une FTP ENVOYEE au LVD contenant les 3 pools
- *
- * Idempotent : nettoie son propre run précédent avant de recréer.
- *
- * Lancer (depuis api-express/) :
- *   tsx ./scripts/seed-trichine-labo-demo.ts
- * ou contre la base de test :
- *   NODE_ENV=test POSTGRESQL_ADDON_URI=postgres://postgres:postgres@localhost:5432/zacharietest tsx ./scripts/seed-trichine-labo-demo.ts
- *
- * NE PAS lancer contre une base partagée (préprod/prod).
- */
 import {
   EntityRelationStatus,
   EntityRelationType,
@@ -38,7 +19,6 @@ const EMETTEUR_EMAIL = 'emetteur-trichine-demo@example.fr';
 const FEI_NUMERO = 'ZACH-DEMO-TRICHINE-001';
 const FTP_NUMERO = 'F-26-EMTDM-0001';
 
-// pool ↔ carcasse ↔ échantillon, index par index
 const ROWS = [
   {
     pool: 'P-26-EMTDM-0001',
@@ -64,7 +44,6 @@ const CARCASSE_IDS = ROWS.map((r) => r.carcasse);
 const ECHANTILLON_REFS = ROWS.map((r) => r.echantillon);
 
 async function cleanup() {
-  // Ordre enfants → parents
   await prisma.trichinePoolFTP.deleteMany({ where: { TrichinePool: { reference_pool: { in: POOL_REFS } } } });
   await prisma.trichineFTP.deleteMany({
     where: { OR: [{ numero_fiche: FTP_NUMERO }, { destinataire_entity_id: { in: [LVD_ID, LNR_ID] } }] },
@@ -90,7 +69,6 @@ async function cleanup() {
 async function main() {
   await cleanup();
 
-  // 1. Entités laboratoire
   await prisma.entity.createMany({
     data: [
       {
@@ -120,7 +98,6 @@ async function main() {
     ],
   });
 
-  // 2. Utilisateurs
   await prisma.user.createMany({
     data: [
       {
@@ -153,7 +130,6 @@ async function main() {
     ],
   });
 
-  // 3. Rattachement du user labo à l'entité LVD (guardLabo exige ADMIN/MEMBER)
   await prisma.entityAndUserRelations.create({
     data: {
       owner_id: LABO_USER_ID,
@@ -163,7 +139,6 @@ async function main() {
     },
   });
 
-  // 4. FEI + carcasses sanglier (émetteur = 1er détenteur)
   await prisma.fei.create({
     data: {
       numero: FEI_NUMERO,
@@ -183,7 +158,6 @@ async function main() {
     })),
   });
 
-  // 5. Pools (1 par carcasse)
   await prisma.trichinePool.createMany({
     data: POOL_REFS.map((reference_pool) => ({
       reference_pool,
@@ -198,7 +172,6 @@ async function main() {
   });
   const poolIdByRef = new Map(pools.map((pool) => [pool.reference_pool, pool.id]));
 
-  // 6. 1 échantillon par carcasse, rattaché à son pool
   await prisma.trichineEchantillon.createMany({
     data: ROWS.map((row) => ({
       reference_echantillon: row.echantillon,
@@ -212,7 +185,6 @@ async function main() {
     })),
   });
 
-  // 7. FTP envoyée au LVD, contenant les 3 pools
   const ftp = await prisma.trichineFTP.create({
     data: {
       numero_fiche: FTP_NUMERO,

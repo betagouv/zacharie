@@ -14,21 +14,13 @@ import {
 
 type JwtPayload = SessionTokenPayload & { iat?: number };
 
-// Code renvoyé (403) quand un admin a une session valide mais pas d'authentification ProConnect récente
 export const PROCONNECT_REQUIRED = 'PROCONNECT_REQUIRED';
 
 const cookieExtractor = (req: Request): string | null => {
-  // console.log('Cookies extractor called', req.cookies);
   const token = req && req.cookies ? req.cookies[SESSION_COOKIE_NAME] : null;
-  // console.log('Extracted token:', token);
-  // console.log('Secret key', SECRET);
   return token;
 };
 
-// Native WebView clients can't rely on cross-site cookies (WebKit ITP),
-// so they send the JWT as `Authorization: Bearer <token>` instead.
-// Only applied to the user/admin strategies — the apiKey strategy reads
-// its own key from the same header but is mounted on /v1/ routes only.
 const bearerExtractor = (req: Request): string | null => {
   const auth = req.headers.authorization;
   if (auth?.startsWith('Bearer ')) {
@@ -47,45 +39,33 @@ passport.use(
   new JwtStrategy(
     jwtOptions,
     async (jwt_payload: JwtPayload, done: (error: Error | null, user: User | null) => void) => {
-      // console.log('JWT Strategy called');
-      // console.log('JWT payload:', jwt_payload);
-
       try {
         if (!jwt_payload || typeof jwt_payload !== 'object') {
-          // console.log('Invalid JWT payload');
           return done(null, null);
         }
 
         if (!jwt_payload.userId) {
-          // console.log('No userId in JWT payload');
           return done(null, null);
         }
 
-        // console.log('Attempting to find user with ID:', jwt_payload.userId);
         const user = await prisma.user.findUnique({
           where: { id: jwt_payload.userId },
           include: { Password: { select: { password_changed_at: true } } },
         });
 
         if (user) {
-          // console.log('User found:', user.email);
-          // console.log('User found:', user.id);
           if (user.deleted_at) {
-            // console.log('User has been deleted');
             return done(null, null);
           }
           const { Password, ...userWithoutPassword } = user;
           if (isTokenRevokedByPasswordChange(jwt_payload, Password?.password_changed_at)) {
             return done(null, null);
           }
-          // console.log('Authentication successful');
           return done(null, userWithoutPassword);
         } else {
-          // console.log('User not found in database');
           return done(null, null);
         }
       } catch (error) {
-        // console.error('Error in Passport strategy:', error);
         return done(error as Error, null);
       }
     }
@@ -100,17 +80,12 @@ passport.use(
       jwt_payload: JwtPayload,
       done: (error: Error | null, user: User | null | false, info?: { code: string }) => void
     ) => {
-      // console.log('JWT Strategy called');
-      // console.log('JWT payload:', jwt_payload);
-
       try {
         if (!jwt_payload || typeof jwt_payload !== 'object') {
-          // console.log('Invalid JWT payload');
           return done(null, null);
         }
 
         if (!jwt_payload.userId) {
-          // console.log('No userId in JWT payload');
           return done(null, null);
         }
 
@@ -134,7 +109,6 @@ passport.use(
 
         return done(null, userWithoutPassword);
       } catch (error) {
-        // console.error('Error in Passport strategy:', error);
         return done(error as Error, null);
       }
     }

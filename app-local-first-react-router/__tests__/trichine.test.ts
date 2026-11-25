@@ -130,8 +130,6 @@ describe('filtreLaboFTP', () => {
     statut_logistique: statutLogistique,
   });
 
-  // Le classement suit la réception, pas la présence d'un résultat : une FTP de confirmation
-  // vers le LNR porte déjà le DOUTEUX saisi par le LVD avant même que le LNR l'ait reçue.
   test('à traiter tant que la FTP n’est pas réceptionnée', () => {
     expect(filtreLaboFTP(makeLaboFtp(TrichineStatutLogistiqueFTP.ENVOYEE))).toBe('a-traiter');
   });

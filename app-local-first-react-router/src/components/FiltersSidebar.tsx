@@ -8,10 +8,6 @@ interface FiltersSidebarProps {
   title?: string;
 }
 
-// Sidebar de filtres réutilisable, calquée sur la page « Mes fiches » chasseur.
-// - Desktop : panneau collé à gauche, repliable en une bande étroite (état persité en localStorage).
-// - Mobile : bouton « Filtres » + panneau modal overlay.
-// À placer comme premier enfant d'un conteneur `md:flex` ; le contenu principal suit dans un `flex-1`.
 export default function FiltersSidebar({
   children,
   storageKey,
@@ -39,7 +35,6 @@ export default function FiltersSidebar({
 
   return (
     <>
-      {/* Mobile : bouton filtres */}
       <div className="mb-2 hidden max-md:flex">
         <button
           type="button"
@@ -56,7 +51,6 @@ export default function FiltersSidebar({
         </button>
       </div>
 
-      {/* Mobile : panneau modal */}
       {showMobileFilters && (
         <div className="fixed inset-0 z-[800] hidden max-md:block">
           <div
@@ -88,7 +82,6 @@ export default function FiltersSidebar({
         </div>
       )}
 
-      {/* Desktop : sidebar repliée -> bande étroite */}
       {!open && (
         <button
           type="button"
@@ -109,7 +102,6 @@ export default function FiltersSidebar({
         </button>
       )}
 
-      {/* Desktop : sidebar ouverte */}
       {open && (
         <aside className="sticky top-0 hidden h-screen w-52 shrink-0 overflow-y-auto border-r border-gray-200 bg-white px-3 py-2 md:block">
           <div className="mb-2 flex items-center justify-between">

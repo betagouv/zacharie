@@ -34,7 +34,6 @@ import {
 } from '~/utils/trichine-alias';
 import { recomputeFTPTrichine, recomputePoolAndLinkedFTPs } from '~/utils/trichine-status';
 
-// Résultats saisissables selon le type de laboratoire (cf doc/trichine.md §6.3-6.4)
 export const LVD_RESULTS: TrichineResultatAnalyse[] = [
   TrichineResultatAnalyse.NEGATIF,
   TrichineResultatAnalyse.DOUTEUX,
@@ -45,7 +44,6 @@ export const LNR_RESULTS: TrichineResultatAnalyse[] = [
   TrichineResultatAnalyse.POSITIF,
 ];
 
-// Résultats sur lesquels le laboratoire a vu des larves et peut indiquer leur nombre
 export const RESULTATS_AVEC_LARVES: TrichineResultatAnalyse[] = [
   TrichineResultatAnalyse.DOUTEUX,
   ...LNR_RESULTS,
@@ -57,11 +55,6 @@ export type ResultValidationError = {
   error: string;
 };
 
-/**
- * Règles métier de saisie d'un résultat sur un pool : résultat autorisé selon LVD/LNR, parasite
- * obligatoire sur NON_NEGATIF, écrasement d'un DOUTEUX réservé au LNR. Pur, sans I/O.
- * Source UNIQUE partagée par applyPoolResult (saisie/import) et l'aperçu d'import LIMS.
- */
 export function validateResultForPool({
   existingResult,
   resultat_analyse,
@@ -75,7 +68,6 @@ export function validateResultForPool({
   resultat_analyse: TrichineResultatAnalyse;
   parasite_identifie?: string;
   nombre_larves?: number;
-  // Date (saisie) ou AAAA-MM-JJ (import)
   date_debut_analyse?: Date | string;
   date_fin_analyse?: Date | string;
   isLnr: boolean;
@@ -106,7 +98,6 @@ export function validateResultForPool({
   if (datesInvalides) {
     return { code: 'dates_invalides', status: 400, error: datesInvalides };
   }
-  // Seul le LNR peut écraser un résultat DOUTEUX (confirmation) ; tout autre résultat est définitif
   if (existingResult && !(existingResult === TrichineResultatAnalyse.DOUTEUX && isLnr)) {
     return { code: 'already_resulted', status: 400, error: 'Un résultat a déjà été saisi pour ce pool' };
   }
@@ -114,7 +105,6 @@ export function validateResultForPool({
 }
 
 function erreurDatesAnalyse(debut?: Date | string, fin?: Date | string): string | null {
-  // Un jour de marge : une date AAAA-MM-JJ est lue à minuit UTC, en avance sur l'heure française
   const limite = dayjs().add(1, 'day');
   if ((debut && dayjs(debut).isAfter(limite)) || (fin && dayjs(fin).isAfter(limite))) {
     return 'Une date d’analyse ne peut pas être dans le futur';
@@ -125,8 +115,6 @@ function erreurDatesAnalyse(debut?: Date | string, fin?: Date | string): string 
   return null;
 }
 
-// Formes minimales attendues (satisfaites structurellement par findPoolForLabo côté saisie
-// manuelle et par le rapprochement d'import LIMS côté fichier)
 type ApplyPoolResultPool = {
   id: string;
   reference_pool: string;
@@ -153,7 +141,6 @@ type ApplyPoolResultFtp = {
   expediteur_entity_id: string | null;
 };
 
-// Lignes « nombre de larves » des emails destinés aux laboratoires (jamais à l'émetteur)
 export function detailsNombreLarves({
   nombre_larves_lvd,
   nombre_larves_lnr,
@@ -176,52 +163,30 @@ export const resultatSchema = z.object({
     Object.values(TrichineResultatAnalyse) as [TrichineResultatAnalyse, ...TrichineResultatAnalyse[]]
   ),
   parasite_identifie: z.string().optional(),
-  // Enregistré dans nombre_larves_lvd ou nombre_larves_lnr selon le laboratoire qui saisit
   nombre_larves: z.number().int().min(1).optional(),
   date_debut_analyse: z.coerce.date().optional(),
   date_fin_analyse: z.coerce.date().optional(),
-  // Référence interne du laboratoire pour ce pool : devient son alias (cf utils/trichine-alias.ts)
   reference_labo: z.string().optional(),
   commentaire: z.string().optional(),
-  // FTP de confirmation générée vers le LNR sur un DOUTEUX saisi par un LVD
   date_envoi_lnr: z.coerce.date().optional(),
   mode_transport_lnr: z.string().optional(),
   conditions_conservation_lnr: z.string().optional(),
 });
 export type ApplyPoolResultBody = z.infer<typeof resultatSchema>;
 
-/**
- * D'où vient le résultat. Saisi à la main, une référence labo refusée (format, déjà prise) bloque
- * la saisie : le laboratoire la corrige. Lu dans un import LIMS, la référence est facultative et ne
- * doit jamais faire perdre le résultat : elle est alors ignorée.
- */
 export type ApplyPoolResultOrigine = 'saisie' | 'automatique';
 
-// FTP générée vers le LNR sur un résultat DOUTEUX : le laboratoire doit l'imprimer et la joindre au colis
 export type FtpConfirmation = { id: string; numero_fiche: string };
 
-// Discriminant string-literal (et non booléen) : le repo compile avec strictNullChecks: false,
-// qui casse le narrowing des unions discriminées sur un booléen.
 export type ApplyPoolResultOutcome =
   | {
       kind: 'ok';
       pool: TrichinePool | null;
       ftpConfirmation: FtpConfirmation | null;
-      // Motif pour lequel la référence labo lue dans un import n'a pas été posée (le résultat l'est)
       referenceIgnoree: string | null;
     }
   | { kind: 'error'; status: number; error: string };
 
-/**
- * Applique un résultat d'analyse à un pool : gardes métier (résultats autorisés selon
- * LVD/LNR, parasite obligatoire sur NON_NEGATIF, écrasement d'un DOUTEUX réservé au LNR),
- * mise à jour du pool, recalcul de statut, génération automatique de la FTP de confirmation
- * vers le LNR sur DOUTEUX, et notifications.
- *
- * Chemin UNIQUE partagé par la saisie manuelle (POST /laboratoire/pool/:id/resultat) et
- * l'import de fichier LIMS : toute évolution des règles/effets de bord profite aux deux.
- * Les préoccupations HTTP (auth, parsing, rapprochement du pool, réponse) restent aux appelants.
- */
 export async function applyPoolResult({
   pool,
   ftp,
@@ -252,8 +217,6 @@ export async function applyPoolResult({
   if (invalid) {
     return { kind: 'error', status: invalid.status, error: invalid.error };
   }
-  // Saisi à la main, un DOUTEUX part au LNR avec ce qu'il doit savoir de l'échantillon. Un import
-  // LIMS n'a pas ces colonnes : la FTP de confirmation part sans.
   const versLnr = body.resultat_analyse === TrichineResultatAnalyse.DOUTEUX && !isLnr;
   if (versLnr && origine === 'saisie') {
     if (body.nombre_larves == null) {
@@ -268,7 +231,6 @@ export async function applyPoolResult({
       };
     }
   }
-  // L'alias est posé au nom du laboratoire destinataire de la fiche par laquelle le pool est arrivé
   const referenceSaisie = body.reference_labo?.trim() || null;
   const referenceRefusee = referenceSaisie
     ? await aliasReferenceRefusee({
@@ -283,10 +245,7 @@ export async function applyPoolResult({
   }
   const referenceLabo = referenceRefusee ? null : referenceSaisie;
   let referenceIgnoree = referenceRefusee;
-  // Saisie manuelle : un champ vidé retire la référence du laboratoire (un import ne retire jamais rien)
   const referenceEffacee = origine === 'saisie' && body.reference_labo !== undefined && !referenceSaisie;
-  // Comme les dates et le commentaire, un nombre de larves non renseigné garde celui déjà posé
-  // (correction d'un résultat)
   const nombreLarves = body.nombre_larves ?? (isLnr ? pool.nombre_larves_lnr : pool.nombre_larves_lvd);
 
   await prisma.trichinePool.update({
@@ -294,7 +253,6 @@ export async function applyPoolResult({
     data: {
       resultat_analyse: body.resultat_analyse,
       parasite_identifie: body.parasite_identifie ?? null,
-      // Le LNR ne touche pas au nombre compté par le LVD, et inversement
       ...(isLnr ? { nombre_larves_lnr: nombreLarves } : { nombre_larves_lvd: nombreLarves }),
       date_debut_analyse: body.date_debut_analyse ?? pool.date_debut_analyse,
       date_fin_analyse: body.date_fin_analyse ?? new Date(),
@@ -329,8 +287,6 @@ export async function applyPoolResult({
 
   let ftpConfirmation: FtpConfirmation | null = null;
 
-  // Un résultat n'est notifié qu'à l'émetteur de la FTP. Les détenteurs des carcasses ne le sont
-  // pas : ils voient le résultat sur la carcasse, et le volume d'envois reste à cadrer avec eux.
   const emitterUsers = await getFtpEmitterUsers(ftp);
 
   if (body.resultat_analyse === TrichineResultatAnalyse.NEGATIF) {
@@ -361,7 +317,6 @@ export async function applyPoolResult({
   }
 
   if (body.resultat_analyse === TrichineResultatAnalyse.DOUTEUX) {
-    // Type ré-attribué automatiquement : le pool transmis au LNR devient un pool de confirmation
     await prisma.trichinePool.update({
       where: { id: pool.id },
       data: { type: TrichineType.CONFIRMATION },
@@ -371,7 +326,6 @@ export async function applyPoolResult({
       data: { type: TrichineType.CONFIRMATION },
     });
 
-    // Génération automatique de la FTP vers le LNR
     const lnrEntity = await prisma.entity.findFirst({
       where: { type: EntityTypes.LABORATOIRE, is_lnr: true, deleted_at: null },
     });
@@ -380,7 +334,6 @@ export async function applyPoolResult({
         extra: { pool_id: pool.id },
       });
     } else {
-      // La FTP de confirmation part du LVD : c'est lui qui donne son code à la référence
       const entityCode = await referenceCodeForEntity(ftp.destinataire_entity_id, userId);
       const lnrFtp = await withReferenceRetry(async () =>
         prisma.trichineFTP.create({
@@ -400,7 +353,6 @@ export async function applyPoolResult({
       );
       await prisma.trichinePoolFTP.create({ data: { pool_id: pool.id, ftp_id: lnrFtp.id } });
       ftpConfirmation = { id: lnrFtp.id, numero_fiche: lnrFtp.numero_fiche };
-      // Statut analytique de la FTP de confirmation (EN_COURS_ANALYSES)
       await recomputeFTPTrichine(lnrFtp.id, userId);
       await logTrichineStatutChange({
         objetType: TrichineObjetType.FTP,
@@ -474,9 +426,6 @@ export async function applyPoolResult({
   }
 
   if (LNR_RESULTS.includes(body.resultat_analyse)) {
-    // Résultat de confirmation LNR : alerte au LVD (expéditeur de la FTP de confirmation)
-    // + à l'émetteur initial (expéditeur de la FTP d'origine). Le LVD reçoit en plus le nombre de
-    // larves, réservé aux laboratoires.
     const emetteursInitiaux = new Map<string, TrichineNotifiableUser>();
     if (ftp.ftp_parent_id) {
       const parentFtp = await prisma.trichineFTP.findUnique({ where: { id: ftp.ftp_parent_id } });
@@ -582,11 +531,6 @@ const EFFET_PAR_RESULTAT: Partial<Record<TrichineResultatAnalyse, PoolResultEffe
   [TrichineResultatAnalyse.PRESENCE_PARASITE_NON_IDENTIFIE]: 'decision_a_prendre',
 };
 
-/**
- * Décrit, en phrases lisibles par le laboratoire, ce que applyPoolResult va faire dans Zacharie.
- * Sert à l'aperçu d'import : toute évolution des effets de bord de applyPoolResult se reporte ici.
- * Pur, sans I/O.
- */
 export function describePoolResultActions({
   resultat_analyse,
   reference_pool,

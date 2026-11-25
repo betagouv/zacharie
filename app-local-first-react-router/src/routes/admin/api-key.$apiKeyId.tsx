@@ -260,7 +260,6 @@ export default function AdminApiKey() {
                       id: Prisma.ApiKeyScalarFieldEnum.name,
                       name: Prisma.ApiKeyScalarFieldEnum.name,
                       autoComplete: 'off',
-                      // required: true,
                       defaultValue: apiKey.name ?? '',
                     }}
                   />
@@ -271,7 +270,6 @@ export default function AdminApiKey() {
                       id: Prisma.ApiKeyScalarFieldEnum.description,
                       name: Prisma.ApiKeyScalarFieldEnum.description,
                       autoComplete: 'off',
-                      // required: true,
                       defaultValue: apiKey.description ?? '',
                     }}
                   />

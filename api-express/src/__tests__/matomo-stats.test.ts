@@ -128,7 +128,6 @@ describe('parseReferrers', () => {
 
 describe('dates', () => {
   it('la fenêtre glissante va de J-7 à J-1 dans le fuseau de Paris', () => {
-    // 21 octobre 00h30 à Paris, encore le 20 en UTC
     expect(slidingWindow(new Date('2026-10-20T22:30:00Z'))).toEqual({ from: '2026-10-14', to: '2026-10-20' });
   });
 

@@ -3,13 +3,6 @@ import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
-// Scenario 160 — FTP de confirmation LVD → LNR.
-// Seed LABORATOIRE_FTP_RECUE : laboratoire@example.fr (Laboratoire 1, LVD) a réceptionné la FTP
-// F-26-SVI01-0001 ; lnr@example.fr travaille pour le LNR. Sur un non négatif, le LVD indique le
-// nombre de larves, la date d'envoi, les modalités de transmission et les conditions de conservation :
-// la fiche de confirmation part d'office au LNR avec ces informations. « Analyse impossible » se choisit
-// dans la même modale que les autres résultats.
-
 test.setTimeout(120_000);
 test.use({ launchOptions: { slowMo: 100 } });
 
@@ -24,7 +17,6 @@ test('Le LVD renseigne l’envoi au LNR avec le résultat non négatif, le LNR l
   await expect(page).toHaveURL(/\/app\/laboratoire/);
   await page.goto('/app/laboratoire/ftp/F-26-SVI01-0001');
 
-  // Plus petit bloc qui porte à la fois la référence du pool et son bouton de saisie : la carte du pool
   const carte = page
     .locator('div')
     .filter({ has: page.getByRole('link', { name: 'P-26-SVI01-0002' }) })
@@ -37,7 +29,6 @@ test('Le LVD renseigne l’envoi au LNR avec le résultat non négatif, le LNR l
   await modale.getByText('Non négatif — à confirmer par le LNR', { exact: true }).click();
 
   const transmettre = modale.getByRole('button', { name: 'Enregistrer et transmettre au LNR' });
-  // Nombre de larves et conditions de conservation sont obligatoires
   await expect(transmettre).toBeDisabled();
   await modale.getByLabel('Nombre de larves découvertes dans le pool').fill('3');
   await expect(transmettre).toBeDisabled();
@@ -60,7 +51,6 @@ test('Le LVD renseigne l’envoi au LNR avec le résultat non négatif, le LNR l
   await expect(page.getByText('Chronopost, colis isotherme')).toBeVisible();
   await expect(page.getByText('Larves dans l’éthanol à 70 %, sous froid positif')).toBeVisible();
 
-  // Le LNR reçoit la fiche avec les mêmes informations
   await logoutAndConnect(page, 'lnr@example.fr');
   await expect(page).toHaveURL(/\/app\/laboratoire/);
   await page.goto(urlFicheConfirmation);
@@ -89,7 +79,6 @@ test('Le LVD enregistre une analyse impossible depuis la modale de résultat, da
   const modale = page.getByRole('dialog', { name: 'Résultat du pool P-26-SVI01-0001' });
   const enregistrer = modale.getByRole('button', { name: 'Enregistrer le résultat' });
 
-  // Un début d'analyse après la fin bloque l'enregistrement
   await modale.getByText('Négatif', { exact: true }).click();
   await modale.getByLabel("Début d'analyse (optionnel)").fill('2026-07-03');
   await modale.getByLabel("Début d'analyse (optionnel)").blur();
@@ -98,7 +87,6 @@ test('Le LVD enregistre une analyse impossible depuis la modale de résultat, da
   await expect(modale.getByText('La fin doit suivre le début d’analyse')).toBeVisible();
   await expect(enregistrer).toBeDisabled();
 
-  // Analyse impossible : seule la raison est demandée
   await modale.getByText(/^Analyse impossible/).click();
   await expect(modale.getByLabel("Fin d'analyse (optionnel)")).toHaveCount(0);
   await expect(enregistrer).toBeDisabled();

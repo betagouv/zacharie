@@ -16,9 +16,6 @@ test.beforeAll(async () => {
 test('Fiche refusée intégralement par ETG — chasseur voit le statut de refus pour chaque carcasse', async ({
   page,
 }) => {
-  // Fiche is in terminal "all refused at ETG" state: current owner = ETG, intermediaire_closed_at set,
-  // CarcasseIntermediaire with refus = "Présence de souillures". PD still sees it because they
-  // are premier_detenteur_user_id (and created_by_user_id via the examinateur).
   const feiId = 'ZACH-20250707-QZ6E0-215242';
   await connectWith(page, 'premier-detenteur@example.fr');
 

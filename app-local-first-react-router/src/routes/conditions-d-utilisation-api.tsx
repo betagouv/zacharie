@@ -47,7 +47,6 @@ export default function ConditionsDUtilisationApi() {
             jusqu'à l'inspection sanitaire.
           </p>
 
-          {/* ===================== TITRE I ===================== */}
           <h2 className={h2}>Titre I — Dispositions générales</h2>
 
           <h3 className={h3}>Article 1 — Objet</h3>
@@ -121,7 +120,6 @@ export default function ConditionsDUtilisationApi() {
           </p>
           <p>4.5. L'accès à l'API est gratuit.</p>
 
-          {/* ===================== TITRE II ===================== */}
           <h2 className={h2}>Titre II — Accès en lecture pour les logiciels tiers</h2>
 
           <h3 className={h3}>Article 5 — Accès en lecture</h3>
@@ -240,7 +238,6 @@ export default function ConditionsDUtilisationApi() {
             retirer l'accès à l'API sans renoncer à engager d'éventuelles poursuites à son encontre.
           </p>
 
-          {/* ===================== TITRE III ===================== */}
           <h2 className={h2}>Titre III — Données à caractère personnel et sécurité</h2>
 
           <h3 className={h3}>Article 9 — Protection des données personnelles</h3>
@@ -408,7 +405,6 @@ export default function ConditionsDUtilisationApi() {
             amiable avant toute action. À défaut, le litige est porté devant la juridiction compétente.
           </p>
 
-          {/* ===================== ANNEXES ===================== */}
           <h2 className={h2}>Annexe A — Données transmises par l'API</h2>
           <p>
             Le détail des champs est décrit dans la{' '}

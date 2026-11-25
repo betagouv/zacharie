@@ -7,10 +7,6 @@ import { sendError } from '~/middlewares/errors';
 import prisma from '~/prisma';
 import { getFromCellar } from '~/third-parties/cellar';
 
-// GET /laboratoire/pool/:pool_id/document/:document_id — téléchargement du rapport déposé.
-// Contrat épinglé ici : le fichier n'est servi qu'au laboratoire destinataire du pool,
-// et seulement s'il est bien rattaché à ce pool (pas de lecture d'une clé voisine par son id).
-
 vi.mock('~/third-parties/cellar', () => ({
   IS_CELLAR_CONFIGURED: true,
   getFromCellar: vi.fn(),

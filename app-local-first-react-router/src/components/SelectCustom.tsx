@@ -37,9 +37,6 @@ function SelectCustom<
   IsMulti extends boolean = false,
   Group extends GroupBase<Option> = GroupBase<Option>,
 >(allProps: SelectCustomProps<Option, IsMulti, Group>) {
-  // `required` n'est pas transmis à react-select : sans valeur, il rend un <input required> sans `type`
-  // que le piège à focus des modales DSFR prend pour un radio, et plante. Aucun de nos selects n'est
-  // dans un <form> (validation faite dans le code), on garde seulement l'info pour les lecteurs d'écran.
   const { creatable, async: isAsync, isReadOnly, label, hint, required, ...props } = allProps;
   const Component = isAsync
     ? creatable
@@ -114,8 +111,6 @@ function SelectCustom<
         </label>
       )}
       <Component
-        // These two options seems magical, they make the dropdown appear on top of everything
-        // https://stackoverflow.com/a/64973481/978690
         menuPosition="fixed"
         className={[props.className, props.isDisabled ? 'text-disabled-grey' : ''].join(' ')}
         menuPortalTarget={document.body}

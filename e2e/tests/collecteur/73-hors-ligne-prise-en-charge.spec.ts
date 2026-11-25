@@ -8,7 +8,6 @@ test.beforeEach(async () => {
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Scenario 73 — Hors-ligne : prise en charge locale → sync au retour en ligne.
 test('Collecteur transmet hors-ligne puis sync online', async ({ page, context }) => {
   const feiId = 'ZACH-20250707-QZ6E0-175242';
   await connectWith(page, 'collecteur-pro@example.fr');
@@ -25,7 +24,6 @@ test('Collecteur transmet hors-ligne puis sync online', async ({ page, context }
   await selectDest.scrollIntoViewIfNeeded();
   await selectDest.click();
   await page.getByRole('option', { name: /ETG 1/ }).click();
-  // Storage location is required before Transmettre
   const pasDeStockage = page.getByText(/Pas de stockage/i).first();
   await pasDeStockage.scrollIntoViewIfNeeded();
   await pasDeStockage.click();

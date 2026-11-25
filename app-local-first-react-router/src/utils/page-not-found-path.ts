@@ -1,10 +1,8 @@
-// Chemins sondés par des robots (scanners de failles, crawlers) : on ne les
-// envoie pas à Sentry. Liste à compléter quand de nouveaux chemins apparaissent.
 const BOT_PATH_PATTERNS: RegExp[] = [
   /^\/index(\.\w+)?\/?$/i,
   /^\/assets\//i,
   /^\/beta-testeurs/i,
-  /^\/\./, // .env, .git, .aws, .well-known, .DS_Store...
+  /^\/\./,
   /^\/(wp-|wordpress|wp\/)/i,
   /^\/(xmlrpc|phpinfo|info|test|shell|config|setup|install)\.php/i,
   /^\/(phpmyadmin|pma|myadmin|mysql|adminer)/i,
@@ -21,10 +19,6 @@ export function isBotPath(pathname: string) {
   return BOT_PATH_PATTERNS.some((pattern) => pattern.test(pathname));
 }
 
-// Un lien collé dans un texte entre parenthèses ou en fin de phrase
-// (« (https://zacharie.beta.gouv.fr/) ») est parfois ouvert avec la ponctuation
-// qui le suit : `/)`, `/app/chasseur.`... On renvoie le chemin sans cette
-// ponctuation, ou `null` si le chemin n'en a pas.
 const TRAILING_PUNCTUATION = /(?:[)\].,;:!?'"»>]|%29|%5D|%22|%C2%BB)+$/i;
 
 export function getPathWithoutTrailingPunctuation(pathname: string): string | null {

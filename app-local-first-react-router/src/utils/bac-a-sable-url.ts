@@ -1,4 +1,3 @@
-// bac à sable de l'API (api-playground) : jamais en production
 const BAC_A_SABLE_URL: Record<string, string | null> = {
   prod: null,
   test: 'https://api-playground.zacharie.incubateur.net',

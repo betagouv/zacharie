@@ -2,9 +2,6 @@ import { describe, expect, it } from 'vitest';
 import etablissements from '@app/data/etablissements-traitement-sanitaire.json';
 import { etablissementsTree, retrieveEtablissementAgremenet } from './etablissementsTraitementSaintaire';
 
-// Le fichier est importé dans le bundle : il ne garde que les 5 champs affichés, sous des clés
-// abrégées. Ces tests verrouillent ce format, qu'une régénération depuis le référentiel complet
-// pourrait faire régresser.
 describe('référentiel etablissements-traitement-sanitaire.json', () => {
   it('contient tous les établissements', () => {
     expect(etablissements.data).toHaveLength(2384);
@@ -32,8 +29,6 @@ describe('etablissementsTree', () => {
     );
   });
   it('produit un libellé unique par établissement', () => {
-    // retrieveEtablissementAgremenet retrouve l'établissement par son libellé : un doublon
-    // renverrait le mauvais numéro d'agrément.
     expect(new Set(etablissementsTree).size).toBe(etablissementsTree.length);
   });
 });

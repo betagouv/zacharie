@@ -36,7 +36,6 @@ const toolLabels: Record<string, string> = {
   list_commits: 'Derniers commits',
 };
 
-// on réduit les captures avant envoi : l'API limite le corps des requêtes à 5 Mo
 function imageFileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -71,7 +70,6 @@ type ThreadBlock =
   | { author: 'user'; message: BugInvestigationUserMessage }
   | { author: 'albert'; parts: Array<AlbertPart> };
 
-// regroupe les messages successifs d'Albert (appels d'outils + réponse) en un seul bloc
 function buildThread(messages: Array<BugInvestigationMessage>): Array<ThreadBlock> {
   const toolResults = new Map<string, string>();
   for (const message of messages) {
@@ -89,7 +87,6 @@ function buildThread(messages: Array<BugInvestigationMessage>): Array<ThreadBloc
       block = { author: 'albert', parts: [] };
       blocks.push(block);
     }
-    // le contrôle automatique et le premier jet qu'il vérifie restent visibles, mais repliés
     if (message.role === 'user') {
       const text = typeof message.content === 'string' ? message.content : '';
       block.parts.push({ kind: 'collapsed', title: 'Contrôle automatique du rapport', text });

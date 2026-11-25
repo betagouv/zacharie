@@ -5,7 +5,6 @@ import { sendWebhook } from '~/utils/api';
 import { nextVersion } from '~/utils/sync-version';
 
 export async function webhookApprobation(existingFei: Fei, savedFei: Fei) {
-  // la fiche lue en base et la fiche sauvegardée ont deux objets Date distincts : on compare leur valeur
   if (
     existingFei.examinateur_initial_date_approbation_mise_sur_le_marche?.getTime() !==
     savedFei.examinateur_initial_date_approbation_mise_sur_le_marche?.getTime()
@@ -46,11 +45,6 @@ export async function syncCarcasseDates(existingFei: Fei, savedFei: Fei, user: U
   }
 }
 
-/**
- * Runs all side effects after a FEI update.
- * SVI assignment and circuit court notifications are mutually exclusive
- * with generic next-owner notifications (matches original early-return flow).
- */
 export async function runFeiUpdateSideEffects(existingFei: Fei, savedFei: Fei, user: User) {
   await webhookApprobation(existingFei, savedFei);
   await syncCarcasseDates(existingFei, savedFei, user);

@@ -1,10 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { TrichineResultatAnalyse, TrichineStatutLogistiqueFTP } from '@prisma/client';
 
-// applyPoolResult — un non négatif saisi par un LVD génère la FTP de confirmation vers le LNR,
-// envoyée d'office, avec la date d'envoi, les modalités de transmission et les conditions de
-// conservation saisies par le laboratoire.
-
 vi.mock('~/utils/trichine-status', async (importOriginal) => ({
   ...(await importOriginal<typeof import('~/utils/trichine-status')>()),
   recomputePoolAndLinkedFTPs: vi.fn().mockResolvedValue(undefined),

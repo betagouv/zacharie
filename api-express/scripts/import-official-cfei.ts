@@ -3,18 +3,6 @@ import path from 'path';
 import { parse } from 'csv-parse';
 import prisma from '~/prisma';
 
-/**
- * Import script for official CFEI (Chasseur Formé à l'Examen Initial) list.
- *
- * Usage: npx tsx scripts/import-official-cfei.ts path/to/cfei-list.csv
- *
- * Expected CSV columns:
- * - numero_cfei: CFEI number (required, used as primary key)
- * - nom: Last name (optional)
- * - prenom: First name (optional)
- * - departement: Department code (optional)
- */
-
 async function importOfficialCfei() {
   const csvPath = process.argv[2];
 
@@ -45,7 +33,6 @@ async function importOfficialCfei() {
     departement: string | null;
   }> = [];
 
-  // Read all records first
   await new Promise<void>((resolve, reject) => {
     fs.createReadStream(sourcePath)
       .pipe(
@@ -80,7 +67,6 @@ async function importOfficialCfei() {
 
   console.log(`Found ${records.length} valid records to process`);
 
-  // Process records in batches for better performance
   const batchSize = 100;
   for (let i = 0; i < records.length; i += batchSize) {
     const batch = records.slice(i, i + batchSize);
@@ -113,7 +99,6 @@ async function importOfficialCfei() {
       }
     }
 
-    // Log progress
     const processed = Math.min(i + batchSize, records.length);
     console.log(`Processed ${processed}/${records.length} records...`);
   }

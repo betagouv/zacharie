@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from 'vitest';
 import type { CarcasseIntermediaire } from '@prisma/client';
 import type { FeiAndCarcasseAndIntermediaireIds } from '@app/types/carcasses-intermediaire';
 
-// le store (IndexedDB) n'est pas utile ici : on ne teste que la fonction pure
 vi.mock('@app/zustand/store', () => ({ default: () => null }));
 
 const { filterCarcassesIntermediairesForCarcasse } = await import('./get-carcasses-intermediaires');
