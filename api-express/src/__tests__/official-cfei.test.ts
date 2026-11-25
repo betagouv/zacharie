@@ -15,10 +15,10 @@ describe('canonicalNumeroCfei', () => {
     ['CFEI/45/13/577', 'CFEI-45-13-577'],
     ['CFEI.45.13.0577', 'CFEI-45-13-577'],
     ['CFEI\t45-13-0577\n', 'CFEI-45-13-577'],
-    // un espace qui coupe un groupe de chiffres (copier-coller) est retiré
-    ['CFEI-21-09-1 234', 'CFEI-21-09-1234'],
-    ['CFEI-21-09-0 5', 'CFEI-21-09-5'],
-    ['CFEI-2 1-09-5', 'CFEI-21-09-5'],
+    // un espace sépare toujours deux groupes : un groupe coupé n'est pas reconnu, plutôt que rattaché à un autre numéro
+    ['CFEI-21-09-1 234', 'CFEI-21-09-1-234'],
+    ['CFEI-45-13-577 2', 'CFEI-45-13-577-2'],
+    ['CFEI-2 1-09-5', 'CFEI-2-1-09-5'],
     // tirets typographiques (onglet Corrèze)
     ['CFEI\u201019\u201012\u20100345', 'CFEI-19-12-345'],
     ['CFEI\u201319\u221212\u20140345', 'CFEI-19-12-345'],

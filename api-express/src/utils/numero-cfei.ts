@@ -36,8 +36,7 @@ function matchCanonical(tokens: string) {
 
 export function canonicalNumeroCfei(source: string): string {
   const cleaned = source.replace(TYPOGRAPHIC_DASHES, '-').toUpperCase();
+  // un espace sépare toujours deux groupes : « CFEI-45-13-577 2 » n'est pas lu comme CFEI-45-13-5772
   const tokens = joinTokens(cleaned.replace(SEPARATORS, '-'));
-  // un espace peut aussi couper un groupe de chiffres (« CFEI-21-09-1 234 ») : on retente sans les espaces
-  const compact = joinTokens(cleaned.replace(/\s+/g, '').replace(/[_./]+/g, '-'));
-  return matchCanonical(tokens) ?? matchCanonical(compact) ?? tokens;
+  return matchCanonical(tokens) ?? tokens;
 }
