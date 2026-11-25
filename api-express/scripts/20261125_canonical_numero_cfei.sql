@@ -11,8 +11,10 @@
 --         - CFEI : `CFEI-<dép sans zéro de tête, 2 car. min.>-<AA>-<numéro sans zéro de tête>`,
 --           préfixe ajouté s'il manque ;
 --         - FREI : `<dép>-FREI-<AA>-<numéro>`, seuls séparateurs et casse nettoyés ;
---         - autre texte : tirets typographiques remplacés, espaces retirés, majuscules.
---         Garder cette fonction alignée sur canonicalNumeroCfei.
+--         - autre texte : tirets typographiques et séparateurs (espaces, _ . /) remplacés par `-`, majuscules.
+--         Garder cette fonction alignée sur canonicalNumeroCfei (vérifié par numero-cfei-sql.db.test.ts).
+--         Les espaces sont listés explicitement (ceux de `\s` en JavaScript, espace insécable comprise) :
+--         le `\s` de Postgres ne couvre pas l'espace insécable et dépend de la locale de la base.
 --
 -- À exécuter UNE FOIS, manuellement, sur la base (preprod puis prod), au déploiement de la PR,
 -- AVANT de relancer l'import de la liste officielle (scripts/import-official-cfei.ts).
@@ -27,8 +29,9 @@ DECLARE
   m text[];
   departement text;
 BEGIN
-  cleaned := regexp_replace(upper(regexp_replace(source, '[‐-―−]', '-', 'g')), '^\s+|\s+$', '', 'g');
-  tokens := regexp_replace(regexp_replace(regexp_replace(cleaned, '[\s_./]+', '-', 'g'), '-+', '-', 'g'), '^-|-$', '', 'g');
+  cleaned := upper(regexp_replace(source, '[‐-―−]', '-', 'g'));
+  tokens := regexp_replace(cleaned, '[\t\n\v\f\r    -     　﻿_./]+', '-', 'g');
+  tokens := regexp_replace(regexp_replace(tokens, '-+', '-', 'g'), '^-|-$', '', 'g');
 
   m := regexp_match(tokens, '^(?:CFEI)?-?(\d{1,3}|0?2[AB])-(\d{2})-(\d+)$');
   IF m IS NOT NULL THEN
@@ -44,7 +47,7 @@ BEGIN
     RETURN m[1] || '-FREI-' || m[2] || '-' || m[3];
   END IF;
 
-  RETURN regexp_replace(cleaned, '\s+', '', 'g');
+  RETURN tokens;
 END;
 $$;
 

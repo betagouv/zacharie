@@ -44,6 +44,7 @@ describe.skipIf(!VITEST_DB_URL)('GET /inbox sur une vraie base', () => {
     await prisma.securityLog.deleteMany({ where: { email: { startsWith: PREFIX } } });
     await prisma.user.deleteMany({ where: { id: { startsWith: PREFIX } } });
     await prisma.officialCfei.deleteMany({ where: { numero_cfei: { startsWith: 'CFEI-INBOX-' } } });
+    await prisma.officialCfei.deleteMany({ where: { numero_cfei: { startsWith: 'CFEI-999-99-' } } });
   });
 
   afterAll(async () => {
@@ -116,5 +117,16 @@ describe.skipIf(!VITEST_DB_URL)('GET /inbox sur une vraie base', () => {
 
     const apres = (await request(app).get('/inbox')).body.data.cfei_introuvable as number;
     expect(apres - avant).toBe(1);
+  });
+
+  test('CFEI introuvable : un numéro saisi avec des zéros de tête et des espaces est reconnu', async () => {
+    const avant = (await request(app).get('/inbox')).body.data.cfei_introuvable as number;
+    await prisma.officialCfei.create({ data: { numero_cfei: 'CFEI-999-99-1' } });
+    await createUser('cfei-zeros', { numero_cfei: 'cfei 999-99-0001' });
+    await createUser('cfei-inconnu-2', { numero_cfei: 'CFEI-999-99-2' });
+    await createUser('cfei-inconnu-3', { numero_cfei: 'CFEI-999-99-3' });
+
+    const apres = (await request(app).get('/inbox')).body.data.cfei_introuvable as number;
+    expect(apres - avant).toBe(2);
   });
 });

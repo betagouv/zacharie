@@ -30,7 +30,11 @@ describe('GET /inbox', () => {
     // le premier numéro est saisi avec des zéros de tête : il correspond quand même à la liste officielle
     (prisma as any).user.findMany = vi
       .fn()
-      .mockResolvedValue([{ numero_cfei: 'cfei-045-13-0577' }, { numero_cfei: 'CFEI-99-99-999' }]);
+      .mockResolvedValue([
+        { numero_cfei: 'cfei-045-13-0577' },
+        { numero_cfei: 'CFEI-99-99-998' },
+        { numero_cfei: 'CFEI-99-99-999' },
+      ]);
     (prisma as any).officialCfei.findMany = vi
       .fn()
       .mockImplementation(({ where }) =>
@@ -51,7 +55,7 @@ describe('GET /inbox', () => {
       ok: true,
       data: {
         en_attente_activation: 2,
-        cfei_introuvable: 1,
+        cfei_introuvable: 2,
         onboarding_incomplet: 3,
         comptes_bloques: [compteBloque],
         entites_non_pretes: 4,

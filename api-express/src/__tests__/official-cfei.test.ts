@@ -27,10 +27,29 @@ describe('canonicalNumeroCfei', () => {
     ['32-FREI-20-002', '32-FREI-20-002'],
     ['32‑frei‑20‑002', '32-FREI-20-002'],
     // texte libre : nettoyé seulement
-    ['en cours', 'ENCOURS'],
+    ['en cours', 'EN-COURS'],
     ['ABC-12', 'ABC-12'],
   ])('%s → %s', (input, expected) => {
     expect(canonicalNumeroCfei(input)).toBe(expected);
+  });
+
+  test('espaces insécables et fines : traités comme des espaces', () => {
+    expect(canonicalNumeroCfei('CFEI\u00A045-13-0577')).toBe('CFEI-45-13-577');
+    expect(canonicalNumeroCfei('CFEI\u202F45-13-0577\u00A0')).toBe('CFEI-45-13-577');
+    expect(canonicalNumeroCfei('\uFEFFCFEI-45-13-0577')).toBe('CFEI-45-13-577');
+  });
+
+  test.each([
+    'CFEI-21-09-0 5',
+    'CFEI-21-09-02 045',
+    'CFEI-0 45-13-577',
+    ' CFEI 45 13 0577 ',
+    'en cours',
+    '02A-FREI-20-002',
+    '83-07-132',
+  ])('idempotente : %s', (input) => {
+    const canonique = canonicalNumeroCfei(input);
+    expect(canonicalNumeroCfei(canonique)).toBe(canonique);
   });
 
   test('les variantes de zéros de tête donnent la même forme', () => {

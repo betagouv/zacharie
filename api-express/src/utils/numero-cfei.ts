@@ -3,7 +3,8 @@
 // - CFEI : `CFEI-<dép>-<AA>-<numéro>`, département sans zéro de tête (2 caractères minimum), numéro
 //   sans zéro de tête. Le préfixe CFEI est ajouté s'il manque (cas de la liste du Var : `83-07-132`).
 // - FREI (`<dép>-FREI-<AA>-<numéro>`) : gardé tel quel, seuls les séparateurs et la casse sont nettoyés.
-// - Tout autre texte : tirets typographiques remplacés, espaces retirés, majuscules.
+// - Tout autre texte : tirets typographiques et séparateurs (espaces, _ . /) remplacés par `-`, majuscules.
+// La fonction est idempotente : la forme canonique d'une forme canonique est elle-même.
 
 const TYPOGRAPHIC_DASHES = /[‐-―−]/g;
 const SEPARATORS = /[\s_./]+/g;
@@ -31,5 +32,5 @@ export function canonicalNumeroCfei(source: string): string {
     return `${departement}-FREI-${annee}-${numero}`;
   }
 
-  return cleaned.replace(/\s+/g, '');
+  return tokens;
 }
