@@ -1024,6 +1024,39 @@ describe('DELETE /user-entity/ sur un CCG pré-enregistré', () => {
     expect(res.status).toBe(200);
     expect(prisma.entityAndUserRelations.delete).toHaveBeenCalledOnce();
   });
+
+  test('le créateur ne peut pas retirer le CCG de la liste d’un autre chasseur', async () => {
+    mockRelations([relationCreateur, relationRattache]);
+
+    const res = await authed(
+      request(app).delete(BASE).send({
+        owner_id: otherUser.id,
+        entity_id: 'ccg-1',
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+      })
+    );
+
+    expect(res.status).toBe(403);
+    expect(prisma.entityAndUserRelations.delete).not.toHaveBeenCalled();
+  });
+
+  test('le créateur ne peut pas quitter lui-même son statut ADMIN pour retirer ensuite le CCG', async () => {
+    mockRelations([relationCreateur, relationRattache]);
+    vi.mocked(prisma.entityAndUserRelations.update).mockResolvedValue(relationCreateur as any);
+
+    await authed(
+      request(app).put(BASE).send({
+        owner_id: regularUser.id,
+        entity_id: 'ccg-1',
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        status: EntityRelationStatus.REQUESTED,
+      })
+    );
+
+    for (const [args] of vi.mocked(prisma.entityAndUserRelations.update).mock.calls) {
+      expect(args.data).not.toHaveProperty('status');
+    }
+  });
 });
 
 describe('DELETE /user-entity/', () => {

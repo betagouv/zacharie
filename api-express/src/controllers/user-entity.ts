@@ -86,7 +86,11 @@ async function checkIfUserIsAdmin(body: z.infer<typeof userEntitySchema>, user: 
     where: {
       owner_id: user.id,
       entity_id: entity.id,
+      // le créateur d'un CCG (ADMIN de CAN_TRANSMIT) n'en gère pas les autres utilisateurs :
+      // c'est l'équipe Zacharie qui désigne un autre créateur
+      relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
       status: EntityRelationStatus.ADMIN,
+      deleted_at: null,
     },
   });
   if (isCurrentUserAdminOfEntity) {
