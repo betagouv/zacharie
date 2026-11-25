@@ -26,6 +26,8 @@ test('76 - SVI inspection : carcasse consignée (IPM1 MISE_EN_CONSIGNE)', async 
   // "Mise en consigne" is the default IPM1 decision; durée de consigne field appears
   await expect(page.getByLabel('Mise en consigne', { exact: true })).toBeChecked();
   await expect(page.getByLabel(/Durée de la consigne/)).toBeVisible();
+  await expect(page.getByText('Lésion ou motif *').first()).toBeVisible();
+  await expect(page.getByText('Observations (lésions)')).toHaveCount(0);
 
   const dateShortcut = page.getByRole('button', { name: /Cliquez ici/ }).first();
   await dateShortcut.scrollIntoViewIfNeeded();

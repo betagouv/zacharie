@@ -147,7 +147,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
       }
       if (sviIpm2Decision !== IPM2Decision.LEVEE_DE_LA_CONSIGNE) {
         if (!sviIpm2LesionsOuMotifs?.length) {
-          return 'Il manque les lésions';
+          return 'Il manque les lésions ou motifs';
         }
       }
       if (sviIpm2Decision === IPM2Decision.TRAITEMENT_ASSAINISSANT) {
@@ -481,7 +481,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
           <div>
             <InputMultiSelect
               data={lesionsList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
-              label="Observations (lésions) *"
+              label="Lésion ou motif *"
               disabled={!canDoIPM2}
               canEdit
               hintText={
@@ -492,7 +492,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
                     type="button"
                     onClick={() => lesionsOuMotifsConsigneModal.open()}
                   >
-                    Voir le référentiel des lésions de carcasse en <u className="inline">cliquant ici</u>
+                    Voir le référentiel des lésions ou motifs en <u className="inline">cliquant ici</u>
                   </button>
                 </>
               }
@@ -508,7 +508,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
               data={lesionsTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               skipParent
               modal={lesionsOuMotifsConsigneModal}
-              title={`Lésions de carcasse ${carcasse.type === CarcasseType.GROS_GIBIER ? 'de grands gibier' : 'de petit gibier'}`}
+              title={`Lésions ou motifs ${carcasse.type === CarcasseType.GROS_GIBIER ? 'de grands gibier' : 'de petit gibier'}`}
               onItemClick={(newLesionsOuMotifSaisie) => {
                 const nextLesionsOuMotifsSaisie = [...sviIpm2LesionsOuMotifs, newLesionsOuMotifSaisie];
                 setSviIpm2LesionsOuMotifs(nextLesionsOuMotifsSaisie);
