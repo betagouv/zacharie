@@ -387,25 +387,15 @@ async function createBrevoContactFromContactForm(props: ContactForm) {
       // console.log(error);
     }
 
-    // let LANDLINE_NUMBER = '';
-    let SMS = '';
-    let WHATSAPP = '';
+    // pas d'attribut SMS / WHATSAPP : le formulaire est public, le numéro saisi n'est pas vérifié
     let TELEPHONE_PORTABLE = '';
     let TELEPHONE_FIXE = '';
     if (props.telephone) {
       const phoneNumber = parsePhoneNumber(props.telephone, 'FR');
       if (phoneNumber?.isPossible()) {
         if (phoneNumber.number.startsWith('+336') || phoneNumber.number.startsWith('+337')) {
-          const existingUser = await prisma.user.findFirst({
-            where: { telephone: phoneNumber.number },
-          });
-          if (!existingUser) {
-            SMS = phoneNumber.number;
-            WHATSAPP = phoneNumber.number;
-          }
           TELEPHONE_PORTABLE = phoneNumber.number;
         } else {
-          // LANDLINE_NUMBER = phoneNumber.number;
           TELEPHONE_FIXE = phoneNumber.number;
         }
       }
@@ -418,9 +408,6 @@ async function createBrevoContactFromContactForm(props: ContactForm) {
       'CREATION DATE': new Date().toISOString(),
       PRENOM: props.prenom,
       NOM: props.nom_de_famille,
-      // LANDLINE_NUMBER: LANDLINE_NUMBER,
-      SMS: SMS,
-      WHATSAPP: WHATSAPP,
       TELEPHONE_PORTABLE: TELEPHONE_PORTABLE,
       TELEPHONE_FIXE: TELEPHONE_FIXE,
     };
