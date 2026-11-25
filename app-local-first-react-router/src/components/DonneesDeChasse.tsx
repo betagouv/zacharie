@@ -15,6 +15,22 @@ import { getLatestSviDates } from '@app/utils/get-latest-svi-dates';
 type StepDetail = { icon: string; text: string; href?: string };
 type Step = { role: string; name: string; details: Array<StepDetail> };
 
+function formatEntityAddress(entity?: {
+  address_ligne_1?: string | null;
+  address_ligne_2?: string | null;
+  code_postal?: string | null;
+  ville?: string | null;
+}) {
+  if (!entity) return '';
+  return [
+    entity.address_ligne_1,
+    entity.address_ligne_2,
+    [entity.code_postal, entity.ville].filter(Boolean).join(' '),
+  ]
+    .filter(Boolean)
+    .join(', ');
+}
+
 export default function FEIDonneesDeChasse({
   carcasseId,
   intermediaires,
@@ -140,6 +156,10 @@ export default function FEIDonneesDeChasse({
             icon: 'fr-icon-inbox-2-line',
             text: `Dépôt CCG : ${depotEntity.nom_d_usage}`,
           });
+          const depotAddress = formatEntityAddress(depotEntity);
+          if (depotAddress) {
+            details.push({ icon: 'fr-icon-map-pin-2-line', text: `Adresse du CCG : ${depotAddress}` });
+          }
         }
       }
       _steps.push({
@@ -221,6 +241,9 @@ export default function FEIDonneesDeChasse({
     ? dayjs(transmission?.content?.premier_detenteur_depot_ccg_at).format('dddd D MMMM YYYY à HH:mm')
     : null;
 
+  const ccgDepotEntityId = transmission?.content?.premier_detenteur_depot_entity_id;
+  const ccgAddress = ccgDepotEntityId ? formatEntityAddress(entities[ccgDepotEntityId]) : '';
+
   // Faits de la chasse propres à la fiche. Les dates de prise en charge / assignation SVI ne sont pas
   // répétées ici : elles figurent déjà dans la frise « Parcours de la fiche ».
   const facts = useMemo(() => {
@@ -249,6 +272,9 @@ export default function FEIDonneesDeChasse({
           .filter(Boolean)
           .join(', '),
       });
+      if (ccgAddress) {
+        _facts.push({ label: 'Adresse CCG', value: ccgAddress });
+      }
     }
     return _facts;
   }, [
@@ -257,6 +283,7 @@ export default function FEIDonneesDeChasse({
     fei.date_mise_a_mort,
     transmission?.content?.premier_detenteur_depot_entity_name_cache,
     ccgDate,
+    ccgAddress,
     onlyPetitGibier,
     carcasses,
   ]);
