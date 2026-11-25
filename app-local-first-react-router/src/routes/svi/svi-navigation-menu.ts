@@ -1,12 +1,10 @@
 import { useLocation } from 'react-router';
 import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation';
-import useCcgNavigationItems from '@app/routes/ccg/use-ccg-navigation-items';
 import useZustandStore from '@app/zustand/store';
 import { TRICHINE_FEATURE_ENABLED } from '@app/utils/trichine';
 
 export default function useSviNavigationMenu(): MainNavigationProps.Item[] {
   const location = useLocation();
-  const ccgNavigationItems = useCcgNavigationItems('/app/svi');
   const apiKeyApprovals = useZustandStore((state) => state.apiKeyApprovals);
 
   const navigationBase: MainNavigationProps.Item[] = [
@@ -35,7 +33,6 @@ export default function useSviNavigationMenu(): MainNavigationProps.Item[] {
           },
         ]
       : []),
-    ...ccgNavigationItems,
     {
       text: 'Paramètres',
       isActive:

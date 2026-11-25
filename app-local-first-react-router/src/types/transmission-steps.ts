@@ -1,4 +1,5 @@
-export type TransmissionSimpleStatus = 'À compléter' | 'Clôturée' | 'En cours';
+// « Déposée au CCG » : fiche lue comme propriétaire du CCG, sans le statut des carcasses
+export type TransmissionSimpleStatus = 'À compléter' | 'Clôturée' | 'En cours' | 'Déposée au CCG';
 
 export type TransmissionStepForTransportOrSoustraite = 'Sous-traitée' | 'Transporté' | '';
 
@@ -32,7 +33,7 @@ export type TransmissionStepForChasseur =
 
 export type TransmissionStepForSvi = 'Traitement des carcasses' | 'Clôturée';
 
-export type TransmissionStepGeneric = 'Clôturée' | 'En cours';
+export type TransmissionStepGeneric = 'Clôturée' | 'En cours' | 'Déposée au CCG';
 
 export type TransmissionStep =
   | TransmissionStepForEtg

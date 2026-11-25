@@ -16,7 +16,12 @@ const carcasse = (id: string, extra: Partial<Carcasse> = {}) =>
     ...extra,
   }) as unknown as Carcasse;
 
-const intermediaire = (carcasseId: string, id: string, minutes: number, extra: Partial<CarcasseIntermediaire> = {}) =>
+const intermediaire = (
+  carcasseId: string,
+  id: string,
+  minutes: number,
+  extra: Partial<CarcasseIntermediaire> = {}
+) =>
   ({
     zacharie_carcasse_id: carcasseId,
     fei_numero: 'FEI-1',
@@ -33,28 +38,22 @@ const empty = {
   feis: {},
   carcasses: {},
   carcassesIntermediaireById: {},
-  ccgFeis: {},
-  ccgCarcasses: {},
-  ccgCarcassesIntermediaireById: {},
 };
 
 describe('getCcgFiches', () => {
-  it('sans CCG : aucune fiche', () => {
-    expect(getCcgFiches({ ...empty, ccgEntityIds: [], ccgFeis: { 'FEI-1': fei } })).toEqual([]);
-  });
-
   it('dépôt par le premier détenteur : sortie par le premier intermédiaire', () => {
     const [fiche] = getCcgFiches({
       ...empty,
       ccgEntityIds: ['ccg-1'],
-      ccgFeis: { 'FEI-1': fei },
-      ccgCarcasses: {
+      ccgCarcasseIds: ['FEI-1_B1', 'FEI-1_B2'],
+      feis: { 'FEI-1': fei },
+      carcasses: {
         'FEI-1_B1': carcasse('FEI-1_B1', {
           premier_detenteur_depot_entity_id: 'ccg-1',
           premier_detenteur_depot_ccg_at: at(1),
         }),
       },
-      ccgCarcassesIntermediaireById: { a: intermediaire('FEI-1_B1', 'collecteur', 20) },
+      carcassesIntermediaireById: { a: intermediaire('FEI-1_B1', 'collecteur', 20) },
     });
     expect(fiche.carcasses).toHaveLength(1);
     expect(fiche.carcasses[0].deposant).toBeNull();
@@ -62,10 +61,11 @@ describe('getCcgFiches', () => {
     expect(fiche.carcasses[0].sortie?.intermediaire_id).toBe('collecteur');
   });
 
-  it('carcasse de mon périmètre déposée par un intermédiaire dans mon CCG', () => {
+  it('dépôt par un intermédiaire : sortie par l’intermédiaire suivant', () => {
     const [fiche] = getCcgFiches({
       ...empty,
       ccgEntityIds: ['ccg-1'],
+      ccgCarcasseIds: ['FEI-1_B1', 'FEI-1_B2'],
       feis: { 'FEI-1': fei },
       carcasses: { 'FEI-1_B1': carcasse('FEI-1_B1'), 'FEI-1_B2': carcasse('FEI-1_B2') },
       carcassesIntermediaireById: {
@@ -77,17 +77,5 @@ describe('getCcgFiches', () => {
     expect(fiche.carcasses.map((view) => view.carcasse.zacharie_carcasse_id)).toEqual(['FEI-1_B1']);
     expect(fiche.carcasses[0].deposant?.intermediaire_id).toBe('collecteur');
     expect(fiche.carcasses[0].sortie?.intermediaire_id).toBe('etg');
-  });
-
-  it('la copie de mon périmètre l’emporte sur la copie CCG', () => {
-    const fiches = getCcgFiches({
-      ...empty,
-      ccgEntityIds: ['ccg-1'],
-      feis: { 'FEI-1': fei },
-      carcasses: { 'FEI-1_B1': carcasse('FEI-1_B1', { premier_detenteur_depot_entity_id: 'ccg-1' }) },
-      ccgCarcasses: { 'FEI-1_B1': carcasse('FEI-1_B1', { premier_detenteur_depot_entity_id: 'ccg-1' }) },
-    });
-    expect(fiches).toHaveLength(1);
-    expect(fiches[0].carcasses).toHaveLength(1);
   });
 });

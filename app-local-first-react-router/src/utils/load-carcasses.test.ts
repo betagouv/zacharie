@@ -19,9 +19,7 @@ const mocks = vi.hoisted(() => {
     detenteursInitiauxIds: [] as Array<string>,
     feiIdsRenvoiToHide: [] as Array<string>,
     ccgEntityIds: [] as Array<string>,
-    ccgFeis: {} as Record<string, Item & { numero: string }>,
-    ccgCarcasses: {} as Record<string, Item & { zacharie_carcasse_id: string }>,
-    ccgCarcassesIntermediaireById: {} as Record<string, Item>,
+    ccgCarcasseIds: [] as Array<string>,
   };
   return { state, get: vi.fn() };
 });
@@ -60,11 +58,8 @@ function serverResponse(fullReload: boolean) {
       entities: [{ ...base(), id: 'E-SERVEUR', relation: 'NONE' }],
       carcassesIntermediaires: [],
       carcasseModifRequests: [],
-      ccgEntityIds: [],
-      ccgCarcasses: [],
-      ccgFeis: [],
-      ccgCarcassesIntermediaires: [],
-      // le serveur renvoie la dernière carcasse de la page
+      ccgEntityIds: [] as Array<string>,
+      ccgCarcasseIds: [] as Array<string>,
       get nextCursor() {
         const last = this.carcasses.at(-1);
         return last ? { updatedAt: String(last.updated_at.getTime()), id: last.zacharie_carcasse_id } : null;
@@ -101,9 +96,7 @@ beforeEach(() => {
     users: { 'U-SORTI': { ...base(), id: 'U-SORTI' } },
     entities: { 'E-SORTIE': { ...base(), id: 'E-SORTIE', relation: 'NONE' } },
     ccgEntityIds: [],
-    ccgFeis: {},
-    ccgCarcasses: {},
-    ccgCarcassesIntermediaireById: {},
+    ccgCarcasseIds: [],
   });
 });
 
@@ -357,11 +350,12 @@ describe('loadCarcasses — demandes de modification', () => {
 describe('loadCarcasses — fiches de CCG', () => {
   function mockCcgServer(fullReload: boolean) {
     const response = serverResponse(fullReload);
-    response.data.ccgEntityIds = ['CCG-1'] as never;
-    response.data.ccgCarcasses = [
-      { ...base(), zacharie_carcasse_id: 'C-CCG', fei_numero: 'FEI-CCG' },
-    ] as never;
-    response.data.ccgFeis = [{ ...base(), numero: 'FEI-CCG' }] as never;
+    response.data.ccgEntityIds = ['CCG-1'];
+    response.data.carcasses = [
+      ...response.data.carcasses,
+      { ...base(), zacharie_carcasse_id: 'C-CCG', fei_numero: 'FEI-SERVEUR' },
+    ];
+    response.data.ccgCarcasseIds = ['C-CCG'];
     mocks.get.mockImplementation(({ path }: { path: string }) => {
       if (path === 'now') return Promise.resolve({ ok: true, data: 2000 });
       if (path === '/carcasse/count') return Promise.resolve({ ok: false });
@@ -370,24 +364,20 @@ describe('loadCarcasses — fiches de CCG', () => {
   }
 
   beforeEach(() => {
-    Object.assign(mocks.state, {
-      ccgCarcasses: { 'C-CCG-ANCIENNE': { ...base(), zacharie_carcasse_id: 'C-CCG-ANCIENNE' } },
-    });
+    Object.assign(mocks.state, { ccgCarcasseIds: ['C-CCG-ANCIENNE', 'C-SERVEUR'] });
   });
 
-  it('range les fiches de CCG à part, hors des fiches du rôle', async () => {
+  it('marque les carcasses de CCG, et démarque celles revenues dans le périmètre du rôle', async () => {
     mockCcgServer(false);
     await loadCarcasses();
     expect(mocks.state.ccgEntityIds).toEqual(['CCG-1']);
-    expect(Object.keys(mocks.state.ccgCarcasses).sort()).toEqual(['C-CCG', 'C-CCG-ANCIENNE']);
-    expect(mocks.state.ccgFeis['FEI-CCG']).toBeDefined();
-    expect(mocks.state.carcasses['C-CCG']).toBeUndefined();
-    expect(mocks.state.feis['FEI-CCG']).toBeUndefined();
+    expect(mocks.state.carcasses['C-CCG']).toBeDefined();
+    expect([...mocks.state.ccgCarcasseIds].sort()).toEqual(['C-CCG', 'C-CCG-ANCIENNE']);
   });
 
-  it('rechargement complet : les anciennes fiches de CCG sont remplacées', async () => {
+  it('rechargement complet : seules les carcasses de CCG reçues restent marquées', async () => {
     mockCcgServer(true);
     await loadCarcasses();
-    expect(Object.keys(mocks.state.ccgCarcasses)).toEqual(['C-CCG']);
+    expect(mocks.state.ccgCarcasseIds).toEqual(['C-CCG']);
   });
 });

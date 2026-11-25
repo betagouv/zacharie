@@ -5,6 +5,8 @@ import ChangerMonMotDePasse from '@app/routes/profil/changer-mon-mot-de-passe';
 import FederationLayout from './federation-layout';
 import FederationCoordonnees from './federation-coordonnees';
 import FederationMaFederation from './federation-ma-federation';
+import CcgFiches from '@app/routes/ccg/ccg-fiches';
+import CcgFiche from '@app/routes/ccg/ccg-fiche';
 
 export default function RouterFederation() {
   return (
@@ -32,6 +34,14 @@ export default function RouterFederation() {
       <Route
         path="tableau-de-bord/:federationId"
         element={<FederationTableauDeBord basePath="/app/federation/tableau-de-bord" />}
+      />
+      <Route
+        path="fiches"
+        element={<CcgFiches basePath="/app/federation/fiches" />}
+      />
+      <Route
+        path="fiches/:fei_numero"
+        element={<CcgFiche basePath="/app/federation/fiches" />}
       />
       <Route
         path="profil/ma-federation"

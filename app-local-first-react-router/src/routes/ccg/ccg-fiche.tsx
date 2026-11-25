@@ -12,8 +12,6 @@ const formatDate = (date: Date | string | null | undefined) => (date ? dayjs(dat
 const formatDateTime = (date: Date | string | null | undefined) =>
   date ? dayjs(date).format('DD/MM/YYYY à HH:mm') : '';
 
-// Fiche vue par le propriétaire d'un CCG : la chasse, le dépôt dans le CCG et la sortie du CCG.
-// Jamais le devenir des carcasses (refus, inspection SVI…).
 export default function CcgFiche({ basePath }: { basePath: string }) {
   const params = useParams();
   const users = useZustandStore((state) => state.users);
@@ -33,13 +31,16 @@ export default function CcgFiche({ basePath }: { basePath: string }) {
     return user ? `${user.prenom ?? ''} ${user.nom_de_famille ?? ''}`.trim() : '';
   };
   const intermediaireName = (intermediaire: CarcasseIntermediaire) =>
-    [entities[intermediaire.intermediaire_entity_id]?.nom_d_usage, userName(intermediaire.intermediaire_user_id)]
+    [
+      entities[intermediaire.intermediaire_entity_id]?.nom_d_usage,
+      userName(intermediaire.intermediaire_user_id),
+    ]
       .filter(Boolean)
       .join(' – ');
 
   return (
     <>
-      <title>{`${fei.numero} | Mes CCG | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
+      <title>{`${fei.numero} | Mes fiches | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="m-4 md:m-0">
           <h1 className="fr-h3 fr-mb-2w">Fiche {fei.numero}</h1>
@@ -83,7 +84,11 @@ export default function CcgFiche({ basePath }: { basePath: string }) {
                     </span>
                     <span>
                       Examen initial :{' '}
-                      {anomalies.length ? anomalies.join(', ') : carcasse.examinateur_carcasse_sans_anomalie ? 'pas d’anomalie' : ''}
+                      {anomalies.length
+                        ? anomalies.join(', ')
+                        : carcasse.examinateur_carcasse_sans_anomalie
+                          ? 'pas d’anomalie'
+                          : ''}
                     </span>
                     <span>
                       Déposée dans {entities[ccgId]?.nom_d_usage ?? 'le CCG'}
@@ -105,7 +110,7 @@ export default function CcgFiche({ basePath }: { basePath: string }) {
               priority="secondary"
               linkProps={{ to: basePath }}
             >
-              Voir toutes les fiches de mes CCG
+              Retour aux fiches
             </Button>
           </div>
         </div>

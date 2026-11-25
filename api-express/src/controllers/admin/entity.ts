@@ -143,7 +143,6 @@ router.get(
               select: userAdminSelect,
             });
 
-      // CCG : son propriétaire peut avoir n'importe quel rôle (tableau de bord CCG)
       const canSendFichesToEntity = await prisma.user.findMany({
         where: {
           id: {
@@ -155,7 +154,7 @@ router.get(
           roles: {
             hasSome:
               entity.type === EntityTypes.CCG
-                ? Object.values(UserRoles)
+                ? [UserRoles.FEDERATION, UserRoles.CHASSEUR]
                 : entity.type === EntityTypes.ETG || entity.type === EntityTypes.COLLECTEUR_PRO
                   ? [UserRoles.CHASSEUR, UserRoles.ETG, UserRoles.COLLECTEUR_PRO]
                   : entity.type === EntityTypes.PREMIER_DETENTEUR

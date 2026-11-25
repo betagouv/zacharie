@@ -87,7 +87,6 @@ Le rôle est porté par une dimension, **jamais par le nom de l'événement** : 
 | Id                                    | Où                             |
 | ------------------------------------- | ------------------------------ |
 | `carcasse-ouvrir-ajout`               | carte « Ajouter une carcasse » |
-| `ccg-fiche-ouvrir`                    | liste « Mes CCG »              |
 | `fiche-attribuer-carcasses-restantes` | page de confirmation d'envoi   |
 | `fiche-voir-toutes-les-fiches`        | page de confirmation d'envoi   |
 

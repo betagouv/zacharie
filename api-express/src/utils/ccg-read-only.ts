@@ -2,9 +2,7 @@ import type { Carcasse, CarcasseIntermediaire, User } from '@prisma/client';
 import prisma from '~/prisma';
 import { getCarcasseAccessWhere } from '~/utils/carcasse-access';
 
-// Le propriétaire d'un CCG lit les fiches déposées dans son CCG jusqu'à leur sortie du CCG : la chasse,
-// l'examen initial, le premier détenteur, le dépôt, puis qui a sorti la carcasse du CCG et quand.
-// Jamais le devenir de la carcasse (refus, manquante, inspection SVI, saisie…).
+// Le propriétaire d'un CCG voit les fiches jusqu'à leur sortie du CCG, jamais le devenir des carcasses.
 
 const CARCASSE_CCG_FIELDS = new Set<keyof Carcasse>([
   'zacharie_carcasse_id',
@@ -82,9 +80,7 @@ export function redactCarcasseForCcg(carcasse: Carcasse): Carcasse {
   return keepOnly(carcasse, CARCASSE_CCG_FIELDS);
 }
 
-// Les intermédiaires d'une carcasse jusqu'à la sortie du CCG : ceux d'avant le dépôt, le déposant, puis
-// celui qui l'a sortie du CCG (sans son dépôt ni son prochain détenteur). Les lignes supprimées sont
-// gardées, vidées, pour que le client retire ses copies.
+// Les lignes supprimées sont gardées, vidées, pour que le client retire ses copies.
 export function getCcgIntermediaires(
   carcasse: Pick<Carcasse, 'premier_detenteur_depot_entity_id'>,
   intermediaires: Array<CarcasseIntermediaire>,
@@ -120,8 +116,7 @@ export function getCcgIntermediaires(
   ];
 }
 
-// Carcasses d'une page du pull que l'utilisateur ne lit que comme propriétaire de CCG : hors de son
-// périmètre de rôle, elles sont servies sans statut.
+// Carcasses d'une page du pull hors du périmètre du rôle : servies comme carcasses de CCG, sans statut
 export async function getCcgOnlyCarcasseIds(
   user: User,
   userEntityIds: Array<string>,

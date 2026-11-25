@@ -1,4 +1,3 @@
-import CcgFiches from '@app/routes/ccg/ccg-fiches';
 import CcgFiche from '@app/routes/ccg/ccg-fiche';
 import { Route, Outlet } from 'react-router';
 import Contact from '@app/routes/contact';
@@ -32,14 +31,6 @@ export default function RouterChasseur() {
       <Route
         index
         element={<ChasseurFiches />}
-      />
-      <Route
-        path="ccg"
-        element={<CcgFiches basePath="/app/chasseur/ccg" />}
-      />
-      <Route
-        path="ccg/:fei_numero"
-        element={<CcgFiche basePath="/app/chasseur/ccg" />}
       />
       <Route
         path="contact"
@@ -117,6 +108,10 @@ export default function RouterChasseur() {
       <Route
         path="fiches"
         element={<ChasseurFiches />}
+      />
+      <Route
+        path="ccg/:fei_numero"
+        element={<CcgFiche basePath="/app/chasseur" />}
       />
       <Route
         path="fei/:fei_numero"

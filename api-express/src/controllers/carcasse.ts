@@ -87,7 +87,10 @@ router.get(
 
     // Périmètre d'accès role-aware, le même que getCarcasseAccessWhere (partagé avec /refusees/:fei_numero).
     const userEntityIds = await getUserCarcasseEntityIds(req.user.id);
-    const scopeBranches = getCarcasseScopeBranches(req.user, userEntityIds);
+    // fédération (FNC, FRC, FDC sans être chasseur) : aucune fiche à elle, seulement celles de ses CCG
+    const isFederation = req.user.roles.includes(UserRoles.FEDERATION);
+    const canOwnCcg = isFederation || req.user.roles.includes(UserRoles.CHASSEUR);
+    const scopeBranches = isFederation ? [] : getCarcasseScopeBranches(req.user, userEntityIds);
     if (!scopeBranches) {
       capture(`User role not supported: ${req.user.roles.join(', ')}`, { user: req.user });
       res.status(403).send({
@@ -98,8 +101,7 @@ router.get(
       return;
     }
 
-    // CCG dont l'utilisateur est propriétaire : leurs carcasses entrent dans la même pagination.
-    const ccgIds = await getUserAdminCcgIds(req.user.id);
+    const ccgIds = canOwnCcg ? await getUserAdminCcgIds(req.user.id) : [];
 
     // Page suivante : strictement après la dernière carcasse reçue, dans l'ordre (updated_at, id)
     // décroissant (cf e2e/load/README.md).
@@ -125,7 +127,7 @@ router.get(
           id: lastPageCarcasse.zacharie_carcasse_id,
         }
       : null;
-    // Hors périmètre du rôle, une carcasse de CCG est servie à part, sans son statut.
+    // hors du périmètre du rôle, une carcasse de CCG est servie sans son statut, en lecture seule
     const ccgOnlyIds = await getCcgOnlyCarcasseIds(req.user, userEntityIds, ccgIds, pageCarcasses);
     const carcasses = pageCarcasses.filter((carcasse) => !ccgOnlyIds.has(carcasse.zacharie_carcasse_id));
     const ccgCarcasses = pageCarcasses.filter((carcasse) => ccgOnlyIds.has(carcasse.zacharie_carcasse_id));
@@ -186,7 +188,12 @@ router.get(
         }),
         ccgFeiNumeros.size ? prisma.fei.findMany({ where: { numero: { in: [...ccgFeiNumeros] } } }) : [],
       ]);
-    const feis = [...feisWithCarcasses, ...emptyFeis];
+    const feiNumerosServies = new Set([...feisWithCarcasses, ...emptyFeis].map((fei) => fei.numero));
+    const feis = [
+      ...feisWithCarcasses,
+      ...emptyFeis,
+      ...ccgFeis.filter((fei) => !feiNumerosServies.has(fei.numero)),
+    ];
     const carcassesIntermediaires = allCarcassesIntermediaires.filter(
       (intermediaire) => !ccgOnlyIds.has(intermediaire.zacharie_carcasse_id)
     );
@@ -249,16 +256,14 @@ router.get(
     res.status(200).json({
       ok: true,
       data: {
-        carcasses,
+        carcasses: [...carcasses, ...ccgCarcasses.map(redactCarcasseForCcg)],
         feis,
         users,
         entities,
-        carcassesIntermediaires,
+        carcassesIntermediaires: [...carcassesIntermediaires, ...ccgCarcassesIntermediaires],
         carcasseModifRequests,
         ccgEntityIds: ccgIds,
-        ccgCarcasses: ccgCarcasses.map(redactCarcasseForCcg),
-        ccgFeis,
-        ccgCarcassesIntermediaires,
+        ccgCarcasseIds: [...ccgOnlyIds],
         nextCursor,
         hasMore,
         fullReload,
@@ -328,7 +333,28 @@ router.get(
       .filter((c) => groupes.has(groupeKey(c)))
       .map((c) => c.zacharie_carcasse_id);
 
-    res.status(200).send({ ok: true, data: { count, refuseesHorsPerimetreIds }, error: '' });
+    // carcasses des CCG dont le chasseur est propriétaire, hors de son périmètre (lecture seule)
+    const ccgIds = req.user.roles.includes(UserRoles.CHASSEUR) ? await getUserAdminCcgIds(req.user.id) : [];
+    const refuseesIds = new Set(refuseesHorsPerimetreIds);
+    const ccgCount = ccgIds.length
+      ? (
+          await prisma.carcasse.findMany({
+            where: {
+              deleted_at: null,
+              OR: [
+                { premier_detenteur_depot_entity_id: { in: ccgIds } },
+                { CarcasseIntermediaire: { some: { intermediaire_depot_entity_id: { in: ccgIds } } } },
+              ],
+              NOT: accessWhere,
+            },
+            select: { zacharie_carcasse_id: true },
+          })
+        ).filter((c) => !refuseesIds.has(c.zacharie_carcasse_id)).length
+      : 0;
+
+    res
+      .status(200)
+      .send({ ok: true, data: { count: count + ccgCount, refuseesHorsPerimetreIds }, error: '' });
   })
 );
 

@@ -82,6 +82,10 @@ const statusColors: Record<TransmissionSimpleStatus, { bg: string; text: string 
     bg: 'bg-[#E8EDFF]',
     text: 'text-[#01008B]',
   },
+  'Déposée au CCG': {
+    bg: 'bg-[#EEEEEE]',
+    text: 'text-[#3A3A3A]',
+  },
 };
 
 function OnboardingChasseInfoBanner() {
@@ -134,7 +138,12 @@ const ITEMS_PER_PAGE = import.meta.env.VITE_TEST_PLAYWRIGHT === 'true' ? 3 : 100
 export default function ChasseurFiches() {
   const navigate = useNavigate();
   const user = useMostFreshUser('chasseur fiches')!;
-  const { transmissionsEnCours, transmissionsACompleter, transmissionsCloturees } = useTransmissionsSorted();
+  const {
+    transmissionsEnCours,
+    transmissionsACompleter,
+    transmissionsCloturees,
+    transmissionsDeposeesAuCcg,
+  } = useTransmissionsSorted();
   const [isLoading, setIsLoading] = useState(true);
 
   const [searchParams] = useSearchParams();
@@ -288,8 +297,13 @@ export default function ChasseurFiches() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const allTransmissions = useMemo(() => {
-    return [...transmissionsACompleter, ...transmissionsEnCours, ...transmissionsCloturees];
-  }, [transmissionsACompleter, transmissionsEnCours, transmissionsCloturees]);
+    return [
+      ...transmissionsACompleter,
+      ...transmissionsEnCours,
+      ...transmissionsCloturees,
+      ...transmissionsDeposeesAuCcg,
+    ];
+  }, [transmissionsACompleter, transmissionsEnCours, transmissionsCloturees, transmissionsDeposeesAuCcg]);
 
   const premierDetenteurOptions = useMemo(() => {
     const map = new Map<string, string>();
@@ -1033,7 +1047,7 @@ function FeisWrapper({
             filter={'Toutes les fiches'}
             onPrintSelect={handleCheckboxClick}
             isPrintSelected={selectedTransmissions.includes(getTransmissionIdFromMetadata(transmission))}
-            linkTo={`/app/chasseur/fei/${transmission.fei.numero}`}
+            linkTo={getChasseurFicheLink(transmission)}
             detenteurName={transmission.content.premier_detenteur_name_cache ?? null}
             detenteurIcon={<ChasseIcon />}
           />
@@ -1112,7 +1126,7 @@ function FeisTableRow({
     <tr
       key={transmission.fei.numero!}
       className={`cursor-pointer border-b border-gray-200 hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}
-      onClick={() => navigate(`/app/chasseur/fei/${transmission.fei.numero!}`)}
+      onClick={() => navigate(getChasseurFicheLink(transmission))}
     >
       <td
         className="px-4 py-3"
@@ -1256,4 +1270,12 @@ function FeisTable({
       </table>
     </div>
   );
+}
+
+// fiche lue comme propriétaire du CCG : page en lecture seule, sans le statut des carcasses
+function getChasseurFicheLink(transmission: CarcasseTransmissionWihMetadata) {
+  if (transmission.labels.simpleStatus === 'Déposée au CCG') {
+    return `/app/chasseur/ccg/${transmission.fei.numero}`;
+  }
+  return `/app/chasseur/fei/${transmission.fei.numero}`;
 }

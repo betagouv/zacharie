@@ -34,7 +34,7 @@ import type {
   UserPartenaireResponse,
   UserEntityResponse,
 } from '~/types/responses';
-import type { EntityWithUserRelation } from '~/types/entity';
+import { entityAdminInclude, type EntityWithUserRelation } from '~/types/entity';
 import {
   EntityRelationType,
   EntityTypes,
@@ -1436,21 +1436,41 @@ router.get(
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
     const user = req.user!;
-    const userCCGs = (
-      await prisma.entityAndUserRelations.findMany({
-        where: {
-          owner_id: user.id,
-          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-          EntityRelatedWithUser: {
-            type: EntityTypes.CCG,
+    const ccgs = await prisma.entity.findMany({
+      where: {
+        type: EntityTypes.CCG,
+        EntityRelationsWithUsers: {
+          some: {
+            owner_id: user.id,
+            relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+            deleted_at: null,
           },
-          deleted_at: null,
         },
-        include: {
-          EntityRelatedWithUser: true,
+      },
+      include: {
+        EntityRelationsWithUsers: {
+          ...entityAdminInclude.EntityRelationsWithUsers,
+          where: {
+            relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+            deleted_at: null,
+            OR: [{ owner_id: user.id }, { UserRelatedWithEntity: { isZacharieAdmin: false } }],
+          },
         },
-      })
-    ).map((relation) => relation.EntityRelatedWithUser) satisfies Array<Entity>;
+      },
+    });
+    // seul le propriétaire du CCG (ADMIN) voit les autres utilisateurs
+    const userCCGs = ccgs.map((ccg) => {
+      const isAdmin = ccg.EntityRelationsWithUsers.some(
+        (relation) => relation.owner_id === user.id && relation.status === EntityRelationStatus.ADMIN
+      );
+      if (isAdmin) return ccg;
+      return {
+        ...ccg,
+        EntityRelationsWithUsers: ccg.EntityRelationsWithUsers.filter(
+          (relation) => relation.owner_id === user.id
+        ),
+      };
+    });
 
     res.status(200).send({ ok: true, data: { userCCGs }, error: null });
   })

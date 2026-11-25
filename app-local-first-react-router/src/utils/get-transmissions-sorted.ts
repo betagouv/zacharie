@@ -31,6 +31,7 @@ type TransmissionSorted = {
   transmissionsEnCours: Array<CarcasseTransmissionWihMetadata>;
   transmissionsACompleter: Array<CarcasseTransmissionWihMetadata>;
   transmissionsCloturees: Array<CarcasseTransmissionWihMetadata>;
+  transmissionsDeposeesAuCcg: Array<CarcasseTransmissionWihMetadata>;
 };
 
 export function useTransmissions(): Record<
@@ -42,8 +43,16 @@ export function useTransmissions(): Record<
   const entities = useZustandStore((state) => state.entities);
   const user = useUser((state) => state.user)!;
   const feis = useZustandStore((state) => state.feis);
+  const ccgCarcasseIds = useZustandStore((state) => state.ccgCarcasseIds);
 
-  return getTransmissionsShared({ carcasses, carcassesIntermediaireById, feis, user, entities });
+  return getTransmissionsShared({
+    carcasses,
+    carcassesIntermediaireById,
+    feis,
+    user,
+    entities,
+    ccgCarcasseIds,
+  });
 }
 
 type SharedTransmissionsInputs = {
@@ -52,6 +61,7 @@ type SharedTransmissionsInputs = {
   feis: Record<Fei['numero'], Fei>;
   user: User;
   entities: Record<EntityWithUserRelation['id'], EntityWithUserRelation>;
+  ccgCarcasseIds: Array<Carcasse['zacharie_carcasse_id']>;
 };
 
 let sharedTransmissions: {
@@ -70,7 +80,8 @@ export function getTransmissionsShared(inputs: SharedTransmissionsInputs) {
     previous.carcassesIntermediaireById === inputs.carcassesIntermediaireById &&
     previous.feis === inputs.feis &&
     previous.user === inputs.user &&
-    previous.entities === inputs.entities
+    previous.entities === inputs.entities &&
+    previous.ccgCarcasseIds === inputs.ccgCarcasseIds
   ) {
     return sharedTransmissions!.result;
   }
@@ -80,6 +91,7 @@ export function getTransmissionsShared(inputs: SharedTransmissionsInputs) {
     feis: inputs.feis,
     user: inputs.user,
     entitiesWorkingDirectlyFor: filterEntitiesWorkingDirectlyForObj(inputs.entities),
+    ccgCarcasseIds: new Set(inputs.ccgCarcasseIds),
   });
   if (previous?.carcasses !== inputs.carcasses) {
     reportTransmissionsInconsistencies(previous?.carcasses, inputs.carcasses, result);
@@ -127,12 +139,14 @@ export function computeTransmissions({
   feis,
   user,
   entitiesWorkingDirectlyFor,
+  ccgCarcasseIds = new Set(),
 }: {
   carcasses: Record<Carcasse['zacharie_carcasse_id'], Carcasse>;
   carcassesIntermediaireById: Record<string, CarcasseIntermediaire>;
   feis: Record<Fei['numero'], Fei>;
   user: User;
   entitiesWorkingDirectlyFor: Record<EntityWithUserRelation['id'], EntityWithUserRelation>;
+  ccgCarcasseIds?: Set<Carcasse['zacharie_carcasse_id']>;
 }): Record<NonNullable<CarcasseTransmissionWihMetadata['fei']['numero']>, CarcasseTransmissionWihMetadata> {
   const role = user.roles[0]; // only one role anyway
   const meIsSvi = user.roles.includes(UserRoles.SVI);
@@ -268,6 +282,17 @@ export function computeTransmissions({
         allCarcassesDone: true,
       };
       transmissions[transmissionId] = transmissionWithIntermediaires;
+    }
+    // carcasse lue comme propriétaire du CCG : son statut n'est pas connu
+    if (ccgCarcasseIds.has(carcasse.zacharie_carcasse_id)) {
+      transmissions[transmissionId].labels = getTransmissionLabels(
+        'Déposée au CCG',
+        transmissions[transmissionId].content,
+        role,
+        entitiesWorkingDirectlyFor,
+        user.etg_role
+      );
+      continue;
     }
     const partialRefusal = getCarcassePartialRefusal(carcasse, dernierAccepteParCarcasse);
     if (partialRefusal) transmissions[transmissionId].partialRefusals.push(partialRefusal);
@@ -487,6 +512,7 @@ export function useTransmissionsSorted(): TransmissionSorted {
     transmissionsEnCours: [],
     transmissionsACompleter: [],
     transmissionsCloturees: [],
+    transmissionsDeposeesAuCcg: [],
   };
 
   if (!user) return transmissionsSorted;
@@ -501,6 +527,9 @@ export function useTransmissionsSorted(): TransmissionSorted {
     if (transmission.labels.simpleStatus === 'Clôturée') {
       transmissionsSorted.transmissionsCloturees.push(transmission);
     }
+    if (transmission.labels.simpleStatus === 'Déposée au CCG') {
+      transmissionsSorted.transmissionsDeposeesAuCcg.push(transmission);
+    }
   }
   return {
     transmissionsACompleter: [...transmissionsSorted.transmissionsACompleter].sort((a, b) =>
@@ -508,6 +537,7 @@ export function useTransmissionsSorted(): TransmissionSorted {
     ),
     transmissionsEnCours: [...transmissionsSorted.transmissionsEnCours].sort(sortTransmissions),
     transmissionsCloturees: [...transmissionsSorted.transmissionsCloturees].sort(sortTransmissions),
+    transmissionsDeposeesAuCcg: [...transmissionsSorted.transmissionsDeposeesAuCcg].sort(sortTransmissions),
   };
 }
 

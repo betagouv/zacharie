@@ -51,9 +51,7 @@ const PERSISTED_KEYS: (keyof State)[] = [
   'logs',
   'feiIdsRenvoiToHide',
   'ccgEntityIds',
-  'ccgFeis',
-  'ccgCarcasses',
-  'ccgCarcassesIntermediaireById',
+  'ccgCarcasseIds',
 ];
 
 // Tranches qui sont des maps par id : stockées enregistrement par enregistrement, pour qu'une
@@ -65,9 +63,6 @@ const RECORD_KEYS: (keyof State)[] = [
   'carcasses',
   'carcassesIntermediaireById',
   'modifRequestsByCarcasseId',
-  'ccgFeis',
-  'ccgCarcasses',
-  'ccgCarcassesIntermediaireById',
 ];
 
 export interface State {
@@ -96,12 +91,9 @@ export interface State {
   // loadCarcasses les redescend et retire la fiche de cette liste.
   feiIdsRenvoiToHide: Array<Fei['numero']>;
   logs: Array<Log>;
-  // CCG dont l'utilisateur est propriétaire, et les fiches qui y sont passées hors de son périmètre de
-  // rôle : lecture seule, sans le statut des carcasses, jamais renvoyées à /sync (cf load-carcasses.ts)
   ccgEntityIds: Array<string>;
-  ccgFeis: Record<Fei['numero'], Fei>;
-  ccgCarcasses: Record<Carcasse['zacharie_carcasse_id'], Carcasse>;
-  ccgCarcassesIntermediaireById: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>;
+  // carcasses des CCG, hors du périmètre du rôle : servies sans statut, jamais modifiables
+  ccgCarcasseIds: Array<Carcasse['zacharie_carcasse_id']>;
   // Items que le serveur a refusé d'écrire lors d'une synchro de cette session, avec le `updated_at`
   // (en ms) de la version refusée. Cette version n'est plus renvoyée ; une nouvelle modification
   // locale de l'item l'est (voir sync-data.ts).
@@ -184,9 +176,7 @@ function initialState(): State {
     carcassesIntermediaireById: {},
     modifRequestsByCarcasseId: {},
     ccgEntityIds: [],
-    ccgFeis: {},
-    ccgCarcasses: {},
-    ccgCarcassesIntermediaireById: {},
+    ccgCarcasseIds: [],
     syncRejections: [],
     _hasHydrated: false,
   };

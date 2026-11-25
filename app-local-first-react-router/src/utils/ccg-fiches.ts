@@ -2,8 +2,6 @@ import { useMemo } from 'react';
 import type { Carcasse, CarcasseIntermediaire, Fei } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
 
-// Ce que le propriétaire d'un CCG voit d'une carcasse : son dépôt dans le CCG et sa sortie du CCG.
-// Jamais son devenir (refus, inspection SVI…).
 export type CcgCarcasseView = {
   carcasse: Carcasse;
   ccgId: string;
@@ -27,7 +25,10 @@ export function getCcgCarcasseView(
   const alive = intermediaires
     .filter((intermediaire) => !intermediaire.deleted_at)
     .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-  if (carcasse.premier_detenteur_depot_entity_id && ccgIds.includes(carcasse.premier_detenteur_depot_entity_id)) {
+  if (
+    carcasse.premier_detenteur_depot_entity_id &&
+    ccgIds.includes(carcasse.premier_detenteur_depot_entity_id)
+  ) {
     return {
       carcasse,
       ccgId: carcasse.premier_detenteur_depot_entity_id,
@@ -52,86 +53,46 @@ export function getCcgCarcasseView(
   };
 }
 
-// Fiches passées par un CCG dont l'utilisateur est propriétaire : celles du pull CCG (lecture seule,
-// sans statut) et celles de son propre périmètre qui y sont passées. La copie du périmètre l'emporte.
 export function getCcgFiches({
   ccgEntityIds,
+  ccgCarcasseIds,
   feis,
   carcasses,
   carcassesIntermediaireById,
-  ccgFeis,
-  ccgCarcasses,
-  ccgCarcassesIntermediaireById,
 }: {
   ccgEntityIds: Array<string>;
+  ccgCarcasseIds: Array<string>;
   feis: Record<string, Fei>;
   carcasses: Record<string, Carcasse>;
   carcassesIntermediaireById: Record<string, CarcasseIntermediaire>;
-  ccgFeis: Record<string, Fei>;
-  ccgCarcasses: Record<string, Carcasse>;
-  ccgCarcassesIntermediaireById: Record<string, CarcasseIntermediaire>;
 }): Array<CcgFiche> {
-  if (!ccgEntityIds.length) return [];
+  const ids = new Set(ccgCarcasseIds);
   const intermediairesByCarcasseId: Record<string, Array<CarcasseIntermediaire>> = {};
-  const addIntermediaires = (source: Record<string, CarcasseIntermediaire>, carcasseIds: Set<string>) => {
-    for (const intermediaire of Object.values(source)) {
-      if (!carcasseIds.has(intermediaire.zacharie_carcasse_id)) continue;
-      (intermediairesByCarcasseId[intermediaire.zacharie_carcasse_id] ??= []).push(intermediaire);
-    }
-  };
-  const ownCarcasseIds = new Set(Object.keys(carcasses));
-  const ccgOnlyCarcasseIds = new Set(Object.keys(ccgCarcasses).filter((id) => !ownCarcasseIds.has(id)));
-  addIntermediaires(carcassesIntermediaireById, ownCarcasseIds);
-  addIntermediaires(ccgCarcassesIntermediaireById, ccgOnlyCarcasseIds);
-
+  for (const intermediaire of Object.values(carcassesIntermediaireById)) {
+    if (!ids.has(intermediaire.zacharie_carcasse_id)) continue;
+    (intermediairesByCarcasseId[intermediaire.zacharie_carcasse_id] ??= []).push(intermediaire);
+  }
   const fichesByNumero: Record<string, CcgFiche> = {};
-  const addCarcasse = (carcasse: Carcasse) => {
-    if (carcasse.deleted_at) return;
-    const fei = feis[carcasse.fei_numero] ?? ccgFeis[carcasse.fei_numero];
-    if (!fei || fei.deleted_at) return;
-    const view = getCcgCarcasseView(
-      carcasse,
-      intermediairesByCarcasseId[carcasse.zacharie_carcasse_id] ?? [],
-      ccgEntityIds
-    );
-    if (!view) return;
+  for (const id of ids) {
+    const carcasse = carcasses[id];
+    if (!carcasse || carcasse.deleted_at) continue;
+    const fei = feis[carcasse.fei_numero];
+    if (!fei || fei.deleted_at) continue;
+    const view = getCcgCarcasseView(carcasse, intermediairesByCarcasseId[id] ?? [], ccgEntityIds);
+    if (!view) continue;
     (fichesByNumero[fei.numero] ??= { fei, carcasses: [] }).carcasses.push(view);
-  };
-  for (const carcasse of Object.values(carcasses)) addCarcasse(carcasse);
-  for (const id of ccgOnlyCarcasseIds) addCarcasse(ccgCarcasses[id]);
-
-  return Object.values(fichesByNumero).sort(
-    (a, b) => new Date(b.fei.date_mise_a_mort ?? 0).getTime() - new Date(a.fei.date_mise_a_mort ?? 0).getTime()
-  );
+  }
+  return Object.values(fichesByNumero);
 }
 
 export function useCcgFiches(): Array<CcgFiche> {
   const ccgEntityIds = useZustandStore((state) => state.ccgEntityIds);
+  const ccgCarcasseIds = useZustandStore((state) => state.ccgCarcasseIds);
   const feis = useZustandStore((state) => state.feis);
   const carcasses = useZustandStore((state) => state.carcasses);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
-  const ccgFeis = useZustandStore((state) => state.ccgFeis);
-  const ccgCarcasses = useZustandStore((state) => state.ccgCarcasses);
-  const ccgCarcassesIntermediaireById = useZustandStore((state) => state.ccgCarcassesIntermediaireById);
   return useMemo(
-    () =>
-      getCcgFiches({
-        ccgEntityIds,
-        feis,
-        carcasses,
-        carcassesIntermediaireById,
-        ccgFeis,
-        ccgCarcasses,
-        ccgCarcassesIntermediaireById,
-      }),
-    [
-      ccgEntityIds,
-      feis,
-      carcasses,
-      carcassesIntermediaireById,
-      ccgFeis,
-      ccgCarcasses,
-      ccgCarcassesIntermediaireById,
-    ]
+    () => getCcgFiches({ ccgEntityIds, ccgCarcasseIds, feis, carcasses, carcassesIntermediaireById }),
+    [ccgEntityIds, ccgCarcasseIds, feis, carcasses, carcassesIntermediaireById]
   );
 }

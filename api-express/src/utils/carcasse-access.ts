@@ -122,9 +122,7 @@ export function getCarcasseScopeBranches(
   return null;
 }
 
-// Carcasses déposées dans un CCG dont l'utilisateur est propriétaire, par le premier détenteur ou par
-// un intermédiaire. Lecture seule : ces branches ne sont pas dans getCarcasseAccessWhere, qui sert
-// aussi aux écritures de /sync. Le pull les sert sans leur statut (cf `ccg-read-only.ts`).
+// Lecture seule : ces branches ne sont pas dans getCarcasseAccessWhere, qui sert aussi aux écritures de /sync.
 export function getCcgScopeBranches(ccgIds: Array<string>): Array<CarcasseScopeBranch> {
   if (!ccgIds.length) return [];
   return [

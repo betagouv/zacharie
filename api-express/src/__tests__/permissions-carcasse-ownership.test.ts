@@ -92,7 +92,7 @@ beforeEach(() => {
   vi.mocked(prisma.fei.findMany).mockResolvedValue([]);
   (prisma.carcasseIntermediaire as any).findMany.mockResolvedValue([]);
   (prisma.carcasse as any).count.mockResolvedValue(0);
-  // entités de l'utilisateur ; aucun CCG dont il est propriétaire (cf ccg-pull.test.ts)
+  // aucun CCG dont l'utilisateur est propriétaire
   vi.mocked(prisma.entityAndUserRelations.findMany).mockImplementation((async (args: any) =>
     args?.where?.relation === 'CAN_TRANSMIT_CARCASSES_TO_ENTITY'
       ? []

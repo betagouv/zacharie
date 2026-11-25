@@ -1,5 +1,3 @@
-import CcgFiches from '@app/routes/ccg/ccg-fiches';
-import CcgFiche from '@app/routes/ccg/ccg-fiche';
 import { Outlet, Route } from 'react-router';
 import SviLayout from './svi-layout';
 import SviDashboard from './svi-dashboard';
@@ -41,14 +39,6 @@ export default function RouterSvi() {
       <Route
         path="tableau-de-bord"
         element={<SviDashboard />}
-      />
-      <Route
-        path="ccg"
-        element={<CcgFiches basePath="/app/svi/ccg" />}
-      />
-      <Route
-        path="ccg/:fei_numero"
-        element={<CcgFiche basePath="/app/svi/ccg" />}
       />
       <Route
         path="contact"

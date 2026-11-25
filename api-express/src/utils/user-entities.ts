@@ -17,8 +17,7 @@ export async function getUserCarcasseEntityIds(userId: User['id']): Promise<Arra
   return relations.map((relation) => relation.entity_id);
 }
 
-// CCG dont l'utilisateur est propriétaire (statut ADMIN), quel que soit son rôle : il lit les fiches
-// déposées dans ces CCG jusqu'à leur sortie du CCG, sans leur statut (cf `ccg-read-only.ts`).
+// CCG dont l'utilisateur est propriétaire (statut ADMIN).
 export async function getUserAdminCcgIds(userId: User['id']): Promise<Array<string>> {
   const relations = await prisma.entityAndUserRelations.findMany({
     where: {

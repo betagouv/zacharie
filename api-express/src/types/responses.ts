@@ -20,7 +20,13 @@ import type {
 } from '@prisma/client';
 import type { UserForFei, UserForAdmin, UserPartenaire } from './user';
 import type { BugInvestigationMessage } from './bug-investigation';
-import type { EntityForAdmin, EntityWithUserRelation, EntitiesByTypeAndId, EntitiesById } from './entity';
+import type {
+  EntityForAdmin,
+  EntityWithUserRelation,
+  EntityWithUserRelations,
+  EntitiesByTypeAndId,
+  EntitiesById,
+} from './entity';
 
 export interface SearchResponse {
   ok: boolean;
@@ -78,7 +84,7 @@ export interface UserEntityResponse {
 export interface UserCCGsResponse {
   ok: boolean;
   data: {
-    userCCGs: Array<Entity>;
+    userCCGs: Array<EntityWithUserRelations>;
   };
   error: string;
 }
@@ -279,13 +285,10 @@ export interface CarcassesGetResponse {
     entities: Array<EntityWithUserRelation>;
     carcassesIntermediaires: Array<CarcasseIntermediaire>;
     carcasseModifRequests: Array<CarcasseModificationRequest>;
-    // CCG dont l'utilisateur est propriétaire, et les fiches qui y sont passées hors de son périmètre
-    // de rôle : en lecture seule, sans le statut des carcasses (cf utils/ccg-read-only.ts)
+    // CCG dont l'utilisateur (fédération ou chasseur) est propriétaire
     ccgEntityIds: Array<string>;
-    ccgCarcasses: Array<Carcasse>;
-    ccgFeis: Array<Fei>;
-    ccgCarcassesIntermediaires: Array<CarcasseIntermediaire>;
-    // dernière carcasse de la page, CCG compris : la page suivante commence après
+    // carcasses de la page servies en lecture seule, sans statut (comprises dans `carcasses`)
+    ccgCarcasseIds: Array<string>;
     nextCursor: { updatedAt: string; id: string } | null;
     hasMore: boolean;
     // le client remplace ses carcasses locales au lieu de les merger (voir FORCE_FULL_RELOAD_AFTER)

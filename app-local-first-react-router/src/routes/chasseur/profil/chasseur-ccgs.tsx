@@ -1,8 +1,12 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@app/components/Input';
-import { EntityTypes, EntityRelationType, Prisma, Entity } from '@prisma/client';
+import { EntityTypes, EntityRelationType, EntityRelationStatus, Prisma, Entity, User } from '@prisma/client';
+import type { EntityWithUserRelations } from '@api/src/types/entity';
+import { createModal } from '@app/components/Modal';
+import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
+import RelationEntityUsersList from '@app/components/RelationEntityUsersList';
 import InputCodePostalEtVille from '@app/components/InputCodePostalEtVille';
 import type { UserConnexionResponse } from '@api/src/types/responses';
 import useUser from '@app/zustand/user';
@@ -14,7 +18,7 @@ import { useNavigate } from 'react-router';
 import type { UserCCGsResponse, UserEntityResponse } from '@api/src/types/responses';
 
 export default function MesCCGs() {
-  const [userCCGs, setUserCCGs] = useState<Array<Entity>>([]);
+  const [userCCGs, setUserCCGs] = useState<Array<EntityWithUserRelations>>([]);
   const user = useUser((state) => state.user)!;
 
   // Add this handler for CCG radio buttons
@@ -176,6 +180,11 @@ export default function MesCCGs() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
+                      <CcgUsersButton
+                        entity={entity}
+                        user={user}
+                        onChange={refreshUserCCGs}
+                      />
                       {isPreregistered && (
                         <a
                           href="https://scribehow.com/shared/Declarer_un_centre_de_collecte_de_gibier_CCG__f9XrNsQYQx68Mk-WDBJr0w"
@@ -284,8 +293,8 @@ export default function MesCCGs() {
               {!newCCGExpanded && !!registerOneMoreCCG && (
                 <InputCCG
                   key={userCCGs.length}
-                  addCCG={(ccg) => {
-                    setUserCCGs([...userCCGs, ccg]);
+                  addCCG={() => {
+                    refreshUserCCGs();
                     setRegisterOneMoreCCG(false);
                   }}
                 />
@@ -466,5 +475,51 @@ function InputCCG({ addCCG }: { addCCG: (ccg: Entity) => void }) {
         {!isSubmitting ? 'Ajouter cette chambre froide' : 'Recherche en cours...'}
       </Button>
     </form>
+  );
+}
+
+// comme pour les associations de chasse : seul le propriétaire (ADMIN) du CCG voit ses utilisateurs
+function CcgUsersButton({
+  entity,
+  user,
+  onChange,
+}: {
+  entity: EntityWithUserRelations;
+  user: User;
+  onChange: () => void;
+}) {
+  const modal = useRef(createModal({ id: `ccg-users-modal-${entity.id}`, isOpenedByDefault: false })).current;
+  const isOpen = useIsModalOpen(modal);
+  const isAdmin = entity.EntityRelationsWithUsers.some(
+    (relation) => relation.owner_id === user.id && relation.status === EntityRelationStatus.ADMIN
+  );
+  if (!isAdmin) return null;
+  return (
+    <>
+      <Button
+        type="button"
+        iconId="fr-icon-user-setting-fill"
+        onClick={() => modal.open()}
+        title="Voir les utilisateurs"
+        priority="tertiary no outline"
+        size="small"
+      >
+        Voir les utilisateurs
+      </Button>
+      <modal.Component
+        size="large"
+        title={`${entity.nom_d_usage} - Liste des utilisateurs`}
+        buttons={[{ children: 'Fermer', onClick: () => modal.close() }]}
+      >
+        {isOpen && (
+          <RelationEntityUsersList
+            entity={entity}
+            user={user}
+            relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
+            onChange={onChange}
+          />
+        )}
+      </modal.Component>
+    </>
   );
 }

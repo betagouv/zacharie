@@ -11,7 +11,7 @@ import { dropMarginOverwrites, getDeltaAfter } from './delta-margin';
 
 let loadCarcassesAbortController: AbortController | null = null;
 
-const ROLES_WITHOUT_CARCASSES: UserRoles[] = [UserRoles.FEDERATION, UserRoles.LABORATOIRE];
+const ROLES_WITHOUT_CARCASSES: UserRoles[] = [UserRoles.LABORATOIRE];
 
 // Contrôle d'intégrité store local / serveur : au plus une fois par utilisateur toutes les 6 heures.
 const INTEGRITY_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
@@ -111,9 +111,7 @@ export async function loadCarcasses() {
     const carcasseModifRequests: CarcassesGetResponse['data']['carcasseModifRequests'] = [];
     const usersFetched: CarcassesGetResponse['data']['users'] = [];
     const entitiesFetched: CarcassesGetResponse['data']['entities'] = [];
-    const ccgCarcassesFetched: CarcassesGetResponse['data']['ccgCarcasses'] = [];
-    const ccgFeisFetched: CarcassesGetResponse['data']['ccgFeis'] = [];
-    const ccgCarcassesIntermediairesFetched: CarcassesGetResponse['data']['ccgCarcassesIntermediaires'] = [];
+    const ccgCarcasseIdsFetched: CarcassesGetResponse['data']['ccgCarcasseIds'] = [];
     let ccgEntityIds: CarcassesGetResponse['data']['ccgEntityIds'] = [];
     // curseur : updated_at (ms) et id de la dernière carcasse reçue, la page suivante commence après
     let cursor: { updatedAt: string; id: string } | null = null;
@@ -143,9 +141,7 @@ export async function loadCarcasses() {
       entitiesFetched.push(...(res.data.entities || []));
       carcasseModifRequests.push(...(res.data.carcasseModifRequests || []));
       carcassesIntermediairesFetched.push(...(res.data.carcassesIntermediaires || []));
-      ccgCarcassesFetched.push(...res.data.ccgCarcasses);
-      ccgFeisFetched.push(...res.data.ccgFeis);
-      ccgCarcassesIntermediairesFetched.push(...res.data.ccgCarcassesIntermediaires);
+      ccgCarcasseIdsFetched.push(...res.data.ccgCarcasseIds);
       ccgEntityIds = res.data.ccgEntityIds;
       if (!cursor) {
         fullReload = res.data.fullReload;
@@ -159,12 +155,7 @@ export async function loadCarcasses() {
     // Guard against logout/abort races: don't clobber a freshly-reset store.
     if (signal.aborted || !useUser.getState().user) return;
 
-    if (
-      carcassesFetched.length === 0 &&
-      feisFetched.length === 0 &&
-      ccgCarcassesFetched.length === 0 &&
-      !fullReload
-    ) {
+    if (carcassesFetched.length === 0 && feisFetched.length === 0 && !fullReload) {
       console.log('no carcasses nor feis fetched');
       useZustandStore.setState(() => ({
         lastUpdateFromServer: serverDate,
@@ -232,23 +223,17 @@ export async function loadCarcasses() {
       }
     }
 
-    // Fiches de CCG en lecture seule : jamais modifiées en local, un rechargement complet les remplace.
-    const keepCcg = <T,>(items: Record<string, T>) => (fullReload ? [] : Object.values(items));
-    const newCcgCarcasses = mergeItems({
-      oldItems: keepCcg(localState.ccgCarcasses),
-      newItems: ccgCarcassesFetched,
-      idKey: (c) => c.zacharie_carcasse_id,
-    });
-    const newCcgFeis = mergeItems({
-      oldItems: keepCcg(localState.ccgFeis),
-      newItems: ccgFeisFetched,
-      idKey: (f) => f.numero,
-    });
-    const newCcgCarcassesIntermediaires = mergeItems({
-      oldItems: keepCcg(localState.ccgCarcassesIntermediaireById),
-      newItems: ccgCarcassesIntermediairesFetched,
-      idKey: getFeiAndCarcasseAndIntermediaireIds,
-    });
+    // une carcasse revenue sans être marquée CCG est revenue dans le périmètre du rôle
+    const ccgFetched = new Set(ccgCarcasseIdsFetched);
+    const roleFetched = new Set(
+      carcassesFetched.map((c) => c.zacharie_carcasse_id).filter((id) => !ccgFetched.has(id))
+    );
+    const newCcgCarcasseIds = [
+      ...new Set([
+        ...(fullReload ? [] : localState.ccgCarcasseIds.filter((id) => !roleFetched.has(id))),
+        ...ccgFetched,
+      ]),
+    ];
 
     // Merge modif requests by their own id (drops cancelled ones via deleted_at, like other entities),
     // then regroup into the full-history-by-carcasse map the store and UI consume.
@@ -290,9 +275,7 @@ export async function loadCarcasses() {
       users: newUsers,
       entities: newEntities,
       ccgEntityIds,
-      ccgCarcasses: newCcgCarcasses,
-      ccgFeis: newCcgFeis,
-      ccgCarcassesIntermediaireById: newCcgCarcassesIntermediaires,
+      ccgCarcasseIds: newCcgCarcasseIds,
       lastUpdateFromServer: serverDate,
       carcassesReloadVersion: receivedReloadVersion,
     }));

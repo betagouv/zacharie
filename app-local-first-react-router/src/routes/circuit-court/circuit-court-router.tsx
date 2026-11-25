@@ -1,5 +1,3 @@
-import CcgFiches from '@app/routes/ccg/ccg-fiches';
-import CcgFiche from '@app/routes/ccg/ccg-fiche';
 import { Outlet, Route } from 'react-router';
 import CollecteurLayout from './circuit-court-layout';
 import Contact from '@app/routes/contact';
@@ -22,14 +20,6 @@ export default function RouterCircuitCourt() {
       <Route
         index
         element={<CircuitCourtFiches />}
-      />
-      <Route
-        path="ccg"
-        element={<CcgFiches basePath="/app/circuit-court/ccg" />}
-      />
-      <Route
-        path="ccg/:fei_numero"
-        element={<CcgFiche basePath="/app/circuit-court/ccg" />}
       />
       <Route
         path="contact"

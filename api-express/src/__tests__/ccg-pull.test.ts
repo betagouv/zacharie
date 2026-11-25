@@ -7,9 +7,18 @@ import { EntityRelationType, Prisma, UserRoles } from '@prisma/client';
 import type { Carcasse, CarcasseIntermediaire } from '@prisma/client';
 import { getCcgIntermediaires, redactCarcasseForCcg } from '~/utils/ccg-read-only';
 
-// Le propriétaire d'un CCG (relation CAN_TRANSMIT_CARCASSES_TO_ENTITY au statut ADMIN), quel que soit son
-// rôle, reçoit dans GET /carcasse les fiches déposées dans son CCG, à part et sans leur statut.
-
+const federationUser = {
+  id: 'user-fnc',
+  roles: [UserRoles.FEDERATION],
+  activated: true,
+  isZacharieAdmin: false,
+};
+const chasseurUser = {
+  id: 'user-chasseur',
+  roles: [UserRoles.CHASSEUR],
+  activated: true,
+  isZacharieAdmin: false,
+};
 const etgUser = { id: 'user-etg', roles: [UserRoles.ETG], activated: true, isZacharieAdmin: false };
 
 const app = express();
@@ -110,12 +119,61 @@ describe('getCcgIntermediaires', () => {
 });
 
 describe('GET /carcasse — propriétaire de CCG', () => {
-  test('les branches CCG entrent dans la page, en lecture seule', async () => {
+  test('fédération : seulement les fiches de ses CCG, sans statut', async () => {
     vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([{ zacharie_carcasse_id: 'FEI-1_B1' }] as any);
-    vi.mocked(prisma.carcasse.findMany)
-      .mockResolvedValueOnce([ccgCarcasse]) // relecture de la page
-      .mockResolvedValueOnce([]); // aucune carcasse dans le périmètre du rôle
+    vi.mocked(prisma.carcasse.findMany).mockResolvedValueOnce([ccgCarcasse]);
     (prisma.carcasseIntermediaire as any).findMany.mockResolvedValueOnce([intermediaire('collecteur', 20)]);
+
+    const res = await request(app)
+      .get('/carcasse?after=0&limit=100&withDeleted=true')
+      .set('x-test-user', JSON.stringify(federationUser));
+
+    expect(res.status).toBe(200);
+    const [strings, ...values] = vi.mocked(prisma.$queryRaw).mock.calls[0] as [
+      TemplateStringsArray,
+      ...any[],
+    ];
+    const query = Prisma.sql(strings, ...values);
+    expect(query.sql).toContain('c.premier_detenteur_depot_entity_id IN');
+    expect(query.sql).toContain('ci.intermediaire_depot_entity_id IN');
+    expect(query.sql).not.toContain('c.next_owner_entity_id');
+
+    expect(res.body.data.ccgCarcasseIds).toEqual(['FEI-1_B1']);
+    expect(res.body.data.ccgEntityIds).toEqual(['ccg-1']);
+    expect(res.body.data.carcasses).toHaveLength(1);
+    expect(res.body.data.carcasses[0].svi_carcasse_status).toBeNull();
+    expect(res.body.data.carcassesIntermediaires).toHaveLength(1);
+    expect(res.body.data.nextCursor).toEqual({
+      updatedAt: String(at(10).getTime()),
+      id: 'FEI-1_B1',
+    });
+  });
+
+  test('chasseur : une carcasse de son périmètre reste complète, les autres sont servies sans statut', async () => {
+    const autreCarcasse = { ...ccgCarcasse, zacharie_carcasse_id: 'FEI-1_B2', numero_bracelet: 'B2' };
+    vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([
+      { zacharie_carcasse_id: 'FEI-1_B1' },
+      { zacharie_carcasse_id: 'FEI-1_B2' },
+    ] as any);
+    vi.mocked(prisma.carcasse.findMany)
+      .mockResolvedValueOnce([ccgCarcasse, autreCarcasse]) // relecture de la page
+      .mockResolvedValueOnce([{ zacharie_carcasse_id: 'FEI-1_B1' }] as any); // périmètre du rôle
+
+    const res = await request(app)
+      .get('/carcasse?after=0&limit=100&withDeleted=true')
+      .set('x-test-user', JSON.stringify(chasseurUser));
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.ccgCarcasseIds).toEqual(['FEI-1_B2']);
+    const [complete, ccg] = res.body.data.carcasses;
+    expect(complete.zacharie_carcasse_id).toBe('FEI-1_B1');
+    expect(complete.svi_carcasse_status).toBe('SAISIE_TOTALE');
+    expect(ccg.zacharie_carcasse_id).toBe('FEI-1_B2');
+    expect(ccg.svi_carcasse_status).toBeNull();
+  });
+
+  test('autre rôle propriétaire de CCG : son périmètre seul, sans les fiches du CCG', async () => {
+    vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([] as any);
 
     const res = await request(app)
       .get('/carcasse?after=0&limit=100&withDeleted=true')
@@ -127,33 +185,7 @@ describe('GET /carcasse — propriétaire de CCG', () => {
       ...any[],
     ];
     const query = Prisma.sql(strings, ...values);
-    expect(query.sql).toContain('c.premier_detenteur_depot_entity_id IN');
-    expect(query.sql).toContain('ci.intermediaire_depot_entity_id IN');
-
-    expect(res.body.data.carcasses).toEqual([]);
-    expect(res.body.data.carcassesIntermediaires).toEqual([]);
-    expect(res.body.data.ccgEntityIds).toEqual(['ccg-1']);
-    expect(res.body.data.ccgCarcasses).toHaveLength(1);
-    expect(res.body.data.ccgCarcasses[0].svi_carcasse_status).toBeNull();
-    expect(res.body.data.ccgCarcassesIntermediaires).toHaveLength(1);
-    expect(res.body.data.nextCursor).toEqual({
-      updatedAt: String(at(10).getTime()),
-      id: 'FEI-1_B1',
-    });
-  });
-
-  test('une carcasse aussi dans le périmètre du rôle reste complète', async () => {
-    vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([{ zacharie_carcasse_id: 'FEI-1_B1' }] as any);
-    vi.mocked(prisma.carcasse.findMany)
-      .mockResolvedValueOnce([ccgCarcasse])
-      .mockResolvedValueOnce([{ zacharie_carcasse_id: 'FEI-1_B1' }] as any);
-
-    const res = await request(app)
-      .get('/carcasse?after=0&limit=100&withDeleted=true')
-      .set('x-test-user', JSON.stringify(etgUser));
-
-    expect(res.body.data.ccgCarcasses).toEqual([]);
-    expect(res.body.data.carcasses).toHaveLength(1);
-    expect(res.body.data.carcasses[0].svi_carcasse_status).toBe('SAISIE_TOTALE');
+    expect(query.sql).not.toContain('depot_entity_id');
+    expect(res.body.data.ccgEntityIds).toEqual([]);
   });
 });

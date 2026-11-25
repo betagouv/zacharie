@@ -1,5 +1,3 @@
-import CcgFiches from '@app/routes/ccg/ccg-fiches';
-import CcgFiche from '@app/routes/ccg/ccg-fiche';
 import { Outlet, Route } from 'react-router';
 import EtgLayout from './etg-layout';
 import EtgFiches from './etg-fiches';
@@ -28,14 +26,6 @@ export default function RouterEtg() {
       <Route
         index
         element={<EtgFiches />}
-      />
-      <Route
-        path="ccg"
-        element={<CcgFiches basePath="/app/etg/ccg" />}
-      />
-      <Route
-        path="ccg/:fei_numero"
-        element={<CcgFiche basePath="/app/etg/ccg" />}
       />
       <Route
         path="contact"
