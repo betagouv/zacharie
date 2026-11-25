@@ -40,7 +40,7 @@ export default function MesCCGs() {
       .then((res) => {
         if (res.ok) {
           setUserCCGs(res.data.userCCGs);
-          setUserCCGsAdminIds(res.data.userCCGsAdminIds);
+          setUserCCGsAdminIds(res.data.userCCGsAdminIds ?? []);
         }
       });
   }
@@ -229,6 +229,8 @@ export default function MesCCGs() {
                                   setRegisterOneMoreCCG(false);
                                 }
                                 setUserCCGs(nextCCGs);
+                              } else if (res.error) {
+                                window.alert(res.error);
                               }
                             });
                           },

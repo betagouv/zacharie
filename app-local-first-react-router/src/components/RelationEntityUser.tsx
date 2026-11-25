@@ -64,6 +64,15 @@ export default function RelationEntityUser({
       relation.owner_id === user.id &&
       relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
   );
+  // un chasseur n'envoie que des fiches à un CCG : le statut ADMIN de cette relation désigne son créateur,
+  // seul à pouvoir le modifier
+  const statusRelationType =
+    entity.type === EntityTypes.CCG
+      ? EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
+      : EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY;
+  const statusRelation = entity.EntityRelationsWithUsers?.find(
+    (relation) => relation.owner_id === user.id && relation.relation === statusRelationType
+  );
   const relationsToApprove = entity.EntityRelationsWithUsers?.filter(
     (relation) =>
       relation.status === EntityRelationStatus.REQUESTED &&
@@ -200,7 +209,8 @@ export default function RelationEntityUser({
           <div className="flex min-w-40 flex-1 flex-col justify-center md:flex-none md:basis-3xs">
             <RelationStatusSelector
               entity={entity}
-              relation={canHandleCarcassesForEntity}
+              relation={statusRelation}
+              relationType={statusRelationType}
               user={user}
               onChange={onChange}
               userEntityPath={userEntityPath}
@@ -284,6 +294,7 @@ const relationStatusOptions: Array<{
 function RelationStatusSelector({
   entity,
   relation,
+  relationType,
   user,
   onChange,
   userEntityPath,
@@ -291,6 +302,7 @@ function RelationStatusSelector({
   entity: EntityWithUserRelations;
   user: User;
   relation?: EntityWithUserRelations['EntityRelationsWithUsers'][number];
+  relationType: EntityRelationType;
   onChange?: () => void;
   userEntityPath: NonNullable<RelationEntityUserProps['userEntityPath']>;
 }) {
@@ -311,7 +323,7 @@ function RelationStatusSelector({
           body: {
             [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
             [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
-            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+            relation: relationType,
             status: newStatus,
           },
         }).then((res) => {

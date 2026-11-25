@@ -546,7 +546,10 @@ router.get(
       ok: true,
       data: {
         entity: relation.EntityRelatedWithUser,
-        canEdit: relation.status === EntityRelationStatus.ADMIN,
+        // mêmes conditions que PUT /ccg/:entityId
+        canEdit:
+          relation.status === EntityRelationStatus.ADMIN &&
+          relation.EntityRelatedWithUser.ccg_status === 'Pré-enregistré dans Zacharie',
       },
       error: '',
     });
@@ -565,7 +568,7 @@ router.put(
         owner_id: user.id,
         entity_id: entityId,
         relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-        // seul le créateur du CCG (ADMIN) le modifie : les chasseurs rattachés par son numéro n'ont pas de statut
+        // seul le créateur du CCG (ADMIN) le modifie : les chasseurs rattachés par son numéro sont REQUESTED
         status: EntityRelationStatus.ADMIN,
         deleted_at: null,
         EntityRelatedWithUser: {

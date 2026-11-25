@@ -155,7 +155,7 @@ describe('PUT /entite/ccg/:entityId avec un numéro déjà enregistré', () => {
 });
 
 describe('PUT /entite/ccg/:entityId réservé au créateur du CCG', () => {
-  // relations en base : le créateur (ADMIN) et un chasseur rattaché par le numéro (sans statut)
+  // relations en base : le créateur (ADMIN) et un chasseur rattaché par le numéro (REQUESTED, statut par défaut)
   const relations = [
     {
       id: 'rel-admin',
@@ -167,7 +167,7 @@ describe('PUT /entite/ccg/:entityId réservé au créateur du CCG', () => {
       id: 'rel-rattache',
       owner_id: 'user-2',
       entity_id: 'ccg-pre-enregistre',
-      status: null as EntityRelationStatus | null,
+      status: EntityRelationStatus.REQUESTED,
     },
   ];
 
@@ -187,7 +187,7 @@ describe('PUT /entite/ccg/:entityId réservé au créateur du CCG', () => {
     }) as any);
   });
 
-  test('un chasseur rattaché sans statut ne peut pas renommer le CCG', async () => {
+  test('un chasseur rattaché par le numéro (REQUESTED) ne peut pas renommer le CCG', async () => {
     const res = await request(app)
       .put('/entite/ccg/ccg-pre-enregistre')
       .set('x-test-user', JSON.stringify({ ...chasseur, id: 'user-2' }))
@@ -202,5 +202,44 @@ describe('PUT /entite/ccg/:entityId réservé au créateur du CCG', () => {
 
     expect(res.status).toBe(200);
     expect(prisma.entity.update).toHaveBeenCalled();
+  });
+});
+
+describe('GET /entite/ccg/:entityId indique si le chasseur peut modifier le CCG', () => {
+  function mockRelation(status: EntityRelationStatus, ccg_status: string) {
+    vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValue({
+      id: 'rel-1',
+      status,
+      EntityRelatedWithUser: { id: 'ccg-1', type: EntityTypes.CCG, ccg_status },
+    } as any);
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test('le créateur (ADMIN) d’un CCG pré-enregistré peut le modifier', async () => {
+    mockRelation(EntityRelationStatus.ADMIN, 'Pré-enregistré dans Zacharie');
+
+    const res = await authed(request(app).get('/entite/ccg/ccg-1'));
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.canEdit).toBe(true);
+  });
+
+  test('un chasseur rattaché par le numéro ne peut pas le modifier', async () => {
+    mockRelation(EntityRelationStatus.REQUESTED, 'Pré-enregistré dans Zacharie');
+
+    const res = await authed(request(app).get('/entite/ccg/ccg-1'));
+
+    expect(res.body.data.canEdit).toBe(false);
+  });
+
+  test('le créateur ne peut plus modifier un CCG déclaré', async () => {
+    mockRelation(EntityRelationStatus.ADMIN, 'Déclaré');
+
+    const res = await authed(request(app).get('/entite/ccg/ccg-1'));
+
+    expect(res.body.data.canEdit).toBe(false);
   });
 });

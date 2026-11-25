@@ -125,6 +125,32 @@ async function getLastAdminSituation(relation: {
   return 'SOLE_USER';
 }
 
+// seul le créateur (ADMIN) d'un CCG pré-enregistré peut le modifier : s'il le retire alors que
+// d'autres chasseurs l'utilisent, plus personne ne peut le modifier
+async function isLastAdminOfSharedPreregisteredCCG(
+  relation: { id: string; relation: EntityRelationType; status: EntityRelationStatus },
+  entity: Entity
+) {
+  if (entity.type !== EntityTypes.CCG || entity.ccg_status !== 'Pré-enregistré dans Zacharie') return false;
+  if (
+    relation.relation !== EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY ||
+    relation.status !== EntityRelationStatus.ADMIN
+  ) {
+    return false;
+  }
+  const otherRelations = await prisma.entityAndUserRelations.findMany({
+    where: {
+      entity_id: entity.id,
+      relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+      deleted_at: null,
+      id: { not: relation.id },
+    },
+    select: { status: true },
+  });
+  if (otherRelations.some((other) => other.status === EntityRelationStatus.ADMIN)) return false;
+  return otherRelations.length > 0;
+}
+
 async function checkIfUserCanCrudEntityRelation(
   body: z.infer<typeof userEntitySchema>,
   user: User,
@@ -490,6 +516,15 @@ router.delete(
       });
 
       if (existingEntityRelation) {
+        if (await isLastAdminOfSharedPreregisteredCCG(existingEntityRelation, entity)) {
+          res.status(409).send({
+            ok: false,
+            data: { relation: null, entity: null },
+            error:
+              "Vous avez pré-enregistré cette chambre froide et d'autres chasseurs l'utilisent : vous êtes le seul à pouvoir la modifier. Pour la retirer de votre liste, contactez-nous à contact@zacharie.beta.gouv.fr.",
+          });
+          return;
+        }
         const lastAdminSituation = await getLastAdminSituation(existingEntityRelation);
         if (lastAdminSituation === 'LAST_ADMIN_WITH_OTHER_USERS') {
           res.status(409).send({

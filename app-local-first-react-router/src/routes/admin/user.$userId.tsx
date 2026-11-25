@@ -1328,7 +1328,10 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
                 user={user}
                 displayEntity
                 entityLink={`/app/admin/entity/${entity.id}`}
-                canApproveRelation={relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
+                canApproveRelation={
+                  relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY ||
+                  entity.type === EntityTypes.CCG
+                }
                 canDelete={!isSviLinkedToEtg}
                 userEntityPath="admin/user-entity"
                 onChange={() => {

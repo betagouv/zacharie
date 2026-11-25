@@ -942,6 +942,90 @@ describe('PUT /user-entity/', () => {
   });
 });
 
+describe('DELETE /user-entity/ sur un CCG pré-enregistré', () => {
+  const ccg: Partial<Entity> = {
+    id: 'ccg-1',
+    type: EntityTypes.CCG,
+    ccg_status: 'Pré-enregistré dans Zacharie',
+    deleted_at: null,
+  };
+  const relationCreateur: Partial<EntityAndUserRelations> = {
+    id: 'rel-createur',
+    owner_id: regularUser.id,
+    entity_id: 'ccg-1',
+    relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+    status: EntityRelationStatus.ADMIN,
+    deleted_at: null,
+  };
+  const relationRattache: Partial<EntityAndUserRelations> = {
+    id: 'rel-rattache',
+    owner_id: otherUser.id,
+    entity_id: 'ccg-1',
+    relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+    status: EntityRelationStatus.REQUESTED,
+    deleted_at: null,
+  };
+
+  // simule la table des relations : findFirst / findMany filtrent sur les champs simples du where
+  function mockRelations(relations: Array<Partial<EntityAndUserRelations>>) {
+    const matches = (row: Partial<EntityAndUserRelations>, where: Record<string, unknown>) =>
+      Object.entries(where).every(([key, value]) => {
+        const field = row[key as keyof EntityAndUserRelations];
+        if (value && typeof value === 'object' && 'not' in value) return field !== value.not;
+        return field === value;
+      });
+    vi.mocked(prisma.entityAndUserRelations.findFirst).mockImplementation(((args: any) =>
+      Promise.resolve(relations.find((r) => matches(r, args.where)) ?? null)) as any);
+    vi.mocked(prisma.entityAndUserRelations.findMany).mockImplementation(((args: any) =>
+      Promise.resolve(relations.filter((r) => matches(r, args.where)))) as any);
+    vi.mocked(prisma.entityAndUserRelations.delete).mockResolvedValue({} as any);
+  }
+
+  function retirer(user: typeof regularUser | typeof otherUser) {
+    return authed(
+      request(app).delete(BASE).send({
+        owner_id: user.id,
+        entity_id: 'ccg-1',
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+      }),
+      user as typeof regularUser
+    );
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(prisma.entity.findUnique).mockResolvedValue(ccg as any);
+  });
+
+  test('le créateur ne peut pas le retirer tant que d’autres chasseurs l’utilisent', async () => {
+    mockRelations([relationCreateur, relationRattache]);
+
+    const res = await retirer(regularUser);
+
+    expect(res.status).toBe(409);
+    expect(res.body.error).toContain('contact@zacharie.beta.gouv.fr');
+    expect(prisma.entityAndUserRelations.delete).not.toHaveBeenCalled();
+  });
+
+  test('le créateur seul à l’utiliser peut le retirer', async () => {
+    mockRelations([relationCreateur]);
+
+    const res = await retirer(regularUser);
+
+    expect(res.status).toBe(200);
+    expect(prisma.entityAndUserRelations.delete).toHaveBeenCalledOnce();
+  });
+
+  test('un chasseur rattaché par le numéro peut le retirer', async () => {
+    mockRelations([relationCreateur, relationRattache]);
+
+    const res = await retirer(otherUser);
+
+    expect(res.status).toBe(200);
+    expect(prisma.entityAndUserRelations.delete).toHaveBeenCalledOnce();
+  });
+});
+
 describe('DELETE /user-entity/', () => {
   beforeEach(() => {
     vi.clearAllMocks();
