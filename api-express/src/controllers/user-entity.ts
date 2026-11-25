@@ -23,6 +23,7 @@ import {
   hasReachedMaxAssociationsDeChasse,
   MAX_ASSOCIATIONS_DE_CHASSE_ERROR,
 } from '~/utils/associations-de-chasse-limit';
+import { isPreregisteredCCGWithoutUser } from '~/utils/ccg-sans-utilisateur';
 
 export const userEntitySchema = z.object({
   owner_id: z.string(),
@@ -285,6 +286,12 @@ router.post(
           },
         });
         if (!entityHasUsers) nextEntityRelation.status = EntityRelationStatus.ADMIN;
+      }
+      if (
+        body.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY &&
+        (await isPreregisteredCCGWithoutUser(entity))
+      ) {
+        nextEntityRelation.status = EntityRelationStatus.ADMIN;
       }
 
       const relation = await prisma.entityAndUserRelations.create({

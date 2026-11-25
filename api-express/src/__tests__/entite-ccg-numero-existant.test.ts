@@ -95,6 +95,38 @@ describe('POST /entite/ccg avec un numéro déjà enregistré', () => {
     expect(prisma.entityAndUserRelations.create).not.toHaveBeenCalled();
   });
 
+  test('le chasseur qui reprend un CCG pré-enregistré dont plus personne ne se sert en devient le créateur', async () => {
+    vi.mocked(prisma.entity.findUnique).mockResolvedValue({
+      ...existingCCG,
+      ccg_status: 'Pré-enregistré dans Zacharie',
+    } as any);
+    vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.entityAndUserRelations.count).mockResolvedValue(0);
+    vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue({ id: 'rel-1' } as any);
+
+    const res = await authed(request(app).post('/entite/ccg')).send(body);
+
+    expect(res.status).toBe(200);
+    expect(prisma.entityAndUserRelations.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ status: EntityRelationStatus.ADMIN, entity_id: 'ccg-existant' }),
+    });
+  });
+
+  test('le chasseur qui rejoint un CCG pré-enregistré déjà utilisé n’en devient pas le créateur', async () => {
+    vi.mocked(prisma.entity.findUnique).mockResolvedValue({
+      ...existingCCG,
+      ccg_status: 'Pré-enregistré dans Zacharie',
+    } as any);
+    vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.entityAndUserRelations.count).mockResolvedValue(1);
+    vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue({ id: 'rel-1' } as any);
+
+    const res = await authed(request(app).post('/entite/ccg')).send(body);
+
+    expect(res.status).toBe(200);
+    expect(vi.mocked(prisma.entityAndUserRelations.create).mock.calls[0][0].data.status).toBeUndefined();
+  });
+
   test('répond 409 avec un message clair si le numéro appartient à une entité supprimée', async () => {
     vi.mocked(prisma.entity.findUnique).mockResolvedValue({ ...existingCCG, deleted_at: new Date() } as any);
 

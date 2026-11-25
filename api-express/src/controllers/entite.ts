@@ -43,6 +43,7 @@ import {
   hasReachedMaxAssociationsDeChasse,
   MAX_ASSOCIATIONS_DE_CHASSE_ERROR,
 } from '~/utils/associations-de-chasse-limit';
+import { isPreregisteredCCGWithoutUser } from '~/utils/ccg-sans-utilisateur';
 
 router.get(
   '/working-for',
@@ -468,6 +469,9 @@ router.post(
             owner_id: user.id,
             relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
             entity_id: existingEntity.id,
+            ...((await isPreregisteredCCGWithoutUser(existingEntity))
+              ? { status: EntityRelationStatus.ADMIN }
+              : {}),
           },
         }));
       res.status(200).send({

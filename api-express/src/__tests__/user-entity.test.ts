@@ -361,6 +361,55 @@ describe('POST /user-entity/', () => {
       expect(res.body.data.relation.entity_id).toBe('entity-ccg');
     });
 
+    describe('rattachement par le numéro à un CCG pré-enregistré', () => {
+      const ccgPreEnregistre = {
+        ...testEntity,
+        id: 'entity-ccg',
+        type: EntityTypes.CCG,
+        numero_ddecpp: 'ccg-dep-1',
+        ccg_status: 'Pré-enregistré dans Zacharie',
+      };
+
+      function rattacher() {
+        return authed(
+          request(app).post(BASE).send({
+            owner_id: regularUser.id,
+            numero_ddecpp: 'CCG-DEP-1',
+            type: EntityTypes.CCG,
+            relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+          }),
+          regularUser
+        );
+      }
+
+      beforeEach(() => {
+        vi.mocked(prisma.entity.findFirst).mockResolvedValue(ccgPreEnregistre as any);
+        vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValue(null);
+        vi.mocked(prisma.entityAndUserRelations.create).mockImplementation(((args: any) =>
+          Promise.resolve({ id: 'rel-ccg', ...args.data })) as any);
+      });
+
+      test('le chasseur qui reprend un CCG dont plus personne ne se sert en devient le créateur', async () => {
+        vi.mocked(prisma.entityAndUserRelations.count).mockResolvedValue(0);
+
+        const res = await rattacher();
+
+        expect(res.status).toBe(200);
+        expect(vi.mocked(prisma.entityAndUserRelations.create).mock.calls[0][0].data.status).toBe(
+          EntityRelationStatus.ADMIN
+        );
+      });
+
+      test('le chasseur qui rejoint un CCG déjà utilisé n’en devient pas le créateur', async () => {
+        vi.mocked(prisma.entityAndUserRelations.count).mockResolvedValue(1);
+
+        const res = await rattacher();
+
+        expect(res.status).toBe(200);
+        expect(vi.mocked(prisma.entityAndUserRelations.create).mock.calls[0][0].data.status).toBeUndefined();
+      });
+    });
+
     test('non-admin cannot set status', async () => {
       vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
       vi.mocked(prisma.entity.findFirst).mockResolvedValue(testEntity as any);
