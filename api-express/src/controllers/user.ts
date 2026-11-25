@@ -57,6 +57,7 @@ import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
 import { z } from 'zod';
 import { normalizeNumeroCfei, sanitize } from '~/utils/sanitize';
 import { inviteUser } from '~/utils/invite-user';
+import { requestCarcassesReload } from '~/utils/carcasses-reload';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
 // Schemas for validation
@@ -1085,9 +1086,9 @@ router.post(
         data: {
           id: await createUserId(),
           email,
-          // un nouvel utilisateur invité a le rôle de celui qui l'invite, sauf dans une fédération :
-          // l'invité n'est pas forcément chasseur
-          roles: isFederation ? [UserRoles.FEDERATION] : req.user.roles,
+          // un nouvel utilisateur invité a le rôle de celui qui l'invite (un seul rôle par utilisateur),
+          // sauf dans une fédération : l'invité n'est pas forcément chasseur
+          roles: isFederation ? [UserRoles.FEDERATION] : [user.roles[0]],
           isZacharieAdmin: false,
           activated: true,
           prefilled: false,
@@ -1112,11 +1113,15 @@ router.post(
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         },
       });
+      await requestCarcassesReload(newUser.id);
     }
 
     await inviteUser(newUser, user, entity);
 
-    res.status(200).send({ ok: true, error: '', data: { newUser } });
+    // on ne renvoie que l'identifiant et l'email : l'invitant n'a pas à lire la fiche de l'invité
+    res
+      .status(200)
+      .send({ ok: true, error: '', data: { newUser: { id: newUser.id, email: newUser.email } } });
   })
 );
 
