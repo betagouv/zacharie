@@ -105,8 +105,7 @@ export default function ConditionsDUtilisationApi() {
           <p>
             4.1. Le Partenaire fait sa demande par le <a href="/contact">formulaire de contact</a> de
             Zacharie. Il indique&nbsp;: son identité et son numéro SIRET, le logiciel concerné, la finalité de
-            l'accès, et le cas échéant l'adresse de son webhook et les domaines qui afficheront l'Interface
-            Zacharie en iframe.
+            l'accès, et le cas échéant l'adresse de son webhook.
           </p>
           <p>4.2. L'Éditeur examine la demande et peut la refuser.</p>
           <p>
@@ -172,21 +171,12 @@ export default function ConditionsDUtilisationApi() {
             . L'API ne permet pas de créer ni de modifier une fiche.
           </p>
           <p>
-            6.2. <strong>Modes d'intégration autorisés.</strong> Le Partenaire peut ouvrir l'Interface
-            Zacharie depuis son logiciel&nbsp;:
-          </p>
-          <ul className={ul}>
-            <li>dans une nouvelle fenêtre ou un nouvel onglet ;</li>
-            <li>
-              dans une iframe, uniquement depuis les domaines que le Partenaire a déclarés et que l'Éditeur a
-              autorisés. Zacharie refuse techniquement l'affichage en iframe sur tout autre domaine.
-            </li>
-          </ul>
-          <p>
-            Pour éviter une nouvelle saisie du mot de passe, le Partenaire peut obtenir un jeton de connexion
-            à usage unique, valable 5 minutes, pour un Utilisateur qui a donné son accord. Ce jeton connecte
-            l'Utilisateur à son propre compte et à aucun autre (voir la{' '}
-            <DocLink href={DOC_TIERCES_PARTIES}>documentation</DocLink>).
+            6.2. <strong>Lien de création de fiche.</strong> Le Partenaire ouvre l'Interface Zacharie depuis
+            son logiciel par un lien de création de fiche pré-remplie (voir la{' '}
+            <DocLink href={DOC_TIERCES_PARTIES}>documentation</DocLink>). Le lien ouvre l'application mobile
+            Zacharie si elle est installée, sinon le navigateur. Le lien ne connecte pas l'Utilisateur&nbsp;:
+            s'il n'est pas déjà connecté, il se connecte lui-même à son compte Zacharie. Zacharie refuse
+            techniquement l'affichage de son interface dans une iframe sur un autre site.
           </p>
           <p>
             6.3. <strong>Interdictions.</strong> Le Partenaire s'interdit&nbsp;:
@@ -194,15 +184,15 @@ export default function ConditionsDUtilisationApi() {
           <ul className={ul}>
             <li>de reproduire, d'imiter ou de simuler tout ou partie de l'Interface Zacharie ;</li>
             <li>
-              de masquer, recouvrir, rogner ou modifier l'iframe, ses mentions ou ses boutons, ou d'y
-              superposer un élément ;
+              de masquer, recouvrir, rogner ou modifier l'Interface Zacharie, ses mentions ou ses boutons, ou
+              d'y superposer un élément ;
             </li>
-            <li>de lire, d'enregistrer ou d'automatiser les saisies faites dans l'iframe ;</li>
+            <li>de lire, d'enregistrer ou d'automatiser les saisies faites dans l'Interface Zacharie ;</li>
             <li>d'effectuer une action dans Zacharie à la place de l'Utilisateur ;</li>
             <li>de laisser croire que la fiche est créée ou validée par son propre logiciel.</li>
           </ul>
           <p>
-            6.4. Chaque fiche créée depuis le logiciel d'un Partenaire, via l'Interface Zacharie encapsulée,
+            6.4. Chaque fiche créée depuis le logiciel d'un Partenaire, par le lien de création de fiche,
             porte un identifiant de contexte de création, visible dans les données de la fiche, qui permet de
             connaître son origine.
           </p>

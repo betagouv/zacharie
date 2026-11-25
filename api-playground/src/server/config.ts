@@ -9,6 +9,8 @@ const IS_PRODUCTION_BUILD = process.env.NODE_ENV === 'production';
 export const DATABASE_URL = process.env.DATABASE_URL || 'postgres://localhost:5432/zacharie-api-playground';
 export const ZACHARIE_API_URL = (process.env.ZACHARIE_API_URL || 'http://localhost:3235').replace(/\/$/, '');
 export const ZACHARIE_APP_URL = (process.env.ZACHARIE_APP_URL || 'http://localhost:3234').replace(/\/$/, '');
+// slug de la clé API dans Zacharie (contexte de création des fiches) : celui de la clé seedée en dev
+export const ZACHARIE_CONTEXTE = process.env.ZACHARIE_CONTEXTE ?? 'bac-a-sable';
 export const SESSION_SECRET =
   process.env.SESSION_SECRET || (IS_PRODUCTION_BUILD ? '' : 'dev-secret-playground');
 export const SECURE_COOKIE = IS_PRODUCTION_BUILD;

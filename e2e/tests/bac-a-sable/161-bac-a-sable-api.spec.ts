@@ -7,8 +7,9 @@ import { dateApprobationDuJour } from '../../utils/date-approbation';
 import { gotoBacASable, resetBacASable } from '../../utils/bac-a-sable';
 
 // Bac à sable de l'API (api-playground) : une application tierce utilise la clé API tierce partie
-// seedée (`test-private-key-user`) pour lier un compte Zacharie, créer des fiches pré-remplies
-// (intégrées dans la page ou dans un nouvel onglet), recevoir les webhooks et lire les fiches.
+// seedée (`test-private-key-user`) pour lier un compte Zacharie, créer des fiches pré-remplies par un
+// lien sans secret (`/app/nouvelle-fiche?…`, ouvert dans un nouvel onglet), recevoir les webhooks et lire
+// les fiches. Non connecté, l'utilisateur passe par la connexion de Zacharie avant la création de la fiche.
 // Les tests s'enchaînent : chacun part de l'état laissé par le précédent.
 
 test.use({ launchOptions: { slowMo: 100 } });
@@ -105,45 +106,29 @@ test("demande d'accès, accord donné dans Zacharie, puis statut vérifié", asy
   await expect(page.getByText("Habilité à l'examen initial")).toBeVisible();
 });
 
-test('création dans cette page : Zacharie intégré, sans sa navigation, avec les carcasses pré-remplies', async ({
+test('lien ouvert sans être connecté à Zacharie : connexion, puis fiche créée avec les carcasses pré-remplies', async ({
   page,
 }) => {
   await seConnecterAuBacASable(page);
   await remplirLaFiche(page, ['BAS-001', 'BAS-002']);
-  await page.getByRole('button', { name: 'Créer sur Zacharie, dans cette page' }).click();
-  await expect(page.locator('code', { hasText: /nouvelle-fiche.*embedded=true/ })).toBeVisible({
+  const nouvelOnglet = page.waitForEvent('popup');
+  await page.getByRole('button', { name: 'Créer sur Zacharie' }).click();
+  const zacharie = await nouvelOnglet;
+  await expect(page.locator('code', { hasText: /nouvelle-fiche\?contexte=bac-a-sable/ })).toBeVisible({
     timeout: 10000,
   });
+  await expect(page.locator('code', { hasText: /access_token|embedded/ })).toHaveCount(0);
 
-  await page.locator('iframe[title="Zacharie"]').scrollIntoViewIfNeeded();
-  const zacharie = page.frameLocator('iframe[title="Zacharie"]');
-  await expect(zacharie.getByRole('heading', { name: /^Fiche du/ })).toBeVisible({ timeout: 20000 });
-  await expect(zacharie.locator('input#date_mise_a_mort')).toHaveValue(AUJOURD_HUI);
-
-  // mode intégré : ni liens de compte, ni recherche, ni colonnes du pied de page
-  await expect(zacharie.getByText('Déconnexion')).toHaveCount(0);
-  await expect(zacharie.getByPlaceholder(/Rechercher/)).toHaveCount(0);
-  await expect(zacharie.getByText('Assistance', { exact: true })).toHaveCount(0);
-
-  // les carcasses pré-remplies sont créées et synchronisées : l'API les renvoie
-  await attendreLaFicheDansLApi(page, 'BAS-001');
-  await expect(page.getByRole('table').getByText(/BAS-002 — Sanglier/)).toBeVisible();
-});
-
-test('création dans un nouvel onglet : Zacharie complet, avec les carcasses pré-remplies', async ({
-  page,
-}) => {
-  await seConnecterAuBacASable(page);
-  await remplirLaFiche(page, ['BAS-003', 'BAS-004']);
-  const nouvelOnglet = page.waitForEvent('popup');
-  await page.getByRole('button', { name: 'Créer sur Zacharie, dans un nouvel onglet' }).click();
-  const zacharie = await nouvelOnglet;
+  // le lien ne connecte pas : Zacharie demande la connexion, puis revient sur le lien
+  await zacharie.waitForURL(/\/app\/connexion\?redirect=/, { timeout: 20000 });
+  await zacharie.getByRole('textbox', { name: 'Mon email Renseignez votre' }).fill(COMPTE_ZACHARIE);
+  await zacharie.getByRole('textbox', { name: 'Mon mot de passe Veuillez' }).fill(MOT_DE_PASSE);
+  await zacharie.getByRole('button', { name: 'Me connecter' }).click();
 
   await zacharie.waitForURL(/\/app\/chasseur\/fei\/ZACH-/, { timeout: 20000 });
-  expect(zacharie.url()).not.toContain('embedded');
   await expect(zacharie.getByRole('heading', { name: /^Fiche du/ })).toBeVisible({ timeout: 20000 });
+  await expect(zacharie.locator('input#date_mise_a_mort')).toHaveValue(AUJOURD_HUI);
   await expect(zacharie.getByText('Déconnexion').first()).toBeVisible();
-  await expect(page.getByText("Zacharie s'est ouvert dans un nouvel onglet.")).toBeVisible();
 
   // le nouvel onglet laisse le bac à sable en arrière-plan, où le navigateur suspend l'affichage :
   // on attend la fin de la synchronisation de Zacharie, puis on revient sur le bac à sable
@@ -151,48 +136,55 @@ test('création dans un nouvel onglet : Zacharie complet, avec les carcasses pr�
   await zacharie.close();
   await page.bringToFront();
 
-  await attendreLaFicheDansLApi(page, 'BAS-003');
-  await expect(page.getByRole('table').getByText(/BAS-004 — Sanglier/)).toBeVisible();
+  await attendreLaFicheDansLApi(page, 'BAS-001');
+  await expect(page.getByRole('table').getByText(/BAS-002 — Sanglier/)).toBeVisible();
 });
 
-test("webhook : les carcasses arrivent dans le bac à sable quand l'examen initial est validé", async ({
+test("lien ouvert déjà connecté : fiche créée directement, puis webhook à la validation de l'examen initial", async ({
   page,
 }) => {
   await seConnecterAuBacASable(page);
-  await remplirLaFiche(page, ['BAS-005', 'BAS-006']);
+  const zacharieConnecte = await page.context().newPage();
+  await connectWith(zacharieConnecte, COMPTE_ZACHARIE);
+  await zacharieConnecte.close();
+  await page.bringToFront();
+
+  await remplirLaFiche(page, ['BAS-003', 'BAS-004']);
   // case DSFR : le libellé recouvre la case, on clique sur le libellé
   await page.getByText(/Récupérer automatiquement les carcasses/).click();
   await expect(page.getByLabel(/Récupérer automatiquement les carcasses/)).toBeChecked();
-  await page.getByRole('button', { name: 'Créer sur Zacharie, dans cette page' }).click();
+  const nouvelOnglet = page.waitForEvent('popup');
+  await page.getByRole('button', { name: 'Créer sur Zacharie' }).click();
+  const zacharie = await nouvelOnglet;
   await expect(page.getByText("En attente d'un webhook de Zacharie…")).toBeVisible({ timeout: 10000 });
 
-  // l'examinateur termine la fiche dans Zacharie intégré
-  await page.locator('iframe[title="Zacharie"]').scrollIntoViewIfNeeded();
-  const zacharie = page.frameLocator('iframe[title="Zacharie"]');
+  // déjà connecté : pas de passage par la connexion
+  await zacharie.waitForURL(/\/app\/chasseur\/fei\/ZACH-/, { timeout: 20000 });
   await expect(zacharie.getByRole('heading', { name: /^Fiche du/ })).toBeVisible({ timeout: 20000 });
   await zacharie.getByRole('button', { name: 'Pierre Petit' }).click();
   await zacharie.getByRole('button', { name: 'Continuer' }).first().click();
   // carcasses et heures sont déjà pré-remplies : la fiche passe directement à la validation
-  await expect(zacharie.getByRole('button', { name: /N° BAS-005/ })).toBeVisible();
-  await expect(zacharie.getByRole('button', { name: /N° BAS-006/ })).toBeVisible();
+  await expect(zacharie.getByRole('button', { name: /N° BAS-003/ })).toBeVisible();
+  await expect(zacharie.getByRole('button', { name: /N° BAS-004/ })).toBeVisible();
   await zacharie.getByRole('button', { name: dateApprobationDuJour() }).click();
   await zacharie.getByText('Je, Martin Marie, certifie qu').click();
   await zacharie.getByRole('button', { name: 'Transmettre', exact: true }).click();
   await expect(zacharie.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 15000 });
+  await zacharie.close();
+  await page.bringToFront();
 
   const webhooks = page.getByRole('heading', { name: 'Webhooks reçus' }).locator('..');
   await expect(webhooks.getByText('FEI_APPROBATION_MISE_SUR_LE_MARCHE').first()).toBeVisible({
     timeout: 30000,
   });
-  await expect(webhooks.getByText(/BAS-005 — Chevreuil/).first()).toBeVisible();
-  await expect(webhooks.getByText(/BAS-006 — Sanglier/).first()).toBeVisible();
+  await expect(webhooks.getByText(/BAS-003 — Chevreuil/).first()).toBeVisible();
+  await expect(webhooks.getByText(/BAS-004 — Sanglier/).first()).toBeVisible();
 });
 
 test('lecture des fiches : la plus récente en premier', async ({ page }) => {
   await seConnecterAuBacASable(page);
   await page.getByRole('button', { name: 'Récupérer les fiches' }).click();
   const lignes = page.getByRole('table').locator('tbody tr');
-  await expect(lignes.first()).toContainText('BAS-005', { timeout: 10000 });
-  await expect(page.getByRole('table')).toContainText('BAS-003');
+  await expect(lignes.first()).toContainText('BAS-003', { timeout: 10000 });
   await expect(page.getByRole('table')).toContainText('BAS-001');
 });

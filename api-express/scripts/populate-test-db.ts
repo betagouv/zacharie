@@ -779,11 +779,9 @@ Christine
       private_key: 'test-private-key-user',
       public_key: 'test-public-key-user',
       active: true,
-      scopes: [
-        ApiKeyScope.FEI_READ_FOR_USER,
-        ApiKeyScope.CARCASSE_READ_FOR_USER,
-        ApiKeyScope.USER_LOGIN_FOR_USER,
-      ],
+      scopes: [ApiKeyScope.FEI_READ_FOR_USER, ApiKeyScope.CARCASSE_READ_FOR_USER],
+      // contexte de création des fiches ouvertes par son lien `/app/nouvelle-fiche?contexte=bac-a-sable`
+      slug_for_context: 'bac-a-sable',
     },
   });
   const etg1User = users.find((u) => u.email === 'etg-1@example.fr');
@@ -803,22 +801,12 @@ Christine
   if ((role as string) === 'API_BAC_A_SABLE') {
     await prisma.apiKey.update({
       where: { id: apiKeyUser.id },
-      data: { webhook_url: 'http://localhost:3292/api/webhook', slug_for_context: 'bac-a-sable' },
+      data: { webhook_url: 'http://localhost:3292/api/webhook' },
     });
     console.log('API_BAC_A_SABLE: webhook de la clé tierce partie vers le bac à sable');
   }
 
   if (role) {
-    // La clé tierce partie a l'accord d'examinateur-premier-detenteur@ : elle peut lui créer un lien
-    // access_token (`/app/nouvelle-fiche?access_token=…`), ouvert sur l'appareil d'un autre compte.
-    if ((role as string) === 'LIEN_ACCESS_TOKEN_AUTRE_COMPTE') {
-      const autreCompte = users.find((u) => u.email === 'examinateur-premier-detenteur@example.fr');
-      await prisma.apiKeyApprovalByUserOrEntity.create({
-        data: { api_key_id: apiKeyUser.id, user_id: autreCompte!.id, status: 'APPROVED' },
-      });
-      await prisma.apiKey.update({ where: { id: apiKeyUser.id }, data: { slug_for_context: 'bac-a-sable' } });
-      console.log('LIEN_ACCESS_TOKEN_AUTRE_COMPTE: accord de la clé tierce partie');
-    }
     if (role === FeiOwnerRole.PREMIER_DETENTEUR) {
       const fei = await prisma.fei.create({ data: feiValidatedByExaminateur });
       const carcasses = await prisma.carcasse.createMany({
