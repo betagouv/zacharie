@@ -590,9 +590,10 @@ function CarcasseDetails({
     for (const carcasseIntermediaire of carcassesIntermediaires) {
       if (carcasseIntermediaire?.intermediaire_poids) {
         const intermediaireEntity = entities[carcasseIntermediaire.intermediaire_entity_id];
-        poids.push(
-          `${intermediaireEntity?.nom_d_usage}\u00A0: ${carcasseIntermediaire.intermediaire_poids}\u00A0kg`
-        );
+        poids.push({
+          intermediaire: intermediaireEntity?.nom_d_usage,
+          poids: carcasseIntermediaire.intermediaire_poids,
+        });
       }
     }
     return poids;
@@ -905,15 +906,14 @@ function CarcasseDetails({
         </ModalCard>
       )}
 
-      {poidsIntermediaires.length > 0 && (
-        <ModalCard title="Poids renseignés par les intermédiaires">
-          <ul className="space-y-1 text-sm">
-            {poidsIntermediaires.map((p, i) => (
-              <li key={i}>{p}</li>
-            ))}
-          </ul>
+      {poidsIntermediaires.map((p, i) => (
+        <ModalCard
+          key={i}
+          title={`Poids renseigné par ${p.intermediaire}`}
+        >
+          <p className="text-sm">{p.poids}&nbsp;kg</p>
         </ModalCard>
-      )}
+      ))}
 
       {showIpm1AndIpm2 ? (
         <>
