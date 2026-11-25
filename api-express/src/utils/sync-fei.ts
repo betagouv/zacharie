@@ -196,10 +196,11 @@ export async function syncFei(
 
   */
 
-  if (canWriteOwnership && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id)) {
-    nextFei.examinateur_initial_user_id = body.examinateur_initial_user_id
-      ? sanitize(body.examinateur_initial_user_id as string)
-      : null;
+  // L'examinateur initial est celui qui crée la fiche, et il ne change plus ensuite : c'est lui qui
+  // signe l'examen et peut supprimer la fiche. La valeur du corps est toujours ignorée, sinon le
+  // premier détenteur pourrait se déclarer examinateur, ou le créateur imputer la fiche à un autre.
+  if (!existingFei) {
+    nextFei.examinateur_initial_user_id = user.id;
   }
   if (isExaminateur && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_offline)) {
     nextFei.examinateur_initial_offline = body.examinateur_initial_offline || null;
