@@ -132,7 +132,7 @@ function NumeroCfeiInput({ defaultValue, disabled }: { defaultValue: string; dis
   return (
     <Input
       label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
-      hintText="De la forme CFEI-DEP-AA-123"
+      hintText="De la forme CFEI-DEP-AA-123 ou DEP-FREI-AA-123"
       disabled={disabled}
       state={!disabled && isNumeroCfeiHorsFormat(numeroCfei) ? 'info' : 'default'}
       stateRelatedMessage={NUMERO_CFEI_FORMAT_MESSAGE}
