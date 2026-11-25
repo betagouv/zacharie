@@ -1,9 +1,11 @@
 import { useLocation } from 'react-router';
 import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation';
 import useZustandStore from '@app/zustand/store';
+import useCcgNavigationItems from '@app/routes/ccg/use-ccg-navigation-items';
 
 export default function useCollecteurNavigationMenu(): MainNavigationProps.Item[] {
   const location = useLocation();
+  const ccgNavigationItems = useCcgNavigationItems('/app/collecteur');
   const apiKeyApprovals = useZustandStore((state) => state.apiKeyApprovals);
 
   const navigationBase: MainNavigationProps.Item[] = [
@@ -18,6 +20,7 @@ export default function useCollecteurNavigationMenu(): MainNavigationProps.Item[
       isActive: location.pathname === '/app/collecteur/carcasses',
       linkProps: { to: '/app/collecteur/carcasses', href: '#' },
     },
+    ...ccgNavigationItems,
     {
       text: 'Paramètres',
       isActive:

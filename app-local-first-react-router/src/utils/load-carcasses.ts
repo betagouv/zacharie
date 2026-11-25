@@ -3,7 +3,7 @@ import useZustandStore from '@app/zustand/store';
 import { mergeItems } from './merge-fetched-items';
 import API from '@app/services/api';
 import { getFeiAndCarcasseAndIntermediaireIds } from './get-carcasse-intermediaire-id';
-import { UserRoles, type Carcasse, type CarcasseModificationRequest } from '@prisma/client';
+import { UserRoles, type CarcasseModificationRequest } from '@prisma/client';
 import useUser from '@app/zustand/user';
 import { capture } from '@app/services/sentry';
 import { isLocalTeardownInProgress } from '@app/zustand/idb-sliced-storage';
@@ -111,6 +111,10 @@ export async function loadCarcasses() {
     const carcasseModifRequests: CarcassesGetResponse['data']['carcasseModifRequests'] = [];
     const usersFetched: CarcassesGetResponse['data']['users'] = [];
     const entitiesFetched: CarcassesGetResponse['data']['entities'] = [];
+    const ccgCarcassesFetched: CarcassesGetResponse['data']['ccgCarcasses'] = [];
+    const ccgFeisFetched: CarcassesGetResponse['data']['ccgFeis'] = [];
+    const ccgCarcassesIntermediairesFetched: CarcassesGetResponse['data']['ccgCarcassesIntermediaires'] = [];
+    let ccgEntityIds: CarcassesGetResponse['data']['ccgEntityIds'] = [];
     // curseur : updated_at (ms) et id de la dernière carcasse reçue, la page suivante commence après
     let cursor: { updatedAt: string; id: string } | null = null;
     let hasMore = true;
@@ -139,29 +143,33 @@ export async function loadCarcasses() {
       entitiesFetched.push(...(res.data.entities || []));
       carcasseModifRequests.push(...(res.data.carcasseModifRequests || []));
       carcassesIntermediairesFetched.push(...(res.data.carcassesIntermediaires || []));
+      ccgCarcassesFetched.push(...res.data.ccgCarcasses);
+      ccgFeisFetched.push(...res.data.ccgFeis);
+      ccgCarcassesIntermediairesFetched.push(...res.data.ccgCarcassesIntermediaires);
+      ccgEntityIds = res.data.ccgEntityIds;
       if (!cursor) {
         fullReload = res.data.fullReload;
         receivedReloadVersion = res.data.reloadVersion;
         if (fullReload) fullReloadRequested = false;
       }
-      const lastCarcasse: Carcasse | undefined = res.data.carcasses?.at(-1);
-      hasMore = res.data.hasMore && !!lastCarcasse;
-      if (lastCarcasse) {
-        cursor = {
-          updatedAt: String(new Date(lastCarcasse.updated_at).getTime()),
-          id: lastCarcasse.zacharie_carcasse_id,
-        };
-      }
+      hasMore = res.data.hasMore && !!res.data.nextCursor;
+      if (res.data.nextCursor) cursor = res.data.nextCursor;
     }
 
     // Guard against logout/abort races: don't clobber a freshly-reset store.
     if (signal.aborted || !useUser.getState().user) return;
 
-    if (carcassesFetched.length === 0 && feisFetched.length === 0 && !fullReload) {
+    if (
+      carcassesFetched.length === 0 &&
+      feisFetched.length === 0 &&
+      ccgCarcassesFetched.length === 0 &&
+      !fullReload
+    ) {
       console.log('no carcasses nor feis fetched');
       useZustandStore.setState(() => ({
         lastUpdateFromServer: serverDate,
         carcassesReloadVersion: receivedReloadVersion,
+        ccgEntityIds,
       }));
       checkLocalCarcassesIntegrity(signal);
       return;
@@ -224,6 +232,24 @@ export async function loadCarcasses() {
       }
     }
 
+    // Fiches de CCG en lecture seule : jamais modifiées en local, un rechargement complet les remplace.
+    const keepCcg = <T,>(items: Record<string, T>) => (fullReload ? [] : Object.values(items));
+    const newCcgCarcasses = mergeItems({
+      oldItems: keepCcg(localState.ccgCarcasses),
+      newItems: ccgCarcassesFetched,
+      idKey: (c) => c.zacharie_carcasse_id,
+    });
+    const newCcgFeis = mergeItems({
+      oldItems: keepCcg(localState.ccgFeis),
+      newItems: ccgFeisFetched,
+      idKey: (f) => f.numero,
+    });
+    const newCcgCarcassesIntermediaires = mergeItems({
+      oldItems: keepCcg(localState.ccgCarcassesIntermediaireById),
+      newItems: ccgCarcassesIntermediairesFetched,
+      idKey: getFeiAndCarcasseAndIntermediaireIds,
+    });
+
     // Merge modif requests by their own id (drops cancelled ones via deleted_at, like other entities),
     // then regroup into the full-history-by-carcasse map the store and UI consume.
     const mergedModifRequestsById = mergeItems({
@@ -263,6 +289,10 @@ export async function loadCarcasses() {
       modifRequestsByCarcasseId: nextModifRequestsByCarcasseId,
       users: newUsers,
       entities: newEntities,
+      ccgEntityIds,
+      ccgCarcasses: newCcgCarcasses,
+      ccgFeis: newCcgFeis,
+      ccgCarcassesIntermediaireById: newCcgCarcassesIntermediaires,
       lastUpdateFromServer: serverDate,
       carcassesReloadVersion: receivedReloadVersion,
     }));

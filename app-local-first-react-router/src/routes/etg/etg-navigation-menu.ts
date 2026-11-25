@@ -1,9 +1,11 @@
 import { useLocation } from 'react-router';
 import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation';
 import useZustandStore from '@app/zustand/store';
+import useCcgNavigationItems from '@app/routes/ccg/use-ccg-navigation-items';
 
 export default function useEtgNavigationMenu(): MainNavigationProps.Item[] {
   const location = useLocation();
+  const ccgNavigationItems = useCcgNavigationItems('/app/etg');
   const apiKeyApprovals = useZustandStore((state) => state.apiKeyApprovals);
 
   const navigationBase: MainNavigationProps.Item[] = [
@@ -27,6 +29,7 @@ export default function useEtgNavigationMenu(): MainNavigationProps.Item[] {
       isActive: location.pathname === '/app/etg/utilisateurs',
       linkProps: { to: '/app/etg/utilisateurs', href: '#' },
     },
+    ...ccgNavigationItems,
     {
       text: 'Paramètres',
       isActive:

@@ -279,6 +279,14 @@ export interface CarcassesGetResponse {
     entities: Array<EntityWithUserRelation>;
     carcassesIntermediaires: Array<CarcasseIntermediaire>;
     carcasseModifRequests: Array<CarcasseModificationRequest>;
+    // CCG dont l'utilisateur est propriétaire, et les fiches qui y sont passées hors de son périmètre
+    // de rôle : en lecture seule, sans le statut des carcasses (cf utils/ccg-read-only.ts)
+    ccgEntityIds: Array<string>;
+    ccgCarcasses: Array<Carcasse>;
+    ccgFeis: Array<Fei>;
+    ccgCarcassesIntermediaires: Array<CarcasseIntermediaire>;
+    // dernière carcasse de la page, CCG compris : la page suivante commence après
+    nextCursor: { updatedAt: string; id: string } | null;
     hasMore: boolean;
     // le client remplace ses carcasses locales au lieu de les merger (voir FORCE_FULL_RELOAD_AFTER)
     fullReload: boolean;

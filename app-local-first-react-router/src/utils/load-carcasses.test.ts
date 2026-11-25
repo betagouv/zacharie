@@ -18,6 +18,10 @@ const mocks = vi.hoisted(() => {
     entities: {} as Record<string, Item & { id: string; relation: string }>,
     detenteursInitiauxIds: [] as Array<string>,
     feiIdsRenvoiToHide: [] as Array<string>,
+    ccgEntityIds: [] as Array<string>,
+    ccgFeis: {} as Record<string, Item & { numero: string }>,
+    ccgCarcasses: {} as Record<string, Item & { zacharie_carcasse_id: string }>,
+    ccgCarcassesIntermediaireById: {} as Record<string, Item>,
   };
   return { state, get: vi.fn() };
 });
@@ -56,6 +60,15 @@ function serverResponse(fullReload: boolean) {
       entities: [{ ...base(), id: 'E-SERVEUR', relation: 'NONE' }],
       carcassesIntermediaires: [],
       carcasseModifRequests: [],
+      ccgEntityIds: [],
+      ccgCarcasses: [],
+      ccgFeis: [],
+      ccgCarcassesIntermediaires: [],
+      // le serveur renvoie la dernière carcasse de la page
+      get nextCursor() {
+        const last = this.carcasses.at(-1);
+        return last ? { updatedAt: String(last.updated_at.getTime()), id: last.zacharie_carcasse_id } : null;
+      },
       hasMore: false,
       fullReload,
       reloadVersion: 4,
@@ -87,6 +100,10 @@ beforeEach(() => {
     },
     users: { 'U-SORTI': { ...base(), id: 'U-SORTI' } },
     entities: { 'E-SORTIE': { ...base(), id: 'E-SORTIE', relation: 'NONE' } },
+    ccgEntityIds: [],
+    ccgFeis: {},
+    ccgCarcasses: {},
+    ccgCarcassesIntermediaireById: {},
   });
 });
 
@@ -334,5 +351,43 @@ describe('loadCarcasses — demandes de modification', () => {
     expect(next).not.toBe(previous);
     expect(next).toContain(changed);
     expect(next).toContain(previous[0]);
+  });
+});
+
+describe('loadCarcasses — fiches de CCG', () => {
+  function mockCcgServer(fullReload: boolean) {
+    const response = serverResponse(fullReload);
+    response.data.ccgEntityIds = ['CCG-1'] as never;
+    response.data.ccgCarcasses = [
+      { ...base(), zacharie_carcasse_id: 'C-CCG', fei_numero: 'FEI-CCG' },
+    ] as never;
+    response.data.ccgFeis = [{ ...base(), numero: 'FEI-CCG' }] as never;
+    mocks.get.mockImplementation(({ path }: { path: string }) => {
+      if (path === 'now') return Promise.resolve({ ok: true, data: 2000 });
+      if (path === '/carcasse/count') return Promise.resolve({ ok: false });
+      return Promise.resolve(response);
+    });
+  }
+
+  beforeEach(() => {
+    Object.assign(mocks.state, {
+      ccgCarcasses: { 'C-CCG-ANCIENNE': { ...base(), zacharie_carcasse_id: 'C-CCG-ANCIENNE' } },
+    });
+  });
+
+  it('range les fiches de CCG à part, hors des fiches du rôle', async () => {
+    mockCcgServer(false);
+    await loadCarcasses();
+    expect(mocks.state.ccgEntityIds).toEqual(['CCG-1']);
+    expect(Object.keys(mocks.state.ccgCarcasses).sort()).toEqual(['C-CCG', 'C-CCG-ANCIENNE']);
+    expect(mocks.state.ccgFeis['FEI-CCG']).toBeDefined();
+    expect(mocks.state.carcasses['C-CCG']).toBeUndefined();
+    expect(mocks.state.feis['FEI-CCG']).toBeUndefined();
+  });
+
+  it('rechargement complet : les anciennes fiches de CCG sont remplacées', async () => {
+    mockCcgServer(true);
+    await loadCarcasses();
+    expect(Object.keys(mocks.state.ccgCarcasses)).toEqual(['C-CCG']);
   });
 });

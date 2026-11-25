@@ -112,7 +112,12 @@ export default function AdminEntity() {
       tabId: 'Utilisateurs pouvant traiter des fiches pour cette entité',
       label: `Utilisateurs ayant accès au tableau de bord de la fédération (${entity.EntityRelationsWithUsers.filter((rel) => rel.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY).length})`,
     });
-  } else if (entity.type !== EntityTypes.CCG) {
+  } else if (entity.type === EntityTypes.CCG) {
+    tabs.push({
+      tabId: 'Utilisateurs pouvant envoyer des fiches à cette entité',
+      label: `Utilisateurs du CCG (${entity.EntityRelationsWithUsers.filter((rel) => rel.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY).length})`,
+    });
+  } else {
     tabs.push({
       tabId: 'Utilisateurs pouvant traiter des fiches pour cette entité',
       label: `Utilisateurs pouvant traiter des fiches pour cette entité (${entity.EntityRelationsWithUsers.filter((rel) => rel.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY).length})`,
@@ -538,6 +543,7 @@ export default function AdminEntity() {
               relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
               fetcherKey="working-with"
               setIsSaving={setIsSaving}
+              ccgOwners={entity.type === EntityTypes.CCG}
             />
           )}
           {selectedTabId === 'ETGs associés' && (
@@ -597,6 +603,8 @@ interface WorkingWithOrForProps {
   }>;
   fetcherKey: string;
   setIsSaving: (isSaving: boolean) => void;
+  // CCG : le statut ADMIN fait du rattaché un propriétaire, qui voit les fiches déposées dans le CCG
+  ccgOwners?: boolean;
 }
 
 function UserWorkingWithOrFor({
@@ -606,14 +614,19 @@ function UserWorkingWithOrFor({
   potentialUsers,
   fetcherKey,
   setIsSaving,
+  ccgOwners = false,
 }: WorkingWithOrForProps) {
   const { entity } = adminEntityResponse;
+  const reload = () =>
+    loadData(entity.id).then((response) => {
+      if (response.data) setAdminEntityResponse(response.data!);
+    });
   return (
     <>
       {entity.EntityRelationsWithUsers.filter((entity) => entity.relation === relationType).map(
         (entityRelation) => {
           const owner = entityRelation.UserRelatedWithEntity;
-          return (
+          const relationEntityUser = (
             <RelationEntityUser
               relationType={relationType}
               entity={entity}
@@ -626,12 +639,45 @@ function UserWorkingWithOrFor({
               canDelete
               userEntityPath="admin/user-entity"
               userLink={`/app/admin/user/${owner.id}`}
-              onChange={() => {
-                loadData(entity.id).then((response) => {
-                  if (response.data) setAdminEntityResponse(response.data!);
-                });
-              }}
+              onChange={reload}
             />
+          );
+          if (!ccgOwners) return relationEntityUser;
+          return (
+            <Fragment key={owner.id}>
+              {relationEntityUser}
+              <Checkbox
+                className="px-4 md:px-8"
+                options={[
+                  {
+                    label: 'Propriétaire du CCG',
+                    hintText: 'Voit les fiches déposées dans le CCG, jusqu’à leur sortie du CCG',
+                    nativeInputProps: {
+                      checked: entityRelation.status === EntityRelationStatus.ADMIN,
+                      onChange: (event) => {
+                        setIsSaving(true);
+                        API.put({
+                          path: 'admin/user-entity',
+                          body: {
+                            [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: owner.id,
+                            [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
+                            relation: relationType,
+                            status: event.target.checked
+                              ? EntityRelationStatus.ADMIN
+                              : EntityRelationStatus.MEMBER,
+                          },
+                        })
+                          .then((response) => {
+                            if (!response.ok) toast.error(response.error);
+                          })
+                          .then(reload)
+                          .finally(() => setIsSaving(false));
+                      },
+                    },
+                  },
+                ]}
+              />
+            </Fragment>
           );
         }
       )}
@@ -658,6 +704,10 @@ function UserWorkingWithOrFor({
                     // ajout par un admin Zacharie : validé d'office (le premier devient admin de l'entité)
                     ...(relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
                       ? { [Prisma.EntityAndUserRelationsScalarFieldEnum.status]: EntityRelationStatus.MEMBER }
+                      : {}),
+                    // ajout au CCG par un admin Zacharie : propriétaire du CCG
+                    ...(ccgOwners
+                      ? { [Prisma.EntityAndUserRelationsScalarFieldEnum.status]: EntityRelationStatus.ADMIN }
                       : {}),
                   },
                 })

@@ -18,8 +18,10 @@ import {
   findScopeCarcassesPage,
   getCarcasseAccessWhere,
   getCarcasseScopeBranches,
+  getCcgScopeBranches,
 } from '~/utils/carcasse-access';
-import { getUserCarcasseEntityIds } from '~/utils/user-entities';
+import { getUserAdminCcgIds, getUserCarcasseEntityIds } from '~/utils/user-entities';
+import { getCcgIntermediaires, getCcgOnlyCarcasseIds, redactCarcasseForCcg } from '~/utils/ccg-read-only';
 import { FORCE_FULL_RELOAD_AFTER } from '~/utils/force-full-reload';
 
 const zodQuerySchema = z.object({
@@ -96,10 +98,13 @@ router.get(
       return;
     }
 
+    // CCG dont l'utilisateur est propriétaire : leurs carcasses entrent dans la même pagination.
+    const ccgIds = await getUserAdminCcgIds(req.user.id);
+
     // Page suivante : strictement après la dernière carcasse reçue, dans l'ordre (updated_at, id)
     // décroissant (cf e2e/load/README.md).
-    const { carcasses, hasMore } = await findScopeCarcassesPage({
-      branches: scopeBranches,
+    const { carcasses: pageCarcasses, hasMore } = await findScopeCarcassesPage({
+      branches: [...scopeBranches, ...getCcgScopeBranches(ccgIds)],
       includeDeleted,
       afterDate,
       cursor: cursorDate && cursorId ? { updatedAt: cursorDate, id: cursorId } : undefined,
@@ -112,6 +117,18 @@ router.get(
       res.status(400).send({ ok: false, data: null, error: "Mise à jour de l'application requise" });
       return;
     }
+
+    const lastPageCarcasse = pageCarcasses.at(-1);
+    const nextCursor = lastPageCarcasse
+      ? {
+          updatedAt: String(new Date(lastPageCarcasse.updated_at).getTime()),
+          id: lastPageCarcasse.zacharie_carcasse_id,
+        }
+      : null;
+    // Hors périmètre du rôle, une carcasse de CCG est servie à part, sans son statut.
+    const ccgOnlyIds = await getCcgOnlyCarcasseIds(req.user, userEntityIds, ccgIds, pageCarcasses);
+    const carcasses = pageCarcasses.filter((carcasse) => !ccgOnlyIds.has(carcasse.zacharie_carcasse_id));
+    const ccgCarcasses = pageCarcasses.filter((carcasse) => ccgOnlyIds.has(carcasse.zacharie_carcasse_id));
 
     const feiNumeros = new Set<string>();
     const carcassesIds = new Set<string>();
@@ -154,17 +171,56 @@ router.get(
     if (!includeDeleted) emptyFeisWhere.deleted_at = null;
     if (afterDate) emptyFeisWhere.updated_at = { gte: afterDate };
 
-    const [feisWithCarcasses, emptyFeis, carcassesIntermediaires, carcasseModifRequests] = await Promise.all([
-      prisma.fei.findMany({ where: { numero: { in: [...feiNumeros].filter(Boolean) } } }),
-      isFirstPage ? prisma.fei.findMany({ where: emptyFeisWhere }) : [],
-      prisma.carcasseIntermediaire.findMany({
-        where: { zacharie_carcasse_id: { in: [...carcassesIds].filter(Boolean) } },
-      }),
-      prisma.carcasseModificationRequest.findMany({
-        where: { zacharie_carcasse_id: { in: [...carcassesIds].filter(Boolean) } },
-      }),
-    ]);
+    const ccgFeiNumeros = new Set(ccgCarcasses.map((carcasse) => carcasse.fei_numero));
+    const [feisWithCarcasses, emptyFeis, allCarcassesIntermediaires, carcasseModifRequests, ccgFeis] =
+      await Promise.all([
+        prisma.fei.findMany({ where: { numero: { in: [...feiNumeros].filter(Boolean) } } }),
+        isFirstPage ? prisma.fei.findMany({ where: emptyFeisWhere }) : [],
+        prisma.carcasseIntermediaire.findMany({
+          where: {
+            zacharie_carcasse_id: { in: [...carcassesIds, ...ccgOnlyIds].filter(Boolean) },
+          },
+        }),
+        prisma.carcasseModificationRequest.findMany({
+          where: { zacharie_carcasse_id: { in: [...carcassesIds].filter(Boolean) } },
+        }),
+        ccgFeiNumeros.size ? prisma.fei.findMany({ where: { numero: { in: [...ccgFeiNumeros] } } }) : [],
+      ]);
     const feis = [...feisWithCarcasses, ...emptyFeis];
+    const carcassesIntermediaires = allCarcassesIntermediaires.filter(
+      (intermediaire) => !ccgOnlyIds.has(intermediaire.zacharie_carcasse_id)
+    );
+
+    const ccgIntermediairesByCarcasseId: Record<string, typeof allCarcassesIntermediaires> = {};
+    for (const intermediaire of allCarcassesIntermediaires) {
+      if (!ccgOnlyIds.has(intermediaire.zacharie_carcasse_id)) continue;
+      (ccgIntermediairesByCarcasseId[intermediaire.zacharie_carcasse_id] ??= []).push(intermediaire);
+    }
+    const ccgCarcassesIntermediaires: typeof allCarcassesIntermediaires = [];
+    for (const carcasse of ccgCarcasses) {
+      ccgCarcassesIntermediaires.push(
+        ...getCcgIntermediaires(
+          carcasse,
+          ccgIntermediairesByCarcasseId[carcasse.zacharie_carcasse_id] ?? [],
+          ccgIds
+        )
+      );
+      if (carcasse.examinateur_initial_user_id) userIds.add(carcasse.examinateur_initial_user_id);
+      if (carcasse.premier_detenteur_user_id) userIds.add(carcasse.premier_detenteur_user_id);
+      if (carcasse.created_by_user_id) userIds.add(carcasse.created_by_user_id);
+      if (carcasse.premier_detenteur_entity_id) entityIds.add(carcasse.premier_detenteur_entity_id);
+      if (carcasse.premier_detenteur_depot_entity_id)
+        entityIds.add(carcasse.premier_detenteur_depot_entity_id);
+      if (carcasse.premier_detenteur_prochain_detenteur_id_cache)
+        entityIds.add(carcasse.premier_detenteur_prochain_detenteur_id_cache);
+    }
+    for (const intermediaire of ccgCarcassesIntermediaires) {
+      if (intermediaire.deleted_at) continue;
+      userIds.add(intermediaire.intermediaire_user_id);
+      entityIds.add(intermediaire.intermediaire_entity_id);
+      if (intermediaire.intermediaire_depot_entity_id)
+        entityIds.add(intermediaire.intermediaire_depot_entity_id);
+    }
 
     for (const intermediaire of carcassesIntermediaires) {
       // affiché dans le parcours de la fiche et le motif de refus : qui, au sein de l'entité, a pris en charge
@@ -199,6 +255,11 @@ router.get(
         entities,
         carcassesIntermediaires,
         carcasseModifRequests,
+        ccgEntityIds: ccgIds,
+        ccgCarcasses: ccgCarcasses.map(redactCarcasseForCcg),
+        ccgFeis,
+        ccgCarcassesIntermediaires,
+        nextCursor,
         hasMore,
         fullReload,
         reloadVersion: req.user.carcasses_reload_version,

@@ -1,8 +1,10 @@
 import { useLocation } from 'react-router';
 import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation';
+import useCcgNavigationItems from '@app/routes/ccg/use-ccg-navigation-items';
 
 export default function useCircuitCourtNavigationMenu(): MainNavigationProps.Item[] {
   const location = useLocation();
+  const ccgNavigationItems = useCcgNavigationItems('/app/circuit-court');
 
   const navigationBase: MainNavigationProps.Item[] = [
     {
@@ -11,6 +13,7 @@ export default function useCircuitCourtNavigationMenu(): MainNavigationProps.Ite
         location.pathname.startsWith('/app/circuit-court/fei') || location.pathname === '/app/circuit-court',
       linkProps: { to: '/app/circuit-court', href: '#' },
     },
+    ...ccgNavigationItems,
     {
       text: 'Paramètres',
       isActive:

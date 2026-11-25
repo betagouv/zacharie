@@ -1,9 +1,11 @@
 import { useLocation } from 'react-router';
 import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation';
 import useZustandStore from '@app/zustand/store';
+import useCcgNavigationItems from '@app/routes/ccg/use-ccg-navigation-items';
 
 export default function useChasseurNavigationMenu(): MainNavigationProps.Item[] {
   const location = useLocation();
+  const ccgNavigationItems = useCcgNavigationItems('/app/chasseur');
   const apiKeyApprovals = useZustandStore((state) => state.apiKeyApprovals);
   const federation = useZustandStore((state) => state.federation);
 
@@ -27,6 +29,7 @@ export default function useChasseurNavigationMenu(): MainNavigationProps.Item[] 
       isActive: location.pathname.startsWith('/app/chasseur/fei') || location.pathname === '/app/chasseur',
       linkProps: { to: '/app/chasseur', href: '#' },
     },
+    ...ccgNavigationItems,
     {
       text: 'Paramètres',
       isActive: location.pathname.startsWith('/app/chasseur/profil'),

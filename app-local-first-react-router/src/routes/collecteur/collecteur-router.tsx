@@ -1,3 +1,5 @@
+import CcgFiches from '@app/routes/ccg/ccg-fiches';
+import CcgFiche from '@app/routes/ccg/ccg-fiche';
 import { Outlet, Route } from 'react-router';
 import CollecteurLayout from './collecteur-layout';
 import CollecteurFiches from './collecteur-fiches';
@@ -23,6 +25,14 @@ export default function RouterCollecteur() {
       <Route
         index
         element={<CollecteurFiches />}
+      />
+      <Route
+        path="ccg"
+        element={<CcgFiches basePath="/app/collecteur/ccg" />}
+      />
+      <Route
+        path="ccg/:fei_numero"
+        element={<CcgFiche basePath="/app/collecteur/ccg" />}
       />
       <Route
         path="contact"
