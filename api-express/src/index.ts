@@ -48,7 +48,6 @@ import statsRouter from './controllers/stats.ts';
 import v1Router from './controllers/v1/index.ts';
 import apiKeyApprovalRouter from './controllers/api-key-approval.ts';
 import quizResultRouter from './controllers/quiz-result.ts';
-import frameAncestorsRouter from './controllers/frame-ancestors.ts';
 import trichineRouter from './controllers/trichine.ts';
 import laboratoireRouter from './controllers/laboratoire.ts';
 import trichineAliasRouter from './controllers/trichine-alias.ts';
@@ -242,9 +241,6 @@ app.post('/sentry-check', async (req, res) => {
 // Public quiz endpoint (anonymous, no auth)
 app.use('/quiz-result', quizResultRouter);
 
-// Public : origines autorisées à afficher l'app dans une iframe (lu par server-app.js)
-app.use('/frame-ancestors', frameAncestorsRouter);
-
 // v1 - REST API used with external clients and api keys
 app.use('/v1', v1Router);
 
@@ -254,7 +250,6 @@ import { requireTrichineFeature } from './middlewares/trichine-feature.ts';
 app.use('/user/login', authIpRateLimit({ skipSuccessfulRequests: true }), authRateLimit);
 app.use('/user/signup', authIpRateLimit(), authRateLimit);
 app.use('/user/signup-with-invitation-token', authIpRateLimit(), authRateLimit);
-app.use('/user/access-token', authIpRateLimit(), authRateLimit);
 app.use('/user/forget-password', authIpRateLimit(), authRateLimit);
 app.use('/user/reset-password', authIpRateLimit(), authRateLimit);
 app.use('/user/change-password', authRateLimit);

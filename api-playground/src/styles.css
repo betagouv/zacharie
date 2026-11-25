@@ -9,12 +9,6 @@
   padding: 0.5rem 1rem;
 }
 
-.zacharie-iframe {
-  width: 100%;
-  height: 80vh;
-  border: 2px dashed #000091;
-}
-
 .json-block {
   max-height: 30rem;
   overflow: auto;

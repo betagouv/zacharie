@@ -224,13 +224,20 @@ describe('syncFei — creation_context', () => {
     expect(prisma.apiKey.findFirst).not.toHaveBeenCalled();
   });
 
-  test('unknown context slug → throws "Invalid context slug"', async () => {
+  test('unknown context slug → ignored, the fiche still syncs', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
     vi.mocked(prisma.apiKey.findFirst).mockResolvedValueOnce(null);
+    vi.mocked(prisma.fei.update).mockResolvedValue(baseFei as any);
 
-    await expect(
-      syncFei('FEI-1', { numero: 'FEI-1', creation_context: 'partner-x' } as any, examinateurInitial, scope)
-    ).rejects.toThrow('Invalid context slug');
+    await syncFei(
+      'FEI-1',
+      { numero: 'FEI-1', creation_context: 'partner-x' } as any,
+      examinateurInitial,
+      scope
+    );
+
+    const updateCall = vi.mocked(prisma.fei.update).mock.calls[0][0];
+    expect(updateCall.data.creation_context).toBeUndefined();
   });
 
   test('known partner context slug → resolves via apiKey', async () => {

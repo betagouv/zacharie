@@ -19,26 +19,8 @@ app.use(compression());
 // http://expressjs.com/en/advanced/best-practice-security.html#at-a-minimum-disable-x-powered-by-header
 app.disable('x-powered-by');
 
-// Zacharie dans une iframe (embedded=true) : les origines autorisées sont réglées par clé API dans
-// l'admin. On ne les lit que pour un document chargé dans une iframe : le navigateur envoie alors
-// Sec-Fetch-Dest: iframe, à chaque chargement (y compris un rechargement sans embedded=true).
-async function getFrameAncestors(req) {
-  if (req.headers['sec-fetch-dest'] !== 'iframe' || !process.env.VITE_API_URL) return [];
-  try {
-    const res = await fetch(`${process.env.VITE_API_URL}/frame-ancestors`, {
-      signal: AbortSignal.timeout(3000),
-    });
-    const json = await res.json();
-    return json.data.origins;
-  } catch (error) {
-    console.error('frame-ancestors indisponible', error);
-    return [];
-  }
-}
-
 // Security headers (Mozilla Observatory recommendations)
-app.use(async (req, res, next) => {
-  const frameAncestors = await getFrameAncestors(req);
+app.use((req, res, next) => {
   res.setHeader(
     'Content-Security-Policy',
     [
@@ -54,14 +36,13 @@ app.use(async (req, res, next) => {
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
-      ["frame-ancestors 'self'", ...frameAncestors].join(' '),
+      "frame-ancestors 'self'",
       'upgrade-insecure-requests',
     ].join('; ')
   );
   res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  // X-Frame-Options ne sait pas lister d'autres origines : frame-ancestors suffit quand il y en a
-  if (!frameAncestors.length) res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
   res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');

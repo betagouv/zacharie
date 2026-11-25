@@ -2,8 +2,6 @@ import type { Request } from 'express';
 import { IS_DEV_OR_TEST, IS_REVIEW_APP } from '~/config';
 
 export const JWT_MAX_AGE = 60 * 60 * 24 * 90; // 90 days in seconds
-// session ouverte par une app tierce via un access token (clé API) : volontairement courte
-export const ACCESS_TOKEN_SESSION_MAX_AGE = 60 * 60 * 24; // 24 hours in seconds
 
 // Hors dev/test, le cookie de session est host-only sur l'API : le préfixe `__Host-` oblige le navigateur
 // à refuser tout attribut `domain`, donc les autres sous-domaines (Metabase…) ne le reçoivent jamais.

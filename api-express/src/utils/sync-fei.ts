@@ -162,15 +162,12 @@ export async function syncFei(
   }
   if (isExaminateur && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.creation_context)) {
     const contextSlug = body.creation_context;
-    if (contextSlug) {
-      if (contextSlug !== 'zacharie') {
-        const apiKey = await prisma.apiKey.findFirst({
-          where: { slug_for_context: contextSlug },
-        });
-        if (!apiKey) {
-          throw new Error('Invalid context slug');
-        }
-      }
+    // le slug vient d'un paramètre d'URL libre (lien de création de fiche) : un slug inconnu est ignoré,
+    // il ne doit pas bloquer la synchro de la fiche
+    const isKnownContext =
+      contextSlug === 'zacharie' ||
+      (!!contextSlug && !!(await prisma.apiKey.findFirst({ where: { slug_for_context: contextSlug } })));
+    if (isKnownContext) {
       nextFei.creation_context = sanitize(contextSlug as string);
     }
   }

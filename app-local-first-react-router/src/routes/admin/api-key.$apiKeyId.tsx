@@ -35,7 +35,6 @@ const initialState: State = {
     public_key: '',
     description: '',
     webhook_url: '',
-    frame_ancestors: [],
     active: false,
     expires_at: null,
     last_used_at: null,
@@ -75,15 +74,8 @@ export default function AdminApiKey() {
     const name = formData.get(Prisma.ApiKeyScalarFieldEnum.name);
     const active = formData.get(Prisma.ApiKeyScalarFieldEnum.active);
     const webhook_url = formData.get(Prisma.ApiKeyScalarFieldEnum.webhook_url);
-    const frame_ancestors = formData.get(Prisma.ApiKeyScalarFieldEnum.frame_ancestors) as string;
 
-    const body: Prisma.ApiKeyUncheckedUpdateInput = {
-      // une origine par ligne ; un champ vide retire toutes les origines
-      [Prisma.ApiKeyScalarFieldEnum.frame_ancestors]: frame_ancestors
-        .split('\n')
-        .map((origin) => origin.trim())
-        .filter(Boolean),
-    };
+    const body: Prisma.ApiKeyUncheckedUpdateInput = {};
 
     if (scopes.length) {
       body[Prisma.ApiKeyScalarFieldEnum.scopes] = scopes.map((scope) => scope as ApiKeyScope);
@@ -323,18 +315,6 @@ export default function AdminApiKey() {
                       defaultValue: apiKey.webhook_url ?? '',
                     }}
                   />
-                  <Input
-                    label="Origines autorisées à intégrer Zacharie (iframe)"
-                    hintText="Une origine par ligne, sans chemin (ex. https://www.exemple.fr). Ces sites peuvent afficher Zacharie dans une iframe (avec ?embedded=true)."
-                    textArea
-                    nativeTextAreaProps={{
-                      id: Prisma.ApiKeyScalarFieldEnum.frame_ancestors,
-                      name: Prisma.ApiKeyScalarFieldEnum.frame_ancestors,
-                      autoComplete: 'off',
-                      rows: 3,
-                      defaultValue: apiKey.frame_ancestors.join('\n'),
-                    }}
-                  />
                   <Checkbox
                     hintText="Une clé api peut permettre d'accéder aux fiches et/ou aux carcasses"
                     legend="Permissions"
@@ -370,14 +350,6 @@ export default function AdminApiKey() {
                           name: Prisma.ApiKeyScalarFieldEnum.scopes,
                           value: ApiKeyScope.CARCASSE_READ_FOR_ENTITY,
                           defaultChecked: apiKey.scopes.includes(ApiKeyScope.CARCASSE_READ_FOR_ENTITY),
-                        },
-                      },
-                      {
-                        label: "Connexion au compte d'un utilisateur (création de fiches en son nom)",
-                        nativeInputProps: {
-                          name: Prisma.ApiKeyScalarFieldEnum.scopes,
-                          value: ApiKeyScope.USER_LOGIN_FOR_USER,
-                          defaultChecked: apiKey.scopes.includes(ApiKeyScope.USER_LOGIN_FOR_USER),
                         },
                       },
                     ]}

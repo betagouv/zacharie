@@ -1,5 +1,4 @@
 import { Footer } from '@codegouvfr/react-dsfr/Footer';
-import { useIsEmbedded } from '@app/utils/use-is-embedded';
 import { Header, type HeaderProps } from '@codegouvfr/react-dsfr/Header';
 import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation';
 import { clearCache } from '@app/services/indexed-db';
@@ -31,7 +30,6 @@ export default function RootDisplay({
 }) {
   const location = useLocation();
   const isInApp = location.pathname.startsWith('/app');
-  const embedded = useIsEmbedded();
   const user = useMostFreshUser('RootDisplay ' + id);
   const isOnline = useIsOnline();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -132,10 +130,10 @@ export default function RootDisplay({
         }}
         id="fr-header-header-with-quick-access-items"
         className="[&_.fr-header\\_\\_navbar_.fr-btn--search]:hidden [&_.fr-header\\_\\_service-title]:flex [&_.fr-header\\_\\_service-title]:items-end"
-        navigation={embedded ? undefined : navigation}
+        navigation={navigation}
         allowEmptySearch={false}
-        renderSearchInput={embedded ? undefined : RenderedSearchInput}
-        quickAccessItems={embedded ? undefined : quickAccessItems}
+        renderSearchInput={RenderedSearchInput}
+        quickAccessItems={quickAccessItems}
         operatorLogo={{
           alt: 'Logo de Zacharie - un bois de cerf bland sur fond bleu avec liseré rouge',
           imgUrl: '/logo-zacharie.png',
@@ -160,98 +158,94 @@ export default function RootDisplay({
         websiteMapLinkProps={{
           href: '#',
         }}
-        linkList={
-          embedded
-            ? undefined
-            : [
-                {
-                  categoryName: 'Connexion',
-                  links: [
-                    {
-                      linkProps: {
-                        to: '/app/connexion',
-                        href: '#',
-                      },
-                      text: 'Se connecter',
-                    },
-                    {
-                      linkProps: {
-                        to: user ? getUserOnboardingRoute(user) : '/app/connexion',
-                        href: '#',
-                      },
-                      text: 'Accéder à mon compte',
-                    },
-                    {
-                      linkProps: {
-                        to: '/modalites-d-utilisation',
-                        href: '#',
-                      },
-                      text: "Modalités d'utilisation",
-                    },
-                    {
-                      linkProps: {
-                        to: '/conditions-d-utilisation-api',
-                        href: '#',
-                      },
-                      text: "Conditions d'utilisation de l'API",
-                    },
-                    {
-                      linkProps: {
-                        to: '/politique-de-confidentialite',
-                        href: '#',
-                      },
-                      text: 'Politique de confidentialité',
-                    },
-                    {
-                      linkProps: {
-                        to: '/mentions-legales',
-                        href: '#',
-                      },
-                      text: 'Mentions légales',
-                    },
-                    {
-                      linkProps: {
-                        to: '/stats',
-                        href: '#',
-                      },
-                      text: 'Statistiques',
-                    },
-                  ],
+        linkList={[
+          {
+            categoryName: 'Connexion',
+            links: [
+              {
+                linkProps: {
+                  to: '/app/connexion',
+                  href: '#',
                 },
-                {
-                  categoryName: 'Assistance',
-                  links: [
-                    {
-                      linkProps: {
-                        href: '#',
-                        onClick: () => {
-                          if (isOnline) {
-                            clearCache().then(() => window.location.reload());
-                          } else {
-                            alert('Vous devez être connecté à internet pour effectuer cette action');
-                          }
-                        },
-                      },
-                      text: "Obtenir la dernière version de l'app",
-                    },
-                    {
-                      linkProps: {
-                        to: '/faq',
-                        href: '#',
-                      },
-                      text: 'FAQ',
-                    },
-                    {
-                      linkProps: {
-                        to: contactLink ?? '/contact',
-                        href: '#',
-                      },
-                      text: 'Contactez-nous',
-                    },
-                  ],
+                text: 'Se connecter',
+              },
+              {
+                linkProps: {
+                  to: user ? getUserOnboardingRoute(user) : '/app/connexion',
+                  href: '#',
                 },
-              ]
-        }
+                text: 'Accéder à mon compte',
+              },
+              {
+                linkProps: {
+                  to: '/modalites-d-utilisation',
+                  href: '#',
+                },
+                text: "Modalités d'utilisation",
+              },
+              {
+                linkProps: {
+                  to: '/conditions-d-utilisation-api',
+                  href: '#',
+                },
+                text: "Conditions d'utilisation de l'API",
+              },
+              {
+                linkProps: {
+                  to: '/politique-de-confidentialite',
+                  href: '#',
+                },
+                text: 'Politique de confidentialité',
+              },
+              {
+                linkProps: {
+                  to: '/mentions-legales',
+                  href: '#',
+                },
+                text: 'Mentions légales',
+              },
+              {
+                linkProps: {
+                  to: '/stats',
+                  href: '#',
+                },
+                text: 'Statistiques',
+              },
+            ],
+          },
+          {
+            categoryName: 'Assistance',
+            links: [
+              {
+                linkProps: {
+                  href: '#',
+                  onClick: () => {
+                    if (isOnline) {
+                      clearCache().then(() => window.location.reload());
+                    } else {
+                      alert('Vous devez être connecté à internet pour effectuer cette action');
+                    }
+                  },
+                },
+                text: "Obtenir la dernière version de l'app",
+              },
+              {
+                linkProps: {
+                  to: '/faq',
+                  href: '#',
+                },
+                text: 'FAQ',
+              },
+              {
+                linkProps: {
+                  to: contactLink ?? '/contact',
+                  href: '#',
+                },
+                text: 'Contactez-nous',
+              },
+            ],
+          },
+        ]}
       />
     </>
   );
