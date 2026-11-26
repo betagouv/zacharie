@@ -4,7 +4,7 @@ import { connectWith } from '../../utils/connect-with';
 import { ajouterVenteDon } from '../../utils/vente-don';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
-// Scenario 127 — URL directe vers carcasse d'une autre branche → 403/404 ou redirect.
+// Scenario 127 — URL directe vers carcasse d'une autre branche → page 404.
 // Group 1 (ETG 1) keeps MM-001-003/004. Group 2 (ETG 2) gets MM-001-001/002.
 // ETG 1 tries to access MM-001-001 (ETG 2's carcasse) via direct URL.
 
@@ -14,7 +14,6 @@ test.beforeEach(async () => {
   await resetDb('PREMIER_DETENTEUR');
 });
 
-// FIXME backend should restrict access to carcasses of other branches via URL
 test("ETG 1 ne peut pas accéder à la carcasse d'ETG 2 via URL directe", async ({ page }) => {
   const feiId = 'ZACH-20250707-QZ6E0-155242';
 
@@ -35,16 +34,13 @@ test("ETG 1 ne peut pas accéder à la carcasse d'ETG 2 via URL directe", async 
   await page.setViewportSize({ width: 1280, height: 900 });
   await logoutAndConnect(page, 'etg-1@example.fr');
 
-  // Try to access ETG 2's carcasse via direct URL
-  // The route is /app/etg/carcasse-svi/:fei_numero/:zacharie_carcasse_id
-  // MM-001-001 is in ETG 2's branch (group 2)
-  await page.goto(`http://localhost:3290/app/etg/carcasse-svi/${feiId}/${feiId}_MM-001-001`);
-  // Wait for page to load
-  await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+  // Témoin : la carcasse de sa propre branche (MM-001-003) s'ouvre par URL directe
+  await page.goto(`http://localhost:3290/app/etg/carcasse-svi/${feiId}/${feiId}_MM-001-003`);
+  await expect(page.getByRole('heading', { level: 1, name: /MM-001-003/ })).toBeVisible({ timeout: 15000 });
 
-  // Négatif explicite : no carcasse detail data from ETG 2's branch should be visible
-  // The page should either show nothing, redirect, or show an error
-  await expect(page.getByText(/10 pigeons|Pigeons \(10\)/i)).not.toBeVisible();
-  // Also check that the specific carcasse data is not displayed
+  // La carcasse de l'ETG 2 (MM-001-001) n'est jamais envoyée à l'ETG 1 par le serveur : page 404
+  await page.goto(`http://localhost:3290/app/etg/carcasse-svi/${feiId}/${feiId}_MM-001-001`);
+  await expect(page.getByRole('heading', { name: 'Page non trouvée' })).toBeVisible({ timeout: 15000 });
   await expect(page.getByText('MM-001-001')).not.toBeVisible();
+  await expect(page.getByText(/10 pigeons|Pigeons \(10\)/i)).not.toBeVisible();
 });

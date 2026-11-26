@@ -49,8 +49,14 @@ test('Dispatch 2 ETG : isolation négative + vue agrégée', async ({ page }) =>
   await expect(page.getByText('MM-001-001')).not.toBeVisible();
   await expect(page.getByText('MM-001-002')).not.toBeVisible();
 
-  // NOTE: /etg/carcasses aggregate view tested separately in spec 120.
-  // Currently the aggregate view does not filter by dispatch branch (known app limitation).
+  // Vue agrégée /etg/carcasses : seulement les carcasses de la branche ETG 1
+  await page.goto('http://localhost:3290/app/etg/carcasses');
+  await expect(page).toHaveURL(/\/app\/etg\/carcasses/, { timeout: 10000 });
+  await expect(page.getByText('MM-001-003').first()).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText('MM-001-004').first()).toBeVisible();
+  await expect(page.getByText('2 carcasses').first()).toBeVisible();
+  await expect(page.getByText('MM-001-001')).not.toBeVisible();
+  await expect(page.getByText('MM-001-002')).not.toBeVisible();
 
   // 3. ETG 2 : prend en charge, voit MM-001-001 and MM-001-002 (moved into group 2)
   await logoutAndConnect(page, 'etg-2@example.fr');
