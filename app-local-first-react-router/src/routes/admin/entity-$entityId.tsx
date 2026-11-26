@@ -1,4 +1,4 @@
-import { useState, useRef, Fragment, useMemo, useEffect } from 'react';
+import { useState, useRef, Fragment, useMemo, useEffect, useDeferredValue } from 'react';
 import dayjs from 'dayjs';
 import Checkbox from '@codegouvfr/react-dsfr/Checkbox';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
@@ -531,7 +531,6 @@ export default function AdminEntity() {
               setAdminEntityResponse={setAdminEntityResponse}
               potentialUsers={canTakeFichesForEntity}
               relationType={EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
-              fetcherKey="working-for"
               setIsSaving={setIsSaving}
             />
           )}
@@ -541,7 +540,6 @@ export default function AdminEntity() {
               setAdminEntityResponse={setAdminEntityResponse}
               potentialUsers={canSendFichesToEntity}
               relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
-              fetcherKey="working-with"
               setIsSaving={setIsSaving}
             />
           )}
@@ -600,7 +598,6 @@ interface WorkingWithOrForProps {
     ville: string | null;
     roles: UserRoles[];
   }>;
-  fetcherKey: string;
   setIsSaving: (isSaving: boolean) => void;
 }
 
@@ -609,10 +606,67 @@ function UserWorkingWithOrFor({
   setAdminEntityResponse,
   relationType,
   potentialUsers,
-  fetcherKey,
   setIsSaving,
 }: WorkingWithOrForProps) {
   const { entity } = adminEntityResponse;
+  const [searchQuery, setSearchQuery] = useState('');
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+
+  // Texte de recherche fabriqué une fois par utilisateur, pas à chaque frappe.
+  const searchableTextByUserId = useMemo(() => {
+    const map = new Map<string, string>();
+    potentialUsers.forEach((user) => {
+      map.set(
+        user.id,
+        [user.prenom, user.nom_de_famille, user.email, user.code_postal, user.ville]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+      );
+    });
+    return map;
+  }, [potentialUsers]);
+
+  const filteredUsers = useMemo(() => {
+    const query = deferredSearchQuery.trim().toLowerCase();
+    if (!query) return potentialUsers;
+    return potentialUsers.filter((user) => searchableTextByUserId.get(user.id)?.includes(query));
+  }, [potentialUsers, searchableTextByUserId, deferredSearchQuery]);
+
+  const addUser = (userId: string) => {
+    setIsSaving(true);
+    API.post({
+      path: 'admin/user-entity',
+      body: {
+        [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: userId,
+        relation: relationType,
+        [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
+        // ajout par un admin Zacharie : validé d'office (le premier devient admin de l'entité)
+        ...(relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
+          ? { [Prisma.EntityAndUserRelationsScalarFieldEnum.status]: EntityRelationStatus.MEMBER }
+          : {}),
+      },
+    })
+      .then((res) => res as AdminActionEntityResponse)
+      .then((response) => {
+        if (!response.ok) {
+          return toast.error(response.error);
+        }
+        toast.success("L'entité a été mise à jour avec succès");
+      })
+      .then(() => {
+        loadData(entity.id).then((response) => {
+          if (response.data) setAdminEntityResponse(response.data!);
+          if (!response.ok) {
+            return toast.error(response.error);
+          }
+        });
+      })
+      .finally(() => {
+        setIsSaving(false);
+      });
+  };
+
   return (
     <>
       {entity.EntityRelationsWithUsers.filter((entity) => entity.relation === relationType).map(
@@ -640,82 +694,75 @@ function UserWorkingWithOrFor({
           );
         }
       )}
-      <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline has-[a]:[&_td]:p-0!">
-        <Table
-          fixed
-          noCaption
-          className="[&_td]:align-middle"
-          data={potentialUsers.map((user) => [
-            <form
+      <div className="p-4 md:p-8 md:pb-0">
+        <div className="relative mb-4">
+          <span
+            className="fr-icon--sm fr-icon-search-line absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"
+            aria-hidden="true"
+          />
+          <input
+            type="search"
+            aria-label="Rechercher (nom, email, ville)"
+            placeholder="Rechercher (nom, email, ville)"
+            autoComplete="off"
+            data-1p-ignore
+            data-lpignore="true"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full rounded border border-gray-300 py-2 pr-3 pl-10 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          />
+        </div>
+        {filteredUsers.length === 0 && (
+          <p className="text-sm text-gray-500">Aucun utilisateur ne correspond à la recherche.</p>
+        )}
+        <ul
+          aria-label="Utilisateurs à ajouter"
+          className="m-0 list-none divide-y divide-gray-200 p-0"
+        >
+          {filteredUsers.map((user) => (
+            <li
               key={user.id}
-              id={fetcherKey}
-              className="flex w-full flex-col items-start gap-4"
-              method="POST"
-              onSubmit={(event) => {
-                event.preventDefault();
-                setIsSaving(true);
-                API.post({
-                  path: 'admin/user-entity',
-                  body: {
-                    [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-                    relation: relationType,
-                    [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
-                    // ajout par un admin Zacharie : validé d'office (le premier devient admin de l'entité)
-                    ...(relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
-                      ? { [Prisma.EntityAndUserRelationsScalarFieldEnum.status]: EntityRelationStatus.MEMBER }
-                      : {}),
-                  },
-                })
-                  .then((res) => res as AdminActionEntityResponse)
-                  .then((response) => {
-                    if (!response.ok) {
-                      return toast.error(response.error);
-                    }
-                    toast.success("L'entité a été mise à jour avec succès");
-                  })
-                  .then(() => {
-                    loadData(entity.id).then((response) => {
-                      if (response.data) setAdminEntityResponse(response.data!);
-                      if (!response.ok) {
-                        return toast.error(response.error);
-                      }
-                    });
-                  })
-                  .finally(() => {
-                    setIsSaving(false);
-                  });
-              }}
+              className="p-0"
             >
-              <Link
-                to={`/app/admin/user/${user.id}`}
-                className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
+              <form
+                className="flex items-center gap-3 py-2"
+                method="POST"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  addUser(user.id);
+                }}
               >
-                {user.prenom} {user.nom_de_famille}
-                <br />＠ {user.email}
-                <br />
-                🏡 {user.code_postal} {user.ville}
-              </Link>
-              <Button
-                type="submit"
-                className="m-2"
-              >
-                Ajouter
-              </Button>
-            </form>,
-            <p
-              key={user.id}
-              className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
-            >
-              {user.roles.map((role) => (
-                <Fragment key={role}>
-                  {role}
-                  <br />
-                </Fragment>
-              ))}
-            </p>,
-          ])}
-          headers={['Utilisateur', 'Roles']}
-        />
+                <div className="min-w-0 flex-1">
+                  <Link
+                    to={`/app/admin/user/${user.id}`}
+                    className="font-medium"
+                  >
+                    {[user.prenom, user.nom_de_famille].filter(Boolean).join(' ') || user.email}
+                  </Link>
+                  <div className="flex flex-wrap items-center gap-x-2 text-xs text-gray-500">
+                    {user.email && (
+                      <span
+                        className="max-w-[18rem] truncate"
+                        title={user.email}
+                      >
+                        {user.email}
+                      </span>
+                    )}
+                    {(user.code_postal || user.ville) && (
+                      <span>· {[user.code_postal, user.ville].filter(Boolean).join(' ')}</span>
+                    )}
+                  </div>
+                </div>
+                <Button
+                  type="submit"
+                  size="small"
+                >
+                  Ajouter
+                </Button>
+              </form>
+            </li>
+          ))}
+        </ul>
       </div>
     </>
   );
