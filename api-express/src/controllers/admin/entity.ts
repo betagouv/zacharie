@@ -146,6 +146,7 @@ router.get(
           ? []
           : await prisma.user.findMany({
               where: {
+                deleted_at: null,
                 roles: (() => {
                   if (entity.type === EntityTypes.PREMIER_DETENTEUR) {
                     return {
@@ -182,6 +183,7 @@ router.get(
 
       const canSendFichesToEntity = await prisma.user.findMany({
         where: {
+          deleted_at: null,
           id: {
             notIn: entity.EntityRelationsWithUsers.filter(
               (entityRelation) =>
