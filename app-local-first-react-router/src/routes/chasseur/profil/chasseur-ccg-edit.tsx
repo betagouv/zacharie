@@ -9,7 +9,7 @@ import Chargement from '@app/components/Chargement';
 
 interface CCGResponse {
   ok: boolean;
-  data: { entity: Entity };
+  data: { entity: Entity; canEdit: boolean };
   error: string;
 }
 
@@ -26,6 +26,7 @@ function ChasseurCCGEditContent() {
   const { entityId } = useParams<{ entityId: string }>();
   const navigate = useNavigate();
   const [ccg, setCcg] = useState<Entity | null>(null);
+  const [canEdit, setCanEdit] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -36,6 +37,7 @@ function ChasseurCCGEditContent() {
       .then((res) => {
         if (res.ok) {
           setCcg(res.data.entity);
+          setCanEdit(res.data.canEdit);
         } else {
           setError(res.error || 'Erreur lors du chargement du CCG');
         }
@@ -88,21 +90,46 @@ function ChasseurCCGEditContent() {
     );
   }
 
+  const retourButton = (
+    <Button
+      type="button"
+      priority="tertiary no outline"
+      size="small"
+      iconId="fr-icon-arrow-left-line"
+      className="mb-4"
+      nativeButtonProps={{
+        onClick: () => navigate(-1),
+      }}
+    >
+      Retour aux chambres froides
+    </Button>
+  );
+
+  if (!canEdit) {
+    return (
+      <div className="fr-container mb-6 bg-white md:shadow-sm">
+        <div className="p-4 md:p-8">
+          {retourButton}
+          <h3 className="text-lg font-semibold text-gray-900">Chambre froide (CCG)</h3>
+          <p className="mb-5 text-sm text-gray-500">
+            Seul l'administrateur de cette chambre froide, désigné par l'équipe Zacharie, peut la modifier.
+          </p>
+          {ccg.numero_ddecpp && <p className="text-sm font-bold">{ccg.numero_ddecpp}</p>}
+          <p className="text-sm">{ccg.nom_d_usage}</p>
+          <p className="text-sm">{ccg.address_ligne_1}</p>
+          {ccg.address_ligne_2 && <p className="text-sm">{ccg.address_ligne_2}</p>}
+          <p className="text-sm">
+            {ccg.code_postal} {ccg.ville}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fr-container mb-6 bg-white md:shadow-sm">
       <div className="p-4 md:p-8">
-        <Button
-          type="button"
-          priority="tertiary no outline"
-          size="small"
-          iconId="fr-icon-arrow-left-line"
-          className="mb-4"
-          nativeButtonProps={{
-            onClick: () => navigate(-1),
-          }}
-        >
-          Retour aux chambres froides
-        </Button>
+        {retourButton}
         <h3 className="text-lg font-semibold text-gray-900">Modifier la chambre froide (CCG)</h3>
         <p className="mb-5 text-sm text-gray-500">
           * Les champs marqués d'un astérisque (*) sont obligatoires.

@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@app/components/Input';
-import { EntityTypes, EntityRelationType, Prisma, Entity } from '@prisma/client';
+import { EntityTypes, EntityRelationType, EntityRelationStatus, Prisma, Entity } from '@prisma/client';
 import InputCodePostalEtVille from '@app/components/InputCodePostalEtVille';
 import type { UserConnexionResponse } from '@api/src/types/responses';
 import useUser from '@app/zustand/user';
@@ -15,6 +15,8 @@ import type { UserCCGsResponse, UserEntityResponse } from '@api/src/types/respon
 
 export default function MesCCGs() {
   const [userCCGs, setUserCCGs] = useState<Array<Entity>>([]);
+  // seul l'admin du CCG, nommé par l'équipe Zacharie, peut le modifier
+  const [userCCGsAdminIds, setUserCCGsAdminIds] = useState<Array<string>>([]);
   const user = useUser((state) => state.user)!;
 
   // Add this handler for CCG radio buttons
@@ -39,6 +41,16 @@ export default function MesCCGs() {
       .then((res) => {
         if (res.ok) {
           setUserCCGs(res.data.userCCGs);
+          setUserCCGsAdminIds(
+            res.data.userCCGs
+              .filter((ccg) =>
+                ccg.EntityRelationsWithUsers.some(
+                  (relation) =>
+                    relation.owner_id === user.id && relation.status === EntityRelationStatus.ADMIN
+                )
+              )
+              .map((ccg) => ccg.id)
+          );
         }
       });
   }
@@ -186,7 +198,7 @@ export default function MesCCGs() {
                           Démarrer la déclaration
                         </a>
                       )}
-                      {isPreregistered && (
+                      {isPreregistered && userCCGsAdminIds.includes(entity.id) && (
                         <Button
                           type="button"
                           priority="tertiary no outline"

@@ -552,7 +552,13 @@ router.get(
 
     res.status(200).send({
       ok: true,
-      data: { entity: relation.EntityRelatedWithUser },
+      data: {
+        entity: relation.EntityRelatedWithUser,
+        // mêmes conditions que PUT /ccg/:entityId
+        canEdit:
+          relation.status === EntityRelationStatus.ADMIN &&
+          relation.EntityRelatedWithUser.ccg_status === 'Pré-enregistré dans Zacharie',
+      },
       error: '',
     });
   })
@@ -570,6 +576,8 @@ router.put(
         owner_id: user.id,
         entity_id: entityId,
         relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        // seul l'admin du CCG, nommé par l'équipe Zacharie, le modifie : les autres chasseurs y déposent seulement leurs carcasses
+        status: EntityRelationStatus.ADMIN,
         deleted_at: null,
         EntityRelatedWithUser: {
           type: EntityTypes.CCG,

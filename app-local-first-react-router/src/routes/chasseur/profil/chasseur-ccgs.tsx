@@ -149,6 +149,10 @@ export default function MesCCGs({ editBasePath = '/app/chasseur/profil/ccgs' }: 
           <>
             {userCCGs.map((entity) => {
               const isPreregistered = entity.ccg_status === 'Pré-enregistré dans Zacharie';
+              // seul l'admin du CCG, nommé par l'équipe Zacharie, peut le modifier
+              const isAdmin = entity.EntityRelationsWithUsers.some(
+                (relation) => relation.owner_id === user.id && relation.status === EntityRelationStatus.ADMIN
+              );
               return (
                 <div
                   key={entity.id}
@@ -195,7 +199,7 @@ export default function MesCCGs({ editBasePath = '/app/chasseur/profil/ccgs' }: 
                           Démarrer la déclaration
                         </a>
                       )}
-                      {isPreregistered && (
+                      {isPreregistered && isAdmin && (
                         <Button
                           type="button"
                           priority="tertiary no outline"
