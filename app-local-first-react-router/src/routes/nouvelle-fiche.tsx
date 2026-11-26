@@ -1,3 +1,4 @@
+import { buildConnexionUrl } from '@app/utils/sanitize-redirect';
 import Chargement from '@app/components/Chargement';
 import { capture } from '@app/services/sentry';
 import { track } from '@app/services/matomo';
@@ -164,7 +165,7 @@ export default function NouvelleFiche() {
   if (!user) {
     return (
       <Navigate
-        to={`/app/connexion?redirect=${encodeURIComponent(location.pathname + location.search)}`}
+        to={buildConnexionUrl(location.pathname + location.search)}
         replace
       />
     );

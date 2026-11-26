@@ -1,3 +1,4 @@
+import { buildConnexionUrl } from '@app/utils/sanitize-redirect';
 import { Navigate, Outlet, useLocation } from 'react-router';
 import RootDisplay from '@app/components/RootDisplay';
 import SyncRejectionsNotice from '@app/components/SyncRejectionsNotice';
@@ -33,7 +34,7 @@ export default function CollecteurLayout() {
 
   if (!user) {
     const currentPath = location.pathname + location.search;
-    return <Navigate to={`/app/connexion?redirect=${encodeURIComponent(currentPath)}`} />;
+    return <Navigate to={buildConnexionUrl(currentPath)} />;
   }
 
   if (!user?.roles.includes(UserRoles.COLLECTEUR_PRO)) {

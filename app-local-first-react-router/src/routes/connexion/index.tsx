@@ -1,9 +1,9 @@
 import { Input } from '@app/components/Input';
 import { Link, useSearchParams, useNavigate } from 'react-router';
-import { sanitizeRedirect } from '@app/utils/sanitize-redirect';
+import { resetIgnoreLoginRedirect, shouldIgnoreLoginRedirect } from '@app/utils/disconnect';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { PasswordInput } from '@codegouvfr/react-dsfr/blocks/PasswordInput';
-import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
+import { getPostLoginRoute, getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { type User } from '@prisma/client';
 import { type UserConnexionResponse } from '@api/src/types/responses';
@@ -23,13 +23,13 @@ export default function Connexion() {
   // we don't user   useMostFreshUser() here on purpose to avoid infinite loop
   const navigate = useNavigate();
 
-  const redirect = sanitizeRedirect(searchParams.get('redirect'));
+  const redirect = shouldIgnoreLoginRedirect() ? null : searchParams.get('redirect');
   const communication = searchParams.get('communication');
 
   const handleRedirect = (u: User) => {
     if (u) {
-      const redirectPath = redirect || getUserOnboardingRoute(u);
-      navigate(redirectPath);
+      resetIgnoreLoginRedirect();
+      navigate(getPostLoginRoute(u, redirect));
     }
   };
 

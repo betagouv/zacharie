@@ -8,6 +8,7 @@ import { abortLoadCarcasses } from './load-carcasses';
 import { abortLoadMyRelations } from './load-my-relations';
 import { abortSyncData } from './sync-data';
 import { broadcastToOtherTabs } from './tabs-broadcast';
+import { sanitizeRedirect } from './sanitize-redirect';
 
 interface DisconnectOptions {
   // Free-form tag for logs/aborts: 'logout', '401', etc.
@@ -20,6 +21,17 @@ interface DisconnectOptions {
 }
 
 let disconnecting = false;
+
+// Après une déconnexion volontaire, /app/connexion ignore tout `redirect` : la page de la session
+// précédente ne doit pas être imposée à l'utilisateur suivant. Seule une session expirée (401)
+// renvoie sur la page quittée. Remis à zéro à la connexion suivante.
+let ignoreLoginRedirect = false;
+export function shouldIgnoreLoginRedirect() {
+  return ignoreLoginRedirect;
+}
+export function resetIgnoreLoginRedirect() {
+  ignoreLoginRedirect = false;
+}
 
 /**
  * Cancel in-flight loaders and wipe persisted state (IndexedDB +
@@ -99,6 +111,7 @@ export async function disconnect(options: DisconnectOptions) {
     return;
   }
   disconnecting = true;
+  ignoreLoginRedirect = !options.redirectTo;
   try {
     // 1. Wipe the native JWT (no React subscribers, safe to do up-front).
     setNativeAuthToken(null);
@@ -134,7 +147,8 @@ export async function disconnect(options: DisconnectOptions) {
       if (!window.location.pathname.startsWith('/app/connexion')) {
         const params = new URLSearchParams();
         if (options.communication) params.set('communication', options.communication);
-        if (options.redirectTo) params.set('redirect', options.redirectTo);
+        const redirect = sanitizeRedirect(options.redirectTo);
+        if (redirect) params.set('redirect', redirect);
         const search = params.toString();
         const target = '/app/connexion' + (search ? '?' + search : '');
         // pushState + popstate, NOT window.location.href — see header comment.

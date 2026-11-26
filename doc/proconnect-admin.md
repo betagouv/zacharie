@@ -19,6 +19,10 @@ pour accéder aux routes `/admin` de l'API (et donc à l'interface `/app/admin`)
 Le front admin (`routes/admin/layout.tsx`) appelle `GET /admin/session` avant d'afficher quoi que ce soit
 et renvoie vers `/app/proconnect` sur `PROCONNECT_REQUIRED`. Le login, lui, ne passe jamais par ProConnect.
 
+Le `redirect` est normalisé côté front (`src/utils/sanitize-redirect.ts`) et côté API
+(`src/utils/sanitize-redirect.ts`) : seule une route `/app/...` est gardée, et un `redirect` imbriqué
+(`/app/proconnect?redirect=/app/proconnect?redirect=/app/admin/users`) est aplati vers la page finale.
+
 `POST /admin/user/connect-as` est derrière la même garde : l'usurpation exige un admin ProConnecté, et la
 session usurpée n'hérite pas de `proconnect_at`.
 
