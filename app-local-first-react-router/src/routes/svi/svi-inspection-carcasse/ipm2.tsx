@@ -28,6 +28,7 @@ import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
+import { IpmSaveStatus } from './ipm-save-status';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
@@ -126,7 +127,8 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
   const [sviIpm2UserName, setSviIpm2UserName] = useState(
     carcasse.svi_ipm2_user_name_cache ?? `${user.prenom} ${user.nom_de_famille}`
   );
-  const [triedToSave, setTriedToSave] = useState(false);
+  const [saveAttempts, setSaveAttempts] = useState(0);
+  const [saved, setSaved] = useState(false);
 
   const missingFields = useMemo(() => {
     if (!sviIpm2Date) {
@@ -204,8 +206,9 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
   ]);
 
   function handleSave() {
-    setTriedToSave(true);
+    setSaveAttempts((n) => n + 1);
     if (missingFields) {
+      setSaved(false);
       return;
     }
     let newCarcasseCommentaire = '';
@@ -276,8 +279,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
       carcasse_intermediaire_id: null,
     });
     syncData('svi-ipm2-edit');
-    // TODO: vérifier qu'elles sont réellement bien enregistrées
-    alert('IPM2 enregistrée');
+    setSaved(true);
   }
 
   const canDoIPM2 = useMemo(() => {
@@ -858,14 +860,13 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
           Enregistrer
         </Button>
       </div>
-      {triedToSave && missingFields && (
-        <Alert
-          title="Attention"
-          className="mt-4"
-          severity="error"
-          description={missingFields}
-        />
-      )}
+      <IpmSaveStatus
+        ipm="IPM2"
+        zacharieCarcasseId={carcasse.zacharie_carcasse_id}
+        missingFields={missingFields}
+        saveAttempts={saveAttempts}
+        saved={saved}
+      />
     </form>
   );
 }

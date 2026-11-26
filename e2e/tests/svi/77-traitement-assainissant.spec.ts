@@ -46,7 +46,6 @@ test('77 - SVI inspection : traitement assainissant (IPM2)', async ({ page }) =>
   await page.getByLabel(/Durée de la consigne/).blur();
 
   // Enregistrer IPM1
-  page.once('dialog', (d) => d.accept());
   const saveBtn = page.getByRole('button', { name: 'Enregistrer' }).first();
   await saveBtn.scrollIntoViewIfNeeded();
   await saveBtn.click();
