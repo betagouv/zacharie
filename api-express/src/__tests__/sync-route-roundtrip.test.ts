@@ -99,12 +99,11 @@ describe('POST /sync — round-trip (real utils against mocked prisma)', () => {
     vi.mocked(prisma.fei.create).mockResolvedValueOnce(baseFei as any);
 
     // syncCarcasse ne requête plus la carcasse : le batch d'existence (carcasse.findMany) renvoie
-    // vide → chemin create, puis update applique les champs hasOwnProperty.
+    // vide → chemin create, en une seule écriture avec les champs hasOwnProperty.
     vi.mocked(prisma.carcasse.findMany).mockResolvedValue([]);
     // carcasse.findFirst reste mocké pour la recherche de la carcasse parente par syncCarcasseIntermediaire.
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValue(baseCarcasse as any);
     vi.mocked(prisma.carcasse.create).mockResolvedValueOnce(baseCarcasse as any);
-    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(baseCarcasse as any);
 
     // syncCarcasseIntermediaire: upsert returns the saved row.
     const savedCi = {

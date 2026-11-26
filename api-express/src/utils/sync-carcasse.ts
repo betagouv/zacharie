@@ -116,42 +116,25 @@ export async function syncCarcasse(
   }
 
   const isJustCreated = !existingCarcasse;
+  // Une nouvelle carcasse n'est écrite en base qu'une fois, en fin de fonction, avec toutes ses
+  // colonnes (rattachement compris) : un échec en cours de route ne laisse aucune ligne nue hors du
+  // périmètre de tout le monde. D'ici là, les règles se lisent sur une ligne vierge en mémoire.
+  let carcasseCreateBase: Prisma.CarcasseUncheckedCreateInput | null = null;
   if (!existingCarcasse) {
     const numeroBracelet = body.numero_bracelet;
     if (!numeroBracelet) {
       throw new Error('Le numéro de marquage est obligatoire');
     }
-
-    try {
-      existingCarcasse = await prisma.carcasse.create({
-        data: {
-          zacharie_carcasse_id,
-          fei_numero,
-          numero_bracelet: body.numero_bracelet,
-          // le créateur est l'auteur de la requête, jamais une valeur fournie par le client
-          created_by_user_id: user.id,
-          created_at: body.created_at ?? undefined, // pour garder le même ordre de tri des carcasses dans le frontend
-          is_synced: true,
-        },
-      });
-    } catch (error) {
-      const isUniqueViolation =
-        error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
-      if (!isUniqueViolation) throw error;
-      existingCarcasse = await prisma.carcasse.findUnique({ where: { zacharie_carcasse_id } });
-      if (!existingCarcasse) throw error;
-      if (existingCarcasse.fei_numero !== fei_numero) {
-        throw new SyncRejectedError("Cette carcasse n'appartient pas à cette fiche");
-      }
-    }
-    // La ligne créée n'a encore aucune colonne de rattachement — celles-ci ne sont écrites que par
-    // l'update en fin de fonction. On accorde l'accès tout de suite, pour les sections suivantes de
-    // la même requête (intermédiaire, demande de modification) qui portent sur cette carcasse.
-    // Attention : la portée s'arrête à la requête. Si l'update en fin de fonction échoue, la ligne
-    // nue survit sans colonne de rattachement, donc hors du périmètre de tout le monde — au prochain
-    // envoi elle passe par `canWriteCarcasse` (elle existe désormais) et se fait refuser
-    // définitivement. Cas connu, non traité.
-    scope.grant(zacharie_carcasse_id);
+    carcasseCreateBase = {
+      zacharie_carcasse_id,
+      fei_numero,
+      numero_bracelet: numeroBracelet,
+      // le créateur est l'auteur de la requête, jamais une valeur fournie par le client
+      created_by_user_id: user.id,
+      created_at: body.created_at ?? undefined, // pour garder le même ordre de tri des carcasses dans le frontend
+      is_synced: true,
+    };
+    existingCarcasse = newCarcasseRow(carcasseCreateBase);
   }
 
   // Le premier détenteur porté par la carcasse est une copie de la fiche. Pour un détenteur aval, on
@@ -237,17 +220,15 @@ export async function syncCarcasse(
     if (!canDelete) {
       throw new SyncRejectedError('Vous ne pouvez pas supprimer cette carcasse');
     }
-    // existingCarcasse est garantie non-nulle ici (créée juste au-dessus si absente).
-    const deletedCarcasse = await prisma.carcasse.update({
-      where: {
-        zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
-      },
-      data: {
-        deleted_at: body.deleted_at,
-        is_synced: true,
-        ...nextVersion(user.id),
-      },
-    });
+    const deletedData = { deleted_at: body.deleted_at, is_synced: true, ...nextVersion(user.id) };
+    const deletedCarcasse = carcasseCreateBase
+      ? await createCarcasse(carcasseCreateBase, deletedData, scope)
+      : await prisma.carcasse.update({
+          where: {
+            zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
+          },
+          data: deletedData,
+        });
     await prisma.carcasseIntermediaire.updateMany({
       where: { zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id },
       data: { deleted_at: body.deleted_at, ...nextVersion(user.id) },
@@ -830,12 +811,14 @@ export async function syncCarcasse(
     }
   }
 
-  const updatedCarcasse = await prisma.carcasse.update({
-    where: {
-      zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
-    },
-    data: { ...nextCarcasse, ...nextVersion(user.id) },
-  });
+  const updatedCarcasse = carcasseCreateBase
+    ? await createCarcasse(carcasseCreateBase, { ...nextCarcasse, ...nextVersion(user.id) }, scope)
+    : await prisma.carcasse.update({
+        where: {
+          zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
+        },
+        data: { ...nextCarcasse, ...nextVersion(user.id) },
+      });
 
   // L'utilisateur peut désormais transmettre à ce destinataire : seulement s'il vient de le choisir
   // (valeur changée, écriture acceptée). Un client qui renvoie la carcasse telle qu'il l'a reçue
@@ -846,6 +829,66 @@ export async function syncCarcasse(
   }
 
   return { savedCarcasse: updatedCarcasse, existingCarcasse, isDeleted: false };
+}
+
+const carcasseModel = Prisma.dmmf.datamodel.models.find((model) => model.name === 'Carcasse')!;
+
+// Ligne telle que la base la créerait (listes vides, valeurs par défaut, le reste à null), pour
+// appliquer les règles d'écriture à une carcasse pas encore créée.
+function newCarcasseRow(base: Prisma.CarcasseUncheckedCreateInput): Carcasse {
+  const row: Record<string, unknown> = {};
+  for (const field of carcasseModel.fields) {
+    if (field.kind !== 'scalar' && field.kind !== 'enum') continue;
+    if (field.isList) row[field.name] = [];
+    else if (field.hasDefaultValue && typeof field.default !== 'object') row[field.name] = field.default;
+    else row[field.name] = null;
+  }
+  const now = new Date();
+  return {
+    ...(row as Carcasse),
+    zacharie_carcasse_id: base.zacharie_carcasse_id,
+    fei_numero: base.fei_numero,
+    numero_bracelet: base.numero_bracelet,
+    created_by_user_id: base.created_by_user_id ?? null,
+    created_at: base.created_at ? new Date(base.created_at) : now,
+    updated_at: now,
+  };
+}
+
+// Création d'une carcasse en une seule écriture, colonnes de rattachement comprises.
+async function createCarcasse(
+  base: Prisma.CarcasseUncheckedCreateInput,
+  data: Prisma.CarcasseUncheckedUpdateInput,
+  scope: SyncScope
+): Promise<Carcasse> {
+  let created: Carcasse;
+  try {
+    created = await prisma.carcasse.create({
+      data: {
+        ...(data as Prisma.CarcasseUncheckedCreateInput),
+        // une création part de la version initiale : elle prend la version 1, comme une ligne
+        // créée puis modifiée une fois
+        version: 1,
+        ...base,
+      },
+    });
+  } catch (error) {
+    const isUniqueViolation = error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
+    if (!isUniqueViolation) throw error;
+    const existing = await prisma.carcasse.findUnique({
+      where: { zacharie_carcasse_id: base.zacharie_carcasse_id },
+    });
+    if (existing && existing.fei_numero !== base.fei_numero) {
+      throw new SyncRejectedError("Cette carcasse n'appartient pas à cette fiche");
+    }
+    // Créée entre-temps par un autre envoi : erreur transitoire, le client renverra la carcasse, qui
+    // passera alors par les règles d'une carcasse existante.
+    throw error;
+  }
+  // La carcasse entre tout de suite dans le périmètre de la requête, pour les sections suivantes
+  // (intermédiaire, demande de modification) qui portent sur elle.
+  scope.grant(base.zacharie_carcasse_id);
+  return created;
 }
 
 // En sync de masse, les carcasses transmises au même destinataire sont traitées en parallèle : la
