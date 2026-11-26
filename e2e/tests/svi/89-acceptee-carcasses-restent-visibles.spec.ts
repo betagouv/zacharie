@@ -53,7 +53,6 @@ test('89 - SVI : accepter une carcasse ne la fait pas disparaître après reconn
     (resp) => resp.url().includes('/sync') && resp.request().method() === 'POST' && resp.ok(),
     { timeout: 15000 }
   );
-  page.once('dialog', (d) => d.accept());
   const saveBtn = page.getByRole('button', { name: 'Enregistrer' }).first();
   await saveBtn.scrollIntoViewIfNeeded();
   await saveBtn.click();

@@ -125,7 +125,7 @@ test('SVI rend des décisions divergentes → chasseur voit chaque décision', a
   await ipm1Fieldset2.getByLabel(/Mise en consigne/).check({ force: true });
 
   // MISE_EN_CONSIGNE requires pièces inspectées + lésions (per missingFields validation in
-  // SVI carcasse-svi route). Without these, save silently fails — see test 76 for proof.
+  // SVI carcasse-svi route). Without these, the save is blocked with « IPM1 non enregistrée » — see test 76.
   await page.locator('.input-for-search-prefilled-data__input-container').first().click();
   await page.getByRole('option').first().click();
   await page.locator('.input-for-search-prefilled-data__input-container').nth(1).click();

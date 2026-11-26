@@ -36,13 +36,11 @@ test("86 - Option 'Non, carcasse manquante' disponible dans IPM1", async ({ page
   await dateShortcut.click();
 
   // Enregistrer — no pièces/lésions required when not presented
-  page.once('dialog', (d) => d.accept());
   const saveBtn = page.getByRole('button', { name: 'Enregistrer' }).first();
   await saveBtn.scrollIntoViewIfNeeded();
   await saveBtn.click();
 
-  // No validation error — alert fires
-  await expect(page.getByText(/Il manque les pièces|Il manque les lésions/i)).toHaveCount(0, {
-    timeout: 5000,
-  });
+  // No validation error — IPM1 is saved
+  await expect(page.getByText('IPM1 enregistrée', { exact: true })).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText(/Il manque les pièces|Il manque les lésions/i)).toHaveCount(0);
 });

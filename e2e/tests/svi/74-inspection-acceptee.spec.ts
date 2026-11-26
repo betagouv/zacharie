@@ -34,13 +34,14 @@ test('74 - SVI inspection : carcasse acceptée (IPM1 ACCEPTE)', async ({ page })
   await ipm1Decision.scrollIntoViewIfNeeded();
   await ipm1Decision.getByLabel(/Acceptée/).check({ force: true });
 
-  // Enregistrer — triggers alert('IPM1 enregistrée')
-  page.once('dialog', (d) => d.accept());
+  // Enregistrer : la confirmation reflète l'état réel (enregistrée localement puis envoyée au serveur)
   const saveBtn = page.getByRole('button', { name: 'Enregistrer' }).first();
   await saveBtn.scrollIntoViewIfNeeded();
   await saveBtn.click();
+  await expect(page.getByText('IPM1 enregistrée', { exact: true })).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText('Elle a été envoyée au serveur.')).toBeVisible();
 
-  // After saving, alert was accepted. Navigate back to fiche.
+  // Navigate back to fiche.
   await page.getByText('Fiches').first().click();
   await expect(page).toHaveURL(/\/app\/svi/);
   await page.getByRole('link', { name: feiId }).click();

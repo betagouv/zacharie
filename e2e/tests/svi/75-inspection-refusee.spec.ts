@@ -47,7 +47,6 @@ test('75 - SVI inspection : carcasse refusée (saisie totale via IPM2)', async (
   await page.getByLabel(/Durée de la consigne/).blur();
 
   // Enregistrer IPM1
-  page.once('dialog', (d) => d.accept());
   const saveBtn = page.getByRole('button', { name: 'Enregistrer' }).first();
   await saveBtn.scrollIntoViewIfNeeded();
   await saveBtn.click();
