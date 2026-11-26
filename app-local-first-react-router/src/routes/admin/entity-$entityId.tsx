@@ -737,7 +737,7 @@ function UserWorkingWithOrFor({
                     to={`/app/admin/user/${user.id}`}
                     className="font-medium"
                   >
-                    {user.prenom} {user.nom_de_famille}
+                    {[user.prenom, user.nom_de_famille].filter(Boolean).join(' ') || user.email}
                   </Link>
                   <div className="flex flex-wrap items-center gap-x-2 text-xs text-gray-500">
                     {user.email && (
