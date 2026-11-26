@@ -77,11 +77,10 @@ describe('syncCarcasse — create', () => {
     expect(prisma.carcasse.create).not.toHaveBeenCalled();
   });
 
-  test('new carcasse with numero_bracelet → creates with is_synced=true then updates', async () => {
+  test('new carcasse with numero_bracelet → created in a single write, with is_synced=true', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(null);
     vi.mocked(prisma.carcasse.create).mockResolvedValueOnce(baseCarcasse);
-    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(baseCarcasse);
 
     await syncCarcasse(
       'FEI-1',
@@ -104,7 +103,6 @@ describe('syncCarcasse — create', () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(null);
     vi.mocked(prisma.carcasse.create).mockResolvedValueOnce(baseCarcasse);
-    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(baseCarcasse);
 
     await syncCarcasse(
       'FEI-1',
@@ -116,8 +114,6 @@ describe('syncCarcasse — create', () => {
 
     const createCall = vi.mocked(prisma.carcasse.create).mock.calls[0][0];
     expect(createCall.data.created_by_user_id).toBe(chasseur.id);
-    const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
-    expect(updateCall.data).not.toHaveProperty('created_by_user_id');
   });
 });
 
@@ -573,7 +569,6 @@ describe('syncCarcasse — champs réservés à un rôle', () => {
       premier_detenteur_transport_type: 'PREMIER_DETENTEUR',
       premier_detenteur_prochain_detenteur_id_cache: 'entity-etg',
     } as any);
-    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(carcasseCreee);
 
     await syncCarcasse(
       'FEI-1',
@@ -589,7 +584,8 @@ describe('syncCarcasse — champs réservés à un rôle', () => {
       { existingFei: baseFei, existingCarcasse: null }
     );
 
-    const data = vi.mocked(prisma.carcasse.update).mock.calls[0][0].data;
+    expect(prisma.carcasse.update).not.toHaveBeenCalled();
+    const data = vi.mocked(prisma.carcasse.create).mock.calls[0][0].data;
     expect(data).toMatchObject({
       premier_detenteur_depot_type: 'AUCUN',
       premier_detenteur_transport_type: 'PREMIER_DETENTEUR',
@@ -603,7 +599,6 @@ describe('syncCarcasse — champs réservés à un rôle', () => {
     vi.mocked(prisma.carcasse.create).mockResolvedValueOnce(carcasseCreee);
     vi.mocked(prisma.carcasse.findFirst).mockReset();
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(null);
-    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(carcasseCreee);
 
     await syncCarcasse(
       'FEI-1',
@@ -621,7 +616,6 @@ describe('syncCarcasse — champs réservés à un rôle', () => {
   test("une carcasse créée par l'examinateur ne cherche pas de carcasse soeur", async () => {
     vi.mocked(prisma.carcasse.create).mockResolvedValueOnce(baseCarcasse);
     vi.mocked(prisma.carcasse.findFirst).mockReset();
-    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(baseCarcasse);
 
     await syncCarcasse(
       'FEI-1',

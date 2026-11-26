@@ -342,7 +342,6 @@ describe("syncCarcasse — auto-attribution de l'examen initial", () => {
       ...carcasseTierce,
       examinateur_initial_user_id: null,
     } as any);
-    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(carcasseTierce);
 
     await syncCarcasse(
       'FEI-VICTIME',
@@ -356,7 +355,7 @@ describe("syncCarcasse — auto-attribution de l'examen initial", () => {
       await createSyncScope(attaquant)
     );
 
-    expect(prisma.carcasse.update).toHaveBeenCalled();
+    expect(prisma.carcasse.create).toHaveBeenCalled();
   });
 });
 
@@ -528,7 +527,6 @@ describe('syncCarcasse — écriture sur une carcasse tierce', () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(null);
     vi.mocked(prisma.carcasse.create).mockResolvedValueOnce(carcasseTierce);
-    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(carcasseTierce);
 
     await syncCarcasse(
       'FEI-VICTIME',
@@ -545,9 +543,8 @@ describe('syncCarcasse — écriture sur une carcasse tierce', () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(null);
     vi.mocked(prisma.carcasse.create).mockResolvedValueOnce(carcasseTierce);
-    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(carcasseTierce);
-    // La ligne nue tout juste créée ne matche aucun périmètre : si le scope ne l'accordait pas de
-    // lui-même, un update en échec la rendrait définitivement inaccessible à son propre créateur.
+    // Le périmètre est calculé avant la création : la carcasse doit y être ajoutée, pour les
+    // sections suivantes de la même requête (intermédiaire, demande de modification).
     vi.mocked(prisma.carcasse.findMany).mockResolvedValue([]);
 
     const scope = await createSyncScope(proprietaire);
