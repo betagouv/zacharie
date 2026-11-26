@@ -452,13 +452,21 @@ export function computeTransmissions({
       // créée par une carcasse, ce qui aurait aussi rempli transmissionIdsByFeiNumero[fei.numero] ci-dessus.
       /* v8 ignore next */
       if (transmissions[tempTransmissionId]) continue;
+      // fields like examinateur_initial, etc. that will also exists in carcasses (when they will be created)
+      const content = {
+        ...mapFeiFieldsToCarcasse(fei),
+        current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
+        current_owner_user_id: user.id,
+      };
       const transmission: CarcasseTransmissionWihMetadata = {
-        content: {
-          ...mapFeiFieldsToCarcasse(fei),
-          current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
-          current_owner_user_id: user.id,
-        }, // fields like examinateur_initial, etc. that will also exists in carcasses (when they will be created)
-        labels: getTransmissionLabels('À compléter', fei, role, entitiesWorkingDirectlyFor, user.etg_role),
+        content,
+        labels: getTransmissionLabels(
+          'À compléter',
+          content,
+          role,
+          entitiesWorkingDirectlyFor,
+          user.etg_role
+        ),
         fei: {
           numero: fei.numero,
           commune_mise_a_mort: fei.commune_mise_a_mort,
