@@ -18,6 +18,7 @@ import {
 import { BrevoTemplateId } from '~/third-parties/brevo-templates';
 import { capture } from '~/third-parties/sentry';
 import createUserId from '~/utils/createUserId';
+import { isRolesValidationError, userRolesSchema } from '~/utils/user-roles-schema';
 import {
   getLockoutState,
   LOCKOUT_DURATION_MINUTES,
@@ -1140,11 +1141,7 @@ const userUpdateSchema = z.object({
   [Prisma.UserScalarFieldEnum.addresse_ligne_1]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.addresse_ligne_2]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.code_postal]: z.string().optional(),
-  [Prisma.UserScalarFieldEnum.roles]: z
-    .array(
-      z.enum(Object.values(UserRoles).filter((r) => r !== UserRoles.ADMIN) as [UserRoles, ...UserRoles[]])
-    )
-    .optional(),
+  [Prisma.UserScalarFieldEnum.roles]: userRolesSchema.optional(),
   [Prisma.UserScalarFieldEnum.ville]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.etg_role]: z
     .enum(Object.values(UserEtgRoles) as [UserEtgRoles, ...UserEtgRoles[]])
@@ -1180,7 +1177,7 @@ router.post(
       let result = userUpdateSchema.safeParse(req.body);
       if (!result.success) {
         const error = new Error(result.error.message);
-        res.status(406);
+        res.status(isRolesValidationError(result.error) ? 400 : 406);
         return next(error);
       }
       let body = result.data;

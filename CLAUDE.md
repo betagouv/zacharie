@@ -38,7 +38,7 @@ Key domains:
 
 ## Hard Rules (non-negotiable)
 
-- **One role per user.** A user shall not have multiple roles. The frontend forbids it. **The backend does not enforce it yet** — the zod `roles` schema (`api-express/src/controllers/user.ts`) is a plain `z.array()` with no length cap. Any route you write or touch that persists `roles` must reject an array longer than 1.
+- **One role per user.** A user shall not have multiple roles. The frontend forbids it and the backend rejects it: every route that receives `roles` validates it with `userRolesSchema` (`api-express/src/utils/user-roles-schema.ts`, `.max(1)`) and answers 400 for an array longer than 1. Any new route that persists `roles` must use this schema.
 - **Never write backward-compatibility or data-retroactivity code.** When the data model changes (schema, enums, field names, formats), update the code to work with the new model only. No runtime transformations, fallbacks, or migration logic in app code to handle old formats. Old data is migrated at the DB level (Prisma migrations, SQL scripts), never patched at read-time.
 - **Never roll your own logout sequence.** Call `disconnect(...)` (full logout) or `clearLocalAppState(reason)` (session swap). See @app-local-first-react-router/CLAUDE.md.
 - **Admin routes require ProConnect.** `/admin` is behind the `admin` passport strategy, which rejects a session without a recent `proconnect_at` (403 `PROCONNECT_REQUIRED`). Never add an admin-only route outside `api-express/src/controllers/admin/`. See `doc/proconnect-admin.md`.

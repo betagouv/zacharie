@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import dayjs from 'dayjs';
 import createUserId from '~/utils/createUserId';
+import { isRolesValidationError, userRolesSchema } from '~/utils/user-roles-schema';
 import { Prisma, User, UserEtgRoles, UserNotifications, UserRoles } from '@prisma/client';
 import { cookieOptions, JWT_MAX_AGE, SESSION_COOKIE_NAME } from '~/utils/cookie';
 import { signSessionToken } from '~/utils/session-token';
@@ -116,11 +117,7 @@ router.post(
 
 const adminNewUserSchema = z.object({
   [Prisma.UserScalarFieldEnum.email]: z.string().trim().toLowerCase().email('Adresse email invalide'),
-  [Prisma.UserScalarFieldEnum.roles]: z
-    .array(
-      z.enum(Object.values(UserRoles).filter((r) => r !== UserRoles.ADMIN) as [UserRoles, ...UserRoles[]])
-    )
-    .max(1, 'Un utilisateur ne peut avoir qu’un seul rôle'),
+  [Prisma.UserScalarFieldEnum.roles]: userRolesSchema,
   [Prisma.UserScalarFieldEnum.isZacharieAdmin]: z.boolean(),
 });
 
@@ -171,12 +168,7 @@ const adminUserUpdateSchema = z.object({
   [Prisma.UserScalarFieldEnum.addresse_ligne_1]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.addresse_ligne_2]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.code_postal]: z.string().optional(),
-  [Prisma.UserScalarFieldEnum.roles]: z
-    .array(
-      z.enum(Object.values(UserRoles).filter((r) => r !== UserRoles.ADMIN) as [UserRoles, ...UserRoles[]])
-    )
-    .max(1, 'Un utilisateur ne peut avoir qu’un seul rôle')
-    .optional(),
+  [Prisma.UserScalarFieldEnum.roles]: userRolesSchema.optional(),
   [Prisma.UserScalarFieldEnum.isZacharieAdmin]: z.boolean().optional(),
   [Prisma.UserScalarFieldEnum.ville]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.etg_role]: z
@@ -201,7 +193,7 @@ router.post(
     ) => {
       const result = adminUserUpdateSchema.safeParse(req.body);
       if (!result.success) {
-        res.status(406).send({
+        res.status(isRolesValidationError(result.error) ? 400 : 406).send({
           ok: false,
           data: { user: null },
           error: result.error.errors[0].message,
