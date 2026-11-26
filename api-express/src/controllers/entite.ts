@@ -554,7 +554,10 @@ router.get(
       ok: true,
       data: {
         entity: relation.EntityRelatedWithUser,
-        canEdit: relation.status === EntityRelationStatus.ADMIN,
+        // mêmes conditions que PUT /ccg/:entityId
+        canEdit:
+          relation.status === EntityRelationStatus.ADMIN &&
+          relation.EntityRelatedWithUser.ccg_status === 'Pré-enregistré dans Zacharie',
       },
       error: '',
     });

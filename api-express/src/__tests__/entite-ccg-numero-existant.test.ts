@@ -159,10 +159,12 @@ describe('CCG pré-enregistré modifiable par son admin seulement', () => {
   // relations en base, comme les écrit POST /entite/ccg : le chasseur qui pré-enregistre et celui
   // qui se rattache par le numéro sont membres ; l'équipe Zacharie nomme ensuite l'admin
   let relations: Array<{ owner_id: string; entity_id: string; status: EntityRelationStatus }>;
+  let ccgStatus: string;
 
   beforeEach(() => {
     vi.clearAllMocks();
     relations = [];
+    ccgStatus = 'Pré-enregistré dans Zacharie';
     vi.mocked(prisma.entity.findUnique).mockResolvedValue(null);
     vi.mocked(prisma.entity.create).mockResolvedValue({ id: 'ccg-pre-enregistre', nom_d_usage: 'x' } as any);
     vi.mocked(prisma.entity.update).mockResolvedValue({ id: 'ccg-pre-enregistre' } as any);
@@ -177,7 +179,15 @@ describe('CCG pré-enregistré modifiable par son admin seulement', () => {
           r.entity_id === where.entity_id &&
           (!('status' in where) || r.status === where.status)
       );
-      return relation ? { ...relation, EntityRelatedWithUser: { id: relation.entity_id } } : null;
+      return relation
+        ? {
+            ...relation,
+            EntityRelatedWithUser: {
+              id: relation.entity_id,
+              ccg_status: ccgStatus,
+            },
+          }
+        : null;
     }) as any);
   });
 
@@ -210,5 +220,17 @@ describe('CCG pré-enregistré modifiable par son admin seulement', () => {
     const res = await authed(request(app).put('/entite/ccg/ccg-pre-enregistre')).send(body);
     expect(res.status).toBe(200);
     expect(prisma.entity.update).toHaveBeenCalled();
+  });
+
+  test("l'admin d'un CCG déjà déclaré ne se voit pas proposer de le modifier", async () => {
+    ccgStatus = 'Déclaré';
+    relations.push({
+      owner_id: 'user-1',
+      entity_id: 'ccg-pre-enregistre',
+      status: EntityRelationStatus.ADMIN,
+    });
+
+    const lecture = await authed(request(app).get('/entite/ccg/ccg-pre-enregistre'));
+    expect(lecture.body.data.canEdit).toBe(false);
   });
 });
