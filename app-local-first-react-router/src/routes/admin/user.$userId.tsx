@@ -1,4 +1,12 @@
-import { useState, type RefObject, type ReactNode, useRef, useMemo, useEffect } from 'react';
+import {
+  useState,
+  type RefObject,
+  type ReactNode,
+  useRef,
+  useMemo,
+  useEffect,
+  useDeferredValue,
+} from 'react';
 import dayjs from 'dayjs';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Button } from '@codegouvfr/react-dsfr/Button';
@@ -18,7 +26,6 @@ import {
 } from '@prisma/client';
 import InputCodePostalEtVille from '@app/components/InputCodePostalEtVille';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
-import { Table } from '@codegouvfr/react-dsfr/Table';
 import type {
   AdminUserDataResponse,
   AdminUserFeisResponse,
@@ -865,7 +872,6 @@ export default function AdminUser() {
         {selectedTabId === 'Peut traiter des fiches au nom de' && (
           <PeutEnvoyerDesFichesAOuTraiterAuNomDe
             relationType={EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
-            id={selectedTabId}
             userResponseData={userResponseData}
             setUserResponseData={setUserResponseData}
           />
@@ -873,7 +879,6 @@ export default function AdminUser() {
         {selectedTabId === 'Fédération' && (
           <PeutEnvoyerDesFichesAOuTraiterAuNomDe
             relationType={EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
-            id={selectedTabId}
             userResponseData={userResponseData}
             setUserResponseData={setUserResponseData}
             forFederation
@@ -882,7 +887,6 @@ export default function AdminUser() {
         {selectedTabId === 'CCGs' && (
           <PeutEnvoyerDesFichesAOuTraiterAuNomDe
             relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
-            id={selectedTabId}
             userResponseData={userResponseData}
             setUserResponseData={setUserResponseData}
             forCCG
@@ -891,7 +895,6 @@ export default function AdminUser() {
         {selectedTabId === 'Peut envoyer des fiches à' && (
           <PeutEnvoyerDesFichesAOuTraiterAuNomDe
             relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
-            id={selectedTabId}
             userResponseData={userResponseData}
             setUserResponseData={setUserResponseData}
           />
@@ -1184,7 +1187,6 @@ function UserNotificationsLogs({ userId }: { userId: string }) {
 
 interface PeutEnvoyerDesFichesAOuTraiterAuNomDeProps {
   relationType: EntityRelationType;
-  id: string;
   userResponseData: State;
   setUserResponseData: (data: State) => void;
   forCCG?: boolean;
@@ -1193,7 +1195,6 @@ interface PeutEnvoyerDesFichesAOuTraiterAuNomDeProps {
 
 function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
   relationType,
-  id,
   userResponseData,
   setUserResponseData,
   forCCG,
@@ -1305,20 +1306,59 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
     return entities;
   }, [allEntities, userEntitiesRelations, forCCG, forFederation, relationType, user.roles]);
 
-  // CCG : plusieurs milliers, on n'affiche que ceux qui correspondent à la recherche
-  const [ccgSearch, setCcgSearch] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+
+  // Texte de recherche fabriqué une fois par entité, pas à chaque frappe.
+  const searchableTextByEntityId = useMemo(() => {
+    const map = new Map<string, string>();
+    potentialEntities.forEach((entity) => {
+      map.set(
+        entity.id,
+        [
+          entity.nom_d_usage,
+          entity.raison_sociale,
+          entity.numero_ddecpp,
+          entity.siret,
+          entity.code_postal,
+          entity.ville,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+      );
+    });
+    return map;
+  }, [potentialEntities]);
+
   const shownEntities = useMemo(() => {
-    if (!forCCG) return potentialEntities;
-    const query = ccgSearch.trim().toLowerCase();
-    if (query.length < 2) return [];
-    return potentialEntities
-      .filter((entity) =>
-        [entity.nom_d_usage, entity.numero_ddecpp, entity.siret, entity.code_postal, entity.ville].some(
-          (value) => value?.toLowerCase().includes(query)
-        )
-      )
-      .slice(0, 20);
-  }, [forCCG, ccgSearch, potentialEntities]);
+    const query = deferredSearchQuery.trim().toLowerCase();
+    const matching = query
+      ? potentialEntities.filter((entity) => searchableTextByEntityId.get(entity.id)?.includes(query))
+      : potentialEntities;
+    // CCG : plusieurs milliers, on n'affiche que ceux qui correspondent à la recherche
+    if (forCCG) return query.length < 2 ? [] : matching.slice(0, 20);
+    return matching;
+  }, [forCCG, deferredSearchQuery, potentialEntities, searchableTextByEntityId]);
+
+  const addEntity = (entityId: string) => {
+    API.post({
+      path: 'admin/user-entity',
+      body: {
+        [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
+        relation: relationType,
+        [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entityId,
+        // ajout par un admin Zacharie : validé d'office (le premier devient admin de l'entité)
+        ...(relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
+          ? { [Prisma.EntityAndUserRelationsScalarFieldEnum.status]: EntityRelationStatus.MEMBER }
+          : {}),
+      },
+    }).then(() => {
+      loadData(user.id).then((response) => {
+        if (response.data) setUserResponseData(response.data!);
+      });
+    });
+  };
 
   return (
     <>
@@ -1401,80 +1441,76 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
             utilisateur n'a que le rôle ETG mais peut cocher la case "Gérer le transport dans l'ETG"
           </Highlight>
         )}
-      {forCCG && (
+      {!!potentialEntities.length && (
         <div className="p-4 md:p-8 md:pb-0">
-          <Input
-            label="Ajouter un CCG"
-            hintText="Nom, numéro, SIRET, code postal ou ville (2 caractères minimum)"
-            nativeInputProps={{
-              value: ccgSearch,
-              onChange: (event) => setCcgSearch(event.target.value),
-            }}
-          />
-        </div>
-      )}
-      {!!shownEntities.length && (
-        <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline has-[a]:[&_td]:p-0!">
-          <Table
-            fixed
-            noCaption
-            className="[&_td]:align-middle"
-            data={shownEntities.map((entity) => [
-              <form
+          <div className="relative mb-4">
+            <span
+              className="fr-icon--sm fr-icon-search-line absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"
+              aria-hidden="true"
+            />
+            <input
+              type="search"
+              aria-label="Rechercher (nom, SIRET, DDECPP, ville)"
+              placeholder={
+                forCCG
+                  ? 'Rechercher un CCG (nom, numéro, SIRET, ville), 2 caractères minimum'
+                  : 'Rechercher (nom, SIRET, DDECPP, ville)'
+              }
+              autoComplete="off"
+              data-1p-ignore
+              data-lpignore="true"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded border border-gray-300 py-2 pr-3 pl-10 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+          {shownEntities.length === 0 && (!forCCG || deferredSearchQuery.trim().length >= 2) && (
+            <p className="text-sm text-gray-500">Aucune entité ne correspond à la recherche.</p>
+          )}
+          <ul
+            aria-label="Entités à ajouter"
+            className="m-0 list-none divide-y divide-gray-200 p-0"
+          >
+            {shownEntities.map((entity) => (
+              <li
                 key={entity.id}
-                id={id}
-                className="flex w-full flex-col items-start gap-4"
-                method="POST"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  API.post({
-                    path: 'admin/user-entity',
-                    body: {
-                      [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-                      relation: relationType,
-                      [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
-                      // ajout par un admin Zacharie : validé d'office (le premier devient admin de l'entité)
-                      ...(relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
-                        ? {
-                            [Prisma.EntityAndUserRelationsScalarFieldEnum.status]:
-                              EntityRelationStatus.MEMBER,
-                          }
-                        : {}),
-                    },
-                  }).then(() => {
-                    loadData(user.id).then((response) => {
-                      if (response.data) setUserResponseData(response.data!);
-                    });
-                  });
-                }}
+                className="p-0"
               >
-                <Link
-                  to={`/app/admin/entity/${entity.id}`}
-                  className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
+                <form
+                  className="flex items-center gap-3 py-2"
+                  method="POST"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    addEntity(entity.id);
+                  }}
                 >
-                  {entity.nom_d_usage}
-                  <br />
-                  {entity.siret}
-                  {entity.numero_ddecpp}
-                  <br />
-                  {entity.code_postal} {entity.ville}
-                </Link>
-                <Button
-                  type="submit"
-                  className="m-2"
-                >
-                  Ajouter
-                </Button>
-              </form>,
-              <p
-                key={user.id}
-                className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
-              >
-                {entity.type}
-              </p>,
-            ])}
-            headers={['Entité', 'Type']}
-          />
+                  <div className="min-w-0 flex-1">
+                    <Link
+                      to={`/app/admin/entity/${entity.id}`}
+                      className="font-medium"
+                    >
+                      {entity.nom_d_usage || entity.raison_sociale || entity.id}
+                    </Link>
+                    <div className="flex flex-wrap items-center gap-x-2 text-xs text-gray-500">
+                      <span>{entity.type}</span>
+                      {(entity.siret || entity.numero_ddecpp) && (
+                        <span>· {[entity.siret, entity.numero_ddecpp].filter(Boolean).join(' ')}</span>
+                      )}
+                      {(entity.code_postal || entity.ville) && (
+                        <span>· {[entity.code_postal, entity.ville].filter(Boolean).join(' ')}</span>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    type="submit"
+                    size="small"
+                  >
+                    Ajouter
+                  </Button>
+                </form>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </>
