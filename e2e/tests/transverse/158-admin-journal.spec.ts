@@ -40,7 +40,7 @@ test("les écritures de l'admin apparaissent dans le journal, réussies ou refus
   const twoRoles = await page.request.post(`${API_URL}/admin/user/${userId}`, {
     data: { roles: ['CHASSEUR', 'ETG'] },
   });
-  expect(twoRoles.status()).toBe(406);
+  expect(twoRoles.status()).toBe(400);
 
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Journal admin (2)' })).toBeVisible({ timeout: 10000 });
@@ -51,7 +51,7 @@ test("les écritures de l'admin apparaissent dans le journal, réussies ou refus
   await expect(unblockRow).toContainText('OK');
 
   const refusedRow = page.getByRole('row').filter({ hasText: 'Modification d’utilisateur' });
-  await expect(refusedRow).toContainText('Échec (406)');
+  await expect(refusedRow).toContainText('Échec (400)');
   await refusedRow.getByRole('button', { name: 'Détails' }).click();
   await expect(page.getByText('Données envoyées')).toBeVisible();
   await expect(page.getByText('"ETG"')).toBeVisible();

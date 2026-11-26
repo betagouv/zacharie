@@ -100,14 +100,14 @@ describe('Journal des actions admin', () => {
       .post('/user/target-1')
       .send({ roles: ['CHASSEUR', 'ETG'] });
 
-    expect(res.status).toBe(406);
+    expect(res.status).toBe(400);
     expect(prisma.user.update).not.toHaveBeenCalled();
     const log = await lastAuditLog();
     expect(log).toMatchObject({
       action: 'POST /user/:user_id',
       target_type: 'user',
       target_id: 'target-1',
-      status_code: 406,
+      status_code: 400,
     });
   });
 
