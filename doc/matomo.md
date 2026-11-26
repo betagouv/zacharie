@@ -84,11 +84,13 @@ Le rôle est porté par une dimension, **jamais par le nom de l'événement** : 
 
 ### Clics annotés (`data-matomo`)
 
-| Id                                    | Où                             |
-| ------------------------------------- | ------------------------------ |
-| `carcasse-ouvrir-ajout`               | carte « Ajouter une carcasse » |
-| `fiche-attribuer-carcasses-restantes` | page de confirmation d'envoi   |
-| `fiche-voir-toutes-les-fiches`        | page de confirmation d'envoi   |
+| Id                                         | Où                                                                     |
+| ------------------------------------------ | ---------------------------------------------------------------------- |
+| `carcasse-ouvrir-ajout`                    | carte « Ajouter une carcasse »                                         |
+| `fiche-attribuer-carcasses-restantes`      | page de confirmation d'envoi                                           |
+| `fiche-voir-toutes-les-fiches`             | page de confirmation d'envoi                                           |
+| `deconnexion-annuler-donnees-non-envoyees` | modale « Des modifications ne sont pas encore envoyées » (déconnexion) |
+| `deconnexion-forcer-donnees-non-envoyees`  | modale « Des modifications ne sont pas encore envoyées » (déconnexion) |
 
 ### Événements antérieurs à cette taxonomie
 
