@@ -12,6 +12,8 @@ interface RelationEntityUserProps {
   refreshKey?: number;
   user: User;
   relationType?: EntityRelationType;
+  // CCG : l'admin voit les utilisateurs, seule l'équipe Zacharie modifie les rattachements
+  readOnly?: boolean;
   onChange?: () => void;
 }
 
@@ -20,6 +22,7 @@ export default function RelationEntityUsersList({
   refreshKey,
   user,
   relationType = EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+  readOnly = false,
   onChange,
 }: RelationEntityUserProps) {
   const [searchParams] = useSearchParams();
@@ -77,8 +80,8 @@ export default function RelationEntityUsersList({
             displayUser={true}
             onChange={onChange}
             refreshKey={refreshKey}
-            canApproveRelation={isAdminOfEntity}
-            canDelete={isAdminOfEntity}
+            canApproveRelation={isAdminOfEntity && !readOnly}
+            canDelete={isAdminOfEntity && !readOnly}
           />
         );
       })}

@@ -516,6 +516,7 @@ function CcgUsersButton({
             entity={entity}
             user={user}
             relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
+            readOnly
             onChange={onChange}
           />
         )}

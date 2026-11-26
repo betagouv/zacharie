@@ -85,19 +85,13 @@ router.post(
       if (!entityHasUsers) nextEntityRelation.status = EntityRelationStatus.ADMIN;
     }
 
-    // CCG ajouté par l'équipe Zacharie : le premier utilisateur en devient admin, les suivants membres
+    // CCG : membre par défaut, l'équipe nomme ensuite l'admin avec le sélecteur de statut
     if (
       entity.type === EntityTypes.CCG &&
-      relationType === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
+      relationType === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY &&
+      !body.status
     ) {
-      const ccgHasUsers = await prisma.entityAndUserRelations.findFirst({
-        where: {
-          entity_id: entity.id,
-          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-          deleted_at: null,
-        },
-      });
-      nextEntityRelation.status = ccgHasUsers ? EntityRelationStatus.MEMBER : EntityRelationStatus.ADMIN;
+      nextEntityRelation.status = EntityRelationStatus.MEMBER;
     }
 
     const relation = await prisma.entityAndUserRelations.create({ data: nextEntityRelation });

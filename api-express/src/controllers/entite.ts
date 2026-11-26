@@ -473,6 +473,7 @@ router.post(
           data: {
             owner_id: user.id,
             relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+            status: EntityRelationStatus.MEMBER,
             entity_id: existingEntity.id,
           },
         }));
@@ -506,7 +507,8 @@ router.post(
       data: {
         owner_id: user.id,
         relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-        status: EntityRelationStatus.ADMIN,
+        // l'équipe Zacharie nomme les admins du CCG (accès aux fiches qui y transitent)
+        status: EntityRelationStatus.MEMBER,
         entity_id: createdEntity.id,
       },
     });
