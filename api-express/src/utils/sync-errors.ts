@@ -14,6 +14,7 @@ export type SyncRejectedErrorMessage =
   | 'Seul un examinateur initial peut créer une fiche'
   | 'Vous ne pouvez pas supprimer cette fiche'
   | 'Vous ne pouvez pas supprimer cette carcasse'
+  | 'Vous ne pouvez pas modifier cette carcasse'
   | 'Cette entité a été supprimée, choisissez-en une autre'
   | 'Version obsolète';
 

@@ -41,13 +41,10 @@ test("UI : aucune affordance d'édition sur une carcasse côté CC", async ({ pa
   await expect(page.getByRole('button', { name: /^Refuser/i })).toHaveCount(0);
 });
 
-// ⚠️ SECURITY GUARD: sync-carcasse.ts does not currently role-gate non-SVI
-// fields. A COMMERCE_DE_DETAIL user can in principle POST a payload to /sync
-// that modifies carcasse.commentaire or anomalies and have it persisted.
-// This test asserts the desired (post-refactor) behavior: the sync route
-// must reject the write (4xx) OR silently drop it (no DB mutation).
-// SKIP today; un-skip once the backend gains a role guard.
-test.skip('API : POST /sync depuis un CC ne doit pas modifier la carcasse', async ({ page }) => {
+// Le commerce de détail est le destinataire des carcasses de la fiche : sans garde par rôle, il
+// passerait les droits du détenteur en cours (transmission, refus, statut). Le backend refuse toute
+// écriture de carcasse venant d'un commerce de détail, et la carcasse reste intacte en base.
+test('API : POST /sync depuis un CC est refusé et ne modifie pas la carcasse', async ({ page }) => {
   const feiId = 'ZACH-20250707-QZ6E0-195242';
   const API_BASE = 'http://localhost:3291';
 
@@ -58,22 +55,26 @@ test.skip('API : POST /sync depuis un CC ne doit pas modifier la carcasse', asyn
   const cookies = await page.context().cookies();
   const jwtCookie = cookies.find((c) => c.name === 'zacharie_express_jwt');
   expect(jwtCookie).toBeTruthy();
+  const headers = { Cookie: `zacharie_express_jwt=${jwtCookie!.value}` };
 
   const zacharie_carcasse_id = `${feiId}_MM-001-001`;
   const probeCommentaire = `cc-cannot-write-${Date.now()}`;
 
   const syncRes = await page.request.post(`${API_BASE}/sync`, {
-    headers: {
-      Cookie: `zacharie_express_jwt=${jwtCookie!.value}`,
-      'Content-Type': 'application/json',
-    },
+    headers: { ...headers, 'Content-Type': 'application/json' },
     data: JSON.stringify({
       feis: [],
       carcasses: [
         {
           fei_numero: feiId,
           zacharie_carcasse_id,
+          // version au-dessus de celle de la base : le refus ne vient pas d'une écriture périmée
+          version: 1_000_000,
           examinateur_commentaire: probeCommentaire,
+          examinateur_anomalies_carcasse: ['anomalie inventée par le commerce'],
+          intermediaire_carcasse_refus_motif: probeCommentaire,
+          next_owner_entity_id: null,
+          next_owner_role: null,
         },
       ],
       carcassesIntermediaires: [],
@@ -81,13 +82,28 @@ test.skip('API : POST /sync depuis un CC ne doit pas modifier la carcasse', asyn
     }),
   });
 
-  // Acceptable outcomes:
-  //  (a) backend explicitly rejects (4xx)
-  //  (b) backend accepts (200) but does NOT persist the write
-  // Either way: the probe string must not show up on a subsequent GET.
-  expect(syncRes.status()).toBeLessThan(500);
+  expect(syncRes.status()).toBe(200);
+  const syncBody = await syncRes.json();
+  expect(syncBody.data.carcasses).toHaveLength(0);
+  expect(syncBody.data.rejected).toEqual([
+    { kind: 'carcasse', id: zacharie_carcasse_id, reason: 'Vous ne pouvez pas modifier cette carcasse' },
+  ]);
 
-  // Re-fetch the carcasse and assert the write did not stick.
+  // La carcasse en base n'a pas bougé : toujours destinée au commerce de détail, sans commentaire,
+  // anomalie ni refus du probe.
+  const getRes = await page.request.get(`${API_BASE}/carcasse`, { headers });
+  expect(getRes.status()).toBe(200);
+  const getBody = await getRes.json();
+  const carcasse = getBody.data.carcasses.find(
+    (c: { zacharie_carcasse_id: string }) => c.zacharie_carcasse_id === zacharie_carcasse_id
+  );
+  expect(carcasse).toBeTruthy();
+  expect(carcasse.next_owner_role).toBe('COMMERCE_DE_DETAIL');
+  expect(carcasse.next_owner_entity_id).toBeTruthy();
+  expect(carcasse.examinateur_commentaire).not.toBe(probeCommentaire);
+  expect(carcasse.examinateur_anomalies_carcasse).not.toContain('anomalie inventée par le commerce');
+  expect(carcasse.intermediaire_carcasse_refus_motif).not.toBe(probeCommentaire);
+
   await page.reload();
   await expect(page.getByText(probeCommentaire)).toHaveCount(0);
 });
