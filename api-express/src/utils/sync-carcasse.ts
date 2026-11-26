@@ -102,6 +102,16 @@ export async function syncCarcasse(
     if (!(await scope.canWriteCarcasse(existingCarcasse.zacharie_carcasse_id))) {
       throw new SyncRejectedError("Vous n'avez pas accès à cette carcasse");
     }
+  } else if (!(await scope.canWriteFei(existingFei))) {
+    throw new SyncRejectedError("Vous n'avez pas accès à cette fiche");
+  }
+  // Le commerce de détail ne fait que consulter les carcasses qu'on lui livre : son application
+  // n'écrit jamais une carcasse. Destinataire de la carcasse, il passerait sinon les droits du
+  // détenteur en cours (transmission, refus, statut).
+  if (user.roles.includes(UserRoles.COMMERCE_DE_DETAIL)) {
+    throw new SyncRejectedError('Vous ne pouvez pas modifier cette carcasse');
+  }
+  if (existingCarcasse) {
     // Version périmée : on ne l'écrit pas, et on touche `updated_at` pour que le prochain delta du
     // client (/carcasse, fondé sur `carcasse.updated_at`) lui apporte la version à jour.
     if (isStaleWrite(existingCarcasse, body.version, user)) {
@@ -111,8 +121,6 @@ export async function syncCarcasse(
       });
       throw new SyncRejectedError('Version obsolète');
     }
-  } else if (!(await scope.canWriteFei(existingFei))) {
-    throw new SyncRejectedError("Vous n'avez pas accès à cette fiche");
   }
 
   const isJustCreated = !existingCarcasse;

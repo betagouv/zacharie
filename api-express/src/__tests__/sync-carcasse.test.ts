@@ -996,3 +996,95 @@ describe('syncCarcasse — premier détenteur personne physique', () => {
     expect(prisma.userRelations.findFirst).not.toHaveBeenCalled();
   });
 });
+
+describe('syncCarcasse — commerce de détail en lecture seule', () => {
+  const commerceDeDetail = {
+    id: 'user-cc',
+    roles: [UserRoles.COMMERCE_DE_DETAIL],
+    activated: true,
+  } as unknown as User;
+  // Le commerce de détail est le destinataire de la carcasse : il est dans le périmètre.
+  const ccScope = fakeSyncScope({
+    entityIds: ['entity-cc'],
+    isFeiOwner: () => false,
+    isPremierDetenteur: () => false,
+  });
+  const carcasseLivree = {
+    ...baseCarcasse,
+    version: 1,
+    version_user_id: 'user-chasseur',
+    current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+    current_owner_user_id: 'user-chasseur',
+    next_owner_role: FeiOwnerRole.COMMERCE_DE_DETAIL,
+    next_owner_entity_id: 'entity-cc',
+  };
+
+  test.each([
+    ['le commentaire de l’examinateur', { examinateur_commentaire: 'modifié par le commerce' }],
+    ['les anomalies', { examinateur_anomalies_carcasse: ['anomalie inventée'] }],
+    [
+      'un refus',
+      { intermediaire_carcasse_refus_motif: 'refus', intermediaire_carcasse_refus_intermediaire_id: 'X' },
+    ],
+    ['la transmission', { next_owner_entity_id: 'entity-autre', next_owner_role: FeiOwnerRole.ETG }],
+    ['le statut', { svi_carcasse_status: CarcasseStatus.REFUS_ETG_COLLECTEUR }],
+    ['une inspection SVI', { svi_ipm1_decision: 'ACCEPTE', svi_carcasse_commentaire: 'x' }],
+  ])('refuse de modifier %s, sans rien écrire', async (_label, body) => {
+    await expect(
+      syncCarcasse(
+        'FEI-1',
+        'ZC-1',
+        { fei_numero: 'FEI-1', version: 1, ...body } as any,
+        commerceDeDetail,
+        ccScope,
+        {
+          existingFei: baseFei,
+          existingCarcasse: carcasseLivree,
+        }
+      )
+    ).rejects.toThrow('Vous ne pouvez pas modifier cette carcasse');
+    expect(prisma.carcasse.update).not.toHaveBeenCalled();
+    expect(prisma.entityAndUserRelations.create).not.toHaveBeenCalled();
+  });
+
+  test('refuse la création d’une carcasse', async () => {
+    await expect(
+      syncCarcasse(
+        'FEI-1',
+        'ZC-NEW',
+        { fei_numero: 'FEI-1', numero_bracelet: 'BR-NEW' } as any,
+        commerceDeDetail,
+        ccScope,
+        { existingFei: baseFei, existingCarcasse: null }
+      )
+    ).rejects.toThrow('Vous ne pouvez pas modifier cette carcasse');
+    expect(prisma.carcasse.create).not.toHaveBeenCalled();
+  });
+
+  test('refuse la suppression', async () => {
+    await expect(
+      syncCarcasse(
+        'FEI-1',
+        'ZC-1',
+        { fei_numero: 'FEI-1', version: 1, deleted_at: new Date() } as any,
+        commerceDeDetail,
+        ccScope,
+        { existingFei: baseFei, existingCarcasse: carcasseLivree }
+      )
+    ).rejects.toThrow('Vous ne pouvez pas modifier cette carcasse');
+    expect(prisma.carcasse.update).not.toHaveBeenCalled();
+  });
+
+  test('une carcasse hors périmètre reste refusée pour absence d’accès', async () => {
+    await expect(
+      syncCarcasse(
+        'FEI-1',
+        'ZC-1',
+        { fei_numero: 'FEI-1', examinateur_commentaire: 'x' } as any,
+        commerceDeDetail,
+        fakeSyncScope({ canWriteCarcasse: async () => false }),
+        { existingFei: baseFei, existingCarcasse: carcasseLivree }
+      )
+    ).rejects.toThrow("Vous n'avez pas accès à cette carcasse");
+  });
+});
