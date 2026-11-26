@@ -1,3 +1,4 @@
+import { buildProConnectUrl } from '@app/utils/sanitize-redirect';
 import RootDisplay from '@app/components/RootDisplay';
 import Chargement from '@app/components/Chargement';
 import API from '@app/services/api';
@@ -98,8 +99,7 @@ export default function AdminLayout() {
     // api.ts a déjà pu pousser /app/proconnect en recevant le 403 : on ne ré-encapsule pas cette
     // URL dans un second `redirect`, sinon ProConnect renvoie l'admin sur /app/proconnect
     if (location.pathname === '/app/proconnect') return null;
-    const redirect = encodeURIComponent(location.pathname + location.search);
-    return <Navigate to={`/app/proconnect?redirect=${redirect}`} />;
+    return <Navigate to={buildProConnectUrl(location.pathname + location.search)} />;
   }
   let mainLink = '/app/admin';
   if (user.roles.includes(UserRoles.CHASSEUR)) {

@@ -1,9 +1,8 @@
 import { Link, useSearchParams, useNavigate } from 'react-router';
-import { sanitizeRedirect } from '@app/utils/sanitize-redirect';
+import { getPostLoginRoute } from '@app/utils/user-onboarded.client';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { PasswordInput } from '@codegouvfr/react-dsfr/blocks/PasswordInput';
-import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { type User } from '@prisma/client';
 import { type UserConnexionResponse } from '@api/src/types/responses';
@@ -20,7 +19,7 @@ export default function ResetMotDePasse() {
   const navigate = useNavigate();
 
   const resetPasswordToken = searchParams.get('reset-password-token') || '';
-  const redirect = sanitizeRedirect(searchParams.get('redirect'));
+  const redirect = searchParams.get('redirect');
   const communication = searchParams.get('communication');
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -68,8 +67,7 @@ export default function ResetMotDePasse() {
       useZustandStore.setState((state) => ({
         users: { ...state.users, [user.id]: user },
       }));
-      const redirectPath = redirect || getUserOnboardingRoute(user);
-      navigate(redirectPath);
+      navigate(getPostLoginRoute(user, redirect));
     } else {
       useUser.setState({ user: null });
       setUserResponse(response);

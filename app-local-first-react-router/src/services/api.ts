@@ -1,4 +1,5 @@
 import { disconnect } from '@app/utils/disconnect';
+import { buildProConnectUrl } from '@app/utils/sanitize-redirect';
 import { NATIVE_TOKEN_KEY } from '@app/services/indexed-db';
 
 let API_URL = new URL(import.meta.env.VITE_API_URL);
@@ -122,8 +123,8 @@ class ApiService {
             // plusieurs appels admin peuvent recevoir ce 403 : une fois sur /app/proconnect on ne
             // ré-encapsule pas l'URL courante, sinon ProConnect renvoie l'admin sur /app/proconnect
             if (window.location.pathname !== '/app/proconnect') {
-              const redirect = encodeURIComponent(window.location.pathname + window.location.search);
-              window.history.pushState({}, '', `/app/proconnect?redirect=${redirect}`);
+              const target = buildProConnectUrl(window.location.pathname + window.location.search);
+              window.history.pushState({}, '', target);
               window.dispatchEvent(new PopStateEvent('popstate'));
             }
           }

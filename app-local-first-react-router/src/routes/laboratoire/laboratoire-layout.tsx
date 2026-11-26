@@ -1,3 +1,4 @@
+import { buildConnexionUrl } from '@app/utils/sanitize-redirect';
 import { Navigate, Outlet, useLocation, Link } from 'react-router';
 import { useEffect, useState } from 'react';
 import { UserRoles } from '@prisma/client';
@@ -47,7 +48,7 @@ export default function LaboratoireLayout() {
 
   if (!user) {
     const currentPath = location.pathname + location.search;
-    return <Navigate to={`/app/connexion?redirect=${encodeURIComponent(currentPath)}`} />;
+    return <Navigate to={buildConnexionUrl(currentPath)} />;
   }
 
   if (!user.roles.includes(UserRoles.LABORATOIRE)) {

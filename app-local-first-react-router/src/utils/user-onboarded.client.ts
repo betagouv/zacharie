@@ -1,5 +1,6 @@
 import { User, UserRoles } from '@prisma/client';
-import { isCircuitCourt } from './circuit-court';
+import { isCircuitCourt, isRoleCircuitCourt } from './circuit-court';
+import { sanitizeRedirect } from './sanitize-redirect';
 
 export function getUserOnboardingRoute(user: User): string {
   if (user.roles.includes(UserRoles.CHASSEUR)) {
@@ -47,4 +48,37 @@ export function getUserOnboardingRoute(user: User): string {
   // compte sans rôle reconnu : la page d'accueil ne redirige pas un utilisateur connecté,
   // contrairement à /app/connexion qui le renverrait ici
   return '/';
+}
+
+function canOpenSection(user: User, section: string) {
+  switch (section) {
+    case 'chasseur':
+      return user.roles.includes(UserRoles.CHASSEUR);
+    case 'etg':
+      return user.roles.includes(UserRoles.ETG);
+    case 'collecteur':
+      return user.roles.includes(UserRoles.COLLECTEUR_PRO);
+    case 'svi':
+      return user.roles.includes(UserRoles.SVI);
+    case 'federation':
+      return user.roles.includes(UserRoles.FEDERATION);
+    case 'laboratoire':
+      return user.roles.includes(UserRoles.LABORATOIRE);
+    case 'circuit-court':
+      return user.roles.some((role) => isRoleCircuitCourt(role));
+    case 'admin':
+      return !!user.isZacharieAdmin;
+    default:
+      return true;
+  }
+}
+
+// Page à ouvrir après la connexion : le `redirect` s'il est valide et appartient à l'espace de
+// l'utilisateur, sinon sa page d'accueil.
+export function getPostLoginRoute(user: User, redirect: string | null | undefined) {
+  const path = sanitizeRedirect(redirect);
+  if (!path) return getUserOnboardingRoute(user);
+  const section = path.split(/[/?#]/)[2] ?? '';
+  if (!canOpenSection(user, section)) return getUserOnboardingRoute(user);
+  return path;
 }

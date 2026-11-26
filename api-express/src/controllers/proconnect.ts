@@ -14,6 +14,7 @@ import {
   isProConnectConfigured,
 } from '~/service/proconnect';
 import { capture } from '~/third-parties/sentry';
+import { sanitizeAppRedirect } from '~/utils/sanitize-redirect';
 
 const router: express.Router = express.Router();
 
@@ -31,9 +32,7 @@ interface ProConnectStatePayload {
 
 // Seules les routes internes de l'app sont acceptées comme destination après ProConnect
 function sanitizeRedirect(redirect: unknown): string {
-  if (typeof redirect !== 'string') return '/app/admin';
-  if (!redirect.startsWith('/app/') || redirect.startsWith('/app//')) return '/app/admin';
-  return redirect;
+  return sanitizeAppRedirect(redirect) || '/app/admin';
 }
 
 function redirectToProConnectPage(res: express.Response, error: string, redirect: string) {

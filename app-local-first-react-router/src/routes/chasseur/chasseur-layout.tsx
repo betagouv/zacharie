@@ -1,3 +1,4 @@
+import { buildConnexionUrl } from '@app/utils/sanitize-redirect';
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router';
 import { useCallback, useEffect, useMemo } from 'react';
 import useZustandStore from '@app/zustand/store';
@@ -50,7 +51,7 @@ export default function ChasseurLayout() {
   if (!user) {
     const currentPath = location.pathname + location.search;
     console.log('NO CHASSEUR USER');
-    return <Navigate to={`/app/connexion?redirect=${encodeURIComponent(currentPath)}`} />;
+    return <Navigate to={buildConnexionUrl(currentPath)} />;
   }
 
   if (!user.roles.includes(UserRoles.CHASSEUR)) {
