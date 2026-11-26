@@ -75,9 +75,46 @@ router.get(
         counts[t] = typeCounts[i];
       });
 
+      // carcasses et fiches (non supprimées) qui passent par l'entité à n'importe quelle étape du circuit :
+      // premier détenteur, dépôt (CCG), intermédiaire, SVI, ou propriétaire précédent / actuel / suivant
+      const activityRows = await prisma.$queryRaw<
+        Array<{ entity_id: string; carcasses: number; fiches: number }>
+      >`
+        WITH links AS (
+          SELECT e.entity_id, c.zacharie_carcasse_id, c.fei_numero
+          FROM "Carcasse" c
+          JOIN "Fei" f ON f.numero = c.fei_numero AND f.deleted_at IS NULL
+          CROSS JOIN LATERAL unnest(ARRAY[
+            c.premier_detenteur_entity_id,
+            c.premier_detenteur_depot_entity_id,
+            c.svi_entity_id,
+            c.prev_owner_entity_id,
+            c.current_owner_entity_id,
+            c.next_owner_entity_id
+          ]) AS e(entity_id)
+          WHERE c.deleted_at IS NULL AND e.entity_id IS NOT NULL
+          UNION
+          SELECT e.entity_id, ci.zacharie_carcasse_id, ci.fei_numero
+          FROM "CarcasseIntermediaire" ci
+          JOIN "Carcasse" c ON c.zacharie_carcasse_id = ci.zacharie_carcasse_id AND c.deleted_at IS NULL
+          JOIN "Fei" f ON f.numero = ci.fei_numero AND f.deleted_at IS NULL
+          CROSS JOIN LATERAL unnest(ARRAY[ci.intermediaire_entity_id, ci.intermediaire_depot_entity_id]) AS e(entity_id)
+          WHERE ci.deleted_at IS NULL AND e.entity_id IS NOT NULL
+        )
+        SELECT entity_id,
+          COUNT(DISTINCT zacharie_carcasse_id)::int AS carcasses,
+          COUNT(DISTINCT fei_numero)::int AS fiches
+        FROM links
+        GROUP BY entity_id;
+      `;
+      const activityCounts: AdminEntitiesResponse['data']['activityCounts'] = {};
+      for (const row of activityRows) {
+        activityCounts[row.entity_id] = { carcasses: row.carcasses, fiches: row.fiches };
+      }
+
       res.status(200).send({
         ok: true,
-        data: { entities, counts },
+        data: { entities, counts, activityCounts },
         error: '',
       });
     }
@@ -143,33 +180,32 @@ router.get(
               select: userAdminSelect,
             });
 
-      const canSendFichesToEntity =
-        entity.type === EntityTypes.CCG
-          ? []
-          : await prisma.user.findMany({
-              where: {
-                id: {
-                  notIn: entity.EntityRelationsWithUsers.filter(
-                    (entityRelation) =>
-                      entityRelation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
-                  ).map((entityRelation) => entityRelation.UserRelatedWithEntity.id),
-                },
-                roles: {
-                  hasSome:
-                    entity.type === EntityTypes.ETG || entity.type === EntityTypes.COLLECTEUR_PRO
-                      ? [UserRoles.CHASSEUR, UserRoles.ETG, UserRoles.COLLECTEUR_PRO]
-                      : entity.type === EntityTypes.PREMIER_DETENTEUR
-                        ? [UserRoles.CHASSEUR]
-                        : entity.type === EntityTypes.SVI
-                          ? [UserRoles.ETG]
-                          : [],
-                },
-              },
-              orderBy: {
-                updated_at: 'desc',
-              },
-              select: userAdminSelect,
-            });
+      const canSendFichesToEntity = await prisma.user.findMany({
+        where: {
+          id: {
+            notIn: entity.EntityRelationsWithUsers.filter(
+              (entityRelation) =>
+                entityRelation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
+            ).map((entityRelation) => entityRelation.UserRelatedWithEntity.id),
+          },
+          roles: {
+            hasSome:
+              entity.type === EntityTypes.CCG
+                ? [UserRoles.FEDERATION, UserRoles.CHASSEUR]
+                : entity.type === EntityTypes.ETG || entity.type === EntityTypes.COLLECTEUR_PRO
+                  ? [UserRoles.CHASSEUR, UserRoles.ETG, UserRoles.COLLECTEUR_PRO]
+                  : entity.type === EntityTypes.PREMIER_DETENTEUR
+                    ? [UserRoles.CHASSEUR]
+                    : entity.type === EntityTypes.SVI
+                      ? [UserRoles.ETG]
+                      : [],
+          },
+        },
+        orderBy: {
+          updated_at: 'desc',
+        },
+        select: userAdminSelect,
+      });
 
       const sviRelatedToETG =
         entity.type !== EntityTypes.ETG

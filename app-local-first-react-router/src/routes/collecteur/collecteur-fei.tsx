@@ -35,6 +35,7 @@ import { addAnSToWord, formatCountCarcasseByEspece } from '@app/utils/count-carc
 import FEIDonneesDeChasse from '@app/components/DonneesDeChasse';
 import Section from '@app/components/Section';
 import CardCarcasse from '@app/components/CardCarcasse';
+import RequestNewCarcasseButton from '@app/components/RequestNewCarcasseForm';
 import CollecteurHeaderFiche from './collecteur-header-fiche';
 import { useCollecteursProIds, useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 import DestinataireSelectIntermediaire from './collecteur-destinataire-select-intermediaire';
@@ -728,6 +729,15 @@ function CollecteurProFeiContent({
                     );
                   })}
                 </div>
+                {effectiveCanEdit && (
+                  <div className="my-4 flex justify-center">
+                    <RequestNewCarcasseButton
+                      feiNumero={fei.numero}
+                      intermediaire={intermediaire}
+                      transmission={transmission}
+                    />
+                  </div>
+                )}
                 {carcassesDejaRefusees.length > 0 && (
                   <div className="my-8 flex justify-center">
                     <Button

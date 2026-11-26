@@ -109,7 +109,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
       return 'Il manque les pièces inspectées nécessitant une observation';
     }
     if (!sviIpm1LesionsOuMotifs?.length) {
-      return 'Il manque les lésions';
+      return 'Il manque les lésions ou motifs';
     }
     if (sviIpm1Decision === IPM1Decision.MISE_EN_CONSIGNE && !sviIpm1DureeConsigne) {
       return 'Il manque la durée de la consigne';
@@ -383,9 +383,9 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
               <div className="w-full flex-1">
                 <InputMultiSelect
                   data={lesionsList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
-                  label="Observations (lésions) *"
+                  label="Lésion ou motif *"
                   canEdit
-                  placeholder="Commencez à taper une lésion"
+                  placeholder="Commencez à taper une lésion ou un motif"
                   onChange={setSviIpm1LesionsOuMotifs}
                   values={sviIpm1LesionsOuMotifs}
                 />
@@ -397,7 +397,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
                   priority="tertiary no outline"
                   onClick={() => lesionsOuMotifsConsigneModal.open()}
                 >
-                  Filtrez par catégorie de lésion
+                  Filtrez par catégorie de lésion ou motif
                 </Button>
               </div>
             </div>
@@ -405,7 +405,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
               data={lesionsTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               skipParent
               modal={lesionsOuMotifsConsigneModal}
-              title={`Observations (lésions)`}
+              title={`Lésion ou motif`}
               onItemClick={(newLesionsOuMotifSaisie) => {
                 const nextLesionsOuMotifsSaisie = [...sviIpm1LesionsOuMotifs, newLesionsOuMotifSaisie];
                 setSviIpm1LesionsOuMotifs(nextLesionsOuMotifsSaisie);

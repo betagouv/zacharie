@@ -169,40 +169,69 @@ async function sendPushToUser({
   }
   if (webPushTokens.length) {
     console.log('SENDING WEB PUSH NOTIFICATION FOR REAL', user.id);
+    const webTokensToRemove: string[] = [];
     for (const web_push_subscription of webPushTokens) {
-      webpush
-        .sendNotification(JSON.parse(web_push_subscription), JSON.stringify({ title, body, img }), {
-          vapidDetails: {
-            subject: 'mailto:contact@zacharie.beta.gouv.fr',
-            publicKey: process.env.VITE_VAPID_PUBLIC_KEY!,
-            privateKey: process.env.VITE_VAPID_PRIVATE_KEY!,
-          },
-          urgency: 'high',
-        })
-        .then(async (response) => {
-          console.log('web push response', response);
-          await prisma.notificationLog.create({
-            data: {
-              user_id: user.id,
-              payload: JSON.stringify({
-                title,
-                body,
-                email,
-                response,
-              }),
-              type: 'PUSH',
-              web_push_token: web_push_subscription,
-              action: notificationLogAction,
+      try {
+        const response = await webpush.sendNotification(
+          JSON.parse(web_push_subscription),
+          JSON.stringify({ title, body, img }),
+          {
+            vapidDetails: {
+              subject: 'mailto:contact@zacharie.beta.gouv.fr',
+              publicKey: process.env.VITE_VAPID_PUBLIC_KEY!,
+              privateKey: process.env.VITE_VAPID_PRIVATE_KEY!,
             },
-          });
-        })
-        .catch((error) => {
-          console.error('error in web push');
-          console.error(error, user.id, title);
-          Sentry.captureException(error, {
-            extra: { userId: user.id, title, body, img },
-          });
+            urgency: 'high',
+          }
+        );
+        console.log('web push response', response);
+        await prisma.notificationLog.create({
+          data: {
+            user_id: user.id,
+            payload: JSON.stringify({
+              title,
+              body,
+              email,
+              response,
+            }),
+            type: 'PUSH',
+            web_push_token: web_push_subscription,
+            action: notificationLogAction,
+          },
         });
+      } catch (error) {
+        // 404 / 410 : l'abonnement n'existe plus côté navigateur (désabonné, données effacées).
+        // On le retire, sinon chaque notification suivante échoue à nouveau.
+        const statusCode = error instanceof webpush.WebPushError ? error.statusCode : undefined;
+        if (statusCode === 404 || statusCode === 410) {
+          webTokensToRemove.push(web_push_subscription);
+          continue;
+        }
+        console.error('error in web push');
+        console.error(error, user.id, title);
+        Sentry.captureException(error, {
+          extra: { userId: user.id, title, body, img, statusCode },
+        });
+      }
+    }
+    // Retrait en SQL sur la valeur courante de la colonne (même raison que pour les tokens natifs).
+    if (webTokensToRemove.length) {
+      try {
+        await prisma.$executeRaw`
+          UPDATE "User"
+          SET web_push_tokens = ARRAY(
+            SELECT token
+            FROM unnest(web_push_tokens) AS token
+            WHERE token NOT IN (${Prisma.join(webTokensToRemove)})
+          )
+          WHERE id = ${user.id}
+        `;
+      } catch (error) {
+        console.error('error while removing web push tokens', user.id);
+        Sentry.captureException(error, {
+          extra: { userId: user.id, tokensToRemoveCount: webTokensToRemove.length },
+        });
+      }
     }
   }
   if (nativePushTokens.length) {

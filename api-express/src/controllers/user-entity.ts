@@ -23,7 +23,6 @@ import {
   hasReachedMaxAssociationsDeChasse,
   MAX_ASSOCIATIONS_DE_CHASSE_ERROR,
 } from '~/utils/associations-de-chasse-limit';
-import { isPreregisteredCCGWithoutUser } from '~/utils/ccg-sans-utilisateur';
 
 export const userEntitySchema = z.object({
   owner_id: z.string(),
@@ -82,16 +81,17 @@ async function checkIfUserIsAdmin(body: z.infer<typeof userEntitySchema>, user: 
   if (!body.owner_id) {
     return false;
   }
+  // propriétaire d'un CCG : il voit les utilisateurs et les fiches du CCG, mais seule l'équipe Zacharie
+  // gère les rattachements et les statuts (routes /admin/user-entity)
+  if (entity.type === EntityTypes.CCG) {
+    return false;
+  }
 
   const isCurrentUserAdminOfEntity = await prisma.entityAndUserRelations.findFirst({
     where: {
       owner_id: user.id,
       entity_id: entity.id,
-      // le créateur d'un CCG (ADMIN de CAN_TRANSMIT) n'en gère pas les autres utilisateurs :
-      // c'est l'équipe Zacharie qui désigne un autre créateur
-      relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
       status: EntityRelationStatus.ADMIN,
-      deleted_at: null,
     },
   });
   if (isCurrentUserAdminOfEntity) {
@@ -128,32 +128,6 @@ async function getLastAdminSituation(relation: {
   if (otherRelations.some((other) => other.status === EntityRelationStatus.ADMIN)) return 'NOT_LAST_ADMIN';
   if (otherRelations.length > 0) return 'LAST_ADMIN_WITH_OTHER_USERS';
   return 'SOLE_USER';
-}
-
-// seul le créateur (ADMIN) d'un CCG pré-enregistré peut le modifier : s'il le retire alors que
-// d'autres chasseurs l'utilisent, plus personne ne peut le modifier
-async function isLastAdminOfSharedPreregisteredCCG(
-  relation: { id: string; relation: EntityRelationType; status: EntityRelationStatus },
-  entity: Entity
-) {
-  if (entity.type !== EntityTypes.CCG || entity.ccg_status !== 'Pré-enregistré dans Zacharie') return false;
-  if (
-    relation.relation !== EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY ||
-    relation.status !== EntityRelationStatus.ADMIN
-  ) {
-    return false;
-  }
-  const otherRelations = await prisma.entityAndUserRelations.findMany({
-    where: {
-      entity_id: entity.id,
-      relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-      deleted_at: null,
-      id: { not: relation.id },
-    },
-    select: { status: true },
-  });
-  if (otherRelations.some((other) => other.status === EntityRelationStatus.ADMIN)) return false;
-  return otherRelations.length > 0;
 }
 
 async function checkIfUserCanCrudEntityRelation(
@@ -287,12 +261,9 @@ router.post(
         });
         if (!entityHasUsers) nextEntityRelation.status = EntityRelationStatus.ADMIN;
       }
-      if (
-        body.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY &&
-        (await isPreregisteredCCGWithoutUser(entity))
-      ) {
-        nextEntityRelation.status = EntityRelationStatus.ADMIN;
-      }
+
+      // rejoindre un CCG permet seulement d'y déposer ses carcasses
+      if (entity.type === EntityTypes.CCG) nextEntityRelation.status = EntityRelationStatus.MEMBER;
 
       const relation = await prisma.entityAndUserRelations.create({
         data: nextEntityRelation,
@@ -527,16 +498,11 @@ router.delete(
       });
 
       if (existingEntityRelation) {
-        if (await isLastAdminOfSharedPreregisteredCCG(existingEntityRelation, entity)) {
-          res.status(409).send({
-            ok: false,
-            data: { relation: null, entity: null },
-            error:
-              "Vous avez pré-enregistré cette chambre froide et d'autres chasseurs l'utilisent : vous êtes le seul à pouvoir la modifier. Pour la retirer de votre liste, contactez-nous à contact@zacharie.beta.gouv.fr.",
-          });
-          return;
-        }
-        const lastAdminSituation = await getLastAdminSituation(existingEntityRelation);
+        // CCG : les admins sont nommés par l'équipe Zacharie, chacun peut quitter le CCG
+        const lastAdminSituation =
+          entity.type === EntityTypes.CCG
+            ? 'NOT_LAST_ADMIN'
+            : await getLastAdminSituation(existingEntityRelation);
         if (lastAdminSituation === 'LAST_ADMIN_WITH_OTHER_USERS') {
           res.status(409).send({
             ok: false,

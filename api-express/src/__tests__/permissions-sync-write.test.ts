@@ -360,6 +360,93 @@ describe("syncCarcasse — auto-attribution de l'examen initial", () => {
   });
 });
 
+describe('examinateur initial — fixé à la création, jamais réécrit par la synchro', () => {
+  // Premier détenteur désigné, distinct de l'examinateur : `isFeiOwner` lui ouvre les colonnes de
+  // rattachement, mais l'examinateur initial n'en fait pas partie.
+  const premierDetenteur = {
+    id: 'user-pd',
+    roles: [UserRoles.CHASSEUR],
+    numero_cfei: 'CFEI-PD',
+    activated: true,
+    isZacharieAdmin: false,
+  } as unknown as User;
+  const feiAvecPd = { ...feiTierce, premier_detenteur_user_id: premierDetenteur.id } as any;
+
+  test('le premier détenteur ne peut pas se déclarer examinateur initial de la fiche', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiAvecPd);
+    vi.mocked(prisma.fei.update).mockResolvedValueOnce(feiAvecPd);
+
+    await syncFei(
+      'FEI-VICTIME',
+      { numero: 'FEI-VICTIME', examinateur_initial_user_id: premierDetenteur.id } as any,
+      premierDetenteur,
+      await createSyncScope(premierDetenteur)
+    );
+
+    const updateArgs = vi.mocked(prisma.fei.update).mock.calls[0][0];
+    expect(updateArgs.data).not.toHaveProperty('examinateur_initial_user_id');
+  });
+
+  test("le premier détenteur ne peut ni s'attribuer l'examen d'une carcasse, ni le signer", async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiAvecPd);
+    vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(carcasseTierce);
+    vi.mocked(prisma.carcasse.findMany).mockResolvedValue([{ zacharie_carcasse_id: 'ZC-VICTIME' }] as any);
+    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(carcasseTierce);
+
+    await syncCarcasse(
+      'FEI-VICTIME',
+      'ZC-VICTIME',
+      {
+        fei_numero: 'FEI-VICTIME',
+        examinateur_initial_user_id: premierDetenteur.id,
+        examinateur_signed_at: new Date(),
+        examinateur_anomalies_carcasse: ['Abcès'],
+      } as any,
+      premierDetenteur,
+      await createSyncScope(premierDetenteur)
+    );
+
+    const updateArgs = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
+    expect(updateArgs.data).toMatchObject({ examinateur_initial_user_id: proprietaire.id });
+    expect(updateArgs.data).not.toHaveProperty('examinateur_signed_at');
+    expect(updateArgs.data).not.toHaveProperty('examinateur_anomalies_carcasse');
+  });
+
+  test('le premier détenteur ne peut pas supprimer la fiche', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiAvecPd);
+
+    await expect(
+      syncFei(
+        'FEI-VICTIME',
+        {
+          numero: 'FEI-VICTIME',
+          examinateur_initial_user_id: premierDetenteur.id,
+          deleted_at: new Date(),
+        } as any,
+        premierDetenteur,
+        await createSyncScope(premierDetenteur)
+      )
+    ).rejects.toThrow('Vous ne pouvez pas supprimer cette fiche');
+
+    expect(prisma.fei.update).not.toHaveBeenCalled();
+  });
+
+  test("le créateur d'une fiche en est l'examinateur initial, il ne peut pas l'imputer à un autre", async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(null);
+    vi.mocked(prisma.fei.create).mockResolvedValueOnce(feiTierce);
+
+    await syncFei(
+      'FEI-NOUVELLE',
+      { numero: 'FEI-NOUVELLE', examinateur_initial_user_id: premierDetenteur.id } as any,
+      proprietaire,
+      await createSyncScope(proprietaire)
+    );
+
+    const createArgs = vi.mocked(prisma.fei.create).mock.calls[0][0];
+    expect(createArgs.data.examinateur_initial_user_id).toBe(proprietaire.id);
+  });
+});
+
 describe('syncCarcasse — écriture sur une carcasse tierce', () => {
   test('une carcasse hors périmètre ne peut pas être modifiée', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);

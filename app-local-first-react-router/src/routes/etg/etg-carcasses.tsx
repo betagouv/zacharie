@@ -51,6 +51,10 @@ const feiStatusColors: Record<TransmissionSimpleStatus, { bg: string; text: stri
   'À compléter': { bg: 'bg-[#FEE7FC]', text: 'text-[#6E445A]' },
   'En cours': { bg: 'bg-[#FFECBD]', text: 'text-[#73603F]' },
   Clôturée: { bg: 'bg-[#E8EDFF]', text: 'text-[#01008B]' },
+  'Dépôt en chambre froide': {
+    bg: 'bg-[#EEEEEE]',
+    text: 'text-[#3A3A3A]',
+  },
 };
 
 const DEFAULT_VISIBLE_COLUMN_KEYS = [

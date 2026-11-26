@@ -22,6 +22,7 @@ const entityTypeLabels: Record<EntityTypes, string> = {
   [EntityTypes.ASSOCIATION_CARITATIVE]: 'Association caritative',
   [EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF]: 'Repas de chasse / Associatif',
   [EntityTypes.CONSOMMATEUR_FINAL]: 'Consommateur final',
+  [EntityTypes.CIRCUIT_COURT]: 'Circuit court (non classé)',
   [EntityTypes.LABORATOIRE]: 'Laboratoire (trichine)',
   [EntityTypes.FDC]: 'FDC',
   [EntityTypes.FRC]: 'FRC',
@@ -31,6 +32,7 @@ const entityTypeLabels: Record<EntityTypes, string> = {
 export default function AdminEntites() {
   const [entities, setEntities] = useState<AdminEntitiesResponse['data']['entities']>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [activityCounts, setActivityCounts] = useState<AdminEntitiesResponse['data']['activityCounts']>({});
   const [loading, setLoading] = useState(true);
   const { searchParams, setFilters, replaceFilters } = useUrlFilters();
   const urlSearch = searchParams.get('search') ?? '';
@@ -52,6 +54,7 @@ export default function AdminEntites() {
         if (res.ok) {
           setEntities(res.data.entities);
           setCounts(res.data.counts);
+          setActivityCounts(res.data.activityCounts);
         }
       })
       .finally(() => setLoading(false));
@@ -191,81 +194,95 @@ export default function AdminEntites() {
                     <th className="px-2 py-1">Adresse</th>
                     <th className="px-2 py-1">Type</th>
                     <th className="px-2 py-1">Zacharie</th>
+                    <th className="px-2 py-1">Activité</th>
                     <th className="px-2 py-1">Création</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredEntities.map((entity, index) => (
-                    <tr
-                      key={entity.id}
-                      className="border-b border-gray-200 align-top hover:bg-gray-50"
-                    >
-                      <td className="px-2 py-1">
-                        <span className="flex flex-col">
-                          <span className="font-medium">
-                            <span className="text-xs text-gray-400">{index + 1}. </span>
-                            <Link
-                              to={`/app/admin/entity/${entity.id}`}
-                              className="no-underline"
-                            >
-                              {entity.nom_d_usage}
-                            </Link>
-                          </span>
-                          {entity.raison_sociale && (
-                            <span className="text-xs text-gray-500">{entity.raison_sociale}</span>
-                          )}
-                          {entity.deleted_at && (
-                            <span className="mt-1">
-                              <Badge
-                                severity="error"
-                                small
+                  {filteredEntities.map((entity, index) => {
+                    const activity = activityCounts[entity.id] ?? { carcasses: 0, fiches: 0 };
+                    return (
+                      <tr
+                        key={entity.id}
+                        className="border-b border-gray-200 align-top hover:bg-gray-50"
+                      >
+                        <td className="px-2 py-1">
+                          <span className="flex flex-col">
+                            <span className="font-medium">
+                              <span className="text-xs text-gray-400">{index + 1}. </span>
+                              <Link
+                                to={`/app/admin/entity/${entity.id}`}
+                                className="no-underline"
                               >
-                                Supprimée
-                              </Badge>
+                                {entity.nom_d_usage}
+                              </Link>
                             </span>
-                          )}
-                        </span>
-                      </td>
-                      <td className="px-2 py-1">
-                        <span className="flex flex-col text-xs">
-                          {entity.numero_ddecpp && <span>{entity.numero_ddecpp}</span>}
-                          {entity.siret && <span className="text-gray-500">{entity.siret}</span>}
-                        </span>
-                      </td>
-                      <td className="px-2 py-1">
-                        <span className="flex flex-col text-xs">
-                          {entity.address_ligne_1 && <span>{entity.address_ligne_1}</span>}
-                          <span>
-                            {entity.code_postal} {entity.ville}
+                            {entity.raison_sociale && (
+                              <span className="text-xs text-gray-500">{entity.raison_sociale}</span>
+                            )}
+                            {entity.deleted_at && (
+                              <span className="mt-1">
+                                <Badge
+                                  severity="error"
+                                  small
+                                >
+                                  Supprimée
+                                </Badge>
+                              </span>
+                            )}
                           </span>
-                        </span>
-                      </td>
-                      <td className="px-2 py-1">
-                        <Badge
-                          severity="info"
-                          small
-                        >
-                          {entityTypeLabels[entity.type] ?? entity.type}
-                        </Badge>
-                      </td>
-                      <td className="px-2 py-1">
-                        <Badge
-                          severity={entity.zacharie_compatible ? 'success' : 'warning'}
-                          small
-                        >
-                          {entity.zacharie_compatible ? 'Oui' : 'Non'}
-                        </Badge>
-                      </td>
-                      <td className="px-2 py-1">
-                        <span
-                          className="text-xs text-gray-500"
-                          suppressHydrationWarning
-                        >
-                          {dayjs(entity.created_at).format('DD/MM/YY')}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="px-2 py-1">
+                          <span className="flex flex-col text-xs">
+                            {entity.numero_ddecpp && <span>{entity.numero_ddecpp}</span>}
+                            {entity.siret && <span className="text-gray-500">{entity.siret}</span>}
+                          </span>
+                        </td>
+                        <td className="px-2 py-1">
+                          <span className="flex flex-col text-xs">
+                            {entity.address_ligne_1 && <span>{entity.address_ligne_1}</span>}
+                            <span>
+                              {entity.code_postal} {entity.ville}
+                            </span>
+                          </span>
+                        </td>
+                        <td className="px-2 py-1">
+                          <Badge
+                            severity="info"
+                            small
+                          >
+                            {entityTypeLabels[entity.type] ?? entity.type}
+                          </Badge>
+                        </td>
+                        <td className="px-2 py-1">
+                          <Badge
+                            severity={entity.zacharie_compatible ? 'success' : 'warning'}
+                            small
+                          >
+                            {entity.zacharie_compatible ? 'Oui' : 'Non'}
+                          </Badge>
+                        </td>
+                        <td className="px-2 py-1">
+                          <span className="flex flex-col text-xs whitespace-nowrap text-gray-500">
+                            <span>
+                              {activity.carcasses} carcasse{activity.carcasses > 1 ? 's' : ''}
+                            </span>
+                            <span>
+                              {activity.fiches} fiche{activity.fiches > 1 ? 's' : ''}
+                            </span>
+                          </span>
+                        </td>
+                        <td className="px-2 py-1">
+                          <span
+                            className="text-xs text-gray-500"
+                            suppressHydrationWarning
+                          >
+                            {dayjs(entity.created_at).format('DD/MM/YY')}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

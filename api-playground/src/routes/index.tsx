@@ -51,11 +51,9 @@ function Etape0({ hint }: { hint: string | null }) {
       <p>
         Demandez à un administrateur Zacharie de créer une clé API tierce partie avec les scopes
         <br />
-        <code>FEI_READ_FOR_USER</code>,
+        <code>FEI_READ_FOR_USER</code>
         <br />
-        <code>CARCASSE_READ_FOR_USER</code>,
-        <br />
-        et <code>USER_LOGIN_FOR_USER</code>.<br />
+        et <code>CARCASSE_READ_FOR_USER</code>.<br />
         Puis collez ici sa clé privée.
       </p>
       <p>
@@ -230,12 +228,7 @@ function Etape2({ disabled }: { disabled: boolean }) {
     heure_evisceration_derniere_carcasse: '',
     carcasses: [emptyCarcasse()],
   });
-  const [result, setResult] = useState<{
-    call: ZacharieCall;
-    url: string | null;
-    requestedAt: string;
-  } | null>(null);
-  const [openedIn, setOpenedIn] = useState<'page' | 'onglet'>('page');
+  const [result, setResult] = useState<{ url: string; requestedAt: string } | null>(null);
   const [listenToWebhooks, setListenToWebhooks] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -252,28 +245,23 @@ function Etape2({ disabled }: { disabled: boolean }) {
     <section className="fr-mb-8w">
       <h2>2. Créer une fiche pré-remplie</h2>
       <p>
-        Le bac à sable demande un access token (valable 5 minutes), puis ouvre Zacharie avec les champs
-        pré-remplis : soit intégré dans cette page (comme dans une application mobile), soit dans un nouvel
-        onglet. Tous les champs sont facultatifs.
+        Le bac à sable construit un lien vers Zacharie avec les champs pré-remplis, puis l'ouvre dans un
+        nouvel onglet. Le lien ne contient aucun secret : si l'utilisateur n'est pas connecté à Zacharie, il
+        se connecte, puis la fiche est créée. Sur un téléphone, le lien ouvre l'application Zacharie si elle
+        est installée. Tous les champs sont facultatifs.
       </p>
       <form
         onSubmit={async (event) => {
           event.preventDefault();
-          const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
-          const target = submitter?.value === 'onglet' ? 'onglet' : 'page';
           // l'onglet est ouvert pendant le clic, sinon le navigateur bloque la fenêtre surgissante
-          const newTab = target === 'onglet' ? window.open('', '_blank') : null;
-          setOpenedIn(target);
+          const newTab = window.open('', '_blank');
           setPending(true);
           setError(null);
           setResult(null);
           try {
-            const response = await createFicheUrl({ data: { ...prefill, embedded: target === 'page' } });
+            const response = await createFicheUrl({ data: prefill });
             setResult(response);
-            if (newTab) {
-              if (response.url) newTab.location.href = response.url;
-              else newTab.close();
-            }
+            if (newTab) newTab.location.href = response.url;
           } catch (e) {
             newTab?.close();
             setError((e as Error).message);
@@ -387,28 +375,13 @@ function Etape2({ disabled }: { disabled: boolean }) {
             </button>
           </div>
         </fieldset>
-        <ul className="fr-btns-group fr-btns-group--inline-md">
-          <li>
-            <button
-              className="fr-btn"
-              type="submit"
-              value="page"
-              disabled={disabled || pending}
-            >
-              Créer sur Zacharie, dans cette page
-            </button>
-          </li>
-          <li>
-            <button
-              className="fr-btn fr-btn--secondary"
-              type="submit"
-              value="onglet"
-              disabled={disabled || pending}
-            >
-              Créer sur Zacharie, dans un nouvel onglet
-            </button>
-          </li>
-        </ul>
+        <button
+          className="fr-btn"
+          type="submit"
+          disabled={disabled || pending}
+        >
+          Créer sur Zacharie
+        </button>
         <div className="fr-checkbox-group fr-mt-2w">
           <input
             type="checkbox"
@@ -430,25 +403,13 @@ function Etape2({ disabled }: { disabled: boolean }) {
       </form>
 
       <ErrorAlert error={error} />
-      <CallDetails call={result?.call ?? null} />
-      {result?.url && (
-        <div className="fr-mt-3w">
-          <p>
-            URL ouverte (à réutiliser telle quelle dans une WebView, avant expiration du token) :<br />
-            <code>{result.url}</code>
-          </p>
-          {openedIn === 'page' ? (
-            <iframe
-              className="zacharie-iframe"
-              title="Zacharie"
-              src={result.url}
-            />
-          ) : (
-            <p>Zacharie s'est ouvert dans un nouvel onglet.</p>
-          )}
-        </div>
+      {result && (
+        <p className="fr-mt-3w">
+          Lien ouvert dans un nouvel onglet (il ne contient aucun secret et n'expire pas) :<br />
+          <code>{result.url}</code>
+        </p>
       )}
-      {listenToWebhooks && result?.url && <WebhookEvents since={result.requestedAt} />}
+      {listenToWebhooks && result && <WebhookEvents since={result.requestedAt} />}
     </section>
   );
 }

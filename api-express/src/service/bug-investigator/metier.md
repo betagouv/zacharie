@@ -25,8 +25,9 @@ schéma = `api-express/prisma/schema.prisma`.
 ### 1.1 `User.roles` (enum `UserRoles`, schéma)
 
 `CHASSEUR`, `COLLECTEUR_PRO`, `ETG`, `SVI`, `COMMERCE_DE_DETAIL`, `CANTINE_OU_RESTAURATION_COLLECTIVE`,
-`ASSOCIATION_CARITATIVE`, `REPAS_DE_CHASSE_OU_ASSOCIATIF`, `CONSOMMATEUR_FINAL`, `LABORATOIRE`, `FEDERATION`,
-`ADMIN`. Admin Zacharie = `User.isZacharieAdmin` (pas un rôle).
+`ASSOCIATION_CARITATIVE`, `REPAS_DE_CHASSE_OU_ASSOCIATIF`, `CONSOMMATEUR_FINAL`, `CIRCUIT_COURT`, `LABORATOIRE`,
+`FEDERATION`, `ADMIN`. `CIRCUIT_COURT` = destinataire professionnel créé par un chasseur que l'IA (Albert) n'a pas
+su classer à partir de `Entity.qualite_du_destinataire` (saisie libre). Admin Zacharie = `User.isZacharieAdmin` (pas un rôle).
 
 - **Un seul rôle par utilisateur.** Le front lit `user.roles[0]` (`FRONT/utils/get-transmissions-sorted.ts`,
   `computeTransmissions`). Le backend ne l'impose pas encore (zod `roles` sans longueur max, `API/controllers/user.ts`).

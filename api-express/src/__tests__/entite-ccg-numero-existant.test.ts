@@ -78,6 +78,7 @@ describe('POST /entite/ccg avec un numéro déjà enregistré', () => {
       data: {
         owner_id: 'user-1',
         relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        status: EntityRelationStatus.MEMBER,
         entity_id: 'ccg-existant',
       },
     });
@@ -93,38 +94,6 @@ describe('POST /entite/ccg avec un numéro déjà enregistré', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.createdEntity.id).toBe('ccg-existant');
     expect(prisma.entityAndUserRelations.create).not.toHaveBeenCalled();
-  });
-
-  test('le chasseur qui reprend un CCG pré-enregistré dont plus personne ne se sert en devient le créateur', async () => {
-    vi.mocked(prisma.entity.findUnique).mockResolvedValue({
-      ...existingCCG,
-      ccg_status: 'Pré-enregistré dans Zacharie',
-    } as any);
-    vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValue(null);
-    vi.mocked(prisma.entityAndUserRelations.count).mockResolvedValue(0);
-    vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue({ id: 'rel-1' } as any);
-
-    const res = await authed(request(app).post('/entite/ccg')).send(body);
-
-    expect(res.status).toBe(200);
-    expect(prisma.entityAndUserRelations.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ status: EntityRelationStatus.ADMIN, entity_id: 'ccg-existant' }),
-    });
-  });
-
-  test('le chasseur qui rejoint un CCG pré-enregistré déjà utilisé n’en devient pas le créateur', async () => {
-    vi.mocked(prisma.entity.findUnique).mockResolvedValue({
-      ...existingCCG,
-      ccg_status: 'Pré-enregistré dans Zacharie',
-    } as any);
-    vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValue(null);
-    vi.mocked(prisma.entityAndUserRelations.count).mockResolvedValue(1);
-    vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue({ id: 'rel-1' } as any);
-
-    const res = await authed(request(app).post('/entite/ccg')).send(body);
-
-    expect(res.status).toBe(200);
-    expect(vi.mocked(prisma.entityAndUserRelations.create).mock.calls[0][0].data.status).toBeUndefined();
   });
 
   test('répond 409 avec un message clair si le numéro appartient à une entité supprimée', async () => {
@@ -147,7 +116,7 @@ describe('POST /entite/ccg avec un numéro déjà enregistré', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.createdEntity.id).toBe('nouveau-ccg');
     expect(prisma.entityAndUserRelations.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ status: EntityRelationStatus.ADMIN, entity_id: 'nouveau-ccg' }),
+      data: expect.objectContaining({ status: EntityRelationStatus.MEMBER, entity_id: 'nouveau-ccg' }),
     });
     expect(sendEmail).toHaveBeenCalled();
   });
@@ -186,92 +155,60 @@ describe('PUT /entite/ccg/:entityId avec un numéro déjà enregistré', () => {
   });
 });
 
-describe('PUT /entite/ccg/:entityId réservé au créateur du CCG', () => {
-  // relations en base : le créateur (ADMIN) et un chasseur rattaché par le numéro (REQUESTED, statut par défaut)
-  const relations = [
-    {
-      id: 'rel-admin',
-      owner_id: 'user-1',
-      entity_id: 'ccg-pre-enregistre',
-      status: EntityRelationStatus.ADMIN,
-    },
-    {
-      id: 'rel-rattache',
-      owner_id: 'user-2',
-      entity_id: 'ccg-pre-enregistre',
-      status: EntityRelationStatus.REQUESTED,
-    },
-  ];
+describe('CCG pré-enregistré modifiable par son admin seulement', () => {
+  // relations en base, comme les écrit POST /entite/ccg : le chasseur qui pré-enregistre et celui
+  // qui se rattache par le numéro sont membres ; l'équipe Zacharie nomme ensuite l'admin
+  let relations: Array<{ owner_id: string; entity_id: string; status: EntityRelationStatus }>;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    relations = [];
     vi.mocked(prisma.entity.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.entity.create).mockResolvedValue({ id: 'ccg-pre-enregistre', nom_d_usage: 'x' } as any);
     vi.mocked(prisma.entity.update).mockResolvedValue({ id: 'ccg-pre-enregistre' } as any);
-    vi.mocked(prisma.entityAndUserRelations.findFirst).mockImplementation((async (args: any) => {
-      const where = args.where;
+    vi.mocked(prisma.entityAndUserRelations.create).mockImplementation((async ({ data }: any) => {
+      relations.push(data);
+      return data;
+    }) as any);
+    vi.mocked(prisma.entityAndUserRelations.findFirst).mockImplementation((async ({ where }: any) => {
       const relation = relations.find(
         (r) =>
           r.owner_id === where.owner_id &&
           r.entity_id === where.entity_id &&
           (!('status' in where) || r.status === where.status)
       );
-      return relation ? { ...relation, EntityRelatedWithUser: { id: 'ccg-pre-enregistre' } } : null;
+      return relation ? { ...relation, EntityRelatedWithUser: { id: relation.entity_id } } : null;
     }) as any);
   });
 
-  test('un chasseur rattaché par le numéro (REQUESTED) ne peut pas renommer le CCG', async () => {
-    const res = await request(app)
-      .put('/entite/ccg/ccg-pre-enregistre')
-      .set('x-test-user', JSON.stringify({ ...chasseur, id: 'user-2' }))
-      .send({ ...body, nom_d_usage: 'Nom piraté' });
+  test('le chasseur qui vient de pré-enregistrer le CCG ne peut pas le renommer', async () => {
+    const creation = await authed(request(app).post('/entite/ccg')).send(body);
+    expect(creation.status).toBe(200);
 
+    const lecture = await authed(request(app).get('/entite/ccg/ccg-pre-enregistre'));
+    expect(lecture.status).toBe(200);
+    expect(lecture.body.data.canEdit).toBe(false);
+
+    const res = await authed(request(app).put('/entite/ccg/ccg-pre-enregistre')).send({
+      ...body,
+      nom_d_usage: 'Nom modifié',
+    });
     expect(res.status).toBe(403);
     expect(prisma.entity.update).not.toHaveBeenCalled();
   });
 
-  test('le créateur (ADMIN) peut toujours modifier le CCG', async () => {
-    const res = await authed(request(app).put('/entite/ccg/ccg-pre-enregistre')).send(body);
+  test("l'admin nommé par l'équipe Zacharie peut le modifier", async () => {
+    relations.push({
+      owner_id: 'user-1',
+      entity_id: 'ccg-pre-enregistre',
+      status: EntityRelationStatus.ADMIN,
+    });
 
+    const lecture = await authed(request(app).get('/entite/ccg/ccg-pre-enregistre'));
+    expect(lecture.body.data.canEdit).toBe(true);
+
+    const res = await authed(request(app).put('/entite/ccg/ccg-pre-enregistre')).send(body);
     expect(res.status).toBe(200);
     expect(prisma.entity.update).toHaveBeenCalled();
-  });
-});
-
-describe('GET /entite/ccg/:entityId indique si le chasseur peut modifier le CCG', () => {
-  function mockRelation(status: EntityRelationStatus, ccg_status: string) {
-    vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValue({
-      id: 'rel-1',
-      status,
-      EntityRelatedWithUser: { id: 'ccg-1', type: EntityTypes.CCG, ccg_status },
-    } as any);
-  }
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  test('le créateur (ADMIN) d’un CCG pré-enregistré peut le modifier', async () => {
-    mockRelation(EntityRelationStatus.ADMIN, 'Pré-enregistré dans Zacharie');
-
-    const res = await authed(request(app).get('/entite/ccg/ccg-1'));
-
-    expect(res.status).toBe(200);
-    expect(res.body.data.canEdit).toBe(true);
-  });
-
-  test('un chasseur rattaché par le numéro ne peut pas le modifier', async () => {
-    mockRelation(EntityRelationStatus.REQUESTED, 'Pré-enregistré dans Zacharie');
-
-    const res = await authed(request(app).get('/entite/ccg/ccg-1'));
-
-    expect(res.body.data.canEdit).toBe(false);
-  });
-
-  test('le créateur ne peut plus modifier un CCG déclaré', async () => {
-    mockRelation(EntityRelationStatus.ADMIN, 'Déclaré');
-
-    const res = await authed(request(app).get('/entite/ccg/ccg-1'));
-
-    expect(res.body.data.canEdit).toBe(false);
   });
 });

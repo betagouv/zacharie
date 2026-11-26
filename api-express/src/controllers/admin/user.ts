@@ -7,11 +7,12 @@ import crypto from 'crypto';
 import dayjs from 'dayjs';
 import createUserId from '~/utils/createUserId';
 import { Prisma, User, UserEtgRoles, UserNotifications, UserRoles } from '@prisma/client';
-import { cookieOptions, JWT_MAX_AGE } from '~/utils/cookie';
+import { cookieOptions, JWT_MAX_AGE, SESSION_COOKIE_NAME } from '~/utils/cookie';
 import { signSessionToken } from '~/utils/session-token';
 import { SECRET, VITE_APP_URL } from '~/config';
 import { z } from 'zod';
 import { normalizeNumeroCfei, sanitize } from '~/utils/sanitize';
+import { findOfficialCfeisForNumerosSaisis } from '~/utils/official-cfei';
 import { hasAllRequiredFields } from '~/utils/user';
 import type {
   AdminUsersResponse,
@@ -35,7 +36,12 @@ import {
 import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
 import { BrevoTemplateId } from '~/third-parties/brevo-templates';
 import { requestCarcassesReload } from '~/utils/carcasses-reload';
-import { LOCKOUT_DURATION_MINUTES, MAX_FAILED_ATTEMPTS } from '~/utils/login-lockout';
+import {
+  getLockoutExpiresAt,
+  getLockoutState,
+  LOCKOUT_DURATION_MINUTES,
+  LOCKOUT_FAILED_ACTIONS,
+} from '~/utils/login-lockout';
 
 async function getLockoutInfo(email: string): Promise<AdminUserLockoutInfo> {
   const since = dayjs().subtract(LOCKOUT_DURATION_MINUTES, 'minute').toDate();
@@ -44,21 +50,21 @@ async function getLockoutInfo(email: string): Promise<AdminUserLockoutInfo> {
     orderBy: { created_at: 'desc' },
   });
   const failureSince = lastUnlock ? lastUnlock.created_at : since;
-  const recentFailures = await prisma.securityLog.count({
-    where: { email, action: { startsWith: 'LOGIN_FAILED' }, created_at: { gte: failureSince } },
-  });
-  const lastFailure = await prisma.securityLog.findFirst({
-    where: { email, action: { startsWith: 'LOGIN_FAILED' }, created_at: { gte: failureSince } },
-    orderBy: { created_at: 'desc' },
-  });
-  const isLocked = recentFailures >= MAX_FAILED_ATTEMPTS;
+  const [lockout, recentFailures, lastFailure] = await Promise.all([
+    getLockoutState(email),
+    prisma.securityLog.count({
+      where: { email, action: LOCKOUT_FAILED_ACTIONS, created_at: { gte: failureSince } },
+    }),
+    // toutes les tentatives échouées, y compris pendant le blocage : l'admin voit si elles continuent
+    prisma.securityLog.findFirst({
+      where: { email, action: { startsWith: 'LOGIN_FAILED' }, created_at: { gte: failureSince } },
+      orderBy: { created_at: 'desc' },
+    }),
+  ]);
   return {
-    is_locked: isLocked,
+    is_locked: !!lockout.locked_at,
     recent_failures: recentFailures,
-    lockout_expires_at:
-      isLocked && lastFailure
-        ? dayjs(lastFailure.created_at).add(LOCKOUT_DURATION_MINUTES, 'minute').toISOString()
-        : null,
+    lockout_expires_at: lockout.locked_at ? getLockoutExpiresAt(lockout.locked_at).toISOString() : null,
     last_failure_action: lastFailure?.action ?? null,
     last_failure_at: lastFailure?.created_at.toISOString() ?? null,
   };
@@ -97,7 +103,7 @@ router.post(
       // La session usurpée n'emporte pas le ProConnect de l'admin : si la cible est aussi admin,
       // elle devra refaire ProConnect pour atteindre /admin
       const token = signSessionToken({ userId: user.id });
-      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
+      res.cookie(SESSION_COOKIE_NAME, token, cookieOptions(req));
       res.status(200).send({
         ok: true,
         data: { user, token },
@@ -468,15 +474,8 @@ router.get(
 
       let officialCfei = null;
       if (user.numero_cfei) {
-        officialCfei = await prisma.officialCfei.findUnique({
-          where: { numero_cfei: user.numero_cfei.toUpperCase() },
-          select: {
-            numero_cfei: true,
-            nom: true,
-            prenom: true,
-            departement: true,
-          },
-        });
+        const getOfficialCfei = await findOfficialCfeisForNumerosSaisis([user.numero_cfei]);
+        officialCfei = getOfficialCfei(user.numero_cfei);
       }
 
       const lockout = await getLockoutInfo(user.email);
@@ -683,9 +682,20 @@ router.get(
       for (const row of countsRows) {
         counts[row.user_id] = { carcasses: row.carcasses, fiches: row.fiches };
       }
+      // la liste officielle compte des dizaines de milliers de numéros : on ne renvoie que ceux des comptes
+      const usersAvecCfei = users.filter((user) => !!user.numero_cfei);
+      const [getOfficialCfei, officialCfeisCount] = await Promise.all([
+        findOfficialCfeisForNumerosSaisis(usersAvecCfei.map((user) => user.numero_cfei!)),
+        prisma.officialCfei.count(),
+      ]);
+      const officialCfeis: AdminUsersResponse['data']['officialCfeis'] = {};
+      for (const user of usersAvecCfei) {
+        const officialCfei = getOfficialCfei(user.numero_cfei!);
+        if (officialCfei) officialCfeis[user.id] = officialCfei;
+      }
       res.status(200).send({
         ok: true,
-        data: { users, counts },
+        data: { users, counts, officialCfeis, hasOfficialCfeis: officialCfeisCount > 0 },
         error: '',
       });
     }
@@ -783,16 +793,18 @@ router.post(
         res.status(400).send({ ok: false, error: 'User not found' });
         return;
       }
+      const existingPassword = await prisma.password.findUnique({ where: { user_id: user.id } });
+      if (!existingPassword?.password) {
+        res.status(400).send({
+          ok: false,
+          error: "Cet utilisateur n'a pas encore de mot de passe : envoyez-lui un lien d'invitation",
+        });
+        return;
+      }
       const token = crypto.randomUUID();
-      await prisma.password.upsert({
+      await prisma.password.update({
         where: { user_id: user.id },
-        update: {
-          reset_password_token: token,
-          reset_password_last_email_sent_at: new Date(),
-        },
-        create: {
-          User: { connect: { id: user.id } },
-          password: '',
+        data: {
           reset_password_token: token,
           reset_password_last_email_sent_at: new Date(),
         },

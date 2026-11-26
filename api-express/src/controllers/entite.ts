@@ -38,12 +38,15 @@ import { sanitize } from '~/utils/sanitize';
 import { z } from 'zod';
 import createUserId from '~/utils/createUserId';
 import { inviteUser } from '~/utils/invite-user';
-import { createDestinataire, destinataireSchema } from '~/utils/create-destinataire';
+import {
+  chasseurDestinataireSchema,
+  chasseurDestinataireToInput,
+  createDestinataire,
+} from '~/utils/create-destinataire';
 import {
   hasReachedMaxAssociationsDeChasse,
   MAX_ASSOCIATIONS_DE_CHASSE_ERROR,
 } from '~/utils/associations-de-chasse-limit';
-import { isPreregisteredCCGWithoutUser } from '~/utils/ccg-sans-utilisateur';
 
 router.get(
   '/working-for',
@@ -148,6 +151,7 @@ const PARTENAIRE_TYPES = [
   EntityTypes.ASSOCIATION_CARITATIVE,
   EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
   EntityTypes.CONSOMMATEUR_FINAL,
+  EntityTypes.CIRCUIT_COURT,
 ];
 
 router.get(
@@ -335,7 +339,7 @@ router.post(
         return next(new Error('Seulement un chasseur peut ajouter un destinataire'));
       }
 
-      const result = destinataireSchema.safeParse(req.body);
+      const result = chasseurDestinataireSchema.safeParse(req.body);
       if (!result.success) {
         const champs = result.error.issues.map((issue) => issue.path.join('.')).join(', ');
         res.status(400).send({
@@ -346,7 +350,7 @@ router.post(
         return;
       }
 
-      const body = result.data;
+      const body = chasseurDestinataireToInput(result.data);
       const created = await createDestinataire(body, user);
 
       if (created.existingEntity) {
@@ -430,8 +434,9 @@ router.post(
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
     const user = req.user!;
-    if (!user.roles.includes(UserRoles.CHASSEUR)) {
-      const error = new Error('Seulement un chasseur peut créer un CCG');
+    // une fédération pré-enregistre un CCG pour en voir les fiches (tableau de bord CCG)
+    if (!user.roles.includes(UserRoles.CHASSEUR) && !user.roles.includes(UserRoles.FEDERATION)) {
+      const error = new Error('Seulement un chasseur ou une fédération peut créer un CCG');
       res.status(400);
       return next(error);
     }
@@ -468,10 +473,8 @@ router.post(
           data: {
             owner_id: user.id,
             relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+            status: EntityRelationStatus.MEMBER,
             entity_id: existingEntity.id,
-            ...((await isPreregisteredCCGWithoutUser(existingEntity))
-              ? { status: EntityRelationStatus.ADMIN }
-              : {}),
           },
         }));
       res.status(200).send({
@@ -504,7 +507,8 @@ router.post(
       data: {
         owner_id: user.id,
         relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-        status: EntityRelationStatus.ADMIN,
+        // l'équipe Zacharie nomme les admins du CCG (accès aux fiches qui y transitent)
+        status: EntityRelationStatus.MEMBER,
         entity_id: createdEntity.id,
       },
     });
@@ -550,10 +554,7 @@ router.get(
       ok: true,
       data: {
         entity: relation.EntityRelatedWithUser,
-        // mêmes conditions que PUT /ccg/:entityId
-        canEdit:
-          relation.status === EntityRelationStatus.ADMIN &&
-          relation.EntityRelatedWithUser.ccg_status === 'Pré-enregistré dans Zacharie',
+        canEdit: relation.status === EntityRelationStatus.ADMIN,
       },
       error: '',
     });
@@ -572,7 +573,7 @@ router.put(
         owner_id: user.id,
         entity_id: entityId,
         relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-        // seul le créateur du CCG (ADMIN) le modifie : les chasseurs rattachés par son numéro sont REQUESTED
+        // seul l'admin du CCG, nommé par l'équipe Zacharie, le modifie : les autres chasseurs y déposent seulement leurs carcasses
         status: EntityRelationStatus.ADMIN,
         deleted_at: null,
         EntityRelatedWithUser: {

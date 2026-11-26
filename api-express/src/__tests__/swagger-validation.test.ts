@@ -75,8 +75,8 @@ describe('Swagger Documentation Validation', () => {
       expect(thirdPartyPaths).toContain('/approval-request/user');
       // expect(thirdPartyPaths).toContain('/approval-request/entite');
 
-      // Should have access token endpoint
-      expect(thirdPartyPaths).toContain('/access-token/user');
+      // le lien de création de fiche ne connecte plus l'utilisateur : plus d'access token
+      expect(thirdPartyPaths).not.toContain('/access-token/user');
 
       // Should have FEI user endpoint
       expect(thirdPartyPaths).toContain('/fei/user');
@@ -94,11 +94,11 @@ describe('Swagger Documentation Validation', () => {
       const nouvelleFicheEndpoint = swaggerThirdPartyDocument.paths['/nouvelle-fiche'].get;
       const parameters = nouvelleFicheEndpoint.parameters;
 
-      // Check access_token parameter
-      const accessTokenParam = parameters.find((p) => p.name === 'access_token');
-      expect(accessTokenParam).toBeDefined();
-      expect(accessTokenParam.required).toBe(true);
-      expect(accessTokenParam.schema.type).toBe('string');
+      expect(parameters.find((p) => p.name === 'access_token')).toBeUndefined();
+      expect(parameters.find((p) => p.name === 'embedded')).toBeUndefined();
+      const contexteParam = parameters.find((p) => p.name === 'contexte');
+      expect(contexteParam).toBeDefined();
+      expect(contexteParam.required).toBe(false);
 
       // Check carcasse parameter (new comma-separated format)
       const carcasseParam = parameters.find((p) => p.name === 'carcasse');
@@ -159,12 +159,6 @@ describe('Swagger Documentation Validation', () => {
         approvalRequestResponseSchema.properties.data.properties.habilitePourExamenInitial
       ).toBeDefined();
       expect(approvalRequestResponseSchema.properties.message).toBeDefined();
-
-      const accessTokenResponseSchema = swaggerThirdPartyDocument.components.schemas.AccessTokenResponse;
-      expect(accessTokenResponseSchema.properties.ok).toBeDefined();
-      expect(accessTokenResponseSchema.properties.data).toBeDefined();
-      expect(accessTokenResponseSchema.properties.data.properties.accessToken).toBeDefined();
-      expect(accessTokenResponseSchema.properties.message).toBeDefined();
     });
 
     test('both swaggers should have CarcasseResponse schema', () => {
@@ -346,7 +340,10 @@ describe('Swagger Documentation Validation', () => {
     });
 
     test('all third-party endpoints should have proper error responses defined', () => {
-      const paths = Object.values(swaggerThirdPartyDocument.paths);
+      // /nouvelle-fiche est un lien vers l'app, pas une route de l'API : pas de réponse JSON d'erreur
+      const paths = Object.entries(swaggerThirdPartyDocument.paths)
+        .filter(([path]) => path !== '/nouvelle-fiche')
+        .map(([, pathItem]) => pathItem);
 
       paths.forEach((pathItem: any) => {
         const methods = Object.keys(pathItem);
@@ -495,44 +492,16 @@ describe('Swagger Documentation Validation', () => {
     });
   });
 
-  describe('Access Token Authentication', () => {
-    test('access token endpoint should require authentication', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 150));
-      // Test access token endpoint without auth
-      await request(app).post('/v1/access-token/user').send({ email: 'test@example.com' }).expect(401);
-    });
-
-    test('Access token endpoint should have correct request body schema', () => {
-      const accessTokenEndpoint = swaggerThirdPartyDocument.paths['/access-token/user'].post;
-
-      // Access token endpoint
-      const accessTokenRequestBody = accessTokenEndpoint.requestBody.content['application/json'].schema;
-      expect(accessTokenRequestBody.properties.email).toBeDefined();
-      expect(accessTokenRequestBody.properties.email.format).toBe('email');
-      expect(accessTokenRequestBody.required).toContain('email');
-    });
-
-    test('should validate request body in access token endpoint', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 150));
-      // Test invalid email format
-      await request(app)
-        .post('/v1/access-token/user')
-        .set('Authorization', 'Bearer test-api-key')
-        .send({ email: 'invalid-email' })
-        .expect(400);
-    });
-  });
-
   describe('nouvelle-fiche endpoint', () => {
     test('nouvelle-fiche endpoint should have correct parameters including carcasse format', () => {
       const nouvelleFicheEndpoint = swaggerThirdPartyDocument.paths['/nouvelle-fiche'].get;
       const parameters = nouvelleFicheEndpoint.parameters;
 
-      // Check access_token parameter
-      const accessTokenParam = parameters.find((p) => p.name === 'access_token');
-      expect(accessTokenParam).toBeDefined();
-      expect(accessTokenParam.required).toBe(true);
-      expect(accessTokenParam.schema.type).toBe('string');
+      expect(parameters.find((p) => p.name === 'access_token')).toBeUndefined();
+      expect(parameters.find((p) => p.name === 'embedded')).toBeUndefined();
+      const contexteParam = parameters.find((p) => p.name === 'contexte');
+      expect(contexteParam).toBeDefined();
+      expect(contexteParam.required).toBe(false);
 
       // Check carcasse parameter (new comma-separated format)
       const carcasseParam = parameters.find((p) => p.name === 'carcasse');
@@ -594,7 +563,6 @@ describe('Documentation Completeness', () => {
       'CarcasseResponse',
       'CarcassesResponse',
       'ApprovalRequestResponse',
-      'AccessTokenResponse',
       'ErrorResponse',
     ];
 

@@ -16,7 +16,6 @@ import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-
 import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Constants from 'expo-constants';
 import { useFonts } from 'expo-font';
 import {
   checkAndDownloadSpa,
@@ -36,7 +35,7 @@ const initScript = `window.ENV = {};window.ENV.APP_PLATFORM = "native";true`;
  * passe, invitation, notification) ouvrent l'app : on doit charger ce
  * chemin-là, et non l'`initial-path` stocké.
  */
-function getPathFromDeepLink(url: string | null): string | null {
+function getPathFromDeepLink(url: string | null | undefined): string | null {
   if (!url) return null;
   try {
     const parsed = new URL(url);
@@ -268,7 +267,12 @@ function App() {
             originWhitelist={['*']}
             pullToRefreshEnabled
             allowsBackForwardNavigationGestures
-            onContentProcessDidTerminate={() => ref.current?.reload()}
+            // La page s'est arrêtée (mémoire) : aucun fichier n'est utilisé, on peut installer la nouvelle
+            // version avant de recharger. Sinon l'app, gardée en mémoire des semaines (iPad, Mac), recharge
+            // toujours la version téléchargée à son lancement.
+            onContentProcessDidTerminate={() => {
+              checkAndDownloadSpa().finally(() => ref.current?.reload());
+            }}
             onMessage={onMessage}
             onShouldStartLoadWithRequest={(request: any) => {
               const stayInWebView = request.url.startsWith(spaUrl);

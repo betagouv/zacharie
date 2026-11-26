@@ -59,30 +59,16 @@ export default function RelationEntityUser({
   //     relation.owner_id === user.id &&
   //     relation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
   // );
+  // CCG : relation CAN_TRANSMIT_CARCASSES_TO_ENTITY ; associations, ETG… : CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
+  const myRelationType = relationType ?? EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY;
   const canHandleCarcassesForEntity = entity.EntityRelationsWithUsers?.find(
-    (relation) =>
-      relation.owner_id === user.id &&
-      relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
-  );
-  // un chasseur n'envoie que des fiches à un CCG : le statut ADMIN de cette relation désigne son créateur,
-  // seul à pouvoir le modifier
-  const statusRelationType =
-    entity.type === EntityTypes.CCG
-      ? EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
-      : EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY;
-  const statusRelation = entity.EntityRelationsWithUsers?.find(
-    (relation) => relation.owner_id === user.id && relation.relation === statusRelationType
+    (relation) => relation.owner_id === user.id && relation.relation === myRelationType
   );
   const relationsToApprove = entity.EntityRelationsWithUsers?.filter(
-    (relation) =>
-      relation.status === EntityRelationStatus.REQUESTED &&
-      relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
+    (relation) => relation.status === EntityRelationStatus.REQUESTED && relation.relation === myRelationType
   );
 
-  const isAdminOfEntity = !canHandleCarcassesForEntity
-    ? false
-    : canHandleCarcassesForEntity.status === EntityRelationStatus.ADMIN &&
-      canHandleCarcassesForEntity.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY;
+  const isAdminOfEntity = canHandleCarcassesForEntity?.status === EntityRelationStatus.ADMIN;
 
   // la quitter supprime l'association de Zacharie (cf. DELETE /user-entity)
   const isSoleUserOfAssociation =
@@ -209,8 +195,8 @@ export default function RelationEntityUser({
           <div className="flex min-w-40 flex-1 flex-col justify-center md:flex-none md:basis-3xs">
             <RelationStatusSelector
               entity={entity}
-              relation={statusRelation}
-              relationType={statusRelationType}
+              relationType={myRelationType}
+              relation={canHandleCarcassesForEntity}
               user={user}
               onChange={onChange}
               userEntityPath={userEntityPath}
@@ -262,6 +248,7 @@ export default function RelationEntityUser({
           {isOpen && (
             <RelationEntityUsersList
               entity={entity}
+              relationType={myRelationType}
               refreshKey={refreshKey}
               user={user}
               onChange={onChange}
@@ -300,9 +287,9 @@ function RelationStatusSelector({
   userEntityPath,
 }: {
   entity: EntityWithUserRelations;
+  relationType: EntityRelationType;
   user: User;
   relation?: EntityWithUserRelations['EntityRelationsWithUsers'][number];
-  relationType: EntityRelationType;
   onChange?: () => void;
   userEntityPath: NonNullable<RelationEntityUserProps['userEntityPath']>;
 }) {

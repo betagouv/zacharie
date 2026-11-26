@@ -1,18 +1,16 @@
-import { UserConnexionResponse } from '@api/src/types/responses';
 import Chargement from '@app/components/Chargement';
-import API from '@app/services/api';
 import { capture } from '@app/services/sentry';
 import { track } from '@app/services/matomo';
 import { createNewFei } from '@app/utils/create-new-fei';
 import { createNewCarcasse } from '@app/utils/create-new-carcasse';
-import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
-import { useIsEmbedded } from '@app/utils/use-is-embedded';
 import useUser from '@app/zustand/user';
+import useZustandStore from '@app/zustand/store';
 import Button from '@codegouvfr/react-dsfr/Button';
+import { UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
+import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router';
 import { z } from 'zod';
 import grandGibier from '@app/data/grand-gibier.json';
 import petitGibier from '@app/data/petit-gibier.json';
@@ -31,7 +29,8 @@ const carcasseSchema = z.object({
 
 // Zod schema for search params validation
 const searchParamsSchema = z.object({
-  access_token: z.string().min(1, 'Access token requis'),
+  // slug de la clé API du partenaire : le serveur ignore un slug inconnu
+  contexte: z.string().optional(),
   date_mise_a_mort: z
     .string()
     .optional()
@@ -79,110 +78,82 @@ const searchParamsSchema = z.object({
 
 type SearchParams = z.infer<typeof searchParamsSchema>;
 
+// Lien de création de fiche pré-remplie, ouvert par une application tierce : sans secret dans l'URL.
+// Non connecté, l'utilisateur passe par la connexion puis revient ici avec les mêmes paramètres.
 export default function NouvelleFiche() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
-  // la page est hors RootDisplay : on enregistre ici `embedded` avant la redirection vers la fiche
-  useIsEmbedded();
+  const user = useUser((state) => state.user);
+  // le store est relu depuis IndexedDB de façon asynchrone : une fiche créée avant serait écrasée
+  const hasHydrated = useZustandStore((state) => state._hasHydrated);
+  const isExaminateurInitial = !!user?.roles.includes(UserRoles.CHASSEUR) && !!user?.numero_cfei;
   const [error, setError] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
-  // l'access token ne sert qu'une fois : l'effet ne doit pas être rejoué (StrictMode en dev)
-  const hasUsedAccessToken = useRef(false);
+  // la fiche n'est créée qu'une fois : l'effet ne doit pas être rejoué (StrictMode en dev)
+  const hasCreatedFei = useRef(false);
 
   useEffect(() => {
-    if (hasUsedAccessToken.current) return;
-    hasUsedAccessToken.current = true;
+    if (!user || !hasHydrated) return;
+    if (!isExaminateurInitial) {
+      setError(true);
+      return;
+    }
+    if (hasCreatedFei.current) return;
+    hasCreatedFei.current = true;
     // Object.fromEntries ne garde que le dernier `carcasse` : on les récupère tous avec getAll
     const searchParamsObject = {
       ...Object.fromEntries(searchParams.entries()),
       carcasse: searchParams.getAll('carcasse'),
     };
 
-    // Validate search params with Zod
     const validationResult = searchParamsSchema.safeParse(searchParamsObject);
 
     if (!validationResult.success) {
       const errorMessages = validationResult.error.issues
         .map((err) => `${err.path.join('.')}: ${err.message}`)
         .join(', ');
-      setValidationError(`Paramètres invalides: ${errorMessages}`);
+      setValidationError(errorMessages);
       setError(true);
       return;
     }
 
     const validatedParams: SearchParams = validationResult.data;
 
-    API.post({
-      path: 'user/access-token',
-      body: {
-        accessToken: validatedParams.access_token,
-      },
-    })
-      .then((response) => response as UserConnexionResponse)
-      .then(async (response) => {
-        if (response.ok && response.data?.user?.id && response.data?.contexte) {
-          const user = response.data.user;
-          const contexte = response.data.contexte;
-          useUser.setState({ user });
-          useZustandStore.setState((state) => ({ users: { ...state.users, [user.id]: user } }));
-
-          const newFei = await createNewFei('lien-direct', {
-            contexte: contexte,
-            date_mise_a_mort: validatedParams.date_mise_a_mort
-              ? dayjs.utc(validatedParams.date_mise_a_mort).startOf('day').toDate()
-              : undefined,
-            commune_mise_a_mort: validatedParams.commune_mise_a_mort ?? undefined,
-            heure_mise_a_mort_premiere_carcasse:
-              validatedParams.heure_mise_a_mort_premiere_carcasse ?? undefined,
-            heure_evisceration_derniere_carcasse:
-              validatedParams.heure_evisceration_derniere_carcasse ?? undefined,
-          });
-
-          // Create carcasses if provided
-          if (validatedParams.carcasse && validatedParams.carcasse.length > 0) {
-            for (const carcasseData of validatedParams.carcasse) {
-              const zacharieCarcasseId = `${newFei.numero}-${carcasseData.numero_bracelet}`;
-              try {
-                await createNewCarcasse({
-                  zacharieCarcasseId,
-                  numeroBracelet: carcasseData.numero_bracelet,
-                  espece: carcasseData.espece,
-                  nombreDAnimaux: carcasseData.nombre_d_animaux,
-                  fei: newFei,
-                });
-              } catch (carcasseError) {
-                capture(carcasseError as Error);
-                // Continue with other carcasses even if one fails
-                setError(true);
-              }
-            }
-          }
-
-          syncData('nouvelle-fiche');
-          navigate(`/app/chasseur/fei/${newFei.numero}`);
-        } else {
-          useUser.setState({ user: null });
-          setError(true);
-          return {
-            ok: false,
-            data: { user: null },
-            message: 'Service momentanément indisponible, veuillez réessayer ultérieurement',
-            error: 'Erreur inconnue',
-          };
-        }
-      })
-      .catch((error) => {
-        capture(error);
-        setError(true);
-        return {
-          ok: false,
-          data: { user: null },
-          message: 'Service momentanément indisponible, veuillez réessayer ultérieurement',
-          error: 'Erreur inconnue',
-        };
+    (async () => {
+      const newFei = await createNewFei('lien-direct', {
+        contexte: validatedParams.contexte,
+        date_mise_a_mort: validatedParams.date_mise_a_mort
+          ? dayjs.utc(validatedParams.date_mise_a_mort).startOf('day').toDate()
+          : undefined,
+        commune_mise_a_mort: validatedParams.commune_mise_a_mort,
+        heure_mise_a_mort_premiere_carcasse: validatedParams.heure_mise_a_mort_premiere_carcasse,
+        heure_evisceration_derniere_carcasse: validatedParams.heure_evisceration_derniere_carcasse,
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+      for (const carcasseData of validatedParams.carcasse) {
+        try {
+          await createNewCarcasse({
+            zacharieCarcasseId: `${newFei.numero}-${carcasseData.numero_bracelet}`,
+            numeroBracelet: carcasseData.numero_bracelet,
+            espece: carcasseData.espece,
+            nombreDAnimaux: carcasseData.nombre_d_animaux,
+            fei: newFei,
+          });
+        } catch (carcasseError) {
+          // on crée quand même les autres carcasses
+          capture(carcasseError as Error);
+        }
+      }
+
+      syncData('nouvelle-fiche');
+      // replace : le retour arrière ne repasse pas par ce lien, qui créerait une seconde fiche
+      navigate(`/app/chasseur/fei/${newFei.numero}`, { replace: true });
+    })().catch((error) => {
+      capture(error);
+      setError(true);
+    });
+  }, [user, hasHydrated, isExaminateurInitial, searchParams, navigate]);
 
   useEffect(() => {
     if (error) {
@@ -190,15 +161,37 @@ export default function NouvelleFiche() {
     }
   }, [error]);
 
+  if (!user) {
+    return (
+      <Navigate
+        to={`/app/connexion?redirect=${encodeURIComponent(location.pathname + location.search)}`}
+        replace
+      />
+    );
+  }
+
   return (
     <>
       <title>Nouvelle fiche | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
-      {error ? <CantCreateNewFiche validationError={validationError} /> : <Chargement />}
+      {error ? (
+        <CantCreateNewFiche
+          validationError={validationError}
+          isExaminateurInitial={isExaminateurInitial}
+        />
+      ) : (
+        <Chargement />
+      )}
     </>
   );
 }
 
-function CantCreateNewFiche({ validationError }: { validationError?: string | null }) {
+function CantCreateNewFiche({
+  validationError,
+  isExaminateurInitial,
+}: {
+  validationError: string | null;
+  isExaminateurInitial: boolean;
+}) {
   return (
     <main
       role="main"
@@ -209,19 +202,18 @@ function CantCreateNewFiche({ validationError }: { validationError?: string | nu
           <div className="fr-py-0 fr-col-12 fr-col-md-6">
             <h1 className="fr-h1">Vous ne pouvez pas créer une nouvelle fiche</h1>
             <p className="fr-text--lead fr-mb-3w">
-              {validationError
-                ? `Paramètres invalides: ${validationError}`
-                : "Il semble que l'URL fournie est invalide. Veuillez contacter l'administrateur de votre service."}
-            </p>
-            <p className="fr-text--lead fr-mb-3w">
-              Vous pouvez aussi vous connecter avec votre compte et créer une nouvelle fiche.
+              {!isExaminateurInitial
+                ? 'Seul un chasseur examinateur initial peut créer une fiche. Vérifiez que vous êtes connecté avec le bon compte.'
+                : validationError
+                  ? `Paramètres invalides : ${validationError}`
+                  : "Il semble que l'URL fournie est invalide. Veuillez contacter l'administrateur de votre service."}
             </p>
             <Button
               linkProps={{
-                to: `/app/connexion`,
+                to: '/app/connexion',
               }}
             >
-              Me connecter
+              Retour à mon compte
             </Button>
           </div>
         </div>

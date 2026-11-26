@@ -57,28 +57,6 @@
           }
         }
       },
-      "AccessTokenResponse": {
-        "type": "object",
-        "properties": {
-          "ok": {
-            "type": "boolean",
-            "description": "Indique si la requête s'est bien déroulée"
-          },
-          "data": {
-            "type": "object",
-            "properties": {
-              "accessToken": {
-                "type": "string",
-                "description": "Token d'accès généré pour l'utilisateur"
-              }
-            }
-          },
-          "message": {
-            "type": "string",
-            "description": "Message informatif avec exemple d'utilisation"
-          }
-        }
-      },
       "FeiResponse": {
         "type": "object",
         "properties": {
@@ -799,82 +777,24 @@
         "tags": ["Approbations - Accès Tiers"]
       }
     },
-    "/access-token/user": {
-      "post": {
-        "summary": "Générer un token d'accès pour un utilisateur",
-        "description": "Génère un token d'accès temporaire pour un utilisateur qui a préalablement approuvé votre demande. Ce token peut être utilisé pour connecter automatiquement l'utilisateur à son compte Zacharie via une URL avec paramètres. La clé API doit avoir le scope `USER_LOGIN_FOR_USER`. Le token expire après 5 minutes et ne sert qu'une fois. La session ouverte dure 24 heures.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email",
-                    "example": "utilisateur@example.com",
-                    "description": "Email de l'utilisateur pour lequel générer le token"
-                  }
-                },
-                "required": ["email"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Succès - Token d'accès généré",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccessTokenResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Erreur - Email invalide, utilisateur non trouvé, pas de demande d'approbation ou demande non approuvée",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Accès interdit - Clé API invalide ou non autorisée",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "tags": ["Token d'accès - Accès Tiers"]
-      }
-    },
     "/nouvelle-fiche": {
       "get": {
         "summary": "Créer une nouvelle FEI via URL (Frontend)",
-        "description": "URL frontend permettant de créer automatiquement une nouvelle fiche d'examen initial (FEI) avec authentification par token d'accès. Cette URL doit être utilisée après avoir généré un token via `/access-token/user`. **Note: Cette URL pointe vers zacharie.beta.gouv.fr, pas vers l'API.**",
+        "description": "Lien à ouvrir pour créer une nouvelle fiche d'examen initial (FEI) pré-remplie. Le lien ne contient aucun secret : si l'utilisateur a l'application Zacharie installée sur son téléphone, le lien l'ouvre directement ; sinon il s'ouvre dans le navigateur. Si l'utilisateur n'est pas connecté, Zacharie lui demande de se connecter puis crée la fiche. Seul un compte chasseur examinateur initial peut créer une fiche. **Note: Cette URL pointe vers zacharie.beta.gouv.fr, pas vers l'API.**",
         "externalDocs": {
           "description": "URL complète",
           "url": "https://zacharie.beta.gouv.fr/app/nouvelle-fiche"
         },
         "parameters": [
           {
-            "name": "access_token",
+            "name": "contexte",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string",
-              "example": "abc123def456..."
+              "example": "mon-application"
             },
-            "description": "Token d'accès généré via /access-token/user"
+            "description": "Identifiant de votre application (fourni par l'équipe Zacharie avec votre clé API). Il est enregistré comme contexte de création de la fiche. Un identifiant inconnu est ignoré."
           },
           {
             "name": "date_mise_a_mort",
@@ -944,50 +864,19 @@
                 "value": ["FR123456789,Sanglier,1", "FR987654321,Cerf,2", "FR555666777,Chevreuil"]
               }
             }
-          },
-          {
-            "name": "embedded",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": ["true"],
-              "example": "true"
-            },
-            "description": "À utiliser quand Zacharie est affiché dans une iframe ou une WebView de votre application : masque la navigation de Zacharie (menu, liens de compte, liens du pied de page). Le mode reste actif pendant toute la session de l'iframe / WebView, y compris après la redirection vers la fiche créée."
           }
         ],
         "responses": {
           "302": {
-            "description": "Redirection vers la FEI créée - L'utilisateur est redirigé vers /app/chasseur/fei/{numero_fei}"
+            "description": "Redirection vers la FEI créée - L'utilisateur est redirigé vers /app/chasseur/fei/{numero_fei}. S'il n'est pas connecté, il passe d'abord par /app/connexion."
           },
           "200": {
-            "description": "Page d'erreur affichée si les paramètres sont invalides ou si l'authentification échoue",
+            "description": "Page d'erreur affichée si les paramètres sont invalides ou si le compte n'est pas un compte chasseur",
             "content": {
               "text/html": {
                 "schema": {
                   "type": "string",
                   "description": "Page HTML d'erreur avec message explicatif"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Paramètres invalides",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Accès non autorisé",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }

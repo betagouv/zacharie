@@ -36,6 +36,7 @@ import { EntityWithUserRelations } from '@api/src/types/entity';
 import { toast } from 'react-toastify';
 import ConnexionButton from '@app/components/ConnexionButton';
 import AdminDeletedBanner from '@app/components/AdminDeletedBanner';
+import { isNumeroCfeiHorsFormat, NUMERO_CFEI_FORMAT_MESSAGE } from '@app/utils/numero-cfei';
 
 const loadData = (userId: string): Promise<AdminUserDataResponse> =>
   API.get({ path: `admin/user/${userId}` }).then((res) => res as AdminUserDataResponse);
@@ -51,6 +52,7 @@ const ROLE_OPTIONS: Array<{ value: UserRoles; label: string }> = [
   { value: UserRoles.ASSOCIATION_CARITATIVE, label: 'Association caritative' },
   { value: UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF, label: 'Repas de chasse ou associatif' },
   { value: UserRoles.CONSOMMATEUR_FINAL, label: 'Consommateur final' },
+  { value: UserRoles.CIRCUIT_COURT, label: 'Circuit court (non classé)' },
   { value: UserRoles.LABORATOIRE, label: 'Laboratoire' },
   { value: UserRoles.FEDERATION, label: 'Fédération (sans être chasseur)' },
 ];
@@ -123,6 +125,28 @@ const initialState: State = {
   },
   has_password: true,
 };
+
+// Champ non lié à l'état de la page : sa valeur part dans le FormData lu au blur du formulaire.
+// Il garde sa propre saisie pour afficher l'avertissement de format pendant la frappe.
+function NumeroCfeiInput({ defaultValue, disabled }: { defaultValue: string; disabled: boolean }) {
+  const [numeroCfei, setNumeroCfei] = useState(defaultValue);
+  return (
+    <Input
+      label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
+      hintText="De la forme CFEI-DEP-AA-123 ou DEP-FREI-AA-123"
+      disabled={disabled}
+      state={!disabled && isNumeroCfeiHorsFormat(numeroCfei) ? 'info' : 'default'}
+      stateRelatedMessage={NUMERO_CFEI_FORMAT_MESSAGE}
+      nativeInputProps={{
+        id: Prisma.UserScalarFieldEnum.numero_cfei,
+        name: Prisma.UserScalarFieldEnum.numero_cfei,
+        autoComplete: 'off',
+        value: numeroCfei,
+        onChange: (e) => setNumeroCfei(e.currentTarget.value),
+      }}
+    />
+  );
+}
 
 export default function AdminUser() {
   const params = useParams();
@@ -321,7 +345,8 @@ export default function AdminUser() {
     API.post({ path: `admin/user/${params.userId}/send-reset-password` })
       .then((res) => {
         if (!res.ok) {
-          return toast.error("Une erreur est survenue lors de l'envoi du lien");
+          const error = (res as { error?: string }).error;
+          return toast.error(error || "Une erreur est survenue lors de l'envoi du lien");
         }
         toast.success(`Lien de réinitialisation envoyé à ${user.email}`);
       })
@@ -365,7 +390,7 @@ export default function AdminUser() {
     });
   }
 
-  if (user.roles.includes(UserRoles.CHASSEUR)) {
+  if (user.roles.includes(UserRoles.CHASSEUR) || user.roles.includes(UserRoles.FEDERATION)) {
     tabs.push({
       tabId: 'CCGs',
       label: `CCGs (${userEntitiesRelations.filter((rel) => rel.type === EntityTypes.CCG).length})`,
@@ -560,12 +585,17 @@ export default function AdminUser() {
               <p className="mt-1 mb-0 text-sm">
                 {lockout.is_locked ? (
                   <>
-                    Cet utilisateur est bloqué suite à {lockout.recent_failures} tentatives échouées en moins
-                    de 15 minutes.
+                    Cet utilisateur est bloqué suite à 5 tentatives échouées en moins de 15 minutes.
                     {lockout.lockout_expires_at && (
                       <>
                         {' '}
                         Le blocage expire le {dayjs(lockout.lockout_expires_at).format('DD/MM/YYYY à HH:mm')}.
+                      </>
+                    )}
+                    {lockout.last_failure_at && (
+                      <>
+                        {' '}
+                        Dernière tentative le {dayjs(lockout.last_failure_at).format('DD/MM/YYYY à HH:mm')}.
                       </>
                     )}
                   </>
@@ -785,16 +815,10 @@ export default function AdminUser() {
                       },
                     ]}
                   />
-                  <Input
-                    label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
-                    hintText="De la forme CFEI-DEP-AA-123 ou DEP-FREI-YY-001"
+                  <NumeroCfeiInput
+                    key={user.id}
+                    defaultValue={user.numero_cfei ?? ''}
                     disabled={!user.est_forme_a_l_examen_initial}
-                    nativeInputProps={{
-                      id: Prisma.UserScalarFieldEnum.numero_cfei,
-                      name: Prisma.UserScalarFieldEnum.numero_cfei,
-                      autoComplete: 'off',
-                      defaultValue: user.numero_cfei ?? '',
-                    }}
                   />
                   {!user.est_forme_a_l_examen_initial ? null : user.numero_cfei ? (
                     officialCfei ? (
@@ -1253,6 +1277,10 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
           if (entity.type === EntityTypes.SVI) {
             entities.push(entity);
           }
+        } else if (user.roles.includes(UserRoles.FEDERATION)) {
+          if (entity.type === EntityTypes.CCG) {
+            entities.push(entity);
+          }
         }
       } else if (relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
         if (user.roles.includes(UserRoles.CHASSEUR)) {
@@ -1276,6 +1304,21 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
     }
     return entities;
   }, [allEntities, userEntitiesRelations, forCCG, forFederation, relationType, user.roles]);
+
+  // CCG : plusieurs milliers, on n'affiche que ceux qui correspondent à la recherche
+  const [ccgSearch, setCcgSearch] = useState('');
+  const shownEntities = useMemo(() => {
+    if (!forCCG) return potentialEntities;
+    const query = ccgSearch.trim().toLowerCase();
+    if (query.length < 2) return [];
+    return potentialEntities
+      .filter((entity) =>
+        [entity.nom_d_usage, entity.numero_ddecpp, entity.siret, entity.code_postal, entity.ville].some(
+          (value) => value?.toLowerCase().includes(query)
+        )
+      )
+      .slice(0, 20);
+  }, [forCCG, ccgSearch, potentialEntities]);
 
   return (
     <>
@@ -1329,8 +1372,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
                 displayEntity
                 entityLink={`/app/admin/entity/${entity.id}`}
                 canApproveRelation={
-                  relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY ||
-                  entity.type === EntityTypes.CCG
+                  relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY || forCCG
                 }
                 canDelete={!isSviLinkedToEtg}
                 userEntityPath="admin/user-entity"
@@ -1359,13 +1401,25 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
             utilisateur n'a que le rôle ETG mais peut cocher la case "Gérer le transport dans l'ETG"
           </Highlight>
         )}
-      {!!potentialEntities.length && (
+      {forCCG && (
+        <div className="p-4 md:p-8 md:pb-0">
+          <Input
+            label="Ajouter un CCG"
+            hintText="Nom, numéro, SIRET, code postal ou ville (2 caractères minimum)"
+            nativeInputProps={{
+              value: ccgSearch,
+              onChange: (event) => setCcgSearch(event.target.value),
+            }}
+          />
+        </div>
+      )}
+      {!!shownEntities.length && (
         <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline has-[a]:[&_td]:p-0!">
           <Table
             fixed
             noCaption
             className="[&_td]:align-middle"
-            data={potentialEntities.map((entity) => [
+            data={shownEntities.map((entity) => [
               <form
                 key={entity.id}
                 id={id}

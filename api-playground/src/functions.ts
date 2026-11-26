@@ -8,7 +8,7 @@ import {
   verifyPassword,
 } from './server/auth';
 import { ensureSchema, sql } from './server/db';
-import { ZACHARIE_APP_URL } from './server/config';
+import { ZACHARIE_APP_URL, ZACHARIE_CONTEXTE } from './server/config';
 import { callZacharie, type ZacharieCall } from './server/zacharie';
 
 type Credentials = { email: string; password: string };
@@ -75,21 +75,16 @@ export type FichePrefill = {
   carcasses: Array<{ numero_bracelet: string; espece: string; nombre_d_animaux: string }>;
 };
 
-// étape 2 : access token (valable 5 min) puis URL de création de fiche pré-remplie
+// étape 2 : lien de création de fiche pré-remplie. Le lien ne contient aucun secret : l'utilisateur
+// s'y connecte à Zacharie s'il ne l'est pas déjà (ou l'application Zacharie s'ouvre si elle est installée)
 export const createFicheUrl = createServerFn({ method: 'POST' })
-  .validator((data: FichePrefill & { embedded: boolean }) => data)
-  .handler(async ({ data }): Promise<{ call: ZacharieCall; url: string | null; requestedAt: string }> => {
+  .validator((data: FichePrefill) => data)
+  .handler(async ({ data }): Promise<{ url: string; requestedAt: string }> => {
     const requestedAt = new Date().toISOString();
-    const user = await requireUser();
-    if (!user.zacharie_email) throw new Error("Renseignez d'abord l'email du compte Zacharie (étape 1)");
-    const call = await callZacharie(user.id, 'POST', '/v1/access-token/user', {
-      body: { email: user.zacharie_email },
-    });
-    const accessToken: string | undefined = call.json?.data?.accessToken;
-    if (!accessToken) return { call, url: null, requestedAt };
-
-    const params = new URLSearchParams({ access_token: accessToken });
-    const { carcasses, embedded, ...fields } = data;
+    await requireUser();
+    const params = new URLSearchParams();
+    if (ZACHARIE_CONTEXTE) params.set('contexte', ZACHARIE_CONTEXTE);
+    const { carcasses, ...fields } = data;
     for (const [key, value] of Object.entries(fields)) {
       if (value.trim()) params.set(key, value.trim());
     }
@@ -100,9 +95,7 @@ export const createFicheUrl = createServerFn({ method: 'POST' })
         [carcasse.numero_bracelet.trim(), carcasse.espece, carcasse.nombre_d_animaux.trim() || '1'].join(',')
       );
     }
-    // affichage intégré (iframe / WebView) : Zacharie masque sa navigation
-    if (embedded) params.set('embedded', 'true');
-    return { call, url: `${ZACHARIE_APP_URL}/app/nouvelle-fiche?${params.toString()}`, requestedAt };
+    return { url: `${ZACHARIE_APP_URL}/app/nouvelle-fiche?${params.toString()}`, requestedAt };
   });
 
 // étape 3 : lecture des fiches (et de leurs carcasses) de l'utilisateur Zacharie

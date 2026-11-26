@@ -11,7 +11,7 @@ import { dropMarginOverwrites, getDeltaAfter } from './delta-margin';
 
 let loadCarcassesAbortController: AbortController | null = null;
 
-const ROLES_WITHOUT_CARCASSES: UserRoles[] = [UserRoles.FEDERATION, UserRoles.LABORATOIRE];
+const ROLES_WITHOUT_CARCASSES: UserRoles[] = [UserRoles.LABORATOIRE];
 
 // Contrôle d'intégrité store local / serveur : au plus une fois par utilisateur toutes les 6 heures.
 const INTEGRITY_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
@@ -111,21 +111,25 @@ export async function loadCarcasses() {
     const carcasseModifRequests: CarcassesGetResponse['data']['carcasseModifRequests'] = [];
     const usersFetched: CarcassesGetResponse['data']['users'] = [];
     const entitiesFetched: CarcassesGetResponse['data']['entities'] = [];
-    let page = 0;
+    const ccgCarcasseIdsFetched: CarcassesGetResponse['data']['ccgCarcasseIds'] = [];
+    let ccgEntityIds: CarcassesGetResponse['data']['ccgEntityIds'] = [];
+    // curseur : updated_at (ms) et id de la dernière carcasse reçue, la page suivante commence après
+    let cursor: { updatedAt: string; id: string } | null = null;
     let hasMore = true;
     let fullReload = false;
     let receivedReloadVersion = 0;
+    let pageCount = 0;
 
     while (hasMore) {
-      const res = await API.get({
+      pageCount++;
+      const query: Record<string, string> = { after, withDeleted: 'true', limit: '5000', reloadVersion };
+      if (cursor) {
+        query.cursorUpdatedAt = cursor.updatedAt;
+        query.cursorId = cursor.id;
+      }
+      const res: CarcassesGetResponse = await API.get({
         path: '/carcasse',
-        query: {
-          after,
-          withDeleted: 'true',
-          page: `${page}`,
-          limit: '5000',
-          reloadVersion,
-        },
+        query,
         signal,
       }).then((r) => r as CarcassesGetResponse);
       if (signal.aborted) return;
@@ -137,13 +141,15 @@ export async function loadCarcasses() {
       entitiesFetched.push(...(res.data.entities || []));
       carcasseModifRequests.push(...(res.data.carcasseModifRequests || []));
       carcassesIntermediairesFetched.push(...(res.data.carcassesIntermediaires || []));
-      hasMore = res.data.hasMore;
-      if (page === 0) {
+      ccgCarcasseIdsFetched.push(...res.data.ccgCarcasseIds);
+      ccgEntityIds = res.data.ccgEntityIds;
+      if (!cursor) {
         fullReload = res.data.fullReload;
         receivedReloadVersion = res.data.reloadVersion;
         if (fullReload) fullReloadRequested = false;
       }
-      page += 1;
+      hasMore = res.data.hasMore && !!res.data.nextCursor;
+      if (res.data.nextCursor) cursor = res.data.nextCursor;
     }
 
     // Guard against logout/abort races: don't clobber a freshly-reset store.
@@ -154,6 +160,7 @@ export async function loadCarcasses() {
       useZustandStore.setState(() => ({
         lastUpdateFromServer: serverDate,
         carcassesReloadVersion: receivedReloadVersion,
+        ccgEntityIds,
       }));
       checkLocalCarcassesIntegrity(signal);
       return;
@@ -216,6 +223,18 @@ export async function loadCarcasses() {
       }
     }
 
+    // une carcasse revenue sans être marquée CCG est revenue dans le périmètre du rôle
+    const ccgFetched = new Set(ccgCarcasseIdsFetched);
+    const roleFetched = new Set(
+      carcassesFetched.map((c) => c.zacharie_carcasse_id).filter((id) => !ccgFetched.has(id))
+    );
+    const newCcgCarcasseIds = [
+      ...new Set([
+        ...(fullReload ? [] : localState.ccgCarcasseIds.filter((id) => !roleFetched.has(id))),
+        ...ccgFetched,
+      ]),
+    ];
+
     // Merge modif requests by their own id (drops cancelled ones via deleted_at, like other entities),
     // then regroup into the full-history-by-carcasse map the store and UI consume.
     const mergedModifRequestsById = mergeItems({
@@ -226,6 +245,17 @@ export async function loadCarcasses() {
     const nextModifRequestsByCarcasseId: Record<string, Array<CarcasseModificationRequest>> = {};
     for (const request of Object.values(mergedModifRequestsById) as Array<CarcasseModificationRequest>) {
       (nextModifRequestsByCarcasseId[request.zacharie_carcasse_id] ??= []).push(request);
+    }
+    // Une carcasse dont aucune demande n'a changé garde son tableau : le stockage local n'écrit que
+    // les enregistrements dont la référence change.
+    for (const [carcasseId, requests] of Object.entries(nextModifRequestsByCarcasseId)) {
+      const previousRequests = localState.modifRequestsByCarcasseId[carcasseId];
+      if (
+        previousRequests?.length === requests.length &&
+        requests.every((request) => previousRequests.includes(request))
+      ) {
+        nextModifRequestsByCarcasseId[carcasseId] = previousRequests;
+      }
     }
 
     if (signal.aborted || !useUser.getState().user) return;
@@ -244,9 +274,18 @@ export async function loadCarcasses() {
       modifRequestsByCarcasseId: nextModifRequestsByCarcasseId,
       users: newUsers,
       entities: newEntities,
+      ccgEntityIds,
+      ccgCarcasseIds: newCcgCarcasseIds,
       lastUpdateFromServer: serverDate,
       carcassesReloadVersion: receivedReloadVersion,
     }));
+    // Rechargement complet sur plusieurs pages : une carcasse modifiée pendant la boucle est passée
+    // au-dessus du curseur et n'est revenue dans aucune page, keepLocal vient donc de la retirer.
+    // Un pull delta immédiat (after = serverDate) la ramène.
+    if (fullReload && pageCount > 1) {
+      loadCarcasses();
+      return;
+    }
     checkLocalCarcassesIntegrity(signal);
   } finally {
     if (loadCarcassesAbortController?.signal === signal) {

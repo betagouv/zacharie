@@ -95,4 +95,54 @@ describe('POST /user/fei/trouver-premier-detenteur', () => {
     expect(res.body.data.user.id).toBe(premierDetenteur.id);
     expect(prisma.userRelations.create).toHaveBeenCalledOnce();
   });
+
+  test('ma fiche → le premier détenteur est renvoyé sans téléphone ni adresse', async () => {
+    vi.mocked(prisma.fei.findFirst).mockResolvedValue({
+      numero: body.numero,
+      examinateur_initial_user_id: examinateur.id,
+    } as unknown as Fei);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(premierDetenteur as unknown as User);
+    vi.mocked(prisma.userRelations.findFirst).mockResolvedValue({} as never);
+
+    await authed(request(app).post('/user/fei/trouver-premier-detenteur').send(body), examinateur);
+
+    expect(prisma.user.findUnique).toHaveBeenLastCalledWith({
+      where: { email: body.email },
+      select: {
+        id: true,
+        prenom: true,
+        nom_de_famille: true,
+        email: true,
+        created_at: true,
+        updated_at: true,
+      },
+    });
+  });
+
+  test("email d'un non-chasseur → même erreur qu'un email inconnu", async () => {
+    vi.mocked(prisma.fei.findFirst).mockResolvedValue({
+      numero: body.numero,
+      examinateur_initial_user_id: examinateur.id,
+    } as unknown as Fei);
+
+    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(null);
+    const inconnu = await authed(
+      request(app).post('/user/fei/trouver-premier-detenteur').send(body),
+      examinateur
+    );
+
+    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce({
+      ...premierDetenteur,
+      roles: [UserRoles.ETG],
+    } as unknown as User);
+    const nonChasseur = await authed(
+      request(app).post('/user/fei/trouver-premier-detenteur').send(body),
+      examinateur
+    );
+
+    expect(inconnu.status).toBe(400);
+    expect(nonChasseur.status).toBe(400);
+    expect(nonChasseur.body).toEqual(inconnu.body);
+    expect(prisma.userRelations.create).not.toHaveBeenCalled();
+  });
 });

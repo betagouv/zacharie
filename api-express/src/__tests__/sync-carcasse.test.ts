@@ -469,7 +469,12 @@ describe('syncCarcasse — champs réservés à un rôle', () => {
   } as unknown as User;
   // L'ETG détient la carcasse mais n'est ni examinateur, ni premier détenteur.
   const etgScope = fakeSyncScope({ isFeiOwner: () => false, isPremierDetenteur: () => false });
-  const carcasseDuChasseur = { ...baseCarcasse, created_by_user_id: 'user-chasseur' };
+  const carcasseDuChasseur = {
+    ...baseCarcasse,
+    created_by_user_id: 'user-chasseur',
+    current_owner_role: FeiOwnerRole.ETG,
+    current_owner_entity_id: 'entity-etg',
+  };
 
   // Fiche et carcasse passées en opts, comme le fait le /sync en masse.
   async function syncAsEtg(body: object, existing = carcasseDuChasseur) {
@@ -830,5 +835,164 @@ describe('syncCarcasse — suppression', () => {
       supprimerEnTantQueEtg({ ...carcasseAjoutee, svi_ipm1_signed_at: new Date() })
     ).rejects.toThrow('Vous ne pouvez pas supprimer cette carcasse');
     expect(prisma.carcasse.update).not.toHaveBeenCalled();
+  });
+});
+
+describe('syncCarcasse — transmission et décision réservées au détenteur en cours', () => {
+  const examinateur = {
+    id: 'user-chasseur',
+    roles: [UserRoles.CHASSEUR],
+    activated: true,
+  } as unknown as User;
+  // L'examinateur est rattaché à la fiche mais n'est membre d'aucune entité aval.
+  const examinateurScope = fakeSyncScope({
+    entityIds: [],
+    isFeiOwner: () => true,
+    isPremierDetenteur: () => true,
+  });
+  const etgUser = { id: 'user-etg', roles: [UserRoles.ETG], activated: true } as unknown as User;
+  const etgScope = fakeSyncScope({
+    entityIds: ['entity-etg'],
+    isFeiOwner: () => false,
+    isPremierDetenteur: () => false,
+  });
+
+  // L'ETG a pris la carcasse en charge puis l'a refusée.
+  const carcasseRefuseeParEtg = {
+    ...baseCarcasse,
+    current_owner_role: FeiOwnerRole.ETG,
+    current_owner_entity_id: 'entity-etg',
+    current_owner_user_id: 'user-etg',
+    prev_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+    prev_owner_user_id: 'user-chasseur',
+    intermediaire_carcasse_refus_intermediaire_id: 'INT-ETG',
+    intermediaire_carcasse_refus_motif: 'odeur anormale',
+    intermediaire_carcasse_manquante: false,
+    svi_carcasse_status: CarcasseStatus.REFUS_ETG_COLLECTEUR,
+  };
+  const annulationDuRefus = {
+    intermediaire_carcasse_refus_intermediaire_id: null as string | null,
+    intermediaire_carcasse_refus_motif: null as string | null,
+    svi_carcasse_status: CarcasseStatus.SANS_DECISION,
+    next_owner_role: FeiOwnerRole.ETG,
+    next_owner_entity_id: 'entity-etg-2',
+  };
+
+  async function sync(body: object, user: User, syncScope: ReturnType<typeof fakeSyncScope>, existing: any) {
+    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(existing);
+    await syncCarcasse('FEI-1', 'ZC-1', { fei_numero: 'FEI-1', ...body } as any, user, syncScope, {
+      existingFei: baseFei,
+      existingCarcasse: existing,
+    });
+    return vi.mocked(prisma.carcasse.update).mock.calls[0][0].data;
+  }
+
+  test("l'examinateur ne peut pas annuler un refus ETG ni rediriger la carcasse", async () => {
+    const data = await sync(annulationDuRefus, examinateur, examinateurScope, carcasseRefuseeParEtg);
+    expect(data).not.toHaveProperty('intermediaire_carcasse_refus_intermediaire_id');
+    expect(data).not.toHaveProperty('intermediaire_carcasse_refus_motif');
+    expect(data).not.toHaveProperty('svi_carcasse_status');
+    expect(data).not.toHaveProperty('next_owner_entity_id');
+    expect(data).not.toHaveProperty('next_owner_role');
+    expect(prisma.entityAndUserRelations.create).not.toHaveBeenCalled();
+  });
+
+  test("l'ETG qui a refusé lève son refus", async () => {
+    vi.mocked(prisma.carcasseIntermediaire.findFirst).mockResolvedValueOnce({
+      intermediaire_entity_id: 'entity-etg',
+    } as any);
+    const data = await sync(annulationDuRefus, etgUser, etgScope, carcasseRefuseeParEtg);
+    expect(data.intermediaire_carcasse_refus_intermediaire_id).toBeNull();
+    expect(data.svi_carcasse_status).toBe(CarcasseStatus.SANS_DECISION);
+    expect(data.next_owner_entity_id).toBe('entity-etg-2');
+  });
+
+  test('le détenteur suivant ne lève pas le refus déclaré par une autre entité', async () => {
+    vi.mocked(prisma.carcasseIntermediaire.findFirst).mockResolvedValueOnce({
+      intermediaire_entity_id: 'entity-collecteur',
+    } as any);
+    const data = await sync(annulationDuRefus, etgUser, etgScope, {
+      ...carcasseRefuseeParEtg,
+      intermediaire_carcasse_refus_intermediaire_id: 'INT-COLLECTEUR',
+    });
+    expect(data).not.toHaveProperty('intermediaire_carcasse_refus_intermediaire_id');
+    expect(data).not.toHaveProperty('svi_carcasse_status');
+    // la transmission reste à l'ETG détenteur
+    expect(data.next_owner_entity_id).toBe('entity-etg-2');
+  });
+
+  test("tant que la carcasse est chez les chasseurs, l'examinateur désigne le premier détenteur", async () => {
+    const data = await sync(
+      { next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR, next_owner_user_id: 'user-pd' },
+      examinateur,
+      examinateurScope,
+      { ...baseCarcasse, current_owner_role: null, next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR }
+    );
+    expect(data.next_owner_user_id).toBe('user-pd');
+  });
+
+  test('le prochain détenteur prend la carcasse en charge', async () => {
+    const data = await sync(
+      {
+        current_owner_role: FeiOwnerRole.ETG,
+        current_owner_entity_id: 'entity-etg',
+        current_owner_user_id: 'user-etg',
+        next_owner_entity_id: null,
+        prev_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+      },
+      etgUser,
+      etgScope,
+      {
+        ...baseCarcasse,
+        current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        current_owner_user_id: 'user-chasseur',
+        next_owner_role: FeiOwnerRole.ETG,
+        next_owner_entity_id: 'entity-etg',
+      }
+    );
+    expect(data.current_owner_entity_id).toBe('entity-etg');
+    expect(data.next_owner_entity_id).toBeNull();
+    expect(data.prev_owner_role).toBe(FeiOwnerRole.PREMIER_DETENTEUR);
+  });
+});
+
+describe('syncCarcasse — premier détenteur personne physique', () => {
+  test('un id arbitraire est remplacé par la valeur de la fiche', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
+    vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(baseCarcasse);
+    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(baseCarcasse);
+    vi.mocked(prisma.userRelations.findFirst).mockResolvedValueOnce(null);
+
+    await syncCarcasse(
+      'FEI-1',
+      'ZC-1',
+      { fei_numero: 'FEI-1', premier_detenteur_user_id: 'ARBIT' } as any,
+      chasseur,
+      scope
+    );
+
+    const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
+    expect(updateCall.data).toHaveProperty('premier_detenteur_user_id', 'user-chasseur');
+  });
+
+  test('la valeur de la fiche est acceptée', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce({
+      ...baseFei,
+      premier_detenteur_user_id: 'user-pd',
+    });
+    vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(baseCarcasse);
+    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(baseCarcasse);
+
+    await syncCarcasse(
+      'FEI-1',
+      'ZC-1',
+      { fei_numero: 'FEI-1', premier_detenteur_user_id: 'user-pd' } as any,
+      chasseur,
+      scope
+    );
+
+    const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
+    expect(updateCall.data).toHaveProperty('premier_detenteur_user_id', 'user-pd');
+    expect(prisma.userRelations.findFirst).not.toHaveBeenCalled();
   });
 });

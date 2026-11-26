@@ -92,6 +92,8 @@ vi.mock('./src/prisma', () => ({
     },
     password: {
       findUnique: vi.fn().mockResolvedValue(null),
+      findFirst: vi.fn(),
+      update: vi.fn(),
       upsert: vi.fn(),
     },
     userRelations: {
@@ -101,6 +103,8 @@ vi.mock('./src/prisma', () => ({
     },
     officialCfei: {
       findUnique: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+      count: vi.fn().mockResolvedValue(0),
     },
     notificationLog: {
       findFirst: vi.fn(),

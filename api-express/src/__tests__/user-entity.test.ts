@@ -361,55 +361,6 @@ describe('POST /user-entity/', () => {
       expect(res.body.data.relation.entity_id).toBe('entity-ccg');
     });
 
-    describe('rattachement par le numéro à un CCG pré-enregistré', () => {
-      const ccgPreEnregistre = {
-        ...testEntity,
-        id: 'entity-ccg',
-        type: EntityTypes.CCG,
-        numero_ddecpp: 'ccg-dep-1',
-        ccg_status: 'Pré-enregistré dans Zacharie',
-      };
-
-      function rattacher() {
-        return authed(
-          request(app).post(BASE).send({
-            owner_id: regularUser.id,
-            numero_ddecpp: 'CCG-DEP-1',
-            type: EntityTypes.CCG,
-            relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-          }),
-          regularUser
-        );
-      }
-
-      beforeEach(() => {
-        vi.mocked(prisma.entity.findFirst).mockResolvedValue(ccgPreEnregistre as any);
-        vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValue(null);
-        vi.mocked(prisma.entityAndUserRelations.create).mockImplementation(((args: any) =>
-          Promise.resolve({ id: 'rel-ccg', ...args.data })) as any);
-      });
-
-      test('le chasseur qui reprend un CCG dont plus personne ne se sert en devient le créateur', async () => {
-        vi.mocked(prisma.entityAndUserRelations.count).mockResolvedValue(0);
-
-        const res = await rattacher();
-
-        expect(res.status).toBe(200);
-        expect(vi.mocked(prisma.entityAndUserRelations.create).mock.calls[0][0].data.status).toBe(
-          EntityRelationStatus.ADMIN
-        );
-      });
-
-      test('le chasseur qui rejoint un CCG déjà utilisé n’en devient pas le créateur', async () => {
-        vi.mocked(prisma.entityAndUserRelations.count).mockResolvedValue(1);
-
-        const res = await rattacher();
-
-        expect(res.status).toBe(200);
-        expect(vi.mocked(prisma.entityAndUserRelations.create).mock.calls[0][0].data.status).toBeUndefined();
-      });
-    });
-
     test('non-admin cannot set status', async () => {
       vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
       vi.mocked(prisma.entity.findFirst).mockResolvedValue(testEntity as any);
@@ -991,125 +942,6 @@ describe('PUT /user-entity/', () => {
   });
 });
 
-describe('DELETE /user-entity/ sur un CCG pré-enregistré', () => {
-  const ccg: Partial<Entity> = {
-    id: 'ccg-1',
-    type: EntityTypes.CCG,
-    ccg_status: 'Pré-enregistré dans Zacharie',
-    deleted_at: null,
-  };
-  const relationCreateur: Partial<EntityAndUserRelations> = {
-    id: 'rel-createur',
-    owner_id: regularUser.id,
-    entity_id: 'ccg-1',
-    relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-    status: EntityRelationStatus.ADMIN,
-    deleted_at: null,
-  };
-  const relationRattache: Partial<EntityAndUserRelations> = {
-    id: 'rel-rattache',
-    owner_id: otherUser.id,
-    entity_id: 'ccg-1',
-    relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-    status: EntityRelationStatus.REQUESTED,
-    deleted_at: null,
-  };
-
-  // simule la table des relations : findFirst / findMany filtrent sur les champs simples du where
-  function mockRelations(relations: Array<Partial<EntityAndUserRelations>>) {
-    const matches = (row: Partial<EntityAndUserRelations>, where: Record<string, unknown>) =>
-      Object.entries(where).every(([key, value]) => {
-        const field = row[key as keyof EntityAndUserRelations];
-        if (value && typeof value === 'object' && 'not' in value) return field !== value.not;
-        return field === value;
-      });
-    vi.mocked(prisma.entityAndUserRelations.findFirst).mockImplementation(((args: any) =>
-      Promise.resolve(relations.find((r) => matches(r, args.where)) ?? null)) as any);
-    vi.mocked(prisma.entityAndUserRelations.findMany).mockImplementation(((args: any) =>
-      Promise.resolve(relations.filter((r) => matches(r, args.where)))) as any);
-    vi.mocked(prisma.entityAndUserRelations.delete).mockResolvedValue({} as any);
-  }
-
-  function retirer(user: typeof regularUser | typeof otherUser) {
-    return authed(
-      request(app).delete(BASE).send({
-        owner_id: user.id,
-        entity_id: 'ccg-1',
-        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-      }),
-      user as typeof regularUser
-    );
-  }
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(prisma.entity.findUnique).mockResolvedValue(ccg as any);
-  });
-
-  test('le créateur ne peut pas le retirer tant que d’autres chasseurs l’utilisent', async () => {
-    mockRelations([relationCreateur, relationRattache]);
-
-    const res = await retirer(regularUser);
-
-    expect(res.status).toBe(409);
-    expect(res.body.error).toContain('contact@zacharie.beta.gouv.fr');
-    expect(prisma.entityAndUserRelations.delete).not.toHaveBeenCalled();
-  });
-
-  test('le créateur seul à l’utiliser peut le retirer', async () => {
-    mockRelations([relationCreateur]);
-
-    const res = await retirer(regularUser);
-
-    expect(res.status).toBe(200);
-    expect(prisma.entityAndUserRelations.delete).toHaveBeenCalledOnce();
-  });
-
-  test('un chasseur rattaché par le numéro peut le retirer', async () => {
-    mockRelations([relationCreateur, relationRattache]);
-
-    const res = await retirer(otherUser);
-
-    expect(res.status).toBe(200);
-    expect(prisma.entityAndUserRelations.delete).toHaveBeenCalledOnce();
-  });
-
-  test('le créateur ne peut pas retirer le CCG de la liste d’un autre chasseur', async () => {
-    mockRelations([relationCreateur, relationRattache]);
-
-    const res = await authed(
-      request(app).delete(BASE).send({
-        owner_id: otherUser.id,
-        entity_id: 'ccg-1',
-        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-      })
-    );
-
-    expect(res.status).toBe(403);
-    expect(prisma.entityAndUserRelations.delete).not.toHaveBeenCalled();
-  });
-
-  test('le créateur ne peut pas quitter lui-même son statut ADMIN pour retirer ensuite le CCG', async () => {
-    mockRelations([relationCreateur, relationRattache]);
-    vi.mocked(prisma.entityAndUserRelations.update).mockResolvedValue(relationCreateur as any);
-
-    const res = await authed(
-      request(app).put(BASE).send({
-        owner_id: regularUser.id,
-        entity_id: 'ccg-1',
-        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-        status: EntityRelationStatus.REQUESTED,
-      })
-    );
-
-    expect(res.status).toBe(200);
-    expect(prisma.entityAndUserRelations.update).toHaveBeenCalledOnce();
-    expect(vi.mocked(prisma.entityAndUserRelations.update).mock.calls[0][0].data).not.toHaveProperty(
-      'status'
-    );
-  });
-});
-
 describe('DELETE /user-entity/', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -1331,6 +1163,60 @@ describe('DELETE /user-entity/', () => {
       );
 
       expect(res.status).toBe(403);
+    });
+  });
+});
+
+describe('CCG : seule l’équipe Zacharie gère les rattachements', () => {
+  const ccg: Partial<Entity> = {
+    id: 'ccg-1',
+    nom_d_usage: 'Le renard',
+    type: EntityTypes.CCG,
+    deleted_at: null,
+  };
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test('un admin du CCG ne peut pas y rattacher un autre utilisateur', async () => {
+    vi.mocked(prisma.entity.findUnique).mockResolvedValue(ccg as any);
+    vi.mocked(prisma.entity.findFirst).mockResolvedValue(ccg as any);
+    vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValue({
+      status: EntityRelationStatus.ADMIN,
+    } as any);
+    await authed(request(app).post(BASE))
+      .send({
+        owner_id: otherUser.id,
+        entity_id: 'ccg-1',
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        status: EntityRelationStatus.ADMIN,
+      })
+      .expect(403);
+    expect(prisma.entityAndUserRelations.create).not.toHaveBeenCalled();
+  });
+
+  test('rejoindre un CCG donne le statut membre, jamais admin', async () => {
+    vi.mocked(prisma.entity.findUnique).mockResolvedValue(ccg as any);
+    vi.mocked(prisma.entity.findFirst).mockResolvedValue(ccg as any);
+    vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue({
+      id: 'rel-ccg',
+      owner_id: regularUser.id,
+      entity_id: 'ccg-1',
+      relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+      status: EntityRelationStatus.MEMBER,
+    } as any);
+    await authed(request(app).post(BASE))
+      .send({
+        owner_id: regularUser.id,
+        entity_id: 'ccg-1',
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        status: EntityRelationStatus.ADMIN,
+      })
+      .expect(200);
+    expect(prisma.entityAndUserRelations.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ status: EntityRelationStatus.MEMBER }),
     });
   });
 });

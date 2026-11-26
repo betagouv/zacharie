@@ -140,6 +140,11 @@ export async function syncCarcasseIntermediaire(
   // `carcasse.updated_at` et charge les lignes d'intermédiaire par leur carcasse : on touche donc la
   // carcasse pour qu'il récupère la version à jour.
   const existingIntermediaire = await prisma.carcasseIntermediaire.findUnique({ where });
+  // Une ligne existante n'est modifiable que par son entité : le contrôle sur
+  // `body.intermediaire_entity_id` plus haut ne porte que sur la ligne créée.
+  if (existingIntermediaire && !scope.entityIds.includes(existingIntermediaire.intermediaire_entity_id)) {
+    throw new SyncRejectedError('Vous ne pouvez pas agir au nom de cette entité');
+  }
   if (existingIntermediaire && isStaleWrite(existingIntermediaire, body.version, user)) {
     await prisma.carcasse.update({
       where: { zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id },

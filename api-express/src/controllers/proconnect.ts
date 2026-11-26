@@ -6,7 +6,7 @@ import { catchErrors } from '~/middlewares/errors';
 import { authRateLimit } from '~/middlewares/auth-rate-limit';
 import type { RequestWithUser } from '~/types/request';
 import { API_URL, APP_URL, SECRET } from '~/config';
-import { cookieOptions, logoutCookieOptions } from '~/utils/cookie';
+import { cookieOptions, logoutCookieOptions, SESSION_COOKIE_NAME } from '~/utils/cookie';
 import { signSessionToken } from '~/utils/session-token';
 import {
   buildProConnectAuthorization,
@@ -127,7 +127,7 @@ router.get(
     }
 
     const token = signSessionToken({ userId: user.id, proconnect_at: Math.floor(Date.now() / 1000) });
-    res.cookie('zacharie_express_jwt', token, cookieOptions(req));
+    res.cookie(SESSION_COOKIE_NAME, token, cookieOptions(req));
     res.redirect(new URL(redirect, APP_URL).href);
   })
 );

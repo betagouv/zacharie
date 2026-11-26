@@ -7,6 +7,7 @@ import { Prisma } from '@prisma/client';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Stepper } from '@codegouvfr/react-dsfr/Stepper';
 import { Input } from '@app/components/Input';
+import { isNumeroCfeiHorsFormat, NUMERO_CFEI_FORMAT_MESSAGE_CHASSEUR } from '@app/utils/numero-cfei';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 
 import useUser from '@app/zustand/user';
@@ -168,6 +169,8 @@ function ExaminateurInitial() {
                 </span>
               }
               hintText="De la forme CFEI-DEP-AA-123"
+              state={isNumeroCfeiHorsFormat(numeroCfei) ? 'info' : 'default'}
+              stateRelatedMessage={NUMERO_CFEI_FORMAT_MESSAGE_CHASSEUR}
               key={isExaminateurInitial ? 'true' : 'false'}
               nativeInputProps={{
                 id: Prisma.UserScalarFieldEnum.numero_cfei,

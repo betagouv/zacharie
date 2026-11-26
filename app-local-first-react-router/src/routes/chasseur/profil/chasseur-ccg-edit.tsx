@@ -112,7 +112,7 @@ function ChasseurCCGEditContent() {
           {retourButton}
           <h3 className="text-lg font-semibold text-gray-900">Chambre froide (CCG)</h3>
           <p className="mb-5 text-sm text-gray-500">
-            Seul le chasseur qui a pré-enregistré cette chambre froide peut la modifier.
+            Seul l'administrateur de cette chambre froide, désigné par l'équipe Zacharie, peut la modifier.
           </p>
           {ccg.numero_ddecpp && <p className="text-sm font-bold">{ccg.numero_ddecpp}</p>}
           <p className="text-sm">{ccg.nom_d_usage}</p>

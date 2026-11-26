@@ -7,6 +7,9 @@ import { monAlias, nomEntiteAlias, type TrichineAlias } from '@app/services/tric
  * valeurs d'enums bruts, dates ISO. Le CSV et le JSON portent exactement les mêmes champs ;
  * une liste est un tableau en JSON et des valeurs séparées par `|` en CSV.
  *
+ * Le CSV est séparé par `;`, comme le fichier d'import de résultats (Excel en français l'ouvre
+ * directement en colonnes).
+ *
  * `reference_labo` est l'alias que le laboratoire a donné à l'objet (le même nom de colonne
  * que l'import de résultats), `autres_references_internes` ceux des autres acteurs.
  */
@@ -107,13 +110,13 @@ export function ftpToExportRow(ftp: LaboFTPListItem, mesEntites: Array<string>):
 function csvCell(value: ExportValue): string {
   if (value === null) return '';
   const text = Array.isArray(value) ? value.join('|') : String(value);
-  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  return /[";\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
-function toCsv(rows: Array<ExportRow>): string {
+export function toCsv(rows: Array<ExportRow>): string {
   if (!rows.length) return '';
   const headers = Object.keys(rows[0]);
-  const lines = [headers.join(','), ...rows.map((row) => headers.map((key) => csvCell(row[key])).join(','))];
+  const lines = [headers.join(';'), ...rows.map((row) => headers.map((key) => csvCell(row[key])).join(';'))];
   return `${lines.join('\r\n')}\r\n`;
 }
 

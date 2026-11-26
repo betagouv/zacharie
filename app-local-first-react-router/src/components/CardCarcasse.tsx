@@ -585,6 +585,20 @@ function CarcasseDetails({
     return commentaires;
   }, [carcassesIntermediaires, entities]);
 
+  const poidsIntermediaires = useMemo(() => {
+    const poids = [];
+    for (const carcasseIntermediaire of carcassesIntermediaires) {
+      if (carcasseIntermediaire?.intermediaire_poids) {
+        const intermediaireEntity = entities[carcasseIntermediaire.intermediaire_entity_id];
+        poids.push({
+          intermediaire: intermediaireEntity?.nom_d_usage,
+          poids: carcasseIntermediaire.intermediaire_poids,
+        });
+      }
+    }
+    return poids;
+  }, [carcassesIntermediaires, entities]);
+
   const examinateurInitialUser = fei.examinateur_initial_user_id
     ? users[fei.examinateur_initial_user_id!]
     : null;
@@ -891,6 +905,15 @@ function CarcasseDetails({
           </ul>
         </ModalCard>
       )}
+
+      {poidsIntermediaires.map((p, i) => (
+        <ModalCard
+          key={i}
+          title={`Poids renseigné par ${p.intermediaire}`}
+        >
+          <p className="text-sm">{p.poids}&nbsp;kg</p>
+        </ModalCard>
+      ))}
 
       {showIpm1AndIpm2 ? (
         <>

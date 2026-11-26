@@ -8,6 +8,7 @@ import type { SyncScope } from '~/utils/sync-scope';
 import { SyncRejectedError } from '~/utils/sync-errors';
 import { assertNoNewDeletedEntity } from '~/utils/deleted-entities';
 import { isStaleWrite, nextVersion } from '~/utils/sync-version';
+import { isAllowedPremierDetenteurUserId } from '~/utils/premier-detenteur-user-id';
 
 export interface SaveFeiResult {
   savedFei: Fei;
@@ -161,15 +162,12 @@ export async function syncFei(
   }
   if (isExaminateur && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.creation_context)) {
     const contextSlug = body.creation_context;
-    if (contextSlug) {
-      if (contextSlug !== 'zacharie') {
-        const apiKey = await prisma.apiKey.findFirst({
-          where: { slug_for_context: contextSlug },
-        });
-        if (!apiKey) {
-          throw new Error('Invalid context slug');
-        }
-      }
+    // le slug vient d'un paramètre d'URL libre (lien de création de fiche) : un slug inconnu est ignoré,
+    // il ne doit pas bloquer la synchro de la fiche
+    const isKnownContext =
+      contextSlug === 'zacharie' ||
+      (!!contextSlug && !!(await prisma.apiKey.findFirst({ where: { slug_for_context: contextSlug } })));
+    if (isKnownContext) {
       nextFei.creation_context = sanitize(contextSlug as string);
     }
   }
@@ -198,10 +196,11 @@ export async function syncFei(
 
   */
 
-  if (canWriteOwnership && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id)) {
-    nextFei.examinateur_initial_user_id = body.examinateur_initial_user_id
-      ? sanitize(body.examinateur_initial_user_id as string)
-      : null;
+  // L'examinateur initial est celui qui crée la fiche, et il ne change plus ensuite : c'est lui qui
+  // signe l'examen et peut supprimer la fiche. La valeur du corps est toujours ignorée, sinon le
+  // premier détenteur pourrait se déclarer examinateur, ou le créateur imputer la fiche à un autre.
+  if (!existingFei) {
+    nextFei.examinateur_initial_user_id = user.id;
   }
   if (isExaminateur && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_offline)) {
     nextFei.examinateur_initial_offline = body.examinateur_initial_offline || null;
@@ -230,7 +229,15 @@ export async function syncFei(
 
   */
 
-  if (canWriteOwnership && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id)) {
+  if (
+    canWriteOwnership &&
+    body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id) &&
+    (await isAllowedPremierDetenteurUserId(
+      body.premier_detenteur_user_id,
+      [existingFei?.premier_detenteur_user_id],
+      user
+    ))
+  ) {
     nextFei.premier_detenteur_user_id = body.premier_detenteur_user_id
       ? sanitize(body.premier_detenteur_user_id as string)
       : null;
