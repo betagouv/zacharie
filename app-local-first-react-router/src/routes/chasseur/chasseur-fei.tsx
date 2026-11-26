@@ -451,7 +451,8 @@ function FEIChasseurLoaded() {
   const premierDetenteurIsLocked = useMemo(() => carcasses.some(isPremierDetenteurVerrouille), [carcasses]);
 
   // à la fermeture de l'assistant Zacharie, les champs non contrôlés (defaultValue) de la date et des
-  // heures sont remontés pour reprendre les valeurs écrites par l'assistant
+  // heures, et le choix du propriétaire initial, sont remontés pour reprendre les valeurs écrites par
+  // l'assistant
   const [assistantClosedCount, setAssistantClosedCount] = useState(0);
   const zacharieChat = useZacharieEasterEgg(
     canEdit &&
@@ -590,6 +591,7 @@ function FEIChasseurLoaded() {
                   }}
                 />
                 <SelectNextForExaminateur
+                  key={`next-owner-${assistantClosedCount}`}
                   disabled={premierDetenteurIsLocked}
                   onValidationError={() => setShowBloc1Errors(true)}
                 />
