@@ -4,6 +4,8 @@ type BeforeInput = Record<string, unknown>;
 export type HistoryInput = {
   before: DiffInput | null;
   after: DiffInput;
+  // écriture faite par l'assistant Zacharie : relie le log à celui de l'échange (examinateur-assistant-message)
+  assistant_request_id?: string;
 };
 
 export function createHistoryInput(itemBefore: BeforeInput | null, diff: DiffInput): HistoryInput {

@@ -1,4 +1,7 @@
-import villes from '@app/data/villes.json';
+// Source : api-express/src/utils/search-ville.ts, copié tel quel dans le front (hors ligne) par
+// api-express/scripts/copy-schema-to-app-side.js : on modifie la source, jamais la copie du front.
+// Import relatif pour que les deux copies soient identiques.
+import villes from '../data/villes.json';
 
 // Le fichier est volumineux (~39 000 communes) : les clés sont abrégées pour alléger le bundle.
 type Ville = { c: string; v: string };
@@ -22,6 +25,18 @@ export function normalizeVille(value: string): string {
       return word;
     })
     .join(' ');
+}
+
+const CODE_POSTAL = /^\d{5}$/;
+
+// « Moulins », « Moulins 03000 » et « 03000 Moulins » désignent tous « 03000 MOULINS » : même nom
+// de commune, et même code postal quand la recherche en donne un.
+export function isSameCommune(codePostalVille: string, recherche: string): boolean {
+  const [codePostal, ...nom] = normalizeVille(codePostalVille).split(' ');
+  const mots = normalizeVille(recherche).split(' ');
+  const codePostalRecherche = mots.find((mot) => CODE_POSTAL.test(mot));
+  const nomRecherche = mots.filter((mot) => !CODE_POSTAL.test(mot)).join(' ');
+  return nom.join(' ') === nomRecherche && (!codePostalRecherche || codePostalRecherche === codePostal);
 }
 
 type IndexedVille = {
@@ -57,10 +72,16 @@ export function searchVilles(search: string, maxResults = DEFAULT_MAX_RESULTS): 
   if (!query) {
     return [];
   }
-  // Un code postal ne peut être qu'en tête de recherche : dans un nom de commune les chiffres
-  // sont toujours en suffixe d'arrondissement (« MARSEILLE 01 »).
-  const codePostal = query.match(/^\d{1,5}/)?.[0] ?? '';
-  const nameQuery = query.slice(codePostal.length).trim();
+  // Un code postal est en tête de recherche, ou en fin s'il est complet (« Moulins 03000 ») : dans un
+  // nom de commune les chiffres sont toujours en suffixe d'arrondissement, sur deux chiffres (« MARSEILLE 01 »).
+  const codePostalEnTete = query.match(/^\d{1,5}/)?.[0];
+  const codePostalEnFin = codePostalEnTete ? undefined : query.match(/ (\d{5})$/)?.[1];
+  const codePostal = codePostalEnTete ?? codePostalEnFin ?? '';
+  const nameQuery = codePostalEnTete
+    ? query.slice(codePostalEnTete.length).trim()
+    : codePostalEnFin
+      ? query.slice(0, -codePostalEnFin.length).trim()
+      : query;
   const tokens = nameQuery.split(' ').filter(Boolean);
 
   const scored = scoreVilles(codePostal, nameQuery, tokens);
