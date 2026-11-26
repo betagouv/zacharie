@@ -3,7 +3,7 @@ import useZustandStore from '@app/zustand/store';
 import { mergeItems } from './merge-fetched-items';
 import API from '@app/services/api';
 import { getFeiAndCarcasseAndIntermediaireIds } from './get-carcasse-intermediaire-id';
-import { UserRoles, type Carcasse, type CarcasseModificationRequest } from '@prisma/client';
+import { UserRoles, type CarcasseModificationRequest } from '@prisma/client';
 import useUser from '@app/zustand/user';
 import { capture } from '@app/services/sentry';
 import { isLocalTeardownInProgress } from '@app/zustand/idb-sliced-storage';
@@ -11,7 +11,7 @@ import { dropMarginOverwrites, getDeltaAfter } from './delta-margin';
 
 let loadCarcassesAbortController: AbortController | null = null;
 
-const ROLES_WITHOUT_CARCASSES: UserRoles[] = [UserRoles.FEDERATION, UserRoles.LABORATOIRE];
+const ROLES_WITHOUT_CARCASSES: UserRoles[] = [UserRoles.LABORATOIRE];
 
 // Contrôle d'intégrité store local / serveur : au plus une fois par utilisateur toutes les 6 heures.
 const INTEGRITY_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
@@ -111,6 +111,8 @@ export async function loadCarcasses() {
     const carcasseModifRequests: CarcassesGetResponse['data']['carcasseModifRequests'] = [];
     const usersFetched: CarcassesGetResponse['data']['users'] = [];
     const entitiesFetched: CarcassesGetResponse['data']['entities'] = [];
+    const ccgCarcasseIdsFetched: CarcassesGetResponse['data']['ccgCarcasseIds'] = [];
+    let ccgEntityIds: CarcassesGetResponse['data']['ccgEntityIds'] = [];
     // curseur : updated_at (ms) et id de la dernière carcasse reçue, la page suivante commence après
     let cursor: { updatedAt: string; id: string } | null = null;
     let hasMore = true;
@@ -139,19 +141,15 @@ export async function loadCarcasses() {
       entitiesFetched.push(...(res.data.entities || []));
       carcasseModifRequests.push(...(res.data.carcasseModifRequests || []));
       carcassesIntermediairesFetched.push(...(res.data.carcassesIntermediaires || []));
+      ccgCarcasseIdsFetched.push(...res.data.ccgCarcasseIds);
+      ccgEntityIds = res.data.ccgEntityIds;
       if (!cursor) {
         fullReload = res.data.fullReload;
         receivedReloadVersion = res.data.reloadVersion;
         if (fullReload) fullReloadRequested = false;
       }
-      const lastCarcasse: Carcasse | undefined = res.data.carcasses?.at(-1);
-      hasMore = res.data.hasMore && !!lastCarcasse;
-      if (lastCarcasse) {
-        cursor = {
-          updatedAt: String(new Date(lastCarcasse.updated_at).getTime()),
-          id: lastCarcasse.zacharie_carcasse_id,
-        };
-      }
+      hasMore = res.data.hasMore && !!res.data.nextCursor;
+      if (res.data.nextCursor) cursor = res.data.nextCursor;
     }
 
     // Guard against logout/abort races: don't clobber a freshly-reset store.
@@ -162,6 +160,7 @@ export async function loadCarcasses() {
       useZustandStore.setState(() => ({
         lastUpdateFromServer: serverDate,
         carcassesReloadVersion: receivedReloadVersion,
+        ccgEntityIds,
       }));
       checkLocalCarcassesIntegrity(signal);
       return;
@@ -224,6 +223,18 @@ export async function loadCarcasses() {
       }
     }
 
+    // une carcasse revenue sans être marquée CCG est revenue dans le périmètre du rôle
+    const ccgFetched = new Set(ccgCarcasseIdsFetched);
+    const roleFetched = new Set(
+      carcassesFetched.map((c) => c.zacharie_carcasse_id).filter((id) => !ccgFetched.has(id))
+    );
+    const newCcgCarcasseIds = [
+      ...new Set([
+        ...(fullReload ? [] : localState.ccgCarcasseIds.filter((id) => !roleFetched.has(id))),
+        ...ccgFetched,
+      ]),
+    ];
+
     // Merge modif requests by their own id (drops cancelled ones via deleted_at, like other entities),
     // then regroup into the full-history-by-carcasse map the store and UI consume.
     const mergedModifRequestsById = mergeItems({
@@ -263,6 +274,8 @@ export async function loadCarcasses() {
       modifRequestsByCarcasseId: nextModifRequestsByCarcasseId,
       users: newUsers,
       entities: newEntities,
+      ccgEntityIds,
+      ccgCarcasseIds: newCcgCarcasseIds,
       lastUpdateFromServer: serverDate,
       carcassesReloadVersion: receivedReloadVersion,
     }));

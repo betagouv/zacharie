@@ -26,6 +26,7 @@ export type SeedRole =
   | 'CHASSEUR_MANY_FICHES'
   | 'CHASSEUR_5_ASSOCIATIONS'
   | 'FDC'
+  | 'FEDERATION_CCG'
   | 'FRC'
   | 'FNC'
   | 'FEDERATION_STATS'

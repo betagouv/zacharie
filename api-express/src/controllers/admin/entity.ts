@@ -180,33 +180,32 @@ router.get(
               select: userAdminSelect,
             });
 
-      const canSendFichesToEntity =
-        entity.type === EntityTypes.CCG
-          ? []
-          : await prisma.user.findMany({
-              where: {
-                id: {
-                  notIn: entity.EntityRelationsWithUsers.filter(
-                    (entityRelation) =>
-                      entityRelation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
-                  ).map((entityRelation) => entityRelation.UserRelatedWithEntity.id),
-                },
-                roles: {
-                  hasSome:
-                    entity.type === EntityTypes.ETG || entity.type === EntityTypes.COLLECTEUR_PRO
-                      ? [UserRoles.CHASSEUR, UserRoles.ETG, UserRoles.COLLECTEUR_PRO]
-                      : entity.type === EntityTypes.PREMIER_DETENTEUR
-                        ? [UserRoles.CHASSEUR]
-                        : entity.type === EntityTypes.SVI
-                          ? [UserRoles.ETG]
-                          : [],
-                },
-              },
-              orderBy: {
-                updated_at: 'desc',
-              },
-              select: userAdminSelect,
-            });
+      const canSendFichesToEntity = await prisma.user.findMany({
+        where: {
+          id: {
+            notIn: entity.EntityRelationsWithUsers.filter(
+              (entityRelation) =>
+                entityRelation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
+            ).map((entityRelation) => entityRelation.UserRelatedWithEntity.id),
+          },
+          roles: {
+            hasSome:
+              entity.type === EntityTypes.CCG
+                ? [UserRoles.FEDERATION, UserRoles.CHASSEUR]
+                : entity.type === EntityTypes.ETG || entity.type === EntityTypes.COLLECTEUR_PRO
+                  ? [UserRoles.CHASSEUR, UserRoles.ETG, UserRoles.COLLECTEUR_PRO]
+                  : entity.type === EntityTypes.PREMIER_DETENTEUR
+                    ? [UserRoles.CHASSEUR]
+                    : entity.type === EntityTypes.SVI
+                      ? [UserRoles.ETG]
+                      : [],
+          },
+        },
+        orderBy: {
+          updated_at: 'desc',
+        },
+        select: userAdminSelect,
+      });
 
       const sviRelatedToETG =
         entity.type !== EntityTypes.ETG

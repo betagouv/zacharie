@@ -1,3 +1,4 @@
+import CcgFiche from '@app/routes/ccg/ccg-fiche';
 import { Route, Outlet } from 'react-router';
 import Contact from '@app/routes/contact';
 import MesChasses from './tableau-de-bord/chasseur-tableau-de-bord';
@@ -107,6 +108,10 @@ export default function RouterChasseur() {
       <Route
         path="fiches"
         element={<ChasseurFiches />}
+      />
+      <Route
+        path="ccg/:fei_numero"
+        element={<CcgFiche basePath="/app/chasseur" />}
       />
       <Route
         path="fei/:fei_numero"

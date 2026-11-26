@@ -1166,3 +1166,57 @@ describe('DELETE /user-entity/', () => {
     });
   });
 });
+
+describe('CCG : seule l’équipe Zacharie gère les rattachements', () => {
+  const ccg: Partial<Entity> = {
+    id: 'ccg-1',
+    nom_d_usage: 'Le renard',
+    type: EntityTypes.CCG,
+    deleted_at: null,
+  };
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test('un admin du CCG ne peut pas y rattacher un autre utilisateur', async () => {
+    vi.mocked(prisma.entity.findUnique).mockResolvedValue(ccg as any);
+    vi.mocked(prisma.entity.findFirst).mockResolvedValue(ccg as any);
+    vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValue({
+      status: EntityRelationStatus.ADMIN,
+    } as any);
+    await authed(request(app).post(BASE))
+      .send({
+        owner_id: otherUser.id,
+        entity_id: 'ccg-1',
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        status: EntityRelationStatus.ADMIN,
+      })
+      .expect(403);
+    expect(prisma.entityAndUserRelations.create).not.toHaveBeenCalled();
+  });
+
+  test('rejoindre un CCG donne le statut membre, jamais admin', async () => {
+    vi.mocked(prisma.entity.findUnique).mockResolvedValue(ccg as any);
+    vi.mocked(prisma.entity.findFirst).mockResolvedValue(ccg as any);
+    vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue({
+      id: 'rel-ccg',
+      owner_id: regularUser.id,
+      entity_id: 'ccg-1',
+      relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+      status: EntityRelationStatus.MEMBER,
+    } as any);
+    await authed(request(app).post(BASE))
+      .send({
+        owner_id: regularUser.id,
+        entity_id: 'ccg-1',
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        status: EntityRelationStatus.ADMIN,
+      })
+      .expect(200);
+    expect(prisma.entityAndUserRelations.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ status: EntityRelationStatus.MEMBER }),
+    });
+  });
+});

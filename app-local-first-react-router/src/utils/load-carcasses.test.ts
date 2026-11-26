@@ -18,6 +18,8 @@ const mocks = vi.hoisted(() => {
     entities: {} as Record<string, Item & { id: string; relation: string }>,
     detenteursInitiauxIds: [] as Array<string>,
     feiIdsRenvoiToHide: [] as Array<string>,
+    ccgEntityIds: [] as Array<string>,
+    ccgCarcasseIds: [] as Array<string>,
   };
   return { state, get: vi.fn() };
 });
@@ -56,6 +58,12 @@ function serverResponse(fullReload: boolean) {
       entities: [{ ...base(), id: 'E-SERVEUR', relation: 'NONE' }],
       carcassesIntermediaires: [],
       carcasseModifRequests: [],
+      ccgEntityIds: [] as Array<string>,
+      ccgCarcasseIds: [] as Array<string>,
+      get nextCursor() {
+        const last = this.carcasses.at(-1);
+        return last ? { updatedAt: String(last.updated_at.getTime()), id: last.zacharie_carcasse_id } : null;
+      },
       hasMore: false,
       fullReload,
       reloadVersion: 4,
@@ -87,6 +95,8 @@ beforeEach(() => {
     },
     users: { 'U-SORTI': { ...base(), id: 'U-SORTI' } },
     entities: { 'E-SORTIE': { ...base(), id: 'E-SORTIE', relation: 'NONE' } },
+    ccgEntityIds: [],
+    ccgCarcasseIds: [],
   });
 });
 
@@ -334,5 +344,40 @@ describe('loadCarcasses — demandes de modification', () => {
     expect(next).not.toBe(previous);
     expect(next).toContain(changed);
     expect(next).toContain(previous[0]);
+  });
+});
+
+describe('loadCarcasses — fiches de CCG', () => {
+  function mockCcgServer(fullReload: boolean) {
+    const response = serverResponse(fullReload);
+    response.data.ccgEntityIds = ['CCG-1'];
+    response.data.carcasses = [
+      ...response.data.carcasses,
+      { ...base(), zacharie_carcasse_id: 'C-CCG', fei_numero: 'FEI-SERVEUR' },
+    ];
+    response.data.ccgCarcasseIds = ['C-CCG'];
+    mocks.get.mockImplementation(({ path }: { path: string }) => {
+      if (path === 'now') return Promise.resolve({ ok: true, data: 2000 });
+      if (path === '/carcasse/count') return Promise.resolve({ ok: false });
+      return Promise.resolve(response);
+    });
+  }
+
+  beforeEach(() => {
+    Object.assign(mocks.state, { ccgCarcasseIds: ['C-CCG-ANCIENNE', 'C-SERVEUR'] });
+  });
+
+  it('marque les carcasses de CCG, et démarque celles revenues dans le périmètre du rôle', async () => {
+    mockCcgServer(false);
+    await loadCarcasses();
+    expect(mocks.state.ccgEntityIds).toEqual(['CCG-1']);
+    expect(mocks.state.carcasses['C-CCG']).toBeDefined();
+    expect([...mocks.state.ccgCarcasseIds].sort()).toEqual(['C-CCG', 'C-CCG-ANCIENNE']);
+  });
+
+  it('rechargement complet : seules les carcasses de CCG reçues restent marquées', async () => {
+    mockCcgServer(true);
+    await loadCarcasses();
+    expect(mocks.state.ccgCarcasseIds).toEqual(['C-CCG']);
   });
 });

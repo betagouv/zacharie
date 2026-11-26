@@ -2,7 +2,7 @@ import express from 'express';
 import { catchErrors } from '~/middlewares/errors';
 import { setAdminAuditTarget } from '~/middlewares/admin-audit-log';
 import prisma from '~/prisma';
-import { EntityRelationStatus, EntityRelationType, Prisma } from '@prisma/client';
+import { EntityRelationStatus, EntityRelationType, EntityTypes, Prisma } from '@prisma/client';
 import type { RequestWithUser } from '~/types/request';
 import type { UserEntityResponse } from '~/types/responses';
 import { linkBrevoCompanyToContact, unlinkBrevoCompanyToContact } from '~/third-parties/brevo';
@@ -83,6 +83,15 @@ router.post(
         },
       });
       if (!entityHasUsers) nextEntityRelation.status = EntityRelationStatus.ADMIN;
+    }
+
+    // CCG : membre par défaut, l'équipe nomme ensuite l'admin avec le sélecteur de statut
+    if (
+      entity.type === EntityTypes.CCG &&
+      relationType === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY &&
+      !body.status
+    ) {
+      nextEntityRelation.status = EntityRelationStatus.MEMBER;
     }
 
     const relation = await prisma.entityAndUserRelations.create({ data: nextEntityRelation });

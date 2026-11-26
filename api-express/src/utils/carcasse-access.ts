@@ -71,11 +71,12 @@ export function hasIntermediaireCarcasseScope(user: Pick<User, 'roles'>): boolea
   return user.roles.some((role) => INTERMEDIAIRE_SCOPE_ROLES.includes(role));
 }
 
-// Une branche du périmètre : une condition sur Carcasse, ou les carcasses passées par des entités
-// intermédiaires (CarcasseIntermediaire).
+// Une branche du périmètre : une condition sur Carcasse, les carcasses passées par des entités
+// intermédiaires (CarcasseIntermediaire), ou celles qu'un intermédiaire a déposées dans un CCG.
 export type CarcasseScopeBranch =
   | { carcasseCondition: Prisma.Sql }
-  | { intermediaireEntityIds: Array<string> };
+  | { intermediaireEntityIds: Array<string> }
+  | { intermediaireDepotEntityIds: Array<string> };
 
 // Le même périmètre que getCarcasseAccessWhere, en SQL brut : une branche par condition du OR. Les deux
 // doivent rester identiques (vérifié sur une vraie base dans carcasse-scope.db.test.ts). Retourne null
@@ -121,6 +122,15 @@ export function getCarcasseScopeBranches(
   return null;
 }
 
+// Lecture seule : ces branches ne sont pas dans getCarcasseAccessWhere, qui sert aussi aux écritures de /sync.
+export function getCcgScopeBranches(ccgIds: Array<string>): Array<CarcasseScopeBranch> {
+  if (!ccgIds.length) return [];
+  return [
+    { carcasseCondition: Prisma.sql`c.premier_detenteur_depot_entity_id IN (${Prisma.join(ccgIds)})` },
+    { intermediaireDepotEntityIds: ccgIds },
+  ];
+}
+
 // Une page du pull GET /carcasse, dans l'ordre (updated_at, id) décroissant. Un OR sur plusieurs
 // colonnes ne peut être servi par aucun index : Postgres lit tout le périmètre puis le trie, à chaque
 // page. Ici chaque branche est une requête à part, servie par son index (colonne, updated_at desc),
@@ -154,18 +164,24 @@ export async function findScopeCarcassesPage({
           ORDER BY c.updated_at DESC, c.zacharie_carcasse_id DESC
           LIMIT ${limit}
         )`
-      : // L'entité est sur CarcasseIntermediaire et la date sur Carcasse : la copie
-        // CarcasseIntermediaire.carcasse_updated_at (posée par trigger) les réunit dans un seul index.
-        // DISTINCT avant LIMIT : une carcasse peut passer plusieurs fois par la même entité.
-        Prisma.sql`(
-          SELECT DISTINCT ci.zacharie_carcasse_id, ci.carcasse_updated_at AS updated_at
-          FROM "CarcasseIntermediaire" ci
-          JOIN "Carcasse" c ON c.zacharie_carcasse_id = ci.zacharie_carcasse_id
-          WHERE ci.intermediaire_entity_id IN (${Prisma.join(branch.intermediaireEntityIds)})
-            ${filters('ci.carcasse_updated_at', 'ci.zacharie_carcasse_id')}
-          ORDER BY 2 DESC, 1 DESC
-          LIMIT ${limit}
-        )`;
+      : intermediaireBranchPage(
+          'intermediaireEntityIds' in branch
+            ? { column: 'ci.intermediaire_entity_id', entityIds: branch.intermediaireEntityIds }
+            : { column: 'ci.intermediaire_depot_entity_id', entityIds: branch.intermediaireDepotEntityIds }
+        );
+  // L'entité est sur CarcasseIntermediaire et la date sur Carcasse : la copie
+  // CarcasseIntermediaire.carcasse_updated_at (posée par trigger) les réunit dans un seul index.
+  // DISTINCT avant LIMIT : une carcasse peut passer plusieurs fois par la même entité.
+  const intermediaireBranchPage = ({ column, entityIds }: { column: string; entityIds: Array<string> }) =>
+    Prisma.sql`(
+      SELECT DISTINCT ci.zacharie_carcasse_id, ci.carcasse_updated_at AS updated_at
+      FROM "CarcasseIntermediaire" ci
+      JOIN "Carcasse" c ON c.zacharie_carcasse_id = ci.zacharie_carcasse_id
+      WHERE ${Prisma.raw(column)} IN (${Prisma.join(entityIds)})
+        ${filters('ci.carcasse_updated_at', 'ci.zacharie_carcasse_id')}
+      ORDER BY 2 DESC, 1 DESC
+      LIMIT ${limit}
+    )`;
   const rows = await prisma.$queryRaw<Array<{ zacharie_carcasse_id: string }>>`
     SELECT u.zacharie_carcasse_id FROM (
       ${Prisma.join(branches.map(branchPage), ' UNION ')}

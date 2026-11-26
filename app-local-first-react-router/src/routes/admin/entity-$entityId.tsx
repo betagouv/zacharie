@@ -112,7 +112,12 @@ export default function AdminEntity() {
       tabId: 'Utilisateurs pouvant traiter des fiches pour cette entité',
       label: `Utilisateurs ayant accès au tableau de bord de la fédération (${entity.EntityRelationsWithUsers.filter((rel) => rel.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY).length})`,
     });
-  } else if (entity.type !== EntityTypes.CCG) {
+  } else if (entity.type === EntityTypes.CCG) {
+    tabs.push({
+      tabId: 'Utilisateurs pouvant envoyer des fiches à cette entité',
+      label: `Utilisateurs du CCG (${entity.EntityRelationsWithUsers.filter((rel) => rel.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY).length})`,
+    });
+  } else {
     tabs.push({
       tabId: 'Utilisateurs pouvant traiter des fiches pour cette entité',
       label: `Utilisateurs pouvant traiter des fiches pour cette entité (${entity.EntityRelationsWithUsers.filter((rel) => rel.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY).length})`,

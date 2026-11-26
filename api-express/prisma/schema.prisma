@@ -964,6 +964,7 @@ model Carcasse {
   @@index([current_owner_user_id, updated_at(sort: Desc)])
   @@index([next_owner_user_id, updated_at(sort: Desc)])
   @@index([prev_owner_user_id, updated_at(sort: Desc)])
+  @@index([premier_detenteur_depot_entity_id, updated_at(sort: Desc)])
 }
 
 enum CarcasseCertificatType {
@@ -1064,6 +1065,7 @@ model CarcasseIntermediaire {
   @@index([created_at])
   @@index([intermediaire_entity_id])
   @@index([intermediaire_entity_id, carcasse_updated_at(sort: Desc), zacharie_carcasse_id(sort: Desc)])
+  @@index([intermediaire_depot_entity_id, carcasse_updated_at(sort: Desc), zacharie_carcasse_id(sort: Desc)])
   @@index([intermediaire_user_id])
   @@index([fei_numero, prise_en_charge_at, created_at])
   // Chargement des intermédiaires par carcasse dans GET /carcasse (zacharie_carcasse_id IN [...]).
