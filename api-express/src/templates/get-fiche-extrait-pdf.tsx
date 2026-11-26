@@ -15,7 +15,7 @@ export type FicheExtraitData = {
   carcasses: Array<{
     numeroBracelet: string;
     espece: string | null;
-    nombreAnimaux: number | null;
+    nombreAnimaux: string | null;
     statut: string;
   }>;
   genereLe: Date;

@@ -37,4 +37,13 @@ describe('formatDateJour', () => {
   test('absente → tiret', () => {
     expect(formatDateJour(null)).toBe('-');
   });
+
+  test('serveur à l’ouest de UTC → même jour (pas la veille)', () => {
+    process.env.TZ = 'America/New_York';
+    try {
+      expect(formatDateJour(new Date('2026-10-01T00:00:00Z'))).toBe('01/10/2026');
+    } finally {
+      process.env.TZ = 'UTC';
+    }
+  });
 });
