@@ -72,7 +72,6 @@ export default function AdminStatistiques() {
       >
         {selectedTab === 'general' && (
           <div className="space-y-6 pt-4">
-            {/* Parts de marché par circuit */}
             {partsDeMarche && partsDeMarche.circuit_long.length > 0 && (
               <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
                 <h3 className="mb-1 text-lg font-semibold">Parts de marché par circuit</h3>
@@ -96,7 +95,6 @@ export default function AdminStatistiques() {
               </div>
             )}
 
-            {/* Delta BPH distribution */}
             {deltaBph &&
               deltaBph.deltas.length > 0 &&
               (() => {
@@ -162,7 +160,6 @@ export default function AdminStatistiques() {
                 ))}
               </div>
             </div>
-            {/* Taux de saisie SVI */}
             {saisiesSvi && (
               <div className="grid grid-cols-3 gap-4">
                 <div className="rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
@@ -202,7 +199,6 @@ export default function AdminStatistiques() {
               </div>
             )}
 
-            {/* Saisies SVI — tous les motifs */}
             {saisiesSvi && saisiesSvi.motifs.length > 0 && (
               <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
                 <h3 className="mb-1 text-lg font-semibold">Tous les motifs de saisie totale (IPM2)</h3>
@@ -247,7 +243,6 @@ export default function AdminStatistiques() {
               </div>
             )}
 
-            {/* Saisies SVI — motifs mauvaises pratiques uniquement */}
             {saisiesSvi &&
               saisiesSvi.motifs.filter((m) => m.is_mauvaise_pratique).length > 0 &&
               (() => {

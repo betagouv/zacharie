@@ -118,13 +118,6 @@ export default function ListAndSelectEntities({
                 className="flex basis-1/3 items-center justify-center"
                 nativeButtonProps={{ form: formId }}
                 onClick={(e) => {
-                  /* 
-                  NOTE: pour le moment, Zacharie n'est QUE sur invitation :
-                  Circuit court : une entité ne peut être créée que par un chasseur qui transmet ses carcasses à une entité
-                  ETG/SVI/Collecteur : une entité ne peut être créée que par un administrateur de Zacharie
-                  Tous : un nouvel utilisateur ne peut être ajouté que par un administrateur de l'entité
-                  NOTE 2: un nouvel utilisateur qui s'inscrit dans Zacharie ne peut être qu'un chasseur
-                  */
                   e.preventDefault();
                   API.post({
                     path: '/user-entity',

@@ -26,13 +26,9 @@ queue.on('next', () => {
   console.log(`Task is completed.  Size: ${queue.size}  Pending: ${queue.pending}`);
 });
 
-// Wording dédié au push : il s'affiche sur un écran verrouillé, largement tronqué. Titre générique
-// par type d'évènement, corps d'une phrase. Ni « Bonjour », ni URL, ni mention d'envoi automatique —
-// tout ça appartient à l'email.
 export type PushWording = {
   title: string;
   body: string;
-  // Chemin de l'app (`/app/...`) ouvert par l'app mobile quand on touche la notification.
   url?: string;
 };
 
@@ -44,20 +40,12 @@ type NotificationToUser = {
   notificationLogAction: string;
   img?: string;
   attachments?: brevo.SendSmtpEmailAttachmentInner[];
-  // Email migré vers un template Brevo : sujet + HTML gérés côté dashboard, remplis par
-  // `emailTemplateParams`. Absent ou `null` = email encore en texte inline (`email`).
-  // Cf. src/third-parties/brevo-templates.ts.
   emailTemplateId?: number | null;
   emailTemplateParams?: Record<string, unknown>;
-  // Email HTML construit dans le code (ex. trichine, cf. src/templates/trichine-email.ts) ;
-  // `email` reste la version texte, loggée dans le NotificationLog.
   emailHtml?: string;
-  // Adresses en copie de l'email. Elles suivent l'email du destinataire : pas d'email, pas de copie.
   cc?: Array<string>;
 };
 
-// Résultat du canal email : SENT porte l'identifiant Brevo (`null` en test), SKIPPED couvre
-// l'utilisateur qui a désactivé les emails et l'email déjà envoyé (dédup).
 export type EmailResult =
   | { status: 'SENT'; messageId: string | null }
   | { status: 'FAILED' }
@@ -76,7 +64,6 @@ export default async function queueSendNotificationToUser({
   cc,
   img = 'https://zacharie.beta.gouv.fr/favicon.svg',
 }: NotificationToUser): Promise<EmailResult> {
-  // `queue.add` est typé `void | T` (cas du timeout de p-queue, non configuré ici).
   const result = await queue.add(async () => {
     return sendNotificationToUser({
       user,
@@ -95,9 +82,6 @@ export default async function queueSendNotificationToUser({
   return result || { status: 'FAILED' };
 }
 
-// Les deux canaux sont indépendants : un utilisateur qui a coché PUSH et EMAIL reçoit les deux, et
-// l'échec de l'un ne doit ni empêcher l'autre ni faire remonter une erreur aux appelants (qui
-// notifient souvent plusieurs utilisateurs à la suite).
 async function sendNotificationToUser(notification: NotificationToUser): Promise<EmailResult> {
   const { user, title, push, email, img } = notification;
   if (user.notifications.includes(UserNotifications.PUSH)) {
@@ -134,7 +118,6 @@ async function sendPushToUser({
   if (!webPushTokens.length && !nativePushTokens.length) {
     return;
   }
-  // Une seule dédup pour les deux canaux : web et natif partagent le type `PUSH` du NotificationLog.
   const existingNotification = await prisma.notificationLog.findFirst({
     where: {
       user_id: user.id,
@@ -200,8 +183,6 @@ async function sendPushToUser({
           },
         });
       } catch (error) {
-        // 404 / 410 : l'abonnement n'existe plus côté navigateur (désabonné, données effacées).
-        // On le retire, sinon chaque notification suivante échoue à nouveau.
         const statusCode = error instanceof webpush.WebPushError ? error.statusCode : undefined;
         if (statusCode === 404 || statusCode === 410) {
           webTokensToRemove.push(web_push_subscription);
@@ -214,7 +195,6 @@ async function sendPushToUser({
         });
       }
     }
-    // Retrait en SQL sur la valeur courante de la colonne (même raison que pour les tokens natifs).
     if (webTokensToRemove.length) {
       try {
         await prisma.$executeRaw`
@@ -242,10 +222,6 @@ async function sendPushToUser({
       body,
       url,
     });
-    // Tokens périmés (app désinstallée) ou au format invalide : on les retire pour ne pas les rejouer.
-    // Le retrait se fait en SQL sur la valeur courante de la colonne, et non en réécrivant le
-    // tableau du `user` en mémoire : celui-ci date du chargement de la tâche et écraserait un token
-    // enregistré entre-temps (installation sur un nouvel appareil).
     if (tokensToRemove.length) {
       try {
         await prisma.$executeRaw`
@@ -264,7 +240,6 @@ async function sendPushToUser({
         });
       }
     }
-    // Envoi raté : on n'écrit pas le log, sinon la dédup bloquerait définitivement le renvoi.
     if (sent > 0) {
       try {
         await prisma.notificationLog.create({
@@ -288,10 +263,6 @@ async function sendPushToUser({
       }
     }
   }
-  // await prisma.user.update({
-  //   where: { id: user.id },
-  //   data: { badge_count: { increment: 1 } },
-  // });
 }
 
 async function sendEmailToUser({
@@ -338,9 +309,6 @@ async function sendEmailToUser({
     return { status: 'SENT', messageId: null };
   }
   console.log('SENDING EMAIL NOTIFICATION FOR REAL', user.id);
-  // On attend l'envoi avant de rendre la main : c'est le `notificationLog.create` qui porte la
-  // dédup, et la notification suivante fait son `findFirst` dès que la tâche PQueue courante est
-  // terminée.
   const sent = emailTemplateId
     ? await sendTemplateEmail({
         emails: [user.email!],
@@ -357,8 +325,6 @@ async function sendEmailToUser({
         attachments: attachments,
         cc,
       });
-  // Envoi raté : on n'écrit pas le log, sinon la dédup bloquerait définitivement le renvoi.
-  // Les senders remontent déjà l'erreur à Sentry.
   if (!sent) {
     console.error('error in send email', user.id);
     return { status: 'FAILED' };

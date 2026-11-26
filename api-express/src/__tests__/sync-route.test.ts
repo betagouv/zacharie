@@ -5,8 +5,6 @@ import syncRouter from '~/controllers/sync';
 import prisma from '~/prisma';
 import { UserRoles } from '@prisma/client';
 
-// Mock the three sync functions so we can assert ordering and isolation
-// without having to set up prisma for the full data path here.
 vi.mock('~/utils/sync-fei', () => ({
   syncFei: vi.fn(),
 }));
@@ -33,8 +31,6 @@ vi.mock('~/third-parties/sentry', () => ({
   captureException: vi.fn(),
 }));
 
-// Ce fichier teste le routage et l'isolation des erreurs, pas l'autorisation : le périmètre est
-// neutralisé pour qu'il n'ajoute pas de requête carcasse.findMany dans les séquences mockées ici.
 const { permissiveScope } = vi.hoisted(() => ({
   permissiveScope: {
     entityIds: ['entity-etg', 'entity-collecteur', 'entity-svi'],
@@ -235,7 +231,6 @@ describe('POST /sync — side effects', () => {
     );
 
     expect(res.status).toBe(200);
-    // Only F1 should trigger side effects (F2 is deleted, F3 has no existingFei before save)
     expect(runFeiUpdateSideEffects).toHaveBeenCalledOnce();
   });
 
@@ -406,8 +401,6 @@ describe('POST /sync — response shape', () => {
 });
 
 describe('POST /sync — refus définitifs vs erreurs transitoires', () => {
-  // La distinction est le cœur du mécanisme : sur un refus le client jette sa version locale, donc
-  // une erreur technique classée à tort en refus détruirait le travail de l'utilisateur.
   test("un refus d'autorisation est renvoyé dans `rejected`, pas capturé comme une erreur", async () => {
     vi.mocked(syncCarcasse).mockRejectedValueOnce(
       new SyncRejectedError("Vous n'avez pas accès à cette carcasse")
@@ -485,8 +478,6 @@ describe('POST /sync — refus définitifs vs erreurs transitoires', () => {
     });
   });
 
-  // Un refus ne laisse rien en base et le client cesse de pousser l'item : sans son payload dans
-  // l'évènement, la saisie de l'utilisateur n'est plus récupérable nulle part.
   test("l'évènement de refus porte le payload de chaque item refusé, données personnelles masquées", async () => {
     vi.mocked(syncCarcasse).mockRejectedValueOnce(
       new SyncRejectedError("Vous n'avez pas accès à cette carcasse")
@@ -518,7 +509,6 @@ describe('POST /sync — refus définitifs vs erreurs transitoires', () => {
           fei_numero: 'FEI-1',
           zacharie_carcasse_id: 'ZC-INTERDITE',
           heure_evisceration: '23:59',
-          // Seul identifiant de personne conservé : celui à qui redemander la saisie.
           examinateur_initial_user_id: 'user-examinateur',
           next_owner_user_id: '[masqué]',
           premier_detenteur_name_cache: '[masqué]',
@@ -543,7 +533,6 @@ describe('POST /sync — refus définitifs vs erreurs transitoires', () => {
     const extra = vi.mocked(capture).mock.calls[0][1]?.extra;
     expect(extra.rejectedBodies).toHaveLength(20);
     expect(extra.bodiesTruncated).toBe(true);
-    // Le compte reste exact : c'est lui qui dit combien de payloads manquent.
     expect(extra.count).toBe(25);
   });
 
@@ -613,8 +602,6 @@ describe('POST /sync — shouldRemoveFromLocalStore', () => {
     ]);
   });
 
-  // Renvoi à l'expéditeur : l'écriture passe, mais vide next_owner_* et sort la carcasse du périmètre
-  // de son auteur. Sans retrait immédiat, le client la repousserait pour se la faire refuser.
   test('une carcasse existante que l’écriture sort du périmètre est retirée sans être refusée', async () => {
     vi.mocked(prisma.carcasse.findMany).mockResolvedValueOnce([
       { zacharie_carcasse_id: 'ZC-1', fei_numero: 'F1' },
@@ -839,8 +826,6 @@ describe('POST /sync — carcasse modification requests', () => {
       transitionedTo: CarcasseModificationRequestStatus.APPROVED,
       justCancelled: false,
     });
-    // carcasse.findMany sert deux fois : pré-chargement d'existence (batch), puis refresh
-    // post-side-effects qui renvoie la carcasse renommée.
     vi.mocked(prisma.carcasse.findMany)
       .mockResolvedValueOnce([{ zacharie_carcasse_id: 'C1', numero_bracelet: 'OLD' } as any])
       .mockResolvedValueOnce([{ zacharie_carcasse_id: 'C1', numero_bracelet: 'NEW' } as any]);
@@ -857,7 +842,6 @@ describe('POST /sync — carcasse modification requests', () => {
     );
 
     expect(res.status).toBe(200);
-    // The refreshed (post-side-effect) carcasse overrides the earlier saved one.
     expect(res.body.data.carcasses).toEqual([{ zacharie_carcasse_id: 'C1', numero_bracelet: 'NEW' }]);
   });
 
@@ -921,11 +905,8 @@ describe('POST /sync — carcasse modification requests', () => {
 
     expect(res.status).toBe(200);
     expect(capture).toHaveBeenCalled();
-    // Both M-BAD attempt and M-OK get tried.
     expect(syncCarcasseModifRequest).toHaveBeenCalledTimes(2);
-    // Subsequent log step still runs.
     expect(prisma.log.createMany).toHaveBeenCalledOnce();
-    // Response carries the successful one.
     expect(res.body.data.carcasseModifRequests.map((r: any) => r.id)).toEqual(['M-OK']);
   });
 });

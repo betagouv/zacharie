@@ -8,8 +8,6 @@ import {
   statutAnalyseLabels,
 } from '@app/utils/trichine';
 
-/** Cellules communes aux listes du laboratoire (pools, échantillons). */
-
 export function dateFmt(value: string | Date | null): string {
   return value ? dayjs(value).format('DD/MM/YYYY') : '—';
 }

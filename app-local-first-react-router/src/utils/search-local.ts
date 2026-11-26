@@ -5,10 +5,6 @@ import type { FeiAndCarcasseAndIntermediaireIds } from '@app/types/carcasses-int
 import { isRoleCircuitCourt } from './circuit-court';
 import { getTransmissionId, getTransmissionLinkFromCarcasse } from './get-transmission-id';
 
-// All the data we need is already downloaded and scoped to the current user
-// (load-carcasses returns only the carcasses/feis this user can read), so search
-// runs entirely locally — no backend round-trip.
-
 type RolePrefix = 'chasseur' | 'etg' | 'collecteur' | 'svi' | 'circuit-court';
 
 function getRolePrefix(user: User): RolePrefix {
@@ -24,7 +20,6 @@ function carcasseRedirectUrl(prefix: RolePrefix, carcasse: Carcasse): string {
   if (prefix === 'svi') {
     return `/app/svi/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`;
   }
-  // ETG, collecteur et circuit-court naviguent vers une transmission (fiche + prochain détenteur), pas vers la fiche seule
   if (prefix === 'etg' || prefix === 'collecteur' || prefix === 'circuit-court') {
     return `/app/${prefix}/fei/${getTransmissionLinkFromCarcasse(carcasse)}`;
   }
@@ -55,7 +50,6 @@ function carcasseToResultItem(
   };
 }
 
-// A carcasse is searchable unless it's deleted, refused or declared missing by an intermediaire.
 function isCarcasseSearchable(carcasse: Carcasse): boolean {
   if (carcasse.deleted_at) return false;
   if (carcasse.intermediaire_carcasse_refus_intermediaire_id) return false;
@@ -78,7 +72,6 @@ export function searchLocally(
   const prefix = getRolePrefix(user);
   const allCarcasses = Object.values(carcasses);
 
-  // 1. Search by carcasse numero_bracelet
   const byBracelet = allCarcasses
     .filter(isCarcasseSearchable)
     .filter((carcasse) => carcasse.numero_bracelet?.toLowerCase().includes(query));
@@ -91,7 +84,6 @@ export function searchLocally(
     };
   }
 
-  // 2. Search by carcasseIntermediaire commentaire, resolved to its carcasse
   const matchingZacharieIds = new Set(
     Object.values(carcassesIntermediaireById)
       .filter((ci) => ci.commentaire?.toLowerCase().includes(query))
@@ -111,15 +103,11 @@ export function searchLocally(
     }
   }
 
-  // 3. Search by FEI numero
   const byNumero = Object.values(feis).filter(
     (fei) => !fei.deleted_at && fei.numero?.toLowerCase().includes(query)
   );
 
   if (byNumero.length) {
-    // ETG, collecteur, SVI et circuit-court naviguent vers une transmission : une même fiche peut se
-    // diviser en plusieurs transmissions (Premier Détenteur dispatchant à plusieurs Prochains
-    // Détenteurs), on émet donc un résultat par transmission, dérivé des carcasses.
     if (prefix === 'etg' || prefix === 'collecteur' || prefix === 'svi' || prefix === 'circuit-court') {
       const matchedNumeros = new Set(byNumero.map((fei) => fei.numero));
       const carcasseByTransmissionId: Record<string, Carcasse> = {};

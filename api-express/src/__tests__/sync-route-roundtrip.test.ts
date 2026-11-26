@@ -5,22 +5,6 @@ import syncRouter from '~/controllers/sync';
 import prisma from '~/prisma';
 import { Carcasse, Fei, UserRoles } from '@prisma/client';
 
-// Integration test for POST /sync. Unlike sync-route.test.ts which mocks
-// syncFei / syncCarcasse / syncCarcasseIntermediaire to pin routing behavior,
-// this file exercises those three utils end-to-end against mocked prisma.
-// It pins the response-shape contract that the client's syncData() depends
-// on for store hydration: the client wholesale-replaces local Zustand
-// entries with res.data, keyed by fei.numero, carcasse.zacharie_carcasse_id,
-// and the (fei_numero, zacharie_carcasse_id, intermediaire_id) composite for
-// intermediaires. If any of those identity fields go missing from the
-// response, the client silently drops the record.
-//
-// Replaces the deleted
-// app-local-first-react-router/__tests__/carcasse-load-and-merge.test.ts:
-// last-write-wins-by-updated_at merge logic moved server-side, but the
-// composite-id keying and per-entity identity invariants the old test
-// guarded are still load-bearing for offline-edit safety.
-
 vi.mock('~/utils/fei-side-effects', () => ({
   runFeiUpdateSideEffects: vi.fn().mockResolvedValue(undefined),
 }));
@@ -32,8 +16,6 @@ vi.mock('~/third-parties/sentry', () => ({
   captureException: vi.fn(),
 }));
 
-// Ce fichier pin le contrat de forme de la réponse. L'autorisation d'écriture est couverte par
-// permissions-sync-write.test.ts ; ici on neutralise le périmètre pour ne pas perturber les mocks.
 const { permissiveScope } = vi.hoisted(() => ({
   permissiveScope: {
     entityIds: ['entity-A', 'entity-B'],
@@ -82,7 +64,6 @@ const baseCarcasse: Partial<Carcasse> = {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(prisma.fei.findMany).mockResolvedValue([]);
-  // syncCarcasseIntermediaire n'accepte une entité que si l'utilisateur en est membre.
   vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValue([
     { entity_id: 'entity-A' },
     { entity_id: 'entity-B' },
@@ -91,22 +72,16 @@ beforeEach(() => {
 
 describe('POST /sync — round-trip (real utils against mocked prisma)', () => {
   test('fresh FEI + carcasse + intermediaire → response keys match client store hydration', async () => {
-    // syncFei: no existing → create. Subsequent findUnique calls (carcasse + intermediaire
-    // utils both look up the parent FEI) return the saved row.
     vi.mocked(prisma.fei.findUnique)
       .mockResolvedValueOnce(null)
       .mockResolvedValue(baseFei as any);
     vi.mocked(prisma.fei.create).mockResolvedValueOnce(baseFei as any);
 
-    // syncCarcasse ne requête plus la carcasse : le batch d'existence (carcasse.findMany) renvoie
-    // vide → chemin create, puis update applique les champs hasOwnProperty.
     vi.mocked(prisma.carcasse.findMany).mockResolvedValue([]);
-    // carcasse.findFirst reste mocké pour la recherche de la carcasse parente par syncCarcasseIntermediaire.
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValue(baseCarcasse as any);
     vi.mocked(prisma.carcasse.create).mockResolvedValueOnce(baseCarcasse as any);
     vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(baseCarcasse as any);
 
-    // syncCarcasseIntermediaire: upsert returns the saved row.
     const savedCi = {
       fei_numero: FEI,
       zacharie_carcasse_id: ZC,
@@ -118,7 +93,6 @@ describe('POST /sync — round-trip (real utils against mocked prisma)', () => {
     };
     vi.mocked(prisma.carcasseIntermediaire.upsert).mockResolvedValueOnce(savedCi as any);
 
-    // fei.findMany sert deux fois : pré-chargement des fiches des carcasses, puis re-fetch peuplé.
     vi.mocked(prisma.fei.findMany).mockResolvedValue([baseFei as any]);
 
     const res = await authed(
@@ -142,25 +116,19 @@ describe('POST /sync — round-trip (real utils against mocked prisma)', () => {
 
     expect(res.status).toBe(200);
 
-    // Every section must come back with the field the client uses as its store key
-    // (see app-local-first-react-router/src/zustand/store.ts syncData merge).
     expect(res.body.data.feis[0].numero).toBe(FEI);
     expect(res.body.data.carcasses[0].zacharie_carcasse_id).toBe(ZC);
 
-    // Client recomputes the composite id from these three — all three must round-trip.
     const ci = res.body.data.carcassesIntermediaires[0];
     expect(ci.fei_numero).toBe(FEI);
     expect(ci.zacharie_carcasse_id).toBe(ZC);
     expect(ci.intermediaire_id).toBe('INT-1');
 
-    // is_synced=true on the response is how the client clears its dirty flag after wholesale replace.
     expect(res.body.data.carcasses[0].is_synced).toBe(true);
     expect(res.body.data.carcassesIntermediaires[0].is_synced).toBe(true);
   });
 
   test('two intermediaires for same (fei, carcasse), different intermediaire_id → distinct rows in response and distinct upsert keys', async () => {
-    // The old client-side setFeiInStore guarded this with a composite-id map.
-    // Server side, the same invariant lives in the upsert `where` clause.
     vi.mocked(prisma.fei.findUnique).mockResolvedValue(baseFei as any);
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValue(baseCarcasse as any);
     vi.mocked(prisma.carcasseIntermediaire.upsert)
@@ -215,7 +183,6 @@ describe('POST /sync — round-trip (real utils against mocked prisma)', () => {
       'INT-B',
     ]);
 
-    // Pin the upsert composite key — what makes the two rows distinct on the server side.
     const upsertCalls = vi.mocked(prisma.carcasseIntermediaire.upsert).mock.calls;
     expect(upsertCalls).toHaveLength(2);
     expect(upsertCalls[0][0].where).toEqual({

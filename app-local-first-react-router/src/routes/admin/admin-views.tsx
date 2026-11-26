@@ -5,7 +5,6 @@ export type AdminView = {
   params: Record<string, string>;
 };
 
-// Clé de comparaison : paramètres triés, valeurs de liste triées, sans les paramètres ignorés.
 function viewKey(params: URLSearchParams, ignored: Array<string>) {
   return [...params.entries()]
     .filter(([key, value]) => value && !ignored.includes(key))
@@ -14,8 +13,6 @@ function viewKey(params: URLSearchParams, ignored: Array<string>) {
     .join('&');
 }
 
-// Vues prédéfinies d'une liste admin : chaque vue est un jeu de filtres dans l'URL.
-// `keep` : paramètres conservés au changement de vue et ignorés pour savoir quelle vue est active (le tri).
 export default function AdminViews({ views, keep = [] }: { views: Array<AdminView>; keep?: Array<string> }) {
   const { searchParams, replaceFilters } = useUrlFilters();
   const ignored = ['page', ...keep];

@@ -4,26 +4,22 @@ import { parse } from 'csv-parse';
 import { EntityRelationType, EntityTypes, Prisma, UserRoles } from '@prisma/client';
 import prisma from '~/prisma';
 
-// le fichier est un export Excel de l'administration - non public
 function insertCCGsDéclarésInDB() {
   const sourcePath = path.resolve('../../ccgs-déclarés.csv');
 
-  // Check if file exists
   if (!fs.existsSync(sourcePath)) {
     console.error(`CSV file not found at: ${sourcePath}`);
     return;
   }
 
-  // Read and parse CSV file
   fs.createReadStream(sourcePath)
     .pipe(
       parse({
-        columns: true, // Use first row as column headers
+        columns: true,
         skip_empty_lines: true,
       })
     )
     .on('data', async (row) => {
-      // |CCG:82-CCG-2|LIBRE:82-CCG-02| -> 82-CCG-2
       const rawNumeroDdecpp = row[' Unité Activité (UA) :\nIdentifier métier (Type : Valorisation)'];
       const numeroDdecpp = rawNumeroDdecpp.split('|')[1].split(':')[1];
 
@@ -43,7 +39,6 @@ function insertCCGsDéclarésInDB() {
         zacharie_compatible: true,
       };
       if (!numeroDdecpp) {
-        // console.log('No numeroDdecpp found for row:', row);
         return;
       }
       const existingEntity = await prisma.entity.findFirst({
@@ -73,24 +68,21 @@ function insertCCGsDéclarésInDB() {
     });
 }
 
-// https://fichiers-publics.agriculture.gouv.fr/dgal/ListesOfficielles/SSA1_VIAN_GIB_SAUV.txt
 function insertCCGsAgréésInDB() {
   const sourcePath = path.resolve('../../ccgs-agréés.csv');
 
-  // Check if file exists
   if (!fs.existsSync(sourcePath)) {
     console.error(`CSV file not found at: ${sourcePath}`);
     return;
   }
 
-  // Read and parse CSV file
   fs.createReadStream(sourcePath)
     .pipe(
       parse({
-        columns: true, // Use first row as column headers
+        columns: true,
         skip_empty_lines: true,
-        relax_column_count: true, // Allow inconsistent column counts
-        skip_records_with_error: false, // Skip problematic records instead of failing
+        relax_column_count: true,
+        skip_records_with_error: false,
       })
     )
     .on('data', async (row) => {
@@ -107,7 +99,6 @@ function insertCCGsAgréésInDB() {
         zacharie_compatible: true,
       };
       if (!cleanRow.numero_ddecpp) {
-        // console.log('No numeroDdecpp found for row:', row);
         return;
       }
       const existingEntity = await prisma.entity.findFirst({
@@ -140,6 +131,5 @@ function insertCCGsAgréésInDB() {
     });
 }
 
-// Call the function
 insertCCGsAgréésInDB();
 insertCCGsDéclarésInDB();

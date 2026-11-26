@@ -9,15 +9,12 @@ test.beforeEach(async () => {
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Scenario 177 — Le collecteur ajoute une carcasse manquante, comme l'ETG (scénario 64) :
-// la carcasse apparaît tout de suite dans sa liste, l'examinateur initial signe son examen.
 test('Ajout carcasse manquante : collecteur ajoute → examinateur signe → carcasse rejoint la fiche', async ({
   page,
 }) => {
   const feiId = 'ZACH-20250707-QZ6E0-245242';
   const newBracelet = 'MM-ADDED-362';
 
-  // ----- Step 1: le collecteur ajoute la carcasse -------------------------------------------------
   await connectWith(page, 'collecteur-pro@example.fr');
   await page.getByRole('link', { name: new RegExp(feiId) }).click();
   await expect(page).toHaveURL(new RegExp(`/app/collecteur/fei/${feiId}`));
@@ -36,7 +33,6 @@ test('Ajout carcasse manquante : collecteur ajoute → examinateur signe → car
   });
   await expect(page.getByText("Carcasse ajoutée après l'examen initial").first()).toBeVisible();
 
-  // ----- Step 2: l'examinateur initial signe l'examen ---------------------------------------------
   await logoutAndConnect(page, 'examinateur@example.fr');
   await expect(page.getByRole('heading', { name: 'Modifications signalées sur vos carcasses' })).toBeVisible({
     timeout: 10000,
@@ -51,7 +47,6 @@ test('Ajout carcasse manquante : collecteur ajoute → examinateur signe → car
   await page.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page).toHaveURL(/\/app\/chasseur\/demandes-de-modification$/);
 
-  // ----- Step 3: côté collecteur, la carcasse est un membre signé de la fiche ---------------------
   await logoutAndConnect(page, 'collecteur-pro@example.fr');
   await page.getByRole('link', { name: new RegExp(feiId) }).click();
   await expect(page.getByRole('button', { name: `Chevreuil N° ${newBracelet}` })).toBeVisible({

@@ -38,7 +38,6 @@ describe('searchVilles', () => {
     expect(searchVilles('ste').every((result) => / STE /.test(result))).toBe(true);
   });
   it('trouve aussi les communes que le référentiel écrit « Saint » en entier', () => {
-    // Le référentiel abrège presque toujours, mais pas « LE SAINT » ni « SAINT EXUPERY AEROPORT ».
     expect(searchVilles('le st')).toContain('56110 LE SAINT');
     expect(searchVilles('st exupery')).toContain('69125 SAINT EXUPERY AEROPORT - COLOMBIER SAUGNIEU');
     expect(searchVilles('terre ste')).toContain('97410 TERRE SAINTE - ST PIERRE');
@@ -51,7 +50,6 @@ describe('searchVilles', () => {
     expect(searchVilles('321').every((result) => result.startsWith('321'))).toBe(true);
   });
   it('cherche sur le seul nom quand le code postal ne donne rien', () => {
-    // « 75000 » n'existe pas dans le référentiel, « 34000 » n'est pas celui de Paris.
     expect(searchVilles('75000 Paris')).toContain('75001 PARIS 01');
     expect(searchVilles('34000 Paris')).toContain('75001 PARIS 01');
   });
@@ -66,9 +64,6 @@ describe('searchVilles', () => {
   });
 });
 
-// villes.json est importé dans le bundle : les clés y sont abrégées (c = code postal, v = ville)
-// et « code postal + ville » est recomposé à la lecture. Ces tests verrouillent ce format, qu'un
-// passage de data/update-villes.js pourrait faire régresser sans qu'aucun autre test ne casse.
 describe('référentiel villes.json', () => {
   it('contient toutes les communes', () => {
     expect(villes).toHaveLength(39192);

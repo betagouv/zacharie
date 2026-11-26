@@ -6,8 +6,6 @@ import webpush from 'web-push';
 import * as Sentry from '@sentry/node';
 import queueSendNotificationToUser from '~/service/notifications';
 
-// IS_TEST court-circuite la branche EMAIL avant l'envoi : on le force à false pour tester le vrai chemin.
-// SENTRY_KEY est lu par third-parties/sentry.ts, importé via third-parties/expo-push.ts.
 vi.mock('~/config', () => ({ IS_TEST: false, SENTRY_KEY: '' }));
 vi.mock('~/third-parties/brevo', () => ({
   sendEmail: vi.fn().mockResolvedValue({ messageId: 'msg-1' }),
@@ -82,7 +80,6 @@ describe('sendNotificationToUser — canal email', () => {
     expect(sendTemplateEmail).not.toHaveBeenCalled();
   });
 
-  // Le notificationLog porte la dédup : l'écrire après un envoi raté bloquerait le renvoi pour toujours.
   test('n’écrit pas de notificationLog quand l’envoi inline échoue', async () => {
     vi.mocked(sendEmail).mockResolvedValue(false);
 
@@ -192,7 +189,6 @@ describe('sendNotificationToUser — canaux push et email', () => {
     expect(sendEmail).toHaveBeenCalled();
   });
 
-  // Le push a son propre wording : il ne doit jamais reprendre le sujet ni le texte de l'email.
   test('envoie le wording push, pas le contenu de l’email', async () => {
     await queueSendNotificationToUser({ ...notification, user: pushAndEmailUser });
 
@@ -204,7 +200,6 @@ describe('sendNotificationToUser — canaux push et email', () => {
     );
   });
 
-  // La dédup est par canal : un push déjà envoyé ne doit pas empêcher l'email.
   test('envoie l’email même quand le push a déjà été envoyé', async () => {
     vi.mocked(prisma.notificationLog.findFirst).mockImplementation((({ where }: any) =>
       Promise.resolve(where.type === 'PUSH' ? { id: 'log-1' } : null)) as any);
@@ -223,8 +218,6 @@ describe('sendNotificationToUser — canaux push et email', () => {
     expect(sendEmail).toHaveBeenCalled();
   });
 
-  // On retire les tokens périmés en SQL sur la valeur courante, pour ne pas écraser un token
-  // enregistré depuis le chargement du user.
   test('retire les tokens périmés sans réécrire le tableau du user en mémoire', async () => {
     vi.mocked(sendExpoPushNotification).mockResolvedValue({
       sent: 0,
@@ -254,7 +247,6 @@ describe('sendNotificationToUser — web push', () => {
     vi.mocked(prisma.notificationLog.create).mockResolvedValue({} as any);
   });
 
-  // Un abonnement expiré (410) est retiré sans remonter d'erreur, l'autre reçoit le push.
   test('retire un abonnement expiré sans remonter d’erreur à Sentry', async () => {
     vi.mocked(webpush.sendNotification).mockImplementation((async (subscription: any) => {
       if (subscription.endpoint.endsWith('expired')) {

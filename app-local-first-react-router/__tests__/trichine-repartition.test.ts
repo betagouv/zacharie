@@ -9,10 +9,6 @@ import {
   repartirParGroupe,
 } from '@app/utils/trichine-repartition';
 
-// Répartition automatique d'un prélèvement en lot : 19 carcasses et 100 g maximum par pool
-// (règlement UE 2015/1375, cf doc/trichine.md §9). L'ordre d'entrée est conservé pour que
-// la répartition reste prévisible et réordonnable par l'utilisateur.
-
 const lot = (nombre: number, masse = 5) =>
   Array.from({ length: nombre }, (_, index) => ({
     zacharie_carcasse_id: `c${index + 1}`,
@@ -34,7 +30,6 @@ describe('repartirEnPools', () => {
   });
 
   test('coupe aussi sur la masse', () => {
-    // 20 g par carcasse : 5 carcasses saturent les 100 g avant d'atteindre 19
     const pools = repartirEnPools(lot(12, 20));
     expect(pools.map((pool) => pool.length)).toEqual([5, 5, 2]);
   });
@@ -104,8 +99,6 @@ describe('reconcilierPools', () => {
   });
 });
 
-// 2e intention : les limites changent de rang. Une fille regroupe au plus 5 carcasses du pool
-// mère, une petite-fille en isole une seule avec 50 g minimum (cf doc/trichine.md §9).
 describe('limites des pools de 2e intention', () => {
   test('un pool fille coupe à 5 carcasses, sans limite de masse', () => {
     const pools = repartirEnPools(lot(11, 20), LIMITES_POOL_FILLE);

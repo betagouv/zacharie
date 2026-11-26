@@ -13,9 +13,6 @@ type CarcasseIntermediaireWithId = CarcasseIntermediaire & { id: CarcassesInterm
 
 const NO_INTERMEDIAIRES: Array<CarcasseIntermediaireWithId> = [];
 
-// Index carcasse → intermédiaires, construit une seule fois par version du store et partagé par
-// toutes les cartes : sans lui, chaque carte parcourait tous les intermédiaires de l'utilisateur
-// (300 cartes × 20 000 intermédiaires ≈ 1 s à chaque modification du store).
 const indexByStoreVersion = new WeakMap<
   Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>,
   Map<string, Array<CarcasseIntermediaireWithId>>
@@ -41,7 +38,6 @@ function getIndexByCarcasse(byId: Record<FeiAndCarcasseAndIntermediaireIds, Carc
   return index;
 }
 
-// Le tableau renvoyé est partagé entre les appelants : ne pas le modifier.
 export function filterCarcassesIntermediairesForCarcasse(
   byId: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>,
   zacharie_carcasse_id: string
@@ -101,11 +97,6 @@ export function filterFeiIntermediaires(
         intermediaire_prochain_detenteur_id_cache: ci.intermediaire_prochain_detenteur_id_cache,
       };
     }
-    // Les champs de décision de transmission (prochain détenteur, dépôt, n° de bon de réception) ne
-    // sont posés que sur les
-    // carcasses prises en charge, jamais sur les refusées/manquantes. Le représentant doit donc
-    // retenir la valeur non-nulle de n'importe quelle carcasse de l'intermédiaire, quel que soit
-    // l'ordre d'itération (sinon une carcasse refusée en tête masque la décision réelle).
     const rep = seen[ci.intermediaire_id];
     if (ci.intermediaire_prochain_detenteur_id_cache != null) {
       rep.intermediaire_prochain_detenteur_id_cache = ci.intermediaire_prochain_detenteur_id_cache;
@@ -119,6 +110,5 @@ export function filterFeiIntermediaires(
       rep.numero_bon_reception = ci.numero_bon_reception;
     }
   }
-  // ordre chronologique décroissant, du plus récent au plus ancien
   return Object.values(seen).sort((a, b) => (dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1));
 }

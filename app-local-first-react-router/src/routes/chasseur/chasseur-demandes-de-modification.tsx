@@ -6,9 +6,6 @@ import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { CarcasseModificationRequestStatus, CarcasseModificationRequestType } from '@prisma/client';
 
-// Page dashboard listant les demandes en cours où l'utilisateur est l'examinateur initial.
-// Les demandes sont indicatives : elles ne bloquent ni l'intermédiaire ni le SVI.
-// Le lien des notifications email/SMS/push pointe vers /app/chasseur/demandes-de-modification.
 export default function ChasseurDemandesDeModification() {
   const user = useUser((state) => state.user);
   const modifRequestsByCarcasseId = useZustandStore((state) => state.modifRequestsByCarcasseId);
@@ -21,7 +18,6 @@ export default function ChasseurDemandesDeModification() {
       .flat()
       .filter((r) => r.status === CarcasseModificationRequestStatus.PENDING && !r.deleted_at)
       .filter((r) => {
-        // Filter to those where the underlying carcasse is examined by this user.
         const carcasse = carcasses[r.zacharie_carcasse_id];
         return carcasse?.examinateur_initial_user_id === user.id;
       })

@@ -7,10 +7,6 @@ export type ImportRecap = {
   ftpsCloturees: Array<string>;
 };
 
-/**
- * Récapitulatif de ce que l'import des lignes cochées va faire dans Zacharie.
- * Une fiche reçue se clôture quand tous ses pools sans résultat en reçoivent un dans l'import.
- */
 export function computeImportRecap(selectedRows: Array<LimsResultRow>): ImportRecap {
   const carcasses: Record<PoolResultEffet, number> = {
     liberees: 0,

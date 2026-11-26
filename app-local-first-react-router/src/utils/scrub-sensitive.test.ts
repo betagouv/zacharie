@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { scrubSensitive, scrubString } from './scrub-sensitive';
 
-// valeur fictive construite à l'exécution pour ne pas être prise pour un vrai secret par les scanners
 const VALEUR = ['valeur', 'fictive'].join('-');
 const MASQUE = '[masqué]';
 

@@ -41,11 +41,9 @@ export default function MotDePasseOublie() {
     if (response.message) {
       window.scrollTo(0, 0);
     }
-    // forget-password ne retourne pas d'utilisateur connecté, juste un message de succès
     setUserResponse(response);
   };
 
-  // Helper function to safely access error message
   const getErrorMessage = (field: string): string => {
     if (typeof userResponse === 'object' && userResponse !== null && 'error' in userResponse) {
       if (!userResponse.error) {

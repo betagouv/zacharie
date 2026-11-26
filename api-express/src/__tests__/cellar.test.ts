@@ -1,7 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { NoSuchKey, S3Client } from '@aws-sdk/client-s3';
 
-// Valeurs factices : rend IS_CELLAR_CONFIGURED vrai sans dépendre de l'env de la machine
 vi.mock('~/config', async (importOriginal) => ({
   ...(await importOriginal<typeof import('~/config')>()),
   CELLAR_HOST: 'cellar.test',

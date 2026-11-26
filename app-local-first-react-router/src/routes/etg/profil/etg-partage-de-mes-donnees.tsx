@@ -306,7 +306,6 @@ function ApprovalStatusSelector({
   refreshApiApprovals: () => void;
 }) {
   const [status, setStatus] = useState<Approval['status']>(approval?.status);
-  // seul un administrateur de l'entité peut modifier l'accord donné au nom de l'entité
   if (entity && entity.relationStatus !== EntityRelationStatus.ADMIN) {
     return (
       <p className="m-0 text-sm">

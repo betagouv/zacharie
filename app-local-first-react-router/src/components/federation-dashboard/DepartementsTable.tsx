@@ -8,10 +8,6 @@ export interface CircuitBucket {
   tauxSaisie: number | null;
 }
 
-/**
- * Pour le petit gibier une ligne de carcasse est un lot : `agree`/`nonAgree`/`domestique`
- * comptent les lots, les champs `*Animaux` comptent les animaux qu'ils contiennent.
- */
 export interface PetitGibierBucket extends CircuitBucket {
   agreeAnimaux: number;
   nonAgreeAnimaux: number;
@@ -50,7 +46,6 @@ interface Props {
   valorisation: DepartementRow[];
   formation: FormationRow[];
   showSearch?: boolean;
-  /** Le tableau de bord d'une FDC est à `${basePath}/federation-fdc-<code>` (ids fixes des fédérations). */
   basePath: string;
 }
 
@@ -94,7 +89,6 @@ interface Column {
   key: NumericKey;
   label: string;
   render?: (row: MergedRow) => ReactNode;
-  /** Colonne agrégeable : un taux ne se somme pas, il vaut « — » dans la ligne Total. */
   summable: boolean;
 }
 
@@ -133,8 +127,6 @@ const GROUPS: Group[] = [
   },
 ];
 
-// Pas de total : un examinateur actif dans plusieurs départements compterait plusieurs fois.
-// Le total dédoublonné est la tuile « Examinateurs actifs » en haut du tableau de bord.
 const EXAMINATEURS_COLUMN: Column = {
   key: 'examinateursActifs',
   label: 'Examinateurs actifs',
@@ -168,7 +160,6 @@ export default function DepartementsTable({ valorisation, formation, showSearch 
         const cmp = a.code.localeCompare(b.code);
         return sortDesc ? -cmp : cmp;
       }
-      // Un département sans donnée (taux null) reste en bas quel que soit le sens du tri.
       const aVal = a[sortKey] ?? -Infinity;
       const bVal = b[sortKey] ?? -Infinity;
       const cmp = aVal - bVal;
@@ -196,7 +187,6 @@ export default function DepartementsTable({ valorisation, formation, showSearch 
       return;
     }
     setSortKey(key);
-    // Un classement se lit du plus gros au plus petit, sauf pour le code département.
     setSortDesc(key !== 'code');
   };
 

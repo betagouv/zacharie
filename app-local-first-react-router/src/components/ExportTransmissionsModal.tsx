@@ -28,8 +28,6 @@ export default function ExportTransmissionsModal({ transmissionsIds, storageKey 
   const { onExportToXlsx, isExporting } = useExportTransmissions();
   const transmissions = useTransmissions();
 
-  // Nombre de carcasses qui seront effectivement exportées (mêmes exclusions que l'export :
-  // supprimées / manquantes / refusées), 1 ligne = 1 carcasse.
   const feiNumbersKey = transmissionsIds.join('|');
   const carcassesCount = useMemo(() => {
     let count = 0;
@@ -60,10 +58,6 @@ export default function ExportTransmissionsModal({ transmissionsIds, storageKey 
     DEFAULT_EXPORT_COLUMN_KEYS
   );
 
-  // Toute modification des colonnes invalide le message de succès précédent.
-  // NB: useLocalStorage renvoie un nouveau tableau à chaque rendu, donc on dépend
-  // d'une signature primitive (sinon l'effet se déclencherait à chaque rendu et
-  // effacerait aussitôt l'état de succès).
   const selectedKeysSignature = selectedKeys.join('|');
   useEffect(() => {
     setExportSucceeded(false);

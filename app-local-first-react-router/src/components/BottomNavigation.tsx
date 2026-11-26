@@ -125,7 +125,6 @@ function NavButton({ item, isOverflow }: { item: NavItem; isOverflow?: boolean }
     return null;
   }
 
-  // "Nouvelle fiche" has onClick only, no `to`
   if (onClick && !to) {
     return (
       <button

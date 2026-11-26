@@ -45,12 +45,12 @@ router.post(
         data: {
           name: body[Prisma.ApiKeyScalarFieldEnum.name],
           slug_for_context: slugify(body[Prisma.ApiKeyScalarFieldEnum.name], {
-            replacement: '-', // replace spaces with replacement character
-            remove: undefined, // remove colons and parentheses
-            lower: true, // convert to lower case, defaults to `false`
-            strict: true, // strip special characters except replacement, defaults to `false`
+            replacement: '-',
+            remove: undefined,
+            lower: true,
+            strict: true,
             locale: 'fr',
-            trim: true, // trim leading and trailing replacement chars, defaults to `true`
+            trim: true,
           }),
           description: body[Prisma.ApiKeyScalarFieldEnum.description],
           private_key: crypto.randomBytes(32).toString('hex'),

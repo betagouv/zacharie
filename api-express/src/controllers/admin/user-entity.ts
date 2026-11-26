@@ -11,9 +11,6 @@ import { requestCarcassesReload } from '~/utils/carcasses-reload';
 
 const router: express.Router = express.Router();
 
-// Rattachement d'un utilisateur à une entité par l'équipe Zacharie : ajout, changement de statut, retrait.
-// Les utilisateurs et les admins d'entité passent par /user-entity.
-
 async function parseAdminUserEntityBody(req: RequestWithUser, res: express.Response<UserEntityResponse>) {
   const result = userEntitySchema.safeParse(req.body);
   if (!result.success) {
@@ -69,7 +66,6 @@ router.post(
 
     if (body.status) nextEntityRelation.status = body.status;
 
-    // rattachement direct : le premier utilisateur de l'entité en devient l'admin
     if (
       nextEntityRelation.status === EntityRelationStatus.MEMBER &&
       relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY

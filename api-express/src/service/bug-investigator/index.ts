@@ -11,7 +11,6 @@ import { executeInvestigatorTool, investigatorTools, listSchemaBlocks } from './
 
 const MAX_ITERATIONS = 40;
 const MAX_DURATION_MS = 15 * 60 * 1000;
-// les résultats d'outils des tours précédents sont raccourcis avant l'envoi, pour rester dans le contexte du modèle
 const PREVIOUS_TURNS_TOOL_RESULT_CHARS = 1500;
 
 function readLocalFile(relativePath: string) {
@@ -81,8 +80,6 @@ Pour les colonnes exactes d'une table ou les valeurs d'un enum, appelle describe
 Date du jour : ${dayjs().format('YYYY-MM-DD HH:mm')}.`;
 }
 
-// Le modèle d'enquête ne lit pas les images : le modèle de vision décrit une fois chaque nouvelle capture,
-// la description est gardée dans le message
 async function describeNewImages(messages: Array<BugInvestigationMessage>) {
   let changed = false;
   for (const message of messages) {
@@ -148,9 +145,6 @@ function isAnswer(message: BugInvestigationMessage) {
   return message.role === 'assistant' && !message.tool_calls?.length && !message.draft;
 }
 
-// Contrôle du premier rapport : les modèles rapides concluent trop tôt et citent du code qu'ils n'ont pas lu.
-// On renvoie le premier jet à Albert avec une liste de vérifications ; s'il n'a toujours lu aucun fichier
-// de code, on le renvoie une seconde fois.
 const MAX_REPORT_CONTROLS = 2;
 
 function hasReadCode(messages: Array<BugInvestigationMessage>) {
@@ -177,8 +171,6 @@ function buildReportControl(readCode: boolean) {
     .join('\n');
 }
 
-// on ne raccourcit que les tours terminés par une réponse d'Albert : un tour interrompu (erreur,
-// redémarrage) garde ses résultats complets, l'enquête en a encore besoin
 function shortenAnsweredTurns(messages: Array<BugInvestigationMessage>) {
   let lastAnswerIndex = -1;
   messages.forEach((message, index) => {
@@ -202,13 +194,10 @@ function formatLiveOutput({ reasoning, content }: { reasoning: string; content: 
   return text.length > LIVE_OUTPUT_MAX_CHARS ? `…${text.slice(-LIVE_OUTPUT_MAX_CHARS)}` : text;
 }
 
-// Répond au dernier message de l'utilisateur : Albert appelle des outils jusqu'à pouvoir répondre sans outil
 export async function runBugInvestigation(id: string) {
   const investigation = await prisma.bugInvestigation.findUniqueOrThrow({ where: { id } });
   const messages = investigation.messages as unknown as Array<BugInvestigationMessage>;
   const startedAt = Date.now();
-  // sauvegardes du texte en cours de streaming : une à la fois, et toujours terminées avant d'enregistrer
-  // l'étape, sinon une sauvegarde en retard réafficherait un texte périmé
   let liveOutputSave: Promise<unknown> = Promise.resolve();
   let lastLiveOutputSaveAt = 0;
   const saveLiveOutput = (state: { reasoning: string; content: string }) => {

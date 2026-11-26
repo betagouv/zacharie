@@ -20,8 +20,6 @@ test('94 - Profil circuit court : coordonnées, entreprise, utilisateurs accessi
   await expect(page).toHaveURL(/\/app\/circuit-court\/entreprise\/utilisateurs/);
   await expect(page.getByText(/commerce-de-detail@example\.fr/i).first()).toBeVisible({ timeout: 10000 });
 
-  // Profil (mes coordonnées / notifications)
   await page.goto('http://localhost:3290/app/circuit-court/profil/mes-coordonnees');
-  // TODO: verify exact profil sub-route
   await expect(page).toHaveURL(/\/app\/circuit-court\/profil/);
 });

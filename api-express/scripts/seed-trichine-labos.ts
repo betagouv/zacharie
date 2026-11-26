@@ -1,20 +1,7 @@
-/**
- * Seed de test trichine : un LVD, le LNR (ANSES) et un utilisateur LABORATOIRE pour chacun.
- *
- * Usage (base de dev locale) :
- *   cd api-express
- *   POSTGRESQL_ADDON_URI=postgres://... tsx ./scripts/seed-trichine-labos.ts
- *
- * Idempotent : relançable sans dupliquer (upsert sur ids/emails fixes).
- * Comptes créés : lvd@example.fr / lnr@example.fr — mot de passe : secret-secret
- *
- * NB : seed temporaire en attendant P12 (import annuaire DGAL + création par l'admin).
- */
 import { EntityRelationStatus, EntityRelationType, EntityTypes, UserRoles } from '@prisma/client';
 import prisma from '~/prisma';
 import { hashPassword } from '~/service/crypto';
 
-// Ids fixes lisibles (colonne String, pas de contrainte uuid) pour l'idempotence
 const LVD_ENTITY_ID = 'trichine-seed-lvd-test';
 const LNR_ENTITY_ID = 'trichine-seed-lnr-anses';
 

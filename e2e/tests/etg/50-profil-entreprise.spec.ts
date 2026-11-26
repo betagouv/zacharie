@@ -8,13 +8,11 @@ test.beforeEach(async () => {
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Scenario 50 — Profil entreprise : éditer SIRET/adresse → persisté.
 test('ETG édite les informations entreprise et les voit persistées', async ({ page }) => {
   await connectWith(page, 'etg-1@example.fr');
   await page.goto('http://localhost:3290/app/etg/entreprise/informations');
   await expect(page).toHaveURL(/\/app\/etg\/entreprise\/informations/);
 
-  // TODO: verify selector — noms de champs exacts peuvent varier.
   const adresse = page.getByRole('textbox', { name: /Adresse/i }).first();
   if (await adresse.isVisible().catch(() => false)) {
     await adresse.scrollIntoViewIfNeeded();

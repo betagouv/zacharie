@@ -3,18 +3,6 @@ import type { Locator, Page } from '@playwright/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Les specs 01 et 02 vérifient que les sections s'affichent. Celle-ci vérifie les chiffres,
-// et donc l'exclusion des comptes admin Zacharie des statistiques fédérations.
-//
-// Seed FEDERATION_STATS — trois fiches de la saison en cours, toutes prises en charge par
-// l'ETG (circuit agréé), chacune avec 3 carcasses grand gibier + 1 lot de 10 pigeons :
-//   - Allier (03), examinateur Marie Martin, 1 carcasse GG saisie
-//   - Ardèche (07), examinateur Marie Martin, aucune saisie
-//   - Allier (03), examinateur = compte admin Zacharie → EXCLUE des statistiques
-//   - Ain (01), examinateur Pierre Petit, fiche signée mais jamais transmise (sans carcasse)
-//     → Pierre Petit n'est PAS un examinateur actif
-// Toutes les autres fixtures du seed sont datées du 07/07/2025, hors saison en cours : elles
-// n'apparaissent jamais dans ces tableaux de bord.
 test.beforeAll(async () => {
   await resetDb('FEDERATION_STATS');
 });
@@ -23,14 +11,11 @@ function section(page: Page, heading: string) {
   return page.locator('section').filter({ has: page.getByRole('heading', { level: 2, name: heading }) });
 }
 
-// Les tuiles KPI sont des div sans rôle : la valeur est la div qui suit le libellé.
 function kpi(root: Locator, label: string | RegExp) {
   const text = typeof label === 'string' ? root.getByText(label, { exact: true }) : root.getByText(label);
   return text.locator('xpath=following-sibling::div[1]');
 }
 
-// « Anomalies signalées » est à la fois un libellé de tuile et un titre de camembert :
-// on part du sous-titre, qui lui est unique.
 function kpiFromSublabel(root: Locator, sublabel: string) {
   return root.getByText(sublabel, { exact: true }).locator('xpath=preceding-sibling::div[1]');
 }
@@ -55,38 +40,33 @@ test('FNC — chiffres nationaux, fiches du compte admin exclues', async ({ page
   });
   await expect(page.getByText(/^Saison \d{2}-\d{2}$/)).toBeVisible();
 
-  // Allier + Ardèche, sans la fiche admin : 2 × 3 carcasses GG et 2 × 10 animaux de petit gibier.
-  // Marie Martin examine dans les deux départements : elle ne compte qu'une fois.
   const activite = section(page, 'Activité de la saison');
   await expect(kpi(activite, 'Examinateurs actifs')).toHaveText('1');
   await expect(kpi(activite, 'Grand gibier')).toHaveText('6');
   await expect(kpi(activite, 'Petit gibier')).toHaveText('20');
 
-  // La fiche admin porte 3 saisies GG de plus : sans l'exclusion le taux de saisie serait
-  // de 44,4 % (4/9) au lieu de 16,7 % (1/6), et les anomalies passeraient de 4 à 6.
   const sanitaire = section(page, 'Suivi sanitaire grand gibier');
   await expect(kpi(sanitaire, 'Examinateurs actifs')).toHaveCount(0);
   await expect(kpiFromSublabel(sanitaire, "Anomalies signalées lors de l'examen initial")).toHaveText('4');
   await expect(kpi(sanitaire, /^Taux de saisie national saison \d{2}-\d{2}$/)).toHaveText('16.7%');
   await expect(kpi(sanitaire, 'Taux de saisie national 25-26')).toHaveText('23.9%');
 
-  // Le filtre par département n'est proposé qu'au périmètre national.
   await expect(page.getByPlaceholder('Filtrer par département')).toBeVisible();
 
   const allier = page.getByRole('row').filter({ hasText: 'Allier' });
   await expect(allier).toHaveCount(1);
   expect(await rowCells(allier)).toEqual([
     '03 Allier',
-    '1', // examinateurs actifs
-    '3', // GG agréé
-    '0', // GG non agréé
-    '0', // GG domestique
-    '3', // GG total
-    '33.3%', // GG taux de saisie
-    '10', // PG agréé (animaux)
+    '1',
+    '3',
     '0',
     '0',
-    '10', // PG total (animaux)
+    '3',
+    '33.3%',
+    '10',
+    '0',
+    '0',
+    '10',
     'Accéder au tableau de bord',
   ]);
 
@@ -107,17 +87,13 @@ test('FNC — chiffres nationaux, fiches du compte admin exclues', async ({ page
     'Accéder au tableau de bord',
   ]);
 
-  // La fiche de l'Ain n'a jamais été transmise : son examinateur n'est pas actif.
   const ain = page.getByRole('row').filter({ hasText: '01 Ain' });
   await expect(ain).toHaveCount(1);
   expect((await rowCells(ain))[1]).toBe('0');
 
-  // Ligne Total : un taux ne se somme pas, il vaut « — ». Les examinateurs non plus : Marie Martin,
-  // active dans deux départements, compterait deux fois.
   const total = page.getByRole('table').locator('tfoot').getByRole('row');
   expect(await rowCells(total)).toEqual(['Total', '—', '6', '0', '0', '6', '—', '20', '0', '0', '20', '']);
 
-  // La FNC accède au tableau de bord de chaque département.
   await allier.getByRole('link', { name: 'Accéder au tableau de bord' }).click();
   await expect(page).toHaveURL(/\/app\/federation\/tableau-de-bord\/federation-fdc-03$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Tableau de bord FDC Allier (03)' })).toBeVisible({
@@ -137,9 +113,6 @@ test("FDC — chiffres limités à son département, fiche admin de l'Allier exc
     timeout: 15000,
   });
 
-  // L'Allier porte deux fiches de forme identique : celle de Marie Martin et celle du compte
-  // admin. Sans l'exclusion on verrait 6 carcasses GG, 20 animaux de petit gibier,
-  // 2 examinateurs actifs et 4 anomalies.
   const activite = section(page, 'Activité de la saison');
   await expect(kpi(activite, 'Examinateurs actifs')).toHaveText('1');
   await expect(kpi(activite, 'Grand gibier')).toHaveText('3');
@@ -149,7 +122,6 @@ test("FDC — chiffres limités à son département, fiche admin de l'Allier exc
   await expect(kpiFromSublabel(sanitaire, "Anomalies signalées lors de l'examen initial")).toHaveText('2');
   await expect(kpi(sanitaire, /^Taux de saisie départemental saison \d{2}-\d{2}$/)).toHaveText('33.3%');
 
-  // Périmètre départemental : pas de détail par département.
   await expect(page.getByRole('heading', { level: 2, name: 'Détail par département' })).toHaveCount(0);
 });
 
@@ -160,9 +132,6 @@ test('FRC — chiffres limités aux départements de sa région', async ({ page 
     page.getByRole('heading', { level: 1, name: 'Tableau de bord FRC Auvergne-Rhône-Alpes' })
   ).toBeVisible({ timeout: 15000 });
 
-  // Auvergne-Rhône-Alpes couvre l'Allier et l'Ardèche : mêmes chiffres qu'au national,
-  // fiche admin toujours exclue. Tous les départements de la région ont une ligne, même sans carcasse.
-  // Marie Martin examine dans l'Allier et l'Ardèche : elle ne compte qu'une fois.
   const activite = section(page, 'Activité de la saison');
   await expect(kpi(activite, 'Examinateurs actifs')).toHaveText('1');
   await expect(kpi(activite, 'Grand gibier')).toHaveText('6');
@@ -171,12 +140,10 @@ test('FRC — chiffres limités aux départements de sa région', async ({ page 
   const sanitaire = section(page, 'Suivi sanitaire grand gibier');
   await expect(kpi(sanitaire, /^Taux de saisie régional saison \d{2}-\d{2}$/)).toHaveText('16.7%');
 
-  // L'Ain est dans la région, mais sa fiche n'a jamais été transmise : Pierre Petit n'est pas compté.
   const ain = page.getByRole('row').filter({ hasText: '01 Ain' });
   await expect(ain).toHaveCount(1);
   expect((await rowCells(ain))[1]).toBe('0');
 
-  // Périmètre régional : le détail par département est affiché, sans le filtre.
   await expect(page.getByRole('heading', { level: 2, name: 'Détail par département' })).toBeVisible();
   await expect(page.getByPlaceholder('Filtrer par département')).toHaveCount(0);
   await expect(page.getByRole('row').filter({ hasText: 'Ardèche' })).toHaveCount(1);

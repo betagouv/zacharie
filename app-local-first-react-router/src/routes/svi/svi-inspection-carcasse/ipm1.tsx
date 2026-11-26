@@ -49,7 +49,6 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
   const allCarcasses = useZustandStore((state) => state.carcasses);
   const carcasse = allCarcasses[params.zacharie_carcasse_id!];
   const transmission = useGetTransmissionFromCarcasse(carcasse);
-  // on ne met à jour que les carcasses du même groupe de transmission
   const carcasseIds = transmission.carcasses
     .filter(
       (c) =>
@@ -58,8 +57,6 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
     )
     .map((c) => c.zacharie_carcasse_id);
 
-  // Circuit agréé : pas d'acceptation d'un sanglier sans résultat trichine négatif (cf doc/trichine.md §6.2).
-  // Fail-closed : on bloque aussi tant que les analyses ne sont pas chargées.
   const trichineConcernee = TRICHINE_FEATURE_ENABLED && carcasse.espece === 'Sanglier';
   const trichine = useTrichineResultat(carcasse.zacharie_carcasse_id, trichineConcernee);
   const trichineBloqueAcceptation = trichineConcernee && !trichine.hasNegatif;
@@ -193,7 +190,6 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
       carcasse_intermediaire_id: null,
     });
     syncData('svi-ipm1-edit');
-    // TODO: vérifier qu'elles sont réellement bien enregistrées
     alert('IPM1 enregistrée');
   }
 
@@ -335,7 +331,6 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
                 min: 0,
                 required: true,
                 value: sviIpm1NombreAnimaux ?? '',
-                // max: Number(carcasse.nombre_d_animaux),
                 onChange: (e) => {
                   const clampedValue = Math.max(
                     0,

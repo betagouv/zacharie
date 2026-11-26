@@ -1,7 +1,6 @@
 import { Link } from 'react-router';
 import { Table } from '@codegouvfr/react-dsfr/Table';
 
-// Format unique du fichier d'import de résultats, lu par api-express/src/utils/lims-parse.ts
 const colonnes: Array<[string, string, string, string]> = [
   [
     'reference_pool',

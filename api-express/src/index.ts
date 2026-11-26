@@ -1,7 +1,6 @@
 import { config } from 'dotenv';
 
 if (process.env.NODE_ENV === 'test') {
-  // can't import IS_TEST from config.ts because it's not defined yet
   config({ path: '.env.test' });
 } else {
   config();
@@ -55,23 +54,16 @@ import proconnectRouter from './controllers/proconnect.ts';
 import mockProConnectRouter from './mock-proconnect.ts';
 import { mountE2eRoutes } from './utils/mount-e2e-routes.ts';
 import './cronjobs/index.ts';
-import './scripts/migrations.ts';
 
 import packageJson from '../package.json';
 
-// Put together a schema
 const app = express();
 
-// L'API est derrière le reverse proxy de Clever Cloud : req.ip doit être l'IP du client
-// (lue dans X-Forwarded-For), pas celle du proxy
 app.set('trust proxy', 1);
 
-// Gzip/brotli des réponses : les payloads JSON (ex: GET /carcasse ~13MB) sont très
-// compressibles et l'essentiel du coût côté client est le transfert. Doit être monté tôt.
 app.use(compression());
 
 app.use(
-  // logger('tiny', {
   logger(':method :url :status :res[content-length] - :response-time ms - :date[iso]', {
     skip: (req) => req.method === 'OPTIONS',
   })
@@ -87,17 +79,11 @@ if (sentryEnabled) {
     maxValueLength: 10000,
     release: VERSION,
     integrations: [
-      // enable HTTP calls tracing
       new Sentry.Integrations.Http({ tracing: true }),
-      // enable Express.js middleware tracing
       new Sentry.Integrations.Express({ app }),
-      // Automatically instrument Node.js libraries and frameworks
       ...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations(),
     ],
 
-    // Set tracesSampleRate to 1.0 to capture 100%
-    // of transactions for performance monitoring.
-    // We recommend adjusting this value in production
     tracesSampleRate: 0.01,
     ...SENTRY_SCRUB_OPTIONS,
   });
@@ -110,21 +96,14 @@ if (IS_STAGING) {
   app.use(
     cors({
       credentials: true,
-      origin: [
-        'https://zacharie.incubateur.net',
-        // 'http://127.0.0.1:3000', // Expo WebView local SPA server
-        ...(IS_REVIEW_APP ? [VITE_APP_URL] : []),
-      ],
+      origin: ['https://zacharie.incubateur.net', ...(IS_REVIEW_APP ? [VITE_APP_URL] : [])],
     })
   );
 } else if (IS_PRODUCTION) {
   app.use(
     cors({
       credentials: true,
-      origin: [
-        'https://zacharie.beta.gouv.fr',
-        'http://127.0.0.1:3000', // Expo WebView local SPA server
-      ],
+      origin: ['https://zacharie.beta.gouv.fr', 'http://127.0.0.1:3000'],
     })
   );
 } else {
@@ -138,18 +117,14 @@ if (IS_STAGING) {
   );
 }
 
-// Add header with API version to compare with client.
 app.use((_req, res, next) => {
   res.header('X-API-VERSION', VERSION);
-  // See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Expose-Headers
   res.header('Access-Control-Expose-Headers', 'X-API-VERSION');
   next();
 });
 
-// Pre middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json({ limit: '5mb' }));
-// ProConnect factice (dev/test) : monté avant helmet pour servir sa page HTML sans CSP
 if (PROCONNECT_MOCK_ENABLED) {
   app.use('/mock-proconnect', mockProConnectRouter);
 }
@@ -159,7 +134,7 @@ app.use(
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'", 'https://stats.beta.gouv.fr'],
-        styleSrc: ["'self'", "'unsafe-inline'"], // DSFR uses inline styles
+        styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", 'data:', 'https://developer.apple.com', 'https://play.google.com'],
         fontSrc: ["'self'", 'data:'],
         connectSrc: [
@@ -169,7 +144,6 @@ app.use(
           'https://metabase.zacharie.beta.gouv.fr',
           'https://stats.beta.gouv.fr',
         ],
-        // blob: pour l'aperçu des PDF (fiche de transmission) affichés dans une iframe
         frameSrc: ['blob:', 'https://metabase.zacharie.beta.gouv.fr', 'https://www.youtube.com'],
         objectSrc: ["'none'"],
         baseUri: ["'self'"],
@@ -180,7 +154,6 @@ app.use(
     },
   })
 );
-// Permissions-Policy header — restrict browser features not used by the app
 app.use((_req, res, next) => {
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
   next();
@@ -188,13 +161,10 @@ app.use((_req, res, next) => {
 app.use(cookieParser());
 app.use(migrateLegacySessionCookie);
 
-// Montées après helmet : même `/` doit porter les en-têtes de sécurité (c'est l'URL scannée par l'Observatory MDN)
-// kube probe
 app.get('/healthz', async (req, res) => {
   res.send('Hello World');
 });
 
-// security.txt
 app.get('/.well-known/security.txt', (_req, res) => {
   res.type('text/plain').send(
     `Contact: mailto:contact@zacharie.beta.gouv.fr
@@ -203,10 +173,8 @@ Expires: 2027-12-31T00:00:00.000Z`
   );
 });
 
-// hello world
 const now = new Date();
 app.get('/', async (req, res) => {
-  // Log suspicious requests with User-Agent
   const ip = req.ip || req.connection.remoteAddress;
   const userAgent = req.headers['user-agent'];
 
@@ -223,28 +191,15 @@ app.get('/config.js', async (req, res) => {
 
 mountE2eRoutes(app, process.env.NODE_ENV);
 
-// sentry context/user
-// app.use(async (req, res, next) => {
-//   const { appversion, appbuild, appdevice, currentroute } = req.headers || {};
-//   if (appversion) Sentry.setTag('appversion', appversion as string);
-//   if (appbuild) Sentry.setTag('appbuild', appbuild as string);
-//   if (appdevice) Sentry.setTag('appdevice', appdevice as string);
-//   if (currentroute) Sentry.setTag('currentroute', currentroute as string);
-//   next();
-// });
-
 app.post('/sentry-check', async (req, res) => {
   capture('sentry-check', { extra: { test: 'test' } });
   res.status(200).send({ ok: true, data: 'Sentry checked!' });
 });
 
-// Public quiz endpoint (anonymous, no auth)
 app.use('/quiz-result', quizResultRouter);
 
-// v1 - REST API used with external clients and api keys
 app.use('/v1', v1Router);
 
-// Auth rate limiting
 import { authRateLimit, authIpRateLimit, adminRateLimit } from './middlewares/auth-rate-limit.ts';
 import { requireTrichineFeature } from './middlewares/trichine-feature.ts';
 app.use('/user/login', authIpRateLimit({ skipSuccessfulRequests: true }), authRateLimit);
@@ -253,10 +208,8 @@ app.use('/user/signup-with-invitation-token', authIpRateLimit(), authRateLimit);
 app.use('/user/forget-password', authIpRateLimit(), authRateLimit);
 app.use('/user/reset-password', authIpRateLimit(), authRateLimit);
 app.use('/user/change-password', authRateLimit);
-// /user/proconnect : le limiteur est posé sur chaque route dans controllers/proconnect.ts
 app.use('/admin', adminRateLimit);
 
-// Routes used by zacharie.beta.gouv.fr
 app.use('/user/proconnect', passport.initialize(), proconnectRouter);
 app.use('/user', passport.initialize(), userRouter);
 app.use('/user-entity', passport.initialize(), userEntityRouter);
@@ -276,7 +229,6 @@ app.use('/', passport.initialize(), utilsRouter);
 
 app.use(errorHandlers);
 
-// Start the server
 app.listen(PORT, () => {
   console.log(`RUN ON PORT ${PORT}`);
 });

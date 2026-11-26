@@ -110,7 +110,6 @@ describe('Historique admin : routes', () => {
   });
 
   test('la chronologie d’une entité regroupe ses versions et les actions admin, avec l’email de l’auteur', async () => {
-    // la requête des versions et celle de la ligne courante partagent leur gabarit : on distingue par table
     (prisma as any).$queryRaw = vi
       .fn()
       .mockImplementation((strings: TemplateStringsArray, ...values: unknown[]) => {

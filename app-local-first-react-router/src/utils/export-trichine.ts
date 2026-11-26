@@ -2,24 +2,11 @@ import dayjs from 'dayjs';
 import type { LaboEchantillonRegistre, LaboFTPListItem, LaboPoolRegistre } from '@app/services/laboratoire';
 import { monAlias, nomEntiteAlias, type TrichineAlias } from '@app/services/trichine-alias';
 
-/**
- * Export des registres du laboratoire, destiné à l'import dans son LIMS : noms de champs et
- * valeurs d'enums bruts, dates ISO. Le CSV et le JSON portent exactement les mêmes champs ;
- * une liste est un tableau en JSON et des valeurs séparées par `|` en CSV.
- *
- * Le CSV est séparé par `;`, comme le fichier d'import de résultats (Excel en français l'ouvre
- * directement en colonnes).
- *
- * `reference_labo` est l'alias que le laboratoire a donné à l'objet (le même nom de colonne
- * que l'import de résultats), `autres_references_internes` ceux des autres acteurs.
- */
-
 export type TrichineExportFormat = 'csv' | 'json';
 
 type ExportValue = string | number | boolean | null | Array<string>;
 export type ExportRow = Record<string, ExportValue>;
 
-// Champ @db.Date : seule la date compte
 function isoDate(value: Date | string | null | undefined): string | null {
   return value ? dayjs(value).format('YYYY-MM-DD') : null;
 }

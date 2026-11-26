@@ -8,14 +8,10 @@ test.beforeEach(async () => {
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Scenario 148 — Nouvelle version proposée.
-// Web : un chunk introuvable (vite:preloadError) affiche un toast avec un bouton « Recharger » qui
-// recharge la page. App mobile (WebView Expo) : le toast demande de rouvrir l'application, sans bouton.
 test('web : le toast propose de recharger et le bouton recharge la page', async ({ page }) => {
   await connectWith(page, 'etg-1@example.fr');
   await expect(page).toHaveURL(/\/app\/etg/, { timeout: 15000 });
 
-  // Repère posé dans la page courante : il disparaît si la page est rechargée.
   await page.evaluate(() => {
     (window as unknown as { __avantRechargement?: boolean }).__avantRechargement = true;
   });
@@ -40,7 +36,6 @@ test('web : le toast propose de recharger et le bouton recharge la page', async 
 });
 
 test("app mobile : le toast demande de rouvrir l'application, sans bouton Recharger", async ({ page }) => {
-  // Simule la WebView Expo avant le chargement de l'app.
   await page.addInitScript(() => {
     (window as unknown as { ReactNativeWebView: { postMessage: () => void } }).ReactNativeWebView = {
       postMessage() {},
@@ -49,7 +44,6 @@ test("app mobile : le toast demande de rouvrir l'application, sans bouton Rechar
   await connectWith(page, 'etg-1@example.fr');
   await expect(page).toHaveURL(/\/app\/etg/, { timeout: 15000 });
 
-  // Envoyé par l'app mobile quand une nouvelle version a été téléchargée.
   await page.evaluate(() => window.dispatchEvent(new Event('zacharie-new-native-bundle')));
 
   await expect(

@@ -13,19 +13,10 @@ let loadCarcassesAbortController: AbortController | null = null;
 
 const ROLES_WITHOUT_CARCASSES: UserRoles[] = [UserRoles.FEDERATION, UserRoles.LABORATOIRE];
 
-// Contrôle d'intégrité store local / serveur : au plus une fois par utilisateur toutes les 6 heures.
 const INTEGRITY_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
 let lastIntegrityCheck: { userId: string; at: number } | null = null;
-// Le prochain pull demande tout le périmètre (version de rechargement inférieure à toute version serveur).
 let fullReloadRequested = false;
 
-// Compare le nombre de carcasses non supprimées du périmètre serveur au nombre de carcasses non
-// supprimées synchronisées du store. Le pull delta ne renvoie que le périmètre actuel : une carcasse
-// qui en est sortie (renvoi fait sur un autre appareil, destinataire changé par l'expéditeur) reste en
-// local. En cas d'écart, on remonte à Sentry et on recharge tout le périmètre, ce qui retire ces copies.
-// Les carcasses refusées hors périmètre chargées à l'ouverture d'une fiche (loadCarcassesRefusees) ne
-// sont pas comptées : le serveur en donne la liste, car un rechargement complet les retirerait et
-// l'ouverture de la fiche les remettrait.
 async function checkLocalCarcassesIntegrity(signal: AbortSignal) {
   const user = useUser.getState().user;
   if (!user) return;
@@ -41,7 +32,6 @@ async function checkLocalCarcassesIntegrity(signal: AbortSignal) {
   if (signal.aborted || !res.ok || !res.data || useUser.getState().user?.id !== user.id) return;
 
   const state = useZustandStore.getState();
-  // des modifications locales en attente fausseraient la comparaison
   if (Object.values(state.carcasses).some((c) => !c.deleted_at && !c.is_synced)) return;
   const refuseesHorsPerimetre = new Set(res.data.refuseesHorsPerimetreIds);
   const localCarcasses = Object.values(state.carcasses).filter(
@@ -84,7 +74,6 @@ export async function loadCarcasses() {
     console.log('not loading carcasses because not online');
     return;
   }
-  // ces rôles n'ont pas de périmètre carcasses : l'API répondrait 403
   const roles = useUser.getState().user?.roles ?? [];
   if (roles.some((role) => ROLES_WITHOUT_CARCASSES.includes(role))) return;
 
@@ -95,8 +84,6 @@ export async function loadCarcasses() {
   const signal = loadCarcassesAbortController.signal;
 
   try {
-    // Read server time before pagination so any carcasse touched during the loop
-    // is picked up on the next delta sync.
     const serverDate = await API.get({ path: 'now', signal }).then((res) => (res.ok ? res.data : null));
     if (signal.aborted) return;
 
@@ -111,7 +98,6 @@ export async function loadCarcasses() {
     const carcasseModifRequests: CarcassesGetResponse['data']['carcasseModifRequests'] = [];
     const usersFetched: CarcassesGetResponse['data']['users'] = [];
     const entitiesFetched: CarcassesGetResponse['data']['entities'] = [];
-    // curseur : updated_at (ms) et id de la dernière carcasse reçue, la page suivante commence après
     let cursor: { updatedAt: string; id: string } | null = null;
     let hasMore = true;
     let fullReload = false;
@@ -154,7 +140,6 @@ export async function loadCarcasses() {
       }
     }
 
-    // Guard against logout/abort races: don't clobber a freshly-reset store.
     if (signal.aborted || !useUser.getState().user) return;
 
     if (carcassesFetched.length === 0 && feisFetched.length === 0 && !fullReload) {
@@ -167,14 +152,9 @@ export async function loadCarcasses() {
       return;
     }
 
-    // Rechargement complet : le serveur a renvoyé tout le périmètre, les copies locales absentes de
-    // la réponse sont sorties du périmètre. On ne garde que les modifications locales pas encore synchronisées
-    // (fiches, carcasses, CarcasseIntermediaire, demandes de modification).
     const keepLocal = <T extends { is_synced: boolean }>(items: Array<T>) =>
       fullReload ? items.filter((item) => !item.is_synced) : items;
 
-    // Hors rechargement complet : les lignes revenues seulement à cause de la marge du delta
-    // n'écrasent pas une modification locale pas encore envoyée.
     const guardMargin = <T extends { updated_at: Date | string; is_synced: boolean }>(
       fetched: Array<T>,
       local: Record<string, T | undefined>,
@@ -214,9 +194,6 @@ export async function loadCarcasses() {
       idKey: (c) => c.id,
     });
 
-    // Entities referenced by the fiches (premier détenteur asso, dépôt, SVI…). Fill gaps only:
-    // existing store entities (loaded by load-my-relations) keep their relation metadata, since
-    // fiche entities carry relation NONE.
     const newEntities = { ...useZustandStore.getState().entities };
     for (const entity of entitiesFetched) {
       if (!entity.deleted_at && !newEntities[entity.id]) {
@@ -224,8 +201,6 @@ export async function loadCarcasses() {
       }
     }
 
-    // Merge modif requests by their own id (drops cancelled ones via deleted_at, like other entities),
-    // then regroup into the full-history-by-carcasse map the store and UI consume.
     const mergedModifRequestsById = mergeItems({
       oldItems: keepLocal(Object.values(useZustandStore.getState().modifRequestsByCarcasseId).flat()),
       newItems: guardMargin(carcasseModifRequests, localModifRequestsById, (r) => r.id),
@@ -235,8 +210,6 @@ export async function loadCarcasses() {
     for (const request of Object.values(mergedModifRequestsById) as Array<CarcasseModificationRequest>) {
       (nextModifRequestsByCarcasseId[request.zacharie_carcasse_id] ??= []).push(request);
     }
-    // Une carcasse dont aucune demande n'a changé garde son tableau : le stockage local n'écrit que
-    // les enregistrements dont la référence change.
     for (const [carcasseId, requests] of Object.entries(nextModifRequestsByCarcasseId)) {
       const previousRequests = localState.modifRequestsByCarcasseId[carcasseId];
       if (
@@ -249,8 +222,6 @@ export async function loadCarcasses() {
 
     if (signal.aborted || !useUser.getState().user) return;
 
-    // Le serveur ne renvoie que les carcasses du périmètre du compte. Une fiche qu'il avait renvoyée
-    // à l'expéditeur et qui redescend lui a donc été réattribuée : elle doit réapparaître.
     const feiNumerosBackInScope = new Set(carcassesFetched.map((c) => c.fei_numero));
 
     useZustandStore.setState((state) => ({
@@ -266,9 +237,6 @@ export async function loadCarcasses() {
       lastUpdateFromServer: serverDate,
       carcassesReloadVersion: receivedReloadVersion,
     }));
-    // Rechargement complet sur plusieurs pages : une carcasse modifiée pendant la boucle est passée
-    // au-dessus du curseur et n'est revenue dans aucune page, keepLocal vient donc de la retirer.
-    // Un pull delta immédiat (after = serverDate) la ramène.
     if (fullReload && pageCount > 1) {
       loadCarcasses();
       return;

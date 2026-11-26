@@ -24,10 +24,6 @@ export default function QuizTvPage() {
             alt="Zacharie"
             className="h-[25vh] w-auto self-start"
           />
-          {/* <p className="fr-h4 m-0 text-gray-700">
-            Du prélèvement à l’assiette,
-            êtes-vous sûrs de vos pratiques ?
-          </p> */}
           <h1 className="fr-display--xs md:fr-display--sm m-0">
             Vous auriez pu éviter votre dernière saisie sanitaire,
             <br />

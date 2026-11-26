@@ -43,8 +43,6 @@ const CONTACT_SUFFIX =
 const CONTACT_MESSAGE =
   'Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.';
 
-// Charge les FEI (en-tête + relations noms) des carcasses données, puis mappe chaque carcasse
-// avec sa FEI. La FEI ne sert qu'aux noms examinateur / premier détenteur.
 async function mapCarcassesWithFeis(carcasses: CarcasseGetForApi[]) {
   const feiNumeros = [...new Set(carcasses.map((c) => c.fei_numero))];
   const feis = await prisma.fei.findMany({

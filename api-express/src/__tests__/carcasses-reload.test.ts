@@ -2,9 +2,6 @@ import { describe, test, expect, vi, beforeEach } from 'vitest';
 import prisma from '~/prisma';
 import { requestCarcassesReload } from '~/utils/carcasses-reload';
 
-// Chaque écriture d'une EntityAndUserRelations incrémente User.carcasses_reload_version :
-// tous les appareils de l'utilisateur rechargent leur périmètre une fois.
-
 beforeEach(() => {
   vi.clearAllMocks();
 });

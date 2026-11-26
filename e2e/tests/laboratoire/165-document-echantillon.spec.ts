@@ -2,14 +2,6 @@ import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Scenario 165 — Le laboratoire joint un fichier à un échantillon d'un pool reçu.
-// Seed LABORATOIRE_FTP_RECUE : laboratoire@example.fr (Laboratoire 1, LVD) a réceptionné la FTP
-// F-26-SVI01-0001 du SVI 1. Le pool P-26-SVI01-0001 contient E-26-SVI01-0001 (MM-001-001) et
-// E-26-SVI01-0002 (MM-001-002), sans résultat.
-// Le stockage Cellar n'est pas configuré en test : le dépôt atteint la route (droits du laboratoire
-// vérifiés) et le serveur répond que le stockage n'est pas disponible. Un échantillon retiré du pool
-// n'accepte plus de fichier.
-
 test.setTimeout(120_000);
 test.use({ launchOptions: { slowMo: 100 } });
 
@@ -43,7 +35,6 @@ test('Le laboratoire joint un fichier à un échantillon, pas à un échantillon
     timeout: 10000,
   });
 
-  // Un échantillon retiré du pool n'accepte plus de fichier
   await echantillonRetire.getByRole('button', { name: 'Retirer du pool' }).click();
   const modale = page.getByRole('dialog', { name: /Retirer l'échantillon E-26-SVI01-0002/ });
   await expect(modale).toBeVisible();

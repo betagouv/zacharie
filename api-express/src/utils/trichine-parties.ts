@@ -2,11 +2,6 @@ import prisma from '~/prisma';
 
 export type TrichinePartieConcernee = { id: string; nom: string };
 
-/**
- * ETG où opère le service d'inspection expéditeur : en circuit agréé le SVI prélève et expédie
- * depuis l'atelier de traitement auquel il est rattaché (`Entity.etg_linked_to_svi_id`).
- * Vide quand l'expéditeur n'est pas un service d'inspection — aucun ETG ne pointe alors vers lui.
- */
 export async function getEtgsDuServiceExpediteur(
   expediteurEntityId: string | null
 ): Promise<Array<TrichinePartieConcernee>> {

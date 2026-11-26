@@ -70,7 +70,6 @@ function buildCsv(type: CarcasseType, items: LesionItem[]) {
 }
 
 function downloadCsv(filename: string, csv: string) {
-  // BOM ﻿ pour qu'Excel ouvre l'UTF-8 correctement
   const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');

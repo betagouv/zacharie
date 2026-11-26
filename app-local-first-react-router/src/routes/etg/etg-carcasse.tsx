@@ -88,15 +88,13 @@ export default function CarcasseIntermediaireComp({
   const [poids, setPoids] = useState(carcasseIntermediaire.intermediaire_poids ?? '');
 
   const nombreAnimauxTotal = carcasse.nombre_d_animaux ?? 0;
-  // Prioriser la valeur de CarcasseIntermediaire si disponible, sinon celle de Carcasse
   const nombreAnimauxAccepteFromDb = carcasseIntermediaire.nombre_d_animaux_acceptes ?? null;
 
-  // Si le lot est refusé, préremplir avec 0 acceptés
   const isLotRefuse = !!carcasseIntermediaire.refus;
   const [nombreAnimauxAcceptes, setNombreAnimauxAcceptes] = useState<number | null>(
     carcasse.type === CarcasseType.PETIT_GIBIER
       ? isLotRefuse
-        ? 0 // Si le lot est refusé, 0 animaux acceptés
+        ? 0
         : (nombreAnimauxAccepteFromDb ?? null)
       : null
   );
@@ -154,8 +152,6 @@ export default function CarcasseIntermediaireComp({
     setCarcasseRefusCheckbox(true);
     setCarcasseEcarteePourInspectionCheckbox(false);
     setCarcasseAcceptPartielCheckbox(false);
-    // with custom value for InputForSearchPrefilledData, sometimes the user doesnt press on the blue tag to confirm the refus
-    // so we need to get the value from the input directly
     const refusInputValue = (document.getElementsByName('carcasse-refus')?.[0] as HTMLInputElement)?.value;
 
     if (!refusToRemember && !refus && refus !== refusInputValue) {
@@ -163,12 +159,10 @@ export default function CarcasseIntermediaireComp({
     }
     if (!refusToRemember) refusToRemember = refus || refusInputValue;
 
-    // Si c'est un petit gibier et que le lot est refusé, mettre automatiquement à 0 acceptés
     if (carcasse.type === CarcasseType.PETIT_GIBIER && nombreAnimauxTotal > 0) {
       setNombreAnimauxAcceptes(0);
     }
 
-    // Utiliser 0 pour un refus de petit gibier, sinon null
     const nombreAcceptes = carcasse.type === CarcasseType.PETIT_GIBIER ? 0 : null;
     const nextPartialCarcasseIntermediaire = {
       manquante: false,
@@ -271,7 +265,6 @@ export default function CarcasseIntermediaireComp({
     setCarcasseEcarteePourInspectionCheckbox(false);
     setCarcasseAcceptPartielCheckbox(false);
     setRefus('');
-    // Pour une acceptation complète, utiliser le nombre total d'animaux
     const nombreAcceptes = carcasse.type === CarcasseType.PETIT_GIBIER ? nombreAnimauxTotal : null;
     const nextPartialCarcasseIntermediaire = {
       manquante: false,
@@ -322,7 +315,6 @@ export default function CarcasseIntermediaireComp({
     setCarcasseEcarteePourInspectionCheckbox(false);
     setCarcasseAcceptPartielCheckbox(true);
     setRefus('');
-    // Pour une acceptation partielle, utiliser la valeur saisie par l'utilisateur
     const nombreAcceptes = nombreAnimauxAcceptes ?? 0;
     const nextPartialCarcasseIntermediaire = {
       manquante: false,
@@ -370,10 +362,8 @@ export default function CarcasseIntermediaireComp({
   const updateNombreAnimauxAcceptes = (nouveauNombre: number | null) => {
     if (!canEdit) return;
 
-    // Mettre à jour l'état local
     setNombreAnimauxAcceptes(nouveauNombre);
 
-    // Sauvegarder automatiquement si c'est une acceptation partielle ou un refus
     if (carcasseAcceptPartielCheckbox || carcasseRefusCheckbox) {
       const nombreAcceptes = nouveauNombre ?? 0;
       const nextPartialCarcasseIntermediaire = {
@@ -412,9 +402,6 @@ export default function CarcasseIntermediaireComp({
 
   return (
     <>
-      {/* Banner + card wrapped together so the parent's `gap-4` only separates carcasse groups, not
-          the banner from its own card. History is shown inside the refus modal (cliquer pour ouvrir),
-          jamais en dehors — sinon ambiguïté sur la carcasse concernée. */}
       <div className="flex flex-col">
         <CardCarcasse
           carcasse={carcasse}
@@ -490,14 +477,10 @@ export default function CarcasseIntermediaireComp({
                     ))}
                   </div>
                 )}
-                {/* Historique des modifications passées (approuvées / refusées) — affiché dans la modale
-                  pour rester clairement attaché à la carcasse en cours. */}
                 <HistoriqueDesModifications carcasse={carcasse} />
                 <div className="mt-4">
-                  {/* cutsom radio buttons en reprenant le code de @codegouvfr/react-dsfr/RadioButtons pour y insérer un input pour le nombre d'animaux acceptés */}
                   <fieldset className="fr-fieldset">
                     <div className="fr-fieldset__content">
-                      {/* Radio: Lot accepté / Carcasse acceptée */}
                       <div className="fr-radio-group">
                         <input
                           type="radio"
@@ -530,7 +513,6 @@ export default function CarcasseIntermediaireComp({
                         </label>
                       </div>
 
-                      {/* Radio: Lot partiellement accepté (uniquement pour petit gibier) */}
                       {carcasse.type === CarcasseType.PETIT_GIBIER && (
                         <>
                           <div className="fr-radio-group">
@@ -552,7 +534,6 @@ export default function CarcasseIntermediaireComp({
                               Lot partiellement accepté
                             </label>
                           </div>
-                          {/* Input pour le nombre d'animaux acceptés - affiché uniquement si "Lot partiellement accepté" est sélectionné */}
                           {carcasseAcceptPartielCheckbox && !carcasseManquante && (
                             <div className="mb-4 ml-8">
                               <Input
@@ -573,7 +554,6 @@ export default function CarcasseIntermediaireComp({
                                       return;
                                     }
                                     const numValue = Number(rawValue);
-                                    // Clamp value between 0 and nombreAnimauxTotal
                                     const clampedValue = Math.max(1, Math.min(numValue, nombreAnimauxTotal));
                                     updateNombreAnimauxAcceptes(clampedValue);
                                   },
@@ -584,7 +564,6 @@ export default function CarcasseIntermediaireComp({
                         </>
                       )}
 
-                      {/* Radio: Lot refusé / Carcasse refusée */}
                       <div className="fr-radio-group">
                         <input
                           type="radio"
@@ -602,7 +581,6 @@ export default function CarcasseIntermediaireComp({
                             setCarcasseRefusCheckbox(true);
                             setCarcasseEcarteePourInspectionCheckbox(false);
                             setCarcasseAcceptPartielCheckbox(false);
-                            // Mettre automatiquement 0 animaux acceptés pour un refus de petit gibier
                             if (carcasse.type === CarcasseType.PETIT_GIBIER && nombreAnimauxTotal > 0) {
                               setNombreAnimauxAcceptes(0);
                               updateNombreAnimauxAcceptes(0);
@@ -641,7 +619,6 @@ export default function CarcasseIntermediaireComp({
                         </div>
                       )}
 
-                      {/* Radio: Lot écarté pour inspection (uniquement pour ETG) */}
                       <div className="fr-radio-group">
                         <input
                           type="radio"
@@ -671,7 +648,6 @@ export default function CarcasseIntermediaireComp({
                         )}
                       </div>
 
-                      {/* Radio: Lot manquant / Carcasse manquante */}
                       <div className="fr-radio-group">
                         <input
                           type="radio"
@@ -693,9 +669,6 @@ export default function CarcasseIntermediaireComp({
                         </label>
                       </div>
 
-                      {/* Corriger le numéro de marquage : la correction est appliquée tout de suite,
-                        l'examinateur initial en est seulement informé. Visible uniquement s'il n'y a
-                        pas déjà une demande en cours (le bouton se masque tout seul). */}
                       <div className="fr-mt-2w">
                         <RequestBraceletRenameButton
                           carcasse={carcasse}

@@ -9,11 +9,6 @@ import {
 } from '@app/utils/trichine';
 import { TrichineCard, TrichineFields } from '@app/components/trichine/TrichineDetailPage';
 
-/**
- * Le résultat d'analyse n'a pas de page à lui : il appartient au pool, et c'est ici qu'il
- * s'affiche avec sa provenance (laboratoire, dates). Échantillons et carcasses n'en portent
- * qu'un écho.
- */
 export default function TrichineResultatCard({
   pool,
   laboratoire,

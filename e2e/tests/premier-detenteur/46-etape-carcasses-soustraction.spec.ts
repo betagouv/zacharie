@@ -22,10 +22,6 @@ import {
   enregistrerVenteDon,
 } from '../../utils/vente-don';
 
-// Étape « Carcasses » : on ne coche plus, on retire. Par défaut tout part chez le destinataire,
-// le chasseur n'a rien à toucher dans le cas courant.
-// Seed PREMIER_DETENTEUR : 4 carcasses — 3 daims (MM-001-001/002/004) + 1 lot de 10 pigeons (MM-001-003).
-
 test.use({
   viewport: { width: 350, height: 667 },
   hasTouch: true,
@@ -52,10 +48,8 @@ test('Par défaut toutes les carcasses partent chez le destinataire', async ({ p
 
   await expect(venteDonModal(page).getByRole('radio').first()).toBeChecked();
   await expect(venteDonModal(page).getByText('Toutes les carcasses restantes (4)')).toBeVisible();
-  // Les zones de tags n'apparaissent qu'avec « une partie seulement ».
   await expect(carcassesRetenues(page)).toHaveCount(0);
 
-  // Rien à faire : on enchaîne directement.
   await etapeSuivante(page);
   await expect(etapeCourante(page)).toContainText('Stockage');
 });
@@ -77,14 +71,11 @@ test('Retirer puis remettre une carcasse', async ({ page }) => {
   await expect(carcassesRetirees(page)).toHaveCount(0);
 });
 
-// Une carcasse déjà promise à une autre vente / un autre don n'est pas « à attribuer » : elle a sa
-// propre zone, et la reprendre est un geste explicite.
 test('Reprendre une carcasse attribuée à un autre destinataire', async ({ page }) => {
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris' });
 
-  // ETG 2 : plus rien de libre, les 4 carcasses sont chez ETG 1.
   await openVenteDon(page);
   await selectDestinataire(page, 'ETG 2 - 75000 Paris');
   await allerAEtape(page, 'Carcasses');

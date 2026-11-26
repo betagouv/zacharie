@@ -6,12 +6,6 @@ import { connectWith } from '../../utils/connect-with';
 import { dateApprobationDuJour } from '../../utils/date-approbation';
 import { gotoBacASable, resetBacASable } from '../../utils/bac-a-sable';
 
-// Bac à sable de l'API (api-playground) : une application tierce utilise la clé API tierce partie
-// seedée (`test-private-key-user`) pour lier un compte Zacharie, créer des fiches pré-remplies par un
-// lien sans secret (`/app/nouvelle-fiche?…`, ouvert dans un nouvel onglet), recevoir les webhooks et lire
-// les fiches. Non connecté, l'utilisateur passe par la connexion de Zacharie avant la création de la fiche.
-// Les tests s'enchaînent : chacun part de l'état laissé par le précédent.
-
 test.use({ launchOptions: { slowMo: 100 } });
 test.describe.configure({ mode: 'serial' });
 
@@ -49,7 +43,6 @@ async function remplirLaFiche(page: Page, bracelets: [string, string]) {
   await page.getByLabel('Espèce', { exact: true }).nth(1).selectOption('Sanglier');
 }
 
-// La fiche est créée dans Zacharie puis synchronisée : on la relit par l'API (étape 3 du bac à sable)
 async function attendreLaFicheDansLApi(page: Page, bracelet: string) {
   await expect(async () => {
     await page.getByRole('button', { name: 'Récupérer les fiches' }).click();
@@ -65,7 +58,6 @@ test('inscription et enregistrement de la clé API', async ({ page }) => {
   await page.getByRole('button', { name: 'Créer mon compte' }).click();
   await expect(page.getByRole('heading', { name: "Tester l'API Zacharie" })).toBeVisible({ timeout: 10000 });
 
-  // sans clé, les étapes suivantes sont bloquées
   await expect(page.getByRole('button', { name: "Demander l'accès" })).toBeDisabled();
 
   await page.getByLabel('Clé privée').fill(CLE_API);
@@ -86,12 +78,10 @@ test("demande d'accès, accord donné dans Zacharie, puis statut vérifié", asy
   await page.getByRole('button', { name: "Demander l'accès" }).click();
   await expect(page.getByText('PENDING', { exact: true })).toBeVisible({ timeout: 10000 });
 
-  // le chasseur donne son accord dans Zacharie
   const zacharie = await page.context().newPage();
   await connectWith(zacharie, COMPTE_ZACHARIE);
   await zacharie.goto('http://localhost:3290/app/chasseur/profil/partage-de-mes-donnees');
   await expect(zacharie.getByText('Test API Key User')).toBeVisible({ timeout: 10000 });
-  // liste déroulante (react-select) : on ouvre le champ, pas le texte de la valeur affichée
   await expect(zacharie.getByText('En attente de mon accord')).toBeVisible();
   await zacharie.getByRole('combobox').click();
   const accordEnregistre = zacharie.waitForResponse(
@@ -119,7 +109,6 @@ test('lien ouvert sans être connecté à Zacharie : connexion, puis fiche cré�
   });
   await expect(page.locator('code', { hasText: /access_token|embedded/ })).toHaveCount(0);
 
-  // le lien ne connecte pas : Zacharie demande la connexion, puis revient sur le lien
   await zacharie.waitForURL(/\/app\/connexion\?redirect=/, { timeout: 20000 });
   await zacharie.getByRole('textbox', { name: 'Mon email Renseignez votre' }).fill(COMPTE_ZACHARIE);
   await zacharie.getByRole('textbox', { name: 'Mon mot de passe Veuillez' }).fill(MOT_DE_PASSE);
@@ -130,8 +119,6 @@ test('lien ouvert sans être connecté à Zacharie : connexion, puis fiche cré�
   await expect(zacharie.locator('input#date_mise_a_mort')).toHaveValue(AUJOURD_HUI);
   await expect(zacharie.getByText('Déconnexion').first()).toBeVisible();
 
-  // le nouvel onglet laisse le bac à sable en arrière-plan, où le navigateur suspend l'affichage :
-  // on attend la fin de la synchronisation de Zacharie, puis on revient sur le bac à sable
   await expect(zacharie.getByText('Synchronisation en cours')).toBeHidden({ timeout: 20000 });
   await zacharie.close();
   await page.bringToFront();
@@ -150,7 +137,6 @@ test("lien ouvert déjà connecté : fiche créée directement, puis webhook à 
   await page.bringToFront();
 
   await remplirLaFiche(page, ['BAS-003', 'BAS-004']);
-  // case DSFR : le libellé recouvre la case, on clique sur le libellé
   await page.getByText(/Récupérer automatiquement les carcasses/).click();
   await expect(page.getByLabel(/Récupérer automatiquement les carcasses/)).toBeChecked();
   const nouvelOnglet = page.waitForEvent('popup');
@@ -158,12 +144,10 @@ test("lien ouvert déjà connecté : fiche créée directement, puis webhook à 
   const zacharie = await nouvelOnglet;
   await expect(page.getByText("En attente d'un webhook de Zacharie…")).toBeVisible({ timeout: 10000 });
 
-  // déjà connecté : pas de passage par la connexion
   await zacharie.waitForURL(/\/app\/chasseur\/fei\/ZACH-/, { timeout: 20000 });
   await expect(zacharie.getByRole('heading', { name: /^Fiche du/ })).toBeVisible({ timeout: 20000 });
   await zacharie.getByRole('button', { name: 'Pierre Petit' }).click();
   await zacharie.getByRole('button', { name: 'Continuer' }).first().click();
-  // carcasses et heures sont déjà pré-remplies : la fiche passe directement à la validation
   await expect(zacharie.getByRole('button', { name: /N° BAS-003/ })).toBeVisible();
   await expect(zacharie.getByRole('button', { name: /N° BAS-004/ })).toBeVisible();
   await zacharie.getByRole('button', { name: dateApprobationDuJour() }).click();

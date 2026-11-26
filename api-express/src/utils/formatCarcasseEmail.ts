@@ -97,16 +97,12 @@ export type CarcasseSaisieTemplateParams = {
   carcasse_label: string;
   espece: string;
   numero_bracelet: string;
-  // Pièces retirées de la consommation (saisie partielle uniquement)
   pieces: string[];
   motifs: string[];
   commentaire: string | null;
   cta: string;
 };
 
-// L'email part en template Brevo, le push reste en texte : les deux sont dérivés des mêmes `params`
-// pour ne pas diverger. Les accords (carcasse / lot de carcasses) sont résolus ici, pas dans le
-// template : Brevo n'a pas à connaître `CarcasseType`.
 export function formatSaisieChasseurEmail(carcasse: Carcasse): {
   object: string;
   text: string;
@@ -152,8 +148,6 @@ export function formatSaisieChasseurEmail(carcasse: Carcasse): {
   return { object, text: text.filter(Boolean).join('\n\n'), params, push };
 }
 
-// Manquante et refus sont constatés par le même intermédiaire : mêmes infos à charger, deux emails
-// distincts derrière (constat de manque vs refus motivé).
 async function getIntermediaireConstat(carcasse: Carcasse) {
   const carcasseIntermediaire = await prisma.carcasseIntermediaire.findUnique({
     where: {
@@ -302,10 +296,6 @@ export function formatRenvoiExpediteurEmail(
   return { object, text: email.filter(Boolean).join('\n\n'), push };
 }
 
-// Params des templates Brevo FEI_CLOSED (clôture par le SVI) et FEI_AUTOMATIC_CLOSED (clôture
-// par le cron au bout de 10 jours). Les deux emails ont le même contenu — le chasseur n'a pas à
-// savoir laquelle des deux a eu lieu — mais restent deux templates distincts pour pouvoir les
-// faire diverger plus tard et pour distinguer les deux cas dans les stats Brevo.
 export type FeiClosedTemplateParams = {
   fei_numero: string;
   entity_name: string;
@@ -314,8 +304,6 @@ export type FeiClosedTemplateParams = {
   cta: string;
 };
 
-// Bilan de clôture affiché au chasseur : une carcasse est "refusée" si elle n'a pas pu être
-// mise sur le marché (manquante ou refusée en amont du SVI, saisie totale, consignée).
 function countCarcassesForBilan(carcasses: Carcasse[]) {
   let nombre_carcasses_acceptees = 0;
   let nombre_carcasses_refusees = 0;
@@ -342,16 +330,10 @@ function countCarcassesForBilan(carcasses: Carcasse[]) {
   return { nombre_carcasses_acceptees, nombre_carcasses_refusees };
 }
 
-// Email de clôture de fiche, commun à la clôture SVI et à la clôture automatique : c'est
-// l'appelant qui choisit le template (FEI_CLOSED ou FEI_AUTOMATIC_CLOSED).
-// L'email part en template Brevo, le push reste en texte : les deux sont dérivés des mêmes
-// `params` pour ne pas diverger. Les accords singulier/pluriel du bilan sont gérés côté template.
 export async function formatFeiClosedEmail(
   fei_numero: Fei['numero'],
   carcasses: Carcasse[]
 ): Promise<{ object: string; text: string; params: FeiClosedTemplateParams; push: PushWording }> {
-  // L'établissement à contacter est l'ETG qui a traité la fiche. On passe par les intermédiaires :
-  // `Carcasse.latest_intermediaire_entity_id` vaut le SVI une fois la carcasse assignée.
   const etgIntermediaire = await prisma.carcasseIntermediaire.findFirst({
     where: {
       fei_numero,
@@ -390,7 +372,6 @@ export async function formatFeiClosedEmail(
   return { object, text: text.filter(Boolean).join('\n\n'), params, push };
 }
 
-// Params du template Brevo FEI_TRANSMITTED_TO_SVI (placeholders {{ params.xxx }}).
 export type SviAssignedTemplateParams = {
   entity_name: string;
   count: number;
@@ -398,9 +379,6 @@ export type SviAssignedTemplateParams = {
   cta: string;
 };
 
-// L'email SVI part en template Brevo, le push reste en texte : les deux sont dérivés des mêmes
-// `params` pour ne pas diverger, et les requêtes ne sont faites qu'une fois (le side-effect appelant
-// tourne une fois par carcasse de la fiche).
 export async function formatSviAssignedEmail(
   carcasse: Carcasse
 ): Promise<{ object: string; text: string; params: SviAssignedTemplateParams; push: PushWording }> {
@@ -426,7 +404,6 @@ export async function formatSviAssignedEmail(
     },
   });
 
-  // le SVI consulte une transmission (fiche + prochain détenteur du premier détenteur), pas la fiche seule
   const prochainDetenteurIdCache = feiCarcasses[0]?.premier_detenteur_prochain_detenteur_id_cache;
   const transmissionLink = prochainDetenteurIdCache
     ? `${carcasse.fei_numero}/${prochainDetenteurIdCache}`
@@ -460,8 +437,6 @@ export async function formatSviAssignedEmail(
   return { object, text: text.filter(Boolean).join('\n\n'), params, push };
 }
 
-// Attribution d'une fiche à un user, ou aux users d'une entité : même template des deux côtés,
-// seul le rôle du destinataire change le lien.
 export function formatFeiAssignedTemplateEmail(
   carcasse: Carcasse,
   sender: User,
@@ -478,7 +453,6 @@ export function formatFeiAssignedTemplateEmail(
   };
 }
 
-// `recipient_email` sert à rappeler au destinataire avec quel compte se connecter.
 export function formatCircuitCourtAssignedTemplateEmail(
   carcasse: Carcasse,
   sender: User,
@@ -492,7 +466,6 @@ export function formatCircuitCourtAssignedTemplateEmail(
   };
 }
 
-// Fiche attribuée par erreur puis retirée : pas de lien, la fiche n'est plus accessible.
 export function formatFeiUnassignedTemplateEmail(
   carcasse: Carcasse,
   sender: User

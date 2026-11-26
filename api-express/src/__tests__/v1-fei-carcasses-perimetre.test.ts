@@ -6,14 +6,6 @@ import v1Router from '~/controllers/v1/index';
 import prisma from '~/prisma';
 import { getDedicatedEntityLinkedToApiKey } from '~/utils/api';
 
-// API v1 — une fiche ne renvoie que les carcasses dans le périmètre de la clé.
-// Une fiche dont les carcasses sont dispatchées vers deux ETG : la clé de l'ETG 1 ne doit jamais
-// recevoir la carcasse partie chez l'ETG 2 (ni ses décisions SVI ni ses motifs de refus).
-// Les refusées / manquantes du même groupe de dispatch restent renvoyées, comme /carcasse/refusees.
-//
-// Prisma est mocké : `carcasse.findMany` évalue ici le `where` sur un jeu de carcasses en mémoire,
-// pour que le test porte sur le filtrage réellement demandé à la base.
-
 const app = express();
 app.use(express.json());
 app.use('/v1', v1Router);
@@ -49,8 +41,6 @@ const carcasseEtg1: FakeCarcasse = {
   CarcasseIntermediaire: [{ intermediaire_entity_id: ETG_1 }],
 };
 
-// Refusée par le collecteur en amont de l'ETG 1 : elle a quitté le circuit de l'ETG 1 mais fait
-// partie de son groupe de dispatch.
 const carcasseEtg1Refusee: FakeCarcasse = {
   ...baseCarcasse,
   zacharie_carcasse_id: `${FEI}_ETG1_REFUS`,
@@ -73,7 +63,6 @@ const carcasseEtg2: FakeCarcasse = {
 
 const ALL_CARCASSES = [carcasseEtg1, carcasseEtg1Refusee, carcasseEtg2];
 
-// Évaluateur minimal des opérateurs Prisma utilisés par les périmètres d'accès carcasse.
 function matches(row: FakeCarcasse, where: Record<string, any> | undefined): boolean {
   if (!where) return true;
   return Object.entries(where).every(([key, condition]) => {

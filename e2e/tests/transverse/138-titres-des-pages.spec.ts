@@ -2,12 +2,6 @@ import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Scénario 138 — Chaque page pose un <title>.
-// Sans <title>, le navigateur affiche l'URL brute dans l'onglet, l'historique et les favoris,
-// et Matomo enregistre une page vue sans nom (MatomoTracker envoie document.title).
-// Le garde-fou statique vit dans app-local-first-react-router/src/routes/routes-have-a-title.test.ts ;
-// ici on vérifie le rendu réel dans le navigateur.
-
 const BASE = 'http://localhost:3290';
 
 test.describe('Titres des pages publiques', () => {

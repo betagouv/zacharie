@@ -1,8 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { TrichineSitePrelevement, TrichineStatutLogistiqueFTP, TrichineType } from '@prisma/client';
 
-// Cellar est piloté par le test, jamais par l'env de la machine : les deux branches
-// (archivage réel / régénération à la volée) doivent être vérifiables des deux côtés.
 const cellar = vi.hoisted(() => ({
   configured: false,
   uploadToCellar: vi.fn().mockResolvedValue(''),
@@ -165,14 +163,11 @@ describe('getFtpPdfBuffer', () => {
 
   test('le code-barres embarque sa zone silencieuse de 10 modules de chaque côté', async () => {
     const png = Buffer.from((await barcodeDataUrl('P-26-02-0045')).split(',')[1], 'base64');
-    // largeur PNG lue dans l'IHDR ; `scale: 3` = 3 pixels par module
     const modules = png.readUInt32BE(16) / 3;
-    // P-26-02-0045 tient sur 13 symboles Code 128 (11 modules chacun) + le stop (13)
     expect(modules).toBe(13 * 11 + 13 + 2 * 10);
   });
 });
 
-// Sans Cellar (dev, CI) : le PDF est régénéré à la demande, rien n'est archivé
 describe('archivage du PDF sans Cellar', () => {
   test('archiveFtpPdf rend le PDF sans créer de document', async () => {
     vi.mocked(prisma.trichineFTP.findUnique).mockResolvedValueOnce(ftpFixture as never);
@@ -193,7 +188,6 @@ describe('archivage du PDF sans Cellar', () => {
   }, 30000);
 });
 
-// Avec Cellar : le PDF est figé à l'envoi, archivé, puis relu depuis le stockage
 describe('archivage du PDF avec Cellar', () => {
   beforeEach(() => {
     cellar.configured = true;

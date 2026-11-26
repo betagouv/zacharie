@@ -1,24 +1,3 @@
-/**
- * Fabrique un jeu de test trichine pour les laboratoires, en tapant l'API HTTP comme le ferait
- * l'application : connexion SVI, prélèvement en lot sur les sangliers arrivés chez l'ETG,
- * constitution des pools, création puis envoi des FTP. Aucune écriture directe en base — les
- * références E/P/F, les statuts, l'historique et les notifications sont ceux du backend.
- *
- * Usage (depuis api-express/) :
- *   API_URL=https://<api-preprod> SVI_PASSWORD='...' tsx ./scripts/seed-trichine-jeu-de-test-labos.ts --dry-run
- *   API_URL=https://<api-preprod> SVI_PASSWORD='...' tsx ./scripts/seed-trichine-jeu-de-test-labos.ts
- *
- * --dry-run affiche le plan et les carcasses disponibles sans rien créer.
- *
- * Variables :
- *   API_URL        (requis)  racine de l'API visée
- *   SVI_PASSWORD   (requis)  mot de passe du compte SVI
- *   SVI_EMAIL      (défaut svi@zacharie.beta.gouv.fr)
- *   MAX_CARCASSES  (option)  plafond de carcasses à prélever
- *
- * L'envoi d'une FTP notifie les utilisateurs du laboratoire destinataire par email, avec le PDF
- * de la fiche en pièce jointe : les comptes labo doivent avoir une adresse qui reçoit vraiment.
- */
 import { TrichineSitePrelevement } from '@prisma/client';
 
 const API_URL = process.env.API_URL;
@@ -27,9 +6,6 @@ const SVI_PASSWORD = process.env.SVI_PASSWORD;
 const MAX_CARCASSES = process.env.MAX_CARCASSES ? Number(process.env.MAX_CARCASSES) : Infinity;
 const DRY_RUN = process.argv.includes('--dry-run');
 
-// Une FTP par ligne, avec la taille de chacun de ses pools. Le plan couvre ce que les labos
-// doivent pouvoir rencontrer : un pool plein (19 carcasses, 95 g), des pools d'une seule
-// carcasse, et une fiche à dix pools pour que l'import de résultats en CSV ait du sens.
 const PLAN = [
   {
     labo: 'Labo 001',
@@ -94,11 +70,6 @@ type CarcasseRegistre = {
 type Candidate = { zacharie_carcasse_id: string; numero_bracelet: string };
 type Echantillon = { id: string; zacharie_carcasse_id: string; reference_echantillon: string };
 
-/**
- * Prélèvement d'un lot. La route en lot est tout ou rien : si une carcasse est refusée
- * (déjà prélevée par un collègue, analyse en cours), on reprend carcasse par carcasse pour
- * garder le reste du lot plutôt que de perdre la fiche entière.
- */
 async function prelever(
   lot: Array<Candidate>,
   site: TrichineSitePrelevement,
@@ -155,7 +126,6 @@ async function main() {
   }
   console.log(`Connecté : ${SVI_EMAIL}`);
 
-  // Entité SVI de l'utilisateur : elle porte le code établissement des références E/P/F
   const entites = await api<{
     userEntitiesByTypeAndId: Record<string, Record<string, { id: string; nom_d_usage: string | null }>>;
   }>('GET', '/entite/working-for');
@@ -166,8 +136,6 @@ async function main() {
   const sviEntity = sviEntities[0];
   console.log(`Service d'inspection : ${sviEntity.nom_d_usage} (${sviEntity.id})`);
 
-  // Annuaire des LVD : la route ne renvoie que les laboratoires non-LNR, ceux à qui on peut
-  // adresser une FTP directement
   const { laboratoires } = await api<{
     laboratoires: Array<{ id: string; nom_d_usage: string | null; raison_sociale: string | null }>;
   }>('GET', '/trichine/laboratoires');
@@ -186,9 +154,6 @@ async function main() {
     }
   }
 
-  // Le SVI prélève sur deux gisements, comme l'assistant de prélèvement : les sangliers déjà
-  // transmis (son registre) et ceux arrivés chez un ETG rattaché, pas encore transmis — il
-  // partage les locaux de l'ETG et prélève dès l'arrivage.
   const { carcasses: aVenir } = await api<{ carcasses: Array<CarcasseAVenir> }>(
     'GET',
     '/svi/carcasses-a-venir'
@@ -207,8 +172,6 @@ async function main() {
     hasMore = data.hasMore;
     page += 1;
   }
-  // Le registre SVI contient aussi les carcasses seulement annoncées (next_owner) : le
-  // prélèvement n'est ouvert que sur celles réellement assignées au service.
   const sangliersTransmis = registre.filter(
     (carcasse) =>
       carcasse.espece === 'Sanglier' &&
@@ -218,15 +181,12 @@ async function main() {
       carcasse.svi_entity_id === sviEntity.id
   );
 
-  // Une carcasse déjà prélevée serait refusée
   const { echantillons: dejaPreleves } = await api<{ echantillons: Array<Echantillon> }>(
     'GET',
     '/trichine/echantillons'
   );
   const dejaPrelevees = new Set(dejaPreleves.map((echantillon) => echantillon.zacharie_carcasse_id));
 
-  // Les carcasses encore chez l'ETG d'abord : c'est le cas réel du prélèvement à l'arrivage.
-  // Les transmises ensuite, de la plus récente à la plus ancienne.
   const vues = new Set<string>();
   const candidats: Array<Candidate> = [];
   for (const carcasse of sangliersAVenir) {
@@ -249,8 +209,6 @@ async function main() {
       `→ ${disponibles.length} disponibles (${candidats.length - disponibles.length} déjà prélevés ou hors plafond)`
   );
 
-  // Le plan est rogné à ce qui est disponible : on remplit les FTP dans l'ordre, un pool
-  // entamé mais non rempli reste utile, un pool vide fait arrêter là
   let restantes = disponibles.length;
   const planEffectif = [];
   for (const ftp of PLAN) {

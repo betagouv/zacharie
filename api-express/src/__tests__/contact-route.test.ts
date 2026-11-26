@@ -9,8 +9,6 @@ vi.mock('~/third-parties/brevo', () => ({
   sendEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
-// POST /contact — formulaire de contact public (sans authentification)
-
 const app = express();
 app.use(express.json());
 app.use('/', utilsRouter);
@@ -65,7 +63,6 @@ describe('POST /contact', () => {
   });
 
   test('au-delà de 5 envois par heure depuis la même IP → 429', async () => {
-    // le limiteur est désactivé en NODE_ENV=test
     vi.stubEnv('NODE_ENV', 'development');
     for (let i = 0; i < 5; i++) {
       const res = await request(app).post('/contact').send(validBody);

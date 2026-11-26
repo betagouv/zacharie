@@ -22,10 +22,8 @@ test('Fiche clôturée SVI — côté PD : lecture seule, décision visible', as
   await expect(link).toBeVisible({ timeout: 15000 });
   await link.click();
 
-  // Read-only: no Transmettre or Prendre en charge buttons
   await expect(page.getByRole('button', { name: /Prendre en charge/i })).toHaveCount(0);
   await expect(page.getByRole('button', { name: /Transmettre/i })).toHaveCount(0);
 
-  // SVI decision is visible (svi_carcasse_status = ACCEPTE for all 4 carcasses per SVI_CLOSED seed)
   await expect(page.getByText(/accept/i).first()).toBeVisible({ timeout: 10000 });
 });

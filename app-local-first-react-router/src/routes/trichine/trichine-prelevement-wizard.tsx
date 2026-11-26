@@ -70,11 +70,6 @@ const ETAPES = ['Carcasses', 'Prélèvement', 'Regroupement', 'Récapitulatif'];
 
 type Reglage = { site_prelevement: TrichineSitePrelevement; masse_grammes: number };
 
-/**
- * Carcasse proposée au prélèvement. Le SVI partage les locaux de l'ETG et prélève la trichine
- * dès l'arrivage : `a_venir` marque les sangliers déjà chez l'ETG mais que celui-ci ne lui a
- * pas encore officiellement transmis, servis par une route dédiée hors du store local-first.
- */
 type CarcasseAPrelever = Pick<
   Carcasse,
   | 'zacharie_carcasse_id'
@@ -86,11 +81,6 @@ type CarcasseAPrelever = Pick<
   | 'premier_detenteur_name_cache'
 > & { a_venir: boolean };
 
-/**
- * Stratégies de regroupement proposées à l'étape 3. `MANUEL` ne calcule rien : il part de
- * l'agencement affiché et laisse l'utilisateur déplacer les carcasses. `PLUS_TARD` crée les
- * échantillons sans pool, ils resteront « à regrouper » dans le suivi.
- */
 type ModeRegroupement = 'AUTOMATIQUE' | 'PREMIER_DETENTEUR' | 'INDIVIDUEL' | 'MANUEL' | 'PLUS_TARD';
 
 const MODES: Array<{ value: ModeRegroupement; label: string; hint: string }> = [
@@ -121,11 +111,6 @@ const MODES: Array<{ value: ModeRegroupement; label: string; hint: string }> = [
   },
 ];
 
-/**
- * Rang du pool qu'on s'apprête à constituer. En 2e intention, on re-prélève sur les carcasses
- * d'un pool douteux pour resserrer la recherche : une fille regroupe au plus 5 carcasses du
- * pool mère, une petite-fille en isole une seule (cf doc/trichine.md §5.1).
- */
 type ModePrelevement =
   | { kind: 'INITIAL' }
   | { kind: 'FILLE'; parent: TrichinePoolPopulated }
@@ -143,10 +128,6 @@ const MASSES_DEFAUT: Record<ModePrelevement['kind'], number> = {
   PETITE_FILLE: TRICHINE_MASSE_DEFAUT_PETITE_FILLE,
 };
 
-/**
- * Regrouper par premier détenteur n'a pas de sens dans un pool mère déjà constitué, et une
- * petite-fille n'a qu'une carcasse : chaque rang a ses stratégies.
- */
 function modesDisponibles(kind: ModePrelevement['kind']): typeof MODES {
   if (kind === 'INITIAL') return MODES;
   if (kind === 'PETITE_FILLE') {
@@ -159,16 +140,10 @@ function modesDisponibles(kind: ModePrelevement['kind']): typeof MODES {
   );
 }
 
-/**
- * Assistant de prélèvement (SVI) : les sangliers arrivent par lot chez l'ETG, on prélève,
- * on regroupe et on envoie d'une traite. La modale de la fiche carcasse reste le bon outil
- * pour le cas à l'unité, pendant l'inspection.
- */
 export default function TrichinePrelevementWizard() {
   const navigate = useNavigate();
   const basePath = useTrichineBasePath();
   const [searchParams] = useSearchParams();
-  // Référence du pool douteux quand l'assistant est monté sur `pools/:reference/2e-intention`
   const { reference } = useParams();
   const carcassesRegistry = useCarcassesRegistry();
   const { carcasses: carcassesAVenir } = useSviCarcassesAVenir();
@@ -187,7 +162,6 @@ export default function TrichinePrelevementWizard() {
   });
   const [datePrelevement, setDatePrelevement] = useState(dayjs().format('YYYY-MM-DD'));
   const [exceptions, setExceptions] = useState<Record<string, Reglage>>({});
-  // Référence interne du service, saisie carcasse par carcasse dans le détail
   const [aliases, setAliases] = useState<Record<string, string>>({});
 
   const [mode, setMode] = useState<ModeRegroupement>('AUTOMATIQUE');
@@ -199,7 +173,6 @@ export default function TrichinePrelevementWizard() {
     pools: Array<{ id: string; reference: string; carcasses: number }>;
   } | null>(null);
 
-  // Les pools donnent les FTP et le résultat du laboratoire : l'échantillon ne connaît que son pool
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
     Promise.all([getTrichineEchantillons(), getTrichinePools()])
@@ -224,7 +197,6 @@ export default function TrichinePrelevementWizard() {
 
   const limites = LIMITES[modePrelevement.kind];
 
-  // La masse réglementaire dépend du rang du pool : 5 g en initial, 20 g en fille, 50 g en petite-fille
   useEffect(() => {
     setReglageCommun((precedent) => ({
       ...precedent,
@@ -232,12 +204,10 @@ export default function TrichinePrelevementWizard() {
     }));
   }, [modePrelevement.kind]);
 
-  // Une petite-fille n'isole qu'une carcasse : le seul regroupement possible est individuel
   useEffect(() => {
     if (modePrelevement.kind === 'PETITE_FILLE') setMode('INDIVIDUEL');
   }, [modePrelevement.kind]);
 
-  // 2e intention : le lot de départ, ce sont les carcasses du pool douteux qu'aucune fille ne couvre
   useEffect(() => {
     if (!parent) return;
     setSelection(
@@ -247,7 +217,6 @@ export default function TrichinePrelevementWizard() {
     );
   }, [parent, etats]);
 
-  // Une présélection d'URL ne garde que les carcasses réellement prélevables dans ce mode
   useEffect(() => {
     if (chargement) return;
     setSelection((precedente) =>
@@ -255,9 +224,6 @@ export default function TrichinePrelevementWizard() {
     );
   }, [chargement, etats, parent]);
 
-  // Tous les sangliers du registre SVI, hors carcasses supprimées ou retirées de leur fiche,
-  // plus ceux déjà arrivés chez un ETG rattaché au service et pas encore transmis. Celles déjà
-  // prélevées restent affichées avec leur pool et leur FTP, mais non sélectionnables.
   const sangliers = useMemo<Array<CarcasseAPrelever>>(() => {
     const transmises = carcassesRegistry
       .filter(
@@ -278,7 +244,6 @@ export default function TrichinePrelevementWizard() {
         numero_bracelet: carcasse.numero_bracelet,
         fei_numero: carcasse.fei_numero,
         date_mise_a_mort: carcasse.date_mise_a_mort,
-        // Réception = prise en charge par l'ETG, la carcasse est physiquement sur place
         latest_intermediaire_signed_at: carcasse.arrived_at,
         svi_ipm2_decision: null,
         premier_detenteur_name_cache: carcasse.premier_detenteur_name_cache,
@@ -287,7 +252,6 @@ export default function TrichinePrelevementWizard() {
     return [...transmises, ...aVenir];
   }, [carcassesRegistry, carcassesAVenir]);
 
-  // 2e intention : seules les carcasses du pool douteux peuvent entrer dans une fille
   const proposees = useMemo<Array<CarcasseAPrelever>>(() => {
     if (!parent) return sangliers;
     const duParent = new Set(
@@ -326,7 +290,6 @@ export default function TrichinePrelevementWizard() {
         return repartirIndividuellement(aRepartir());
       case 'AUTOMATIQUE':
         return repartirEnPools(aRepartir(), limites);
-      // MANUEL / PLUS_TARD : on garde l'agencement affiché, aligné sur la sélection
       default:
         return reconcilierPools(precedents, aRepartir(), limites);
     }
@@ -342,7 +305,6 @@ export default function TrichinePrelevementWizard() {
     setPools((precedents) => repartirSelon(nouveauMode, precedents));
   };
 
-  // Déplacer une carcasse à la main sort forcément d'un mode calculé
   const deplacer = (carcasseId: string, indexCible: number) => {
     setMode('MANUEL');
     setPools((precedents) => {
@@ -357,8 +319,6 @@ export default function TrichinePrelevementWizard() {
     setIsSubmitting(true);
     try {
       const response = await createTrichineEchantillonsBulk({
-        // Un prélèvement de 2e intention est un complémentaire, fille comme petite-fille :
-        // CONFIRMATION reste réservé aux analyses du LNR
         type: modePrelevement.kind === 'INITIAL' ? TrichineType.INITIAL : TrichineType.COMPLEMENTAIRE,
         echantillons: selection.map((carcasseId) => ({
           zacharie_carcasse_id: carcasseId,
@@ -433,7 +393,6 @@ export default function TrichinePrelevementWizard() {
     );
   }
 
-  // La hiérarchie s'arrête à la petite-fille : sous une carcasse isolée, il n'y a plus rien à resserrer
   if (
     parent?.pool_parent_id &&
     poolsExistants.find((pool) => pool.id === parent.pool_parent_id)?.pool_parent_id
@@ -546,7 +505,6 @@ export default function TrichinePrelevementWizard() {
         />
       )}
 
-      {/* Barre d'actions collante : les listes sont longues, les boutons doivent rester atteignables */}
       <div className="sticky bottom-0 z-10 mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 bg-white/95 py-3 backdrop-blur">
         <Bouton
           variante="secondaire"
@@ -578,10 +536,6 @@ export default function TrichinePrelevementWizard() {
   );
 }
 
-/**
- * La 2e intention ne s'ouvre qu'après un résultat douteux, et s'arrête à la petite-fille.
- * Hors de ces cas, on explique pourquoi plutôt que d'afficher un assistant qui échouera.
- */
 function ImpossibleDeuxiemeIntention({
   basePath,
   reference,
@@ -611,10 +565,6 @@ function ImpossibleDeuxiemeIntention({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* ① Carcasses                                                                 */
-/* -------------------------------------------------------------------------- */
-
 const IPM2_LABELS: Record<IPM2Decision, string> = {
   [IPM2Decision.NON_RENSEIGNEE]: 'Non renseignée',
   [IPM2Decision.LEVEE_DE_LA_CONSIGNE]: 'Levée de la consigne',
@@ -636,7 +586,6 @@ function DecisionIpm2({ carcasse }: { carcasse: CarcasseAPrelever }) {
   if (!decision || decision === IPM2Decision.NON_RENSEIGNEE) {
     return null;
   }
-  // Le libellé « IPM2 » est porté par l'en-tête de colonne, la pastille n'a que la décision
   return <Pastille ton={IPM2_TONS[decision]}>{IPM2_LABELS[decision]}</Pastille>;
 }
 
@@ -655,10 +604,8 @@ const IPM2_FILTRES = [
   })),
 ];
 
-/** Valeur des filtres pool, FTP et résultat pour « rien », carcasses non prélevées comprises */
 const SANS_RATTACHEMENT = 'SANS';
 
-/** Valeur du filtre résultat regroupant positif, non négatif et parasite non identifié */
 const RESULTAT_DEFAVORABLE = 'DEFAVORABLE';
 
 const RESULTAT_TONS: Record<TrichineResultatAnalyse, 'succes' | 'attention' | 'alerte'> = {
@@ -692,11 +639,6 @@ function decisionIpm2De(carcasse: CarcasseAPrelever): IPM2Decision {
   return carcasse.svi_ipm2_decision ?? IPM2Decision.NON_RENSEIGNEE;
 }
 
-/**
- * Deux listes plutôt qu'une : les carcasses jamais prélevées sont le plan de travail du jour,
- * les autres ne servent qu'à retrouver un pool, une FTP ou un résultat. Les colonnes et les
- * filtres suivent l'onglet, une carcasse jamais prélevée n'ayant ni pool ni résultat.
- */
 type OngletCarcasses = 'A_FAIRE' | 'FAIT';
 
 function EtapeCarcasses({
@@ -708,7 +650,6 @@ function EtapeCarcasses({
 }: {
   carcasses: Array<CarcasseAPrelever>;
   etats: Map<string, EtatTrichineCarcasse>;
-  /** Pool douteux qu'on resserre, null pour un prélèvement initial */
   parentPoolId: string | null;
   selection: Array<string>;
   onSelection: (ids: Array<string>) => void;
@@ -724,7 +665,6 @@ function EtapeCarcasses({
   const [resultat, setResultat] = useState('');
   const [onglet, setOnglet] = useState<OngletCarcasses>('A_FAIRE');
 
-  // 2e intention : les carcasses du pool douteux sont toutes déjà prélevées, l'onglet n'a pas lieu d'être
   const avecOnglets = !parentPoolId;
   const { aFaire, faites } = useMemo(() => {
     const aFaire: Array<CarcasseAPrelever> = [];
@@ -740,7 +680,6 @@ function EtapeCarcasses({
 
   const changerOnglet = (suivant: OngletCarcasses) => {
     setOnglet(suivant);
-    // Un filtre que l'onglet masque continuerait à restreindre la liste sans être visible
     if (suivant === 'A_FAIRE') {
       setPool('');
       setFtp('');
@@ -761,7 +700,6 @@ function EtapeCarcasses({
       .map(([numero, nombre]) => ({ value: numero, label: numero, nombre }));
   }, [listee]);
 
-  // On ne propose que les pools et les FTP qui portent une carcasse de la liste
   const { optionsPools, optionsFtps } = useMemo(() => {
     const pools = new Map<string, number>();
     const ftps = new Map<string, number>();
@@ -813,7 +751,6 @@ function EtapeCarcasses({
   const tousVisiblesSelectionnes =
     idsSelectionnables.length > 0 && idsSelectionnables.every((id) => selection.includes(id));
   const nonPrelevablesVisibles = visibles.length - idsSelectionnables.length;
-  // Une carcasse cochée puis masquée par un filtre reste dans la sélection : on le dit.
   const selectionMasquee = selection.filter((id) => !idsSelectionnables.includes(id)).length;
   const filtresActifs = [fiche, ipm2, miseAMort, reception, pool, ftp, resultat, recherche.trim()].filter(
     Boolean
@@ -840,7 +777,6 @@ function EtapeCarcasses({
         />
       )}
 
-      {/* Le lot d’une 2e intention tient en une page : les filtres ne servent qu’au registre complet */}
       {!parentPoolId && (
         <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <Champ label="N° de marquage">
@@ -853,8 +789,6 @@ function EtapeCarcasses({
           </Champ>
           <div>
             <span className="mb-1 block text-sm font-medium text-gray-900">Fiche</span>
-            {/* Combobox et non liste déroulante : une saison compte des centaines de fiches,
-                et un numéro se retrouve en tapant sa date. */}
             <SelectCustom<OptionFiche>
               options={optionsFiches}
               value={optionsFiches.find((option) => option.value === fiche) ?? null}
@@ -1176,10 +1110,6 @@ function EtapeCarcasses({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* ② Prélèvement                                                               */
-/* -------------------------------------------------------------------------- */
-
 function EtapePrelevement({
   selection,
   parId,
@@ -1346,10 +1276,6 @@ function EtapePrelevement({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* ③ Regroupement                                                              */
-/* -------------------------------------------------------------------------- */
-
 function EtapeRegroupement({
   pools,
   parId,
@@ -1374,8 +1300,6 @@ function EtapeRegroupement({
   const [survole, setSurvole] = useState<number | null>(null);
   const poolsRemplis = pools.filter((pool) => pool.length > 0);
 
-  // Le glisser-déposer ne marche pas au doigt et ne se pilote pas au clavier :
-  // la liste déroulante de chaque carcasse reste le chemin garanti.
   const zoneDepot = (index: number) => ({
     onDragOver: (event: React.DragEvent) => {
       event.preventDefault();
@@ -1516,10 +1440,6 @@ function EtapeRegroupement({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* ④ Récapitulatif                                                             */
-/* -------------------------------------------------------------------------- */
-
 function Chiffre({ valeur, libelle }: { valeur: string; libelle: string }) {
   return (
     <div className="rounded-lg bg-gray-50 px-4 py-3">
@@ -1553,7 +1473,6 @@ function EtapeRecapitulatif({
   premierDetenteurDe: (carcasseId: string) => string;
 }) {
   const fiches = new Set(selection.map((id) => parId.get(id)?.fei_numero).filter(Boolean));
-  // Dernier écran avant enregistrement : un pool hors limites doit sauter aux yeux ici aussi
   const poolsNonConformes = pools.filter((pool) =>
     erreurPool(
       pool.map((carcasseId) => reglageDe(carcasseId).masse_grammes),
@@ -1640,7 +1559,6 @@ function EtapeRecapitulatif({
                 {detenteurs.size === 1 && (
                   <p className="m-0 mb-2 truncate text-xs text-gray-500">{[...detenteurs][0]}</p>
                 )}
-                {/* Numéros de marquage en pastilles : c'est la liste qu'on relit tube par tube */}
                 <ul className="m-0 flex list-none flex-wrap gap-1 p-0">
                   {pool.map((carcasseId) => (
                     <li
@@ -1664,15 +1582,6 @@ function EtapeRecapitulatif({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Écran de fin                                                                */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Les références de pool sont le vrai produit de l'assistant : elles seront recopiées sur
- * les tubes et citées au laboratoire. Elles sont donc mises en avant et copiables, et la
- * suite du parcours (envoi au labo) est proposée avec les pools déjà pré-sélectionnés.
- */
 const SUITE = [
   "Vous créez la fiche de transmission et l'imprimez pour la joindre au colis.",
   "Le laboratoire confirme la réception à l'arrivée du colis.",
@@ -1691,7 +1600,6 @@ function EcranFinal({
   echantillons: number;
   pools: Array<{ id: string; reference: string; carcasses: number }>;
   datePrelevement: string;
-  /** Pool mère quand le lot vient d'une 2e intention */
   parent: TrichinePoolPopulated | null;
   onRecommencer: () => void;
 }) {
@@ -1778,7 +1686,6 @@ function EcranFinal({
 
         <div className="mt-8 border-t border-gray-200 pt-6">
           <p className="m-0 mb-4 text-xs font-semibold tracking-wide text-gray-500 uppercase">Et ensuite</p>
-          {/* Pas de <ol> : les styles de liste globaux rajouteraient leur propre numérotation */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {SUITE.map((texte, index) => (
               <div

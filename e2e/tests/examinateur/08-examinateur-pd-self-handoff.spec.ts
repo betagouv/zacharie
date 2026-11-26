@@ -28,10 +28,6 @@ test.beforeAll(async () => {
 });
 
 test('Examinateur == PD via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY — self-handoff', async ({ page }) => {
-  // The user is both examinateur and PD (via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY on
-  // "Association de chasseurs"). The examinateur form transitions inline to the PD dispatch
-  // view after the first Transmettre — there is no "Prendre en charge" step and no
-  // "Votre fiche a été transmise" confirmation.
   await connectWith(page, 'examinateur-premier-detenteur@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
 
@@ -40,11 +36,9 @@ test('Examinateur == PD via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY — self-hando
   await page.getByRole('textbox', { name: 'Commune de prélèvement du gibier' }).fill('CHASS');
   await page.getByRole('button', { name: 'CHASSENARD' }).click();
 
-  // Sélectionner l'association de chasseurs comme PD (pill button)
   await page.getByRole('button', { name: /Association de chasseurs/i }).click();
   await page.getByRole('button', { name: 'Continuer' }).first().click();
 
-  // Bloc 2 — 1 carcasse
   await page.getByRole('button', { name: 'Ajouter une carcasse' }).click();
   await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Daim');
   await page.getByRole('button', { name: /^PP-\d{3}-\d{3}$/ }).click();
@@ -52,7 +46,6 @@ test('Examinateur == PD via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY — self-hando
   await page.getByRole('button', { name: 'Continuer' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Continuer' }).click();
 
-  // Heures
   await page
     .getByRole('textbox', { name: 'Heure du prélèvement de la première carcasse' })
     .fill(dayjs().startOf('day').add(1, 'hour').format('HH:mm'));
@@ -62,7 +55,6 @@ test('Examinateur == PD via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY — self-hando
     .fill(dayjs().startOf('day').add(2, 'hour').format('HH:mm'));
   await page.getByRole('textbox', { name: 'Heure d’éviscération de la dernière carcasse' }).blur();
 
-  // Validation de l'examen initial
   await page.getByRole('button', { name: dateApprobationDuJour() }).click();
   await page
     .getByText(/Je, .* certifie qu/i)
@@ -70,7 +62,6 @@ test('Examinateur == PD via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY — self-hando
     .click();
   await page.getByRole('button', { name: 'Transmettre', exact: true }).click();
 
-  // Form transitions inline to the PD « vente / don » view.
   await openVenteDon(page);
   await selectDestinataire(page, 'ETG 1 - 75000 Paris');
 

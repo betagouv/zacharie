@@ -99,7 +99,6 @@ export default function RouterSvi() {
         path="carcasse-svi/:fei_numero/:zacharie_carcasse_id"
         element={<SviInspectionCarcasseLoader />}
       />
-      {/* Espace trichine SVI (circuit agréé) — invisible tant que le feature flag n'est pas activé */}
       {TRICHINE_FEATURE_ENABLED && (
         <>
           <Route

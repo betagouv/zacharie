@@ -16,8 +16,6 @@ import { TRICHINE_FEATURE_ENABLED } from '@app/utils/trichine';
 
 export type ApproveCarcasseResult = { ok: true } | { ok: false; error: string };
 
-// Circuit agréé : pas d'acceptation d'un sanglier sans résultat trichine négatif (cf doc/trichine.md §6.2).
-// Fail-closed : on bloque aussi si les analyses ne peuvent pas être chargées.
 async function carcasseHasTrichineNegatif(zacharieCarcasseId: string): Promise<boolean> {
   try {
     const response = await getTrichineCarcasse(zacharieCarcasseId);
@@ -33,10 +31,6 @@ async function carcasseHasTrichineNegatif(zacharieCarcasseId: string): Promise<b
   }
 }
 
-// Cœur de l'acceptation en un clic (gardes + mutation locale), sans déclencher la synchro.
-// Réutilisé par l'acceptation unitaire et l'acceptation en masse (registre SVI).
-// Équivaut à enregistrer une IPM1 avec la décision « Acceptée »
-// (même flux que le handleSave de svi-inspection-carcasse/ipm1.tsx).
 function useApplyApprove() {
   const user = useUser((state) => state.user)!;
   const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
@@ -90,7 +84,6 @@ function useApplyApprove() {
     };
     updateCarcasse(carcasse.zacharie_carcasse_id, partialCarcasse);
     if (carcasse.current_owner_role !== FeiOwnerRole.SVI) {
-      // on ne met à jour que les carcasses du même groupe de transmission
       const carcasseIds = Object.values(allCarcasses)
         .filter((c) => !c.deleted_at)
         .filter((c) => c.fei_numero === carcasse.fei_numero)
@@ -133,7 +126,6 @@ function useApplyApprove() {
   };
 }
 
-// Acceptation en un clic côté SVI (carcasse unique) : applique puis synchronise.
 export function useApproveCarcasse() {
   const applyApprove = useApplyApprove();
   return async function approveCarcasse(carcasse: Carcasse): Promise<ApproveCarcasseResult> {
@@ -150,8 +142,6 @@ export type ApproveCarcassesResult = {
   failed: Array<{ id: string; error: string }>;
 };
 
-// Acceptation en masse depuis le registre SVI : on applique chaque carcasse localement,
-// puis on ne synchronise qu'une seule fois à la fin (évite N synchros).
 export function useApproveCarcasses() {
   const applyApprove = useApplyApprove();
   return async function approveCarcasses(

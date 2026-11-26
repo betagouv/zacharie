@@ -12,7 +12,6 @@ import {
   UserRoles,
 } from '@prisma/client';
 
-// Mock third-party side effects
 vi.mock('~/third-parties/brevo', () => ({
   linkBrevoCompanyToContact: vi.fn().mockResolvedValue(undefined),
   unlinkBrevoCompanyToContact: vi.fn().mockResolvedValue(undefined),
@@ -22,7 +21,6 @@ vi.mock('~/third-parties/brevo', () => ({
   sendEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Mock Passport to not require auth in tests
 vi.mock('passport', () => {
   const authenticateMock = vi.fn(() => (req: any, res: any, next: any) => {
     const userHeader = req.get('x-test-user');
@@ -30,7 +28,6 @@ vi.mock('passport', () => {
       req.user = JSON.parse(userHeader);
       next();
     } else {
-      // Simulate Passport failing auth with failWithError: true
       const err = new Error('Unauthorized');
       (err as any).status = 401;
       next(err);
@@ -54,7 +51,6 @@ vi.mock('~/third-parties/sentry', () => ({
   captureException: vi.fn(),
 }));
 
-// Test users
 const regularUser: {
   id: string;
   email: string;
@@ -123,8 +119,8 @@ describe('POST /user-entity/', () => {
       vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
       vi.mocked(prisma.entity.findFirst).mockResolvedValue(testEntity as any);
       vi.mocked(prisma.entityAndUserRelations.findFirst)
-        .mockResolvedValueOnce(null) // isEntityAdmin check
-        .mockResolvedValueOnce(null); // no duplicate
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null);
       const createdRelation: EntityAndUserRelations = {
         id: 'rel-1',
         owner_id: regularUser.id,
@@ -173,12 +169,11 @@ describe('POST /user-entity/', () => {
     });
 
     test('entity admin can manage another user in their entity', async () => {
-      // First findFirst call: check entity admin status → return admin relation
       vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
       vi.mocked(prisma.entity.findFirst).mockResolvedValue(testEntity as any);
       vi.mocked(prisma.entityAndUserRelations.findFirst)
-        .mockResolvedValueOnce({ id: 'rel-admin', status: EntityRelationStatus.ADMIN } as any) // isEntityAdmin check
-        .mockResolvedValueOnce(null); // duplicate check
+        .mockResolvedValueOnce({ id: 'rel-admin', status: EntityRelationStatus.ADMIN } as any)
+        .mockResolvedValueOnce(null);
 
       const createdRelation: EntityAndUserRelations = {
         id: 'rel-new',
@@ -215,10 +210,9 @@ describe('POST /user-entity/', () => {
       });
     });
 
-    // les pouvoirs d'admin Zacharie passent par /admin/user-entity (ProConnect)
     test('platform admin without entity admin relation cannot manage another user → 403', async () => {
       vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
-      vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValueOnce(null); // not entity admin
+      vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValueOnce(null);
 
       const res = await authed(
         request(app).post(BASE).send({
@@ -285,11 +279,9 @@ describe('POST /user-entity/', () => {
       vi.mocked(prisma.entity.findFirst).mockResolvedValue(testEntity as any);
       // @ts-expect-error
       vi.mocked(prisma.entityAndUserRelations.findFirst).mockImplementation((args: any) => {
-        // Check for duplicate: where has owner_id, entity_id, relation, deleted_at
         if (args.where?.relation && !args.where?.status) {
           return Promise.resolve(existingRelation);
         }
-        // Check for admin: where has owner_id, entity_id, status
         if (args.where?.status === EntityRelationStatus.ADMIN) {
           return Promise.resolve(null);
         }
@@ -370,7 +362,7 @@ describe('POST /user-entity/', () => {
         owner_id: regularUser.id,
         entity_id: 'entity-1',
         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-        status: EntityRelationStatus.REQUESTED, // default, not what user sent
+        status: EntityRelationStatus.REQUESTED,
         deleted_at: null,
         created_at: new Date().toISOString() as unknown as Date,
         updated_at: new Date().toISOString() as unknown as Date,
@@ -384,13 +376,12 @@ describe('POST /user-entity/', () => {
           owner_id: regularUser.id,
           entity_id: 'entity-1',
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-          status: EntityRelationStatus.ADMIN, // basic user trying to set status should not be allowed
+          status: EntityRelationStatus.ADMIN,
         }),
         regularUser
       );
 
       expect(res.status).toBe(200);
-      // status should not have been forwarded to create
       const createCall = vi.mocked(prisma.entityAndUserRelations.create).mock.calls[0][0];
       expect(createCall.data).not.toHaveProperty('status');
       expect(res.body).toEqual({
@@ -428,7 +419,7 @@ describe('POST /user-entity/', () => {
         brevo_id: null,
       };
       vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue(createdRelation);
-      vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValue([]); // no admin notifications
+      vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValue([]);
 
       const res = await authed(
         request(app).post(BASE).send({
@@ -444,7 +435,6 @@ describe('POST /user-entity/', () => {
     });
 
     test('non-CAN_HANDLE relations do not trigger Brevo', async () => {
-      //
       // @ts-expect-error
       const { linkBrevoCompanyToContact } = await import('~/third-parties/brevo');
       vi.mocked(prisma.entity.findFirst).mockResolvedValue(testEntity as any);
@@ -547,7 +537,6 @@ describe('POST /user-entity/', () => {
         vi.mocked(prisma.entity.findUnique).mockResolvedValue(associationDeChasse as any);
         // @ts-expect-error
         vi.mocked(prisma.entityAndUserRelations.findFirst).mockImplementation((args: any) => {
-          // recherche d'un membre ou admin existant (règle du premier utilisateur)
           if (args.where?.status?.in) {
             return Promise.resolve(hasMembers ? ({ id: 'rel-existing' } as any) : null);
           }
@@ -623,9 +612,6 @@ describe('POST /user-entity/', () => {
     });
 
     test('REQUESTED relation by non-CHASSEUR is blocked from notifying admins', async () => {
-      // Guard rail: only CHASSEUR users may legitimately reach the REQUESTED notification path.
-      // Frontend already prevents it; the backend throws to trip Sentry if anything bypasses.
-      // The relation row IS still persisted (guard is after create, by design).
       // @ts-expect-error
       const { default: sendNotification } = await import('~/service/notifications');
       const etgUser = { ...regularUser, id: 'etg-user', roles: [UserRoles.ETG] };
@@ -670,7 +656,6 @@ describe('POST /user-entity/', () => {
 
   describe('IDOR / cross-boundary', () => {
     test('user cannot modify relations outside their entity', async () => {
-      // User-1 tries to create relation for otherUser at entity-2 (where user-1 is not admin)
       const createdRelation: EntityAndUserRelations = {
         id: 'rel-new',
         owner_id: otherUser.id,
@@ -685,8 +670,8 @@ describe('POST /user-entity/', () => {
       };
 
       vi.mocked(prisma.entityAndUserRelations.findFirst)
-        .mockResolvedValueOnce(null) // isEntityAdmin check for entity-2 → not admin
-        .mockResolvedValueOnce(null); // no duplicate
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null);
       vi.mocked(prisma.entity.findUnique).mockResolvedValue({ ...testEntity, id: 'entity-2' } as any);
       vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue(createdRelation);
 
@@ -699,7 +684,7 @@ describe('POST /user-entity/', () => {
         regularUser
       );
 
-      expect(res.status).toBe(403); // blocked: not admin of entity-2
+      expect(res.status).toBe(403);
     });
   });
 });
@@ -725,8 +710,8 @@ describe('PUT /user-entity/', () => {
   describe('update', () => {
     test('relation not found → 404', async () => {
       vi.mocked(prisma.entityAndUserRelations.findFirst)
-        .mockResolvedValueOnce(null) // isEntityAdmin check
-        .mockResolvedValueOnce(null); // find existing relation
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null);
 
       const res = await authed(
         request(app).put(BASE).send({
@@ -756,11 +741,9 @@ describe('PUT /user-entity/', () => {
       vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
       // @ts-expect-error
       vi.mocked(prisma.entityAndUserRelations.findFirst).mockImplementation((args: any) => {
-        // Admin check
         if (args.where?.status === EntityRelationStatus.ADMIN) {
           return Promise.resolve(null);
         }
-        // Find existing relation for update
         return Promise.resolve(existingRelation);
       });
       vi.mocked(prisma.entityAndUserRelations.update).mockResolvedValue(existingRelation);
@@ -803,7 +786,7 @@ describe('PUT /user-entity/', () => {
       };
       vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
       vi.mocked(prisma.entityAndUserRelations.findFirst)
-        .mockResolvedValueOnce(null) // not entity admin
+        .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(existingRelation);
       vi.mocked(prisma.entityAndUserRelations.update).mockResolvedValue(existingRelation);
 
@@ -847,11 +830,9 @@ describe('PUT /user-entity/', () => {
       vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
       // @ts-expect-error
       vi.mocked(prisma.entityAndUserRelations.findFirst).mockImplementation((args: any) => {
-        // Admin check
         if (args.where?.status === EntityRelationStatus.ADMIN) {
           return Promise.resolve(null);
         }
-        // Existing relation lookup
         return Promise.resolve(null);
       });
 
@@ -887,11 +868,9 @@ describe('PUT /user-entity/', () => {
       vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
       // @ts-expect-error
       vi.mocked(prisma.entityAndUserRelations.findFirst).mockImplementation((args: any) => {
-        // Admin check returns the entity admin relation
         if (args.where?.status === EntityRelationStatus.ADMIN && args.where?.owner_id === regularUser.id) {
           return Promise.resolve({ id: 'rel-admin', status: EntityRelationStatus.ADMIN } as any);
         }
-        // Find existing relation
         return Promise.resolve(existingRelation);
       });
       vi.mocked(prisma.entityAndUserRelations.update).mockResolvedValue(updatedRelation);
@@ -914,16 +893,13 @@ describe('PUT /user-entity/', () => {
 
   describe('IDOR / cross-boundary', () => {
     test('entity admin for entity-1 cannot modify entity-2 relations', async () => {
-      // regularUser is admin of entity-1, but not entity-2
       vi.mocked(prisma.entity.findUnique).mockResolvedValue({ ...testEntity, id: 'entity-2' } as any);
       vi.mocked(prisma.entity.findFirst).mockResolvedValue({ ...testEntity, id: 'entity-2' } as any);
       // @ts-expect-error
       vi.mocked(prisma.entityAndUserRelations.findFirst).mockImplementation((args: any) => {
-        // Admin check for entity-2 → not admin
         if (args.where?.status === EntityRelationStatus.ADMIN) {
           return Promise.resolve(null);
         }
-        // Duplicate check
         return Promise.resolve(null);
       });
 
@@ -937,7 +913,7 @@ describe('PUT /user-entity/', () => {
         regularUser
       );
 
-      expect(res.status).toBe(403); // blocked: not admin of entity-2, can't manage others
+      expect(res.status).toBe(403);
     });
   });
 });
@@ -945,10 +921,8 @@ describe('PUT /user-entity/', () => {
 describe('DELETE /user-entity/', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Default: entity exists
     vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
     vi.mocked(prisma.entity.findFirst).mockResolvedValue(testEntity as any);
-    // Default: not an entity admin
     vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValue(null);
   });
 
@@ -974,15 +948,14 @@ describe('DELETE /user-entity/', () => {
         relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
         deleted_at: null,
       };
-      // Reset mocks and setup fresh for this test
       vi.mocked(prisma.entity.findUnique).mockReset();
       vi.mocked(prisma.entityAndUserRelations.findFirst).mockReset();
       vi.mocked(prisma.entityAndUserRelations.delete).mockReset();
 
       vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
       vi.mocked(prisma.entityAndUserRelations.findFirst)
-        .mockResolvedValueOnce(null) // isEntityAdmin check
-        .mockResolvedValueOnce(existingRelation as any); // find relation to delete
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(existingRelation as any);
       vi.mocked(prisma.entityAndUserRelations.delete).mockResolvedValue(existingRelation as any);
 
       const res = await authed(
@@ -999,13 +972,12 @@ describe('DELETE /user-entity/', () => {
     });
 
     test('relation not found → still 200', async () => {
-      // Reset mocks and setup fresh for this test
       vi.mocked(prisma.entity.findUnique).mockReset();
       vi.mocked(prisma.entityAndUserRelations.findFirst).mockReset();
       vi.mocked(prisma.entityAndUserRelations.delete).mockReset();
 
       vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
-      vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValue(null); // all findFirst calls return null
+      vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValue(null);
 
       const res = await authed(
         request(app).delete(BASE).send({
@@ -1021,7 +993,6 @@ describe('DELETE /user-entity/', () => {
     });
 
     test('CAN_HANDLE deletion triggers Brevo unlink', async () => {
-      //
       // @ts-expect-error
       const { unlinkBrevoCompanyToContact } = await import('~/third-parties/brevo');
       const existingRelation: Partial<EntityAndUserRelations> = {
@@ -1038,11 +1009,9 @@ describe('DELETE /user-entity/', () => {
       vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
       // @ts-expect-error
       vi.mocked(prisma.entityAndUserRelations.findFirst).mockImplementation((args: any) => {
-        // Admin check
         if (args.where?.status === EntityRelationStatus.ADMIN) {
           return Promise.resolve(null);
         }
-        // Find relation to delete
         return Promise.resolve(existingRelation);
       });
       vi.mocked(prisma.entityAndUserRelations.delete).mockResolvedValue(existingRelation as any);
@@ -1061,7 +1030,6 @@ describe('DELETE /user-entity/', () => {
     });
 
     test('non-CAN_HANDLE deletion does not trigger Brevo', async () => {
-      //
       // @ts-expect-error
       const { unlinkBrevoCompanyToContact } = await import('~/third-parties/brevo');
       const existingRelation: Partial<EntityAndUserRelations> = {
@@ -1146,7 +1114,6 @@ describe('DELETE /user-entity/', () => {
       vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
       // @ts-expect-error
       vi.mocked(prisma.entityAndUserRelations.findFirst).mockImplementation((args: any) => {
-        // Admin check - regularUser is not admin of entity-1 for otherUser
         if (args.where?.status === EntityRelationStatus.ADMIN) {
           return Promise.resolve(null);
         }

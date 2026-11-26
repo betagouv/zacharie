@@ -10,8 +10,6 @@ import {
   isCarcasseToTake,
 } from './is-carcasse-done';
 
-// Minimal carcasse factory — only the fields the "done / responsibility / to-take" logic reads.
-// svi_carcasse_status defaults to SANS_DECISION (non-terminal) so the baseline carcasse is "not done".
 function c(overrides: Partial<Carcasse> = {}): Carcasse {
   return {
     zacharie_carcasse_id: 'FEI-TEST_BR1',
@@ -42,7 +40,6 @@ function fei(overrides: Partial<Fei> = {}): Fei {
 
 const me = { id: 'me' } as User;
 
-// A key present (truthy value) means "an entity I work directly for".
 function working(...ids: string[]): Record<string, EntityWithUserRelation> {
   return Object.fromEntries(ids.map((id) => [id, {} as EntityWithUserRelation]));
 }
@@ -95,7 +92,6 @@ describe('isCarcasseDone', () => {
   });
 
   it('true when transmise à un destinataire de circuit court (next_owner_role)', () => {
-    // current_owner reste PREMIER_DETENTEUR (pas de prise en charge), seul next_owner pointe vers le circuit court.
     expect(
       isCarcasseDone(
         c({
@@ -118,7 +114,6 @@ describe('isCarcasseDone', () => {
   );
 
   it('falls back to computed status when svi_carcasse_status is null — fresh assignment is not done', () => {
-    // svi_carcasse_status null → updateCarcasseStatus runs; recently assigned, no IPM → SANS_DECISION (not terminal).
     expect(
       isCarcasseDone(
         c({

@@ -7,11 +7,6 @@ import type {
   AdminHistorySubjectType,
 } from '~/types/admin-history';
 
-// Lecture des tables <Table>History (migration history_tables) : chaque ligne d'historique est une version
-// précédente d'une ligne, valable pendant sys_period. La version courante reste dans la table elle-même.
-// Un changement = une version comparée à la suivante (ou à la ligne courante), daté de la fin de sa période,
-// et fait par le version_user_id de la version suivante (Fei, Carcasse et CarcasseIntermediaire seulement).
-
 type HistorySource = {
   table: string;
   historyTable: string;
@@ -43,10 +38,8 @@ export const HISTORY_SOURCES: Record<AdminHistorySubjectType, HistorySource> = {
   },
 };
 
-// Au-delà, la chronologie d'une fiche (jusqu'à plusieurs centaines de carcasses) est coupée aux plus récents
 export const TIMELINE_MAX_EVENTS = 1000;
 
-// Champs techniques ou secrets, jamais affichés
 const IGNORED_FIELDS = [
   'updated_at',
   'is_synced',
@@ -60,7 +53,6 @@ const IGNORED_FIELDS = [
 
 type JsonRow = Record<string, unknown>;
 
-// Événement avant résolution des libellés : `row` sert à nommer la ligne concernée, sans être renvoyé au front
 type RawEvent = Omit<AdminHistoryEvent, 'subject' | 'author_email'> & {
   subject: { type: AdminHistorySubjectType; id: string; row: JsonRow | null };
 };
@@ -72,7 +64,6 @@ export type HistoryVersion = {
   row: JsonRow;
 };
 
-// to_jsonb écrit les timestamp(3) sans fuseau ; Prisma les enregistre en UTC
 const TIMESTAMP_SANS_FUSEAU = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/;
 
 function normalizeValue(value: unknown): unknown {
@@ -94,8 +85,6 @@ function rowKey(source: HistorySource, row: JsonRow) {
   return source.keyColumns.map((column) => String(row[column])).join('|');
 }
 
-// Changements d'une ligne, à partir de ses versions précédentes (dans l'ordre) et de sa ligne courante
-// (absente si la ligne a été supprimée pour de bon)
 export function buildChanges(
   type: AdminHistorySubjectType,
   versions: Array<HistoryVersion>,
@@ -131,7 +120,6 @@ function whereSql(where: Record<string, string | Array<string>>) {
   return conditions.length ? Prisma.join(conditions, ' AND ') : Prisma.sql`TRUE`;
 }
 
-// Toutes les versions des lignes qui vérifient `where` (colonnes de la table), puis leurs changements
 async function loadHistoryChanges(
   type: AdminHistorySubjectType,
   where: Record<string, string | Array<string>>
@@ -159,7 +147,6 @@ async function loadHistoryChanges(
   );
 }
 
-// Log.history est un JSON { before, after } enregistré tel quel par le client (parfois en chaîne)
 function logChanges(history: unknown): Array<AdminHistoryChange> {
   let parsed: unknown = history;
   if (typeof history === 'string') {
@@ -239,9 +226,6 @@ async function loadNotifications(userId: string): Promise<Array<RawEvent>> {
 
 export type AdminHistoryTimelineType = 'fei' | 'carcasse' | 'user' | 'entity';
 
-// Chronologie d'une fiche (avec toutes ses carcasses et lignes intermédiaires), d'une carcasse, d'un
-// utilisateur ou d'une entité : versions des tables d'historique, actions métier (Log), notifications et
-// actions admin, de la plus récente à la plus ancienne
 export async function loadTimeline(type: AdminHistoryTimelineType, id: string) {
   let sources: Array<Promise<Array<RawEvent>>> = [];
   if (type === 'fei') {
@@ -308,10 +292,7 @@ export type HistoryPageFilters = {
   to: Date | null;
 };
 
-// Dernières modifications, toutes tables confondues (page « Historique » de l'admin). Chaque table est lue
-// avec LEAD() pour avoir la version suivante (ou la ligne courante) : l'auteur se filtre ainsi en SQL.
 export async function loadHistoryPage(filters: HistoryPageFilters, limit: number, offset: number) {
-  // seules Fei, Carcasse et CarcasseIntermediaire savent qui a écrit chaque version
   const types = filters.types.filter((type) => !filters.authorId || HISTORY_SOURCES[type].hasAuthor);
   const results = await Promise.all(
     types.map(async (type) => {
@@ -375,7 +356,6 @@ const LINK_TYPE: Record<AdminHistorySubjectType, AdminHistoryLinkType> = {
   user_entity: 'user',
 };
 
-// Emails des auteurs, et libellé + lien de la ligne concernée par chaque événement
 async function resolveEvents(events: Array<RawEvent>): Promise<Array<AdminHistoryEvent>> {
   const userIds = new Set<string>();
   const entityIds = new Set<string>();

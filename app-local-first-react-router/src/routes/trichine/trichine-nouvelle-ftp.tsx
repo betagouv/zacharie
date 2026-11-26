@@ -21,7 +21,6 @@ import {
 import { poolSansFTP } from '@app/utils/trichine';
 import { useEntitiesIdsWorkingDirectlyForObj } from '@app/utils/get-entity-relations';
 
-/** Échantillons vivants d'un pool : ce que le laboratoire recevra réellement. */
 function echantillonsDuPool(pool: TrichinePoolPopulated) {
   return pool.TrichineEchantillons.filter((echantillon) => !echantillon.deleted_at);
 }
@@ -30,17 +29,9 @@ function carcassesDuPool(pool: TrichinePoolPopulated): number {
   return new Set(echantillonsDuPool(pool).map((echantillon) => echantillon.zacharie_carcasse_id)).size;
 }
 
-/**
- * Création d'une FTP : sélection des pools à envoyer + choix du laboratoire (LVD).
- * La FTP est créée en brouillon puis envoyée depuis son détail.
- *
- * Écran en deux colonnes : à gauche les pools qui attendent un envoi, à droite la fiche en cours.
- */
 export default function TrichineNouvelleFTP() {
   const navigate = useNavigate();
   const basePath = useTrichineBasePath();
-  // En circuit agréé la fiche part au nom du service d'inspection, pas de l'agent qui la saisit :
-  // c'est le service qui figure comme expéditeur sur la FTP imprimée et que le laboratoire facture.
   const entitiesWorkingFor = useEntitiesIdsWorkingDirectlyForObj();
   const expediteurEntityId = useMemo(
     () => Object.values(entitiesWorkingFor).find((entity) => entity.type === EntityTypes.SVI)?.id,
@@ -50,7 +41,6 @@ export default function TrichineNouvelleFTP() {
   const [pools, setPools] = useState<Array<TrichinePoolPopulated>>([]);
   const [laboratoires, setLaboratoires] = useState<Array<TrichineLaboratoire>>([]);
   const [recherche, setRecherche] = useState('');
-  // Pré-sélection quand on arrive depuis la liste des pools ou de l'assistant de prélèvement
   const [searchParams] = useSearchParams();
   const [preselection] = useState<Array<string>>(() =>
     (searchParams.get('pools') ?? '').split(',').filter(Boolean)
@@ -68,7 +58,6 @@ export default function TrichineNouvelleFTP() {
         if (poolsResponse.ok && poolsResponse.data) setPools(poolsResponse.data.pools);
         const laboratoiresRecus = laboratoiresResponse.data?.laboratoires ?? [];
         setLaboratoires(laboratoiresRecus);
-        // Le laboratoire de la dernière fiche créée est proposé d'emblée, s'il est toujours agréé
         const [derniere] = (ftpsResponse.data?.ftps ?? [])
           .filter((ftp) => !ftp.deleted_at)
           .sort((a, b) => dayjs(b.date_creation).valueOf() - dayjs(a.date_creation).valueOf());
@@ -82,14 +71,11 @@ export default function TrichineNouvelleFTP() {
 
   const poolsDisponibles = useMemo(() => pools.filter(poolSansFTP), [pools]);
 
-  // La fiche en construction, colonne de droite. Une pré-sélection peut contenir des pools
-  // entre-temps transmis : ils ne sont plus disponibles, on les ignore.
   const selectedPools = useMemo(
     () => poolsDisponibles.filter((pool) => selectedPoolIds.includes(pool.id)),
     [poolsDisponibles, selectedPoolIds]
   );
 
-  // Ce qui reste à transmettre, colonne de gauche : un pool retenu quitte la liste
   const disponibles = useMemo(
     () => poolsDisponibles.filter((pool) => !selectedPoolIds.includes(pool.id)),
     [poolsDisponibles, selectedPoolIds]

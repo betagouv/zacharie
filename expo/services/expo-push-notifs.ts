@@ -1,6 +1,5 @@
 import { Platform, Alert, Linking } from 'react-native';
 import * as Notifications from 'expo-notifications';
-// import { capture } from "./sentry";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -11,15 +10,6 @@ Notifications.setNotificationHandler({
     shouldShowList: true,
   }),
 });
-
-// TO SEND A NOTIFICATION MANUALLY
-// Notifications.scheduleNotificationAsync({
-//   content: {
-//     title: 'Test Dev',
-//     body: "I'm working!",
-//   },
-//   trigger: null,
-// });
 
 export async function registerForPushNotificationsAsync({ force = false, expo = false } = {}) {
   try {

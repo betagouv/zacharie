@@ -2,11 +2,6 @@ import { toast } from 'react-toastify';
 import { capture } from '@app/services/sentry';
 import API from '@app/services/api';
 
-/**
- * Récupère un fichier servi par l'API (PDF de fiche de transmission, document déposé sur un pool).
- * Quand l'API refuse la demande elle répond en JSON et non en binaire : on affiche alors son message.
- * Nécessite d'être en ligne.
- */
 export async function fetchApiFile({
   path,
   accept = 'application/octet-stream',
@@ -35,7 +30,6 @@ export async function fetchApiFile({
   }
 }
 
-/** Télécharge un fichier servi par l'API. */
 export default async function downloadApiFile({
   path,
   filename,

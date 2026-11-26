@@ -2,12 +2,6 @@ import { test, expect, type Page } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Scenario 159 — Import de résultats trichine par fichier CSV (laboratoire).
-// Seed LABORATOIRE_FTP_RECUE : laboratoire@example.fr (Laboratoire 1, LVD) a réceptionné la FTP
-// F-26-SVI01-0001 avec deux pools sans résultat : P-26-SVI01-0001 (2 carcasses) et P-26-SVI01-0002
-// (1 carcasse). L'aperçu montre ce que l'import va faire, le laboratoire choisit les lignes, puis importe.
-// Sur un non négatif, le laboratoire peut indiquer le nombre de larves (colonne nombre_larves).
-
 test.setTimeout(120_000);
 test.use({ launchOptions: { slowMo: 100 } });
 
@@ -56,7 +50,6 @@ test("L'aperçu récapitule les actions, le laboratoire choisit les lignes puis 
   await ouvrirImport(page);
   await deposerFichier(page, csvValide);
 
-  // Statut de chaque ligne
   const ligne1 = page.getByRole('row').filter({ hasText: 'P-26-SVI01-0001' });
   const ligne2 = page.getByRole('row').filter({ hasText: 'P-26-SVI01-0002' });
   await expect(ligne1.getByText('À importer')).toBeVisible({ timeout: 10000 });
@@ -65,7 +58,6 @@ test("L'aperçu récapitule les actions, le laboratoire choisit les lignes puis 
     page.getByRole('row').filter({ hasText: 'P-26-XXXX-9999' }).getByText('Introuvable', { exact: true })
   ).toBeVisible();
 
-  // Actions décrites ligne par ligne
   await expect(
     ligne1.getByText('Pool P-26-SVI01-0001 négatif : 2 carcasses libérée(s) côté trichine')
   ).toBeVisible();
@@ -76,15 +68,12 @@ test("L'aperçu récapitule les actions, le laboratoire choisit les lignes puis 
     ligne2.getByText('Pool P-26-SVI01-0002 négatif : 1 carcasse libérée(s) côté trichine')
   ).toBeVisible();
 
-  // Récapitulatif des deux lignes cochées : la fiche se clôture
   await expect(
     page.getByRole('heading', { name: 'Si vous importez les 2 ligne(s) cochée(s)' })
   ).toBeVisible();
   await expect(page.getByText('3 carcasse(s) libérée(s)')).toBeVisible();
   await expect(page.getByText('Fiche(s) clôturée(s) : F-26-SVI01-0001')).toBeVisible();
 
-  // Décocher une ligne : le récapitulatif suit, la fiche ne se clôture plus
-  // CSS : la case DSFR n'a pas de libellé accessible (colonne « Import »)
   await ligne2.locator('input[type="checkbox"]').uncheck({ force: true });
   await expect(
     page.getByRole('heading', { name: 'Si vous importez les 1 ligne(s) cochée(s)' })

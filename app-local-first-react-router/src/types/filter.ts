@@ -11,7 +11,7 @@ export type FieldType =
   | 'boolean';
 
 export interface FilterableField {
-  name: string; // same as name
+  name: string;
   label: string;
   type: FieldType;
   options?: Array<string>;

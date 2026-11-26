@@ -18,8 +18,6 @@ test("Premier détenteur = examinateur initial : l'ETG voit le nom et le contact
   await expect(page.getByRole('link', { name: feiId })).toBeVisible();
   await page.getByRole('link', { name: feiId }).click();
 
-  // L'étape « Premier détenteur » de la frise affiche les mêmes infos que l'étape « Examinateur initial »
-  // (Marie Martin, son email, son numéro CFEI) car l'examinateur est aussi le premier détenteur.
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
       - group:
         - heading "Données de traçabilité" [level=3]
@@ -50,8 +48,6 @@ test("Premier détenteur = association de chasse : l'ETG voit les infos de l'ass
   await expect(page.getByRole('link', { name: feiId })).toBeVisible();
   await page.getByRole('link', { name: feiId }).click();
 
-  // L'étape « Premier détenteur » de la frise affiche les infos de l'entité association : raison sociale,
-  // SIRET et ville — pas celles d'un individu.
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
       - group:
         - heading "Données de traçabilité" [level=3]
@@ -61,7 +57,6 @@ test("Premier détenteur = association de chasse : l'ETG voit les infos de l'ass
         - text: /SIRET \\d+ \\d+ Paris/
       `);
 
-  // L'individu premier-détenteur par défaut ne doit pas apparaître.
   await expect(page.getByText('premier-detenteur@example.fr')).toHaveCount(0);
   await expect(page.getByText('Pierre Petit')).toHaveCount(0);
 });

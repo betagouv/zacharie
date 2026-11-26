@@ -13,6 +13,7 @@ export default tseslint.config(
     },
     rules: {
       'prefer-const': 'off',
+      'no-empty': ['error', { allowEmptyCatch: true }],
       'no-prototype-builtins': 'off',
       'no-irregular-whitespace': 'off',
       '@typescript-eslint/no-explicit-any': 'off',

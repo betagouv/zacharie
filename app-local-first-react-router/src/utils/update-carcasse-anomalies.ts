@@ -14,9 +14,6 @@ import {
 
 type AnomalieField = 'examinateur_anomalies_carcasse' | 'examinateur_anomalies_abats';
 
-// Écriture centralisée des anomalies d'une carcasse (carcasse ou abats).
-// Met à jour le tableau ciblé, l'horodatage d'examen, recalcule le flag
-// « sans anomalie » à partir des DEUX tableaux résultants, et journalise.
 export function setCarcasseAnomalie({
   carcasse,
   field,
@@ -60,14 +57,10 @@ export function setCarcasseAnomalie({
   });
 }
 
-// Le groupe « Abats » est stocké dans examinateur_anomalies_abats,
-// tout le reste (Comportement, Carcasse, Petit gibier) dans examinateur_anomalies_carcasse.
 function isAbatsGroupe(groupe: string): boolean {
   return groupe === 'Abats';
 }
 
-// Construit les sections du picker depuis le référentiel + les tableaux sélectionnés,
-// en branchant chaque section sur le bon setter (store ou state local).
 export function buildAnomaliePickerSections({
   isPetitGibier,
   anomaliesCarcasse,
@@ -91,13 +84,8 @@ export function buildAnomaliePickerSections({
     const sectionCanonicals = new Set(section.anomalies.map((a) => canonicalOf(a.intitule, section.site)));
     const selected = storedValues.filter((c) => sectionCanonicals.has(c));
 
-    // Saisie libre de la famille : stockée comme les autres, suffixée par le site
-    // (« mon texte - Externe »), pour que l'aval sache de quel organe on parle. Le suffixe est
-    // retiré à l'affichage, il n'apporte rien quand on est déjà dans la famille.
     const suffixe = section.site ? ` - ${section.site}` : null;
     const autres: AnomaliePickerAutres = {
-      // Sans site (petit gibier : une seule famille, donc pas de suffixe à porter),
-      // la famille récupère toutes les saisies libres.
       values: suffixe
         ? storedValues
             .filter((c) => c.endsWith(suffixe) && !sectionCanonicals.has(c))
@@ -119,10 +107,6 @@ export function buildAnomaliePickerSections({
   });
 }
 
-// Anomalies saisies en texte libre hors famille : les valeurs du tableau carcasse absentes du
-// référentiel et non suffixées par une famille connue — celles-là s'affichent dans leur famille.
-// Pas de préfixe ni de marqueur à maintenir, et une valeur devenue orpheline (référentiel modifié)
-// reste visible et supprimable au lieu de disparaître.
 export function buildAutresAnomalies({
   isPetitGibier,
   anomaliesCarcasse,
@@ -146,7 +130,6 @@ export function buildAutresAnomalies({
   };
 }
 
-// Variante branchée sur le store, pour une carcasse existante (édition / synthèse).
 export function buildCarcasseNavSections(carcasse: Carcasse): AnomaliePickerSection[] {
   return buildAnomaliePickerSections({
     isPetitGibier: carcasse.type === CarcasseType.PETIT_GIBIER,

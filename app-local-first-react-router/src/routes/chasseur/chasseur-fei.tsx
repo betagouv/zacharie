@@ -99,10 +99,6 @@ function FEIChasseurLoaded() {
     syncData('examinateur-initial-update-fei');
   };
 
-  // La confirmation de l'examen ne vaut que pour l'état des carcasses au clic sur « Continuer » :
-  // ajouter ou modifier une carcasse l'invalide, ce qui replie les blocs suivants et fait repasser
-  // par la modale d'avertissement des anomalies. Retirer une carcasse ne change pas l'examen des
-  // autres : la confirmation tient, et la vente déjà faite reste affichée.
   const carcassesExamenSignatures = useMemo(
     () =>
       carcasses.map((c) =>
@@ -120,8 +116,6 @@ function FEIChasseurLoaded() {
   const allCarcassesConfirmed =
     carcassesExamenSignatures.length > 0 &&
     carcassesExamenSignatures.every((signature) => confirmedSignatures.has(signature));
-  // Enregistrée dès la coche, comme tous les autres champs de la fiche : la certification vaut
-  // examen initial validé, elle ne dépend pas de la transmission qui peut venir bien plus tard.
   const approbation = !!fei.examinateur_initial_approbation_mise_sur_le_marche;
   const [showErrors, setShowErrors] = useState(false);
   const [showBloc1Errors, setShowBloc1Errors] = useState(false);
@@ -183,10 +177,6 @@ function FEIChasseurLoaded() {
     return true;
   }, [transmissions, fei, user]);
 
-  // Les lots déjà pris en charge par l'aval ne doivent pas verrouiller ceux qui sont restés :
-  // sans ce filtre, une carcasse restée en arrière n'est plus ni transmissible ni supprimable.
-  // On filtre sur la prise en charge, pas sur le choix du destinataire : tant que personne n'a pris
-  // en charge, le chasseur est encore détenteur et garde ses droits sur la fiche.
   const transmissionsEncoreChezLeChasseur = useMemo(
     () => transmissions.filter((transmission) => !isCarcassePriseEnChargeEnAval(transmission.content)),
     [transmissions]
@@ -194,8 +184,6 @@ function FEIChasseurLoaded() {
 
   const canEditAsPremierDetenteur = useMemo(() => {
     for (const currentTransmission of transmissionsEncoreChezLeChasseur) {
-      // Un lot clôturé sans prise en charge (circuit court, clôturé dès l'envoi) ne doit pas
-      // verrouiller les carcasses restées à répartir : les droits viennent des lots encore ouverts.
       if (
         currentTransmission.content.svi_automatic_closed_at ||
         currentTransmission.content.svi_closed_at ||
@@ -230,8 +218,6 @@ function FEIChasseurLoaded() {
   }, [fei.premier_detenteur_user_id, fei.premier_detenteur_entity_id, user.id, entities]);
 
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
-  // Transmettre un lot ne doit toucher que les carcasses encore ici : réécrire le detenteur courant
-  // de tout la fiche écraserait la prise en charge d'un lot déjà parti.
   const carcassesRestantesIds = useMemo(
     () => carcasses.filter((c) => !isCarcasseDejaEnvoyee(c)).map((c) => c.zacharie_carcasse_id),
     [carcasses]
@@ -240,7 +226,6 @@ function FEIChasseurLoaded() {
   const Component = canEdit ? Input : InputNotEditable;
   const VilleComponent = canEdit ? InputVille : InputNotEditable;
 
-  // date_mise_a_mort est stockée à minuit UTC, la date de validation en heure locale : on compare les jours
   const isDateValidationAvantMiseAMort =
     !!fei.date_mise_a_mort &&
     !!fei.examinateur_initial_date_approbation_mise_sur_le_marche &&
@@ -347,7 +332,6 @@ function FEIChasseurLoaded() {
       return label;
     }
     label += ' que les carcasses en peau examinées ce jour présentent au moins une anomalie';
-    // Une anomalie grave interdit la commercialisation : la décision revient au premier détenteur.
     if (atLeastOneAnomalieGrave) {
       label += ', renseignée sur cette fiche.';
     } else if (!fei.consommateur_final_usage_domestique) {
@@ -369,7 +353,6 @@ function FEIChasseurLoaded() {
 
   const communesDeChasseFavorites = useGetCommunesDeChasseFavorites(!fei?.commune_mise_a_mort);
 
-  // Progressive display conditions
   const hasPremierDetenteur = !!(premierDetenteurUser || premierDetenteurEntity);
   const showBloc2 = !canEdit || !!(fei.date_mise_a_mort && fei.commune_mise_a_mort && hasPremierDetenteur);
   const ficheAlmostReady =
@@ -387,14 +370,12 @@ function FEIChasseurLoaded() {
     ficheAlmostReady && fei.examinateur_initial_date_approbation_mise_sur_le_marche && approbation;
 
   const handleTransmettre = () => {
-    // Compte pas encore activé (CFEI non validé) : la fiche peut être préparée mais pas transmise.
     if (!user.activated) {
       return;
     }
     if (validationErrors.length > 0) {
       track('fiche', 'bloquer', validationErrors[0].tracking);
       setShowErrors(true);
-      // on scrolle vers le premier champ en erreur, après le rendu des messages d'erreur
       const firstErrorField = validationErrors[0].field;
       requestAnimationFrame(() => {
         const element = document.getElementById(firstErrorField);
@@ -408,7 +389,6 @@ function FEIChasseurLoaded() {
     }
     setShowErrors(false);
     if (isPremierDetenteur) {
-      // validate() reveals field-level errors inside the destinataire sub-form.
       const destinataireError = destinataireRef.current?.validate();
       if (destinataireError) {
         track('fiche', 'bloquer', 'vente-don');
@@ -471,7 +451,6 @@ function FEIChasseurLoaded() {
           >
             <ChasseurHeaderFiche />
             <div className="flex flex-col gap-6">
-              {/* Bloc 1 — Informations de chasse */}
               <div className="bg-white p-4 md:p-8">
                 <h4 className="fr-h5">Informations de chasse</h4>
                 <Component
@@ -487,7 +466,6 @@ function FEIChasseurLoaded() {
                             className="mr-1 mb-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-left text-sm text-[#000091]"
                             type="button"
                             onClick={(e) => {
-                              // le bouton est dans le <label> du champ : sans preventDefault, iOS focus le champ
                               e.preventDefault();
                               updateFei(fei.numero, { date_mise_a_mort: date });
                             }}
@@ -572,29 +550,9 @@ function FEIChasseurLoaded() {
                 />
               </div>
 
-              {/* Bloc 2 — Carcasses */}
               {showBloc2 && (
                 <div className="bg-white p-4 md:p-8">
                   <h4 className="fr-h5">Carcasses</h4>
-                  {/* {isDebugEnv && canEdit && (
-                    <div className="mb-4 flex flex-wrap items-center gap-2 rounded-sm border border-dashed border-orange-400 bg-orange-50 p-3">
-                      <span className="w-full text-sm font-bold text-orange-700">
-                        🛠 DEBUG — créer des carcasses (Sanglier) en masse
-                      </span>
-                      {[10, 50, 100, 400].map((count) => (
-                        <Button
-                          key={count}
-                          type="button"
-                          size="small"
-                          priority="secondary"
-                          disabled={debugCreating}
-                          onClick={() => createDebugCarcasses(count)}
-                        >
-                          {debugCreating ? 'En cours…' : `+${count}`}
-                        </Button>
-                      ))}
-                    </div>
-                  )} */}
                   <CarcassesExaminateur
                     canEdit={canEdit}
                     canEditAsPremierDetenteur={canEditAsPremierDetenteur}
@@ -718,7 +676,6 @@ function FEIChasseurLoaded() {
                 </div>
               )}
 
-              {/* Bloc 3 — Validation de l'examen initial */}
               {showValidation && examinateurInitialUser && (
                 <div className="bg-white p-4 md:p-8">
                   <h4 className="fr-h5">Validation de l'examen initial</h4>
@@ -763,7 +720,6 @@ function FEIChasseurLoaded() {
                       autoComplete: 'off',
                       suppressHydrationWarning: true,
                       onBlur: (e) => {
-                        // une saisie incomplète du navigateur donne une valeur vide ou invalide
                         const date = dayjs(e.target.value);
                         if (!e.target.value || !date.isValid()) return;
                         updateFei(fei.numero, {
@@ -796,9 +752,6 @@ function FEIChasseurLoaded() {
                             name: Prisma.FeiScalarFieldEnum
                               .examinateur_initial_approbation_mise_sur_le_marche,
                             value: 'true',
-                            // La certification vaut approbation de mise sur le marché : une fois
-                            // cochée on ne la décoche plus. La décocher redescendrait sur toutes les
-                            // carcasses de la fiche, y compris des lots déjà partis chez un ETG.
                             disabled: !canEdit || approbation,
                             onChange: () => {
                               updateFei(fei.numero, {
@@ -842,8 +795,6 @@ function FEIChasseurLoaded() {
                 </div>
               )}
 
-              {/* Bloc 4 — Vente / don. Reste affiché une fois tout transmis : le bloc récapitule
-                  alors les ventes / dons déjà faits. */}
               {showVenteDon && isPremierDetenteur && user.activated && (
                 <div className="bg-white p-4 md:p-8">
                   <h4 className="fr-h5">Destinataires</h4>

@@ -5,9 +5,6 @@ import carcasseRouter from '~/controllers/carcasse';
 import prisma from '~/prisma';
 import { UserRoles } from '@prisma/client';
 
-// GET /carcasse/count — nombre de carcasses non supprimées du périmètre de synchro de l'utilisateur.
-// Le périmètre est celui du pull delta GET /carcasse (getCarcasseAccessWhere), sans filtre updated_at.
-
 const etgUser = {
   id: 'user-etg',
   roles: [UserRoles.ETG],
@@ -72,13 +69,11 @@ describe('GET /carcasse/count', () => {
 
   test('renvoie les carcasses refusées hors périmètre que GET /refusees/:fei_numero peut ajouter au store', async () => {
     vi.mocked(prisma.carcasse.count).mockResolvedValueOnce(2);
-    // groupes de dispatch du périmètre : (FEI-1, dispatch-A) et (FEI-2, sans dispatch)
     vi.mocked(prisma.carcasse.findMany)
       .mockResolvedValueOnce([
         { fei_numero: 'FEI-1', premier_detenteur_prochain_detenteur_id_cache: 'dispatch-A' },
         { fei_numero: 'FEI-2', premier_detenteur_prochain_detenteur_id_cache: null },
       ] as any)
-      // refusées / manquantes hors périmètre de ces fiches
       .mockResolvedValueOnce([
         {
           zacharie_carcasse_id: 'C-REFUSEE-A',

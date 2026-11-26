@@ -31,7 +31,6 @@ router.post(
   contactRateLimit,
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     if (req.body?.job) {
-      // honey pot
       res.status(200).send({ ok: true });
       return;
     }

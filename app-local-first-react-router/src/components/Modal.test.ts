@@ -47,7 +47,6 @@ beforeEach(() => {
       frames.push(cb);
       return frames.length;
     },
-    // renvoie les résultats prévus dans l'ordre, puis la modale enregistrée
     dsfr: () => (dsfrResults.length ? dsfrResults.shift() : dsfrModal),
   });
 });

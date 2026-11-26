@@ -1,49 +1,20 @@
 import { useEffect, useState } from 'react';
 
-// https://github.com/remix-pwa/monorepo/blob/main/packages/push/client/hook/usePush.ts
-
 export type PushObject = {
-  /**
-   * Boolean state indicating whether the user is subscribed to push notifications or not.
-   */
   isSubscribed: boolean;
-  /**
-   * The push subscription object
-   */
   pushSubscription: PushSubscription | null;
-  /**
-   * Request permission for push notifications
-   * @returns The permission status of the push notifications
-   */
   requestPermission: () => NotificationPermission;
-  /**
-   * Utility to subscribe to push notifications
-   * @param publicKey the public vapid key
-   * @param callback a callback function to be called when the subscription is successful
-   * @param errorCallback a callback function to be called if the subscription fails
-   */
   subscribeToPush: (
     publicKey: string,
     callback?: (subscription: PushSubscription) => void,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     errorCallback?: (error: any) => void
   ) => void;
-  /**
-   * Utility to unsubscribe from push notifications
-   * @param callback a callback function to be called when the unsubscription is successful
-   * @param errorCallback a callback function to be called if the unsubscription fails
-   */
   unsubscribeFromPush: (callback?: () => void, errorCallback?: (error: any) => void) => void;
-  /**
-   * Boolean state indicating whether the user has allowed sending of push notifications or not.
-   */
   canSendPush: boolean;
   pushAvailable: boolean;
 };
 
-/**
- * Push API hook - contains all your necessities for handling push notifications in the client
- */
 export const usePush = (): PushObject => {
   const [swRegistration, setSWRegistration] = useState<ServiceWorkerRegistration | null>(null);
   const [isSubscribed, setIsSubscribed] = useState<boolean>(false);

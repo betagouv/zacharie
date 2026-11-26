@@ -3,11 +3,6 @@
 import type { PlaywrightTestConfig } from '@playwright/test';
 import { devices } from '@playwright/test';
 
-// uncomment many things if you need to debug
-
-/**
- * See https://playwright.dev/docs/test-configuration.
- */
 const config: PlaywrightTestConfig = {
   testDir: './tests',
   timeout: 60 * 1000,
@@ -16,52 +11,21 @@ const config: PlaywrightTestConfig = {
   },
   fullyParallel: true,
   forbidOnly: process.env.CI ? true : false,
-  retries: 0, // 0 prevents flaky tests to be retried, so its better for tests stability
+  retries: 0,
   workers: 1,
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: [
-    ['html'], // HTML report for artifacts
-    // ["github"], // GitHub Actions integration // ONLY FOR DEBUG
-    // ["list"], // Detailed console output // ONLY FOR DEBUG
-    // ["junit", { outputFile: "test-results/junit.xml" }], // For CI integration // ONLY FOR DEBUG
-  ],
+  reporter: [['html']],
   use: {
-    actionTimeout: 15 * 1000, // pour tuer le test si une action (genre clic sur un bouton) prend plus de 15s
+    actionTimeout: 15 * 1000,
     baseURL: 'http://localhost:3290',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    // launchOptions: {
-    //   logger: {
-    //     isEnabled: () => true,
-    //     log: (name, severity, message) => console.log(`[${name}] ${severity}: ${message}`),
-    //   },
-    // },
   },
   projects: [
-    // firefox doesn't work for mobile tests
-    /* {
-      name: "firefox",
-      use: {
-        ...devices["Desktop Firefox"],
-      },
-    }, */
     {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        /* CI-specific browser options for better debugging */
-        // launchOptions: {
-        //   args: [
-        //     "--disable-web-security",
-        //     "--disable-features=VizDisplayCompositor",
-        //     "--no-sandbox", // Often needed in CI environments
-        //     "--disable-dev-shm-usage", // Overcome limited resource problems
-        //     "--disable-gpu", // Applicable to Windows
-        //     "--enable-logging",
-        //     "--v=1", // Verbose logging
-        //   ],
-        // },
       },
     },
   ],
@@ -72,10 +36,9 @@ const config: PlaywrightTestConfig = {
         'PORT=3291 NODE_ENV=test PGDATABASE=zacharietest VITE_FEATURE_TRICHINE=true npm run dev-test --prefix ../api-express',
       url: 'http://localhost:3291/healthz',
       timeout: 120 * 1000,
-      reuseExistingServer: true, // FALSE FOR DEBUG
-      // server logs are too verbose, only display when current browser logs are not enough
-      stdout: 'ignore', // PIPE FOR DEBUG
-      stderr: 'ignore', // PIPE FOR DEBUG
+      reuseExistingServer: true,
+      stdout: 'ignore',
+      stderr: 'ignore',
       env: {
         PORT: '3291',
         NODE_ENV: 'test',
@@ -88,10 +51,9 @@ const config: PlaywrightTestConfig = {
         'VITE_HOST=127.0.0.1:3290 VITE_SCHEME=http VITE_TEST=true VITE_TEST_PLAYWRIGHT=true VITE_FEATURE_TRICHINE=true VITE_API_URL=http://localhost:3291 PORT=3290 npm run dev-test --prefix ../app-local-first-react-router',
       url: 'http://localhost:3290',
       timeout: 120 * 1000,
-      reuseExistingServer: true, // FALSE FOR DEBUG
-      // server logs are too verbose, only display when current browser logs are not enough
-      stdout: 'ignore', // PIPE FOR DEBUG
-      stderr: 'ignore', // PIPE FOR DEBUG
+      reuseExistingServer: true,
+      stdout: 'ignore',
+      stderr: 'ignore',
       env: {
         PORT: '3290',
         VITE_HOST: '127.0.0.1:3290',
@@ -102,13 +64,12 @@ const config: PlaywrightTestConfig = {
       },
     },
     {
-      // bac à sable de l'API (api-playground) : application tierce qui utilise une clé API Zacharie
       command: 'npm run dev-test --prefix ../api-playground',
       url: 'http://localhost:3292/connexion',
       timeout: 120 * 1000,
-      reuseExistingServer: true, // FALSE FOR DEBUG
-      stdout: 'ignore', // PIPE FOR DEBUG
-      stderr: 'ignore', // PIPE FOR DEBUG
+      reuseExistingServer: true,
+      stdout: 'ignore',
+      stderr: 'ignore',
       env: {
         DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/zacharie-api-playground-test',
         ZACHARIE_API_URL: 'http://localhost:3291',

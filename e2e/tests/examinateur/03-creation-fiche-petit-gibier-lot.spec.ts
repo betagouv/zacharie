@@ -29,10 +29,8 @@ test('Création fiche petit gibier en lot — 10 pigeons', async ({ page }) => {
   await page.getByRole('button', { name: 'Pierre Petit' }).click();
   await page.getByRole('button', { name: 'Continuer' }).first().click();
 
-  // Bloc 2 — Lot de pigeons
   await page.getByRole('button', { name: 'Ajouter une carcasse' }).click();
   await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Pigeons');
-  // Quantité du lot
   const quantite = page.getByLabel(/Nombre de carcasses dans le lot/);
   await quantite.scrollIntoViewIfNeeded();
   await quantite.fill('10');
@@ -42,7 +40,6 @@ test('Création fiche petit gibier en lot — 10 pigeons', async ({ page }) => {
   await page.getByRole('button', { name: 'Continuer' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Continuer' }).click();
 
-  // Heures — petit gibier only: no éviscération field
   await page
     .getByRole('textbox', { name: 'Heure du prélèvement de la première carcasse' })
     .fill(dayjs().startOf('day').add(1, 'hour').format('HH:mm'));
@@ -54,7 +51,6 @@ test('Création fiche petit gibier en lot — 10 pigeons', async ({ page }) => {
   await page.getByRole('button', { name: 'Transmettre', exact: true }).click();
   await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 10000 });
 
-  // Page /envoyée — l'examinateur a un numero_cfei, le raccourci « Nouvelle fiche » est visible.
   await expect(page.getByRole('button', { name: 'Nouvelle fiche' }).first()).toBeVisible();
 
   const feiId = RegExp(/ZACH-\d+-\w+-\d+/).exec(page.url())?.[0];

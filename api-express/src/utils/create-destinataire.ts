@@ -22,9 +22,6 @@ import { sanitize } from '~/utils/sanitize';
 import { classifyDestinataire } from '~/utils/classify-destinataire';
 import { capture } from '~/third-parties/sentry';
 
-// un destinataire ne s'inscrit pas lui-même sur Zacharie : un chasseur, un ETG ou un admin
-// le pré-enregistre avec le compte de son représentant, qui reçoit une invitation.
-// Le collecteur pro n'est pas du circuit court, mais un chasseur peut le pré-enregistrer de la même façon.
 const destinataireBaseSchema = z.object({
   raison_sociale: z.string().trim().min(1),
   address_ligne_1: z.string(),
@@ -51,8 +48,6 @@ export const destinataireSchema = destinataireBaseSchema.extend({
   ]),
 });
 
-// le chasseur ne choisit pas le type du destinataire : il dit s'il est particulier ou professionnel,
-// et décrit librement le professionnel. Le type est déduit ensuite (cf. classifyDestinataire)
 export const chasseurDestinataireSchema = z.discriminatedUnion('particulier', [
   destinataireBaseSchema.extend({ particulier: z.literal(true) }),
   destinataireBaseSchema.extend({
@@ -68,7 +63,6 @@ export function chasseurDestinataireToInput(
   return { ...rest, type: particulier ? EntityTypes.CONSOMMATEUR_FINAL : EntityTypes.CIRCUIT_COURT };
 }
 
-// les entités auxquelles un chasseur transmet des carcasses
 const RECIPIENT_TYPES: Array<EntityTypes> = [
   EntityTypes.ETG,
   EntityTypes.COLLECTEUR_PRO,
@@ -82,8 +76,6 @@ const RECIPIENT_TYPES: Array<EntityTypes> = [
 
 export type DestinataireInput = z.infer<typeof destinataireSchema>;
 
-// `entity` est null quand la création est refusée : `status` et `error` portent alors la réponse HTTP.
-// `existingEntity` est renseigné quand le destinataire est déjà enregistré sur Zacharie.
 export type CreateDestinataireResult = {
   entity: Entity | null;
   existingEntity?: Entity;
@@ -108,9 +100,6 @@ export async function createDestinataire(
     zacharie_compatible: true,
   };
 
-  // un destinataire déjà enregistré sur Zacharie ne doit pas être créé en double.
-  // On le retrouve par SIRET, sinon par raison sociale + code postal, quel que soit le type saisi :
-  // un ETG saisi comme commerce de détail est retrouvé comme ETG.
   const existingEntity = await prisma.entity.findFirst({
     where: {
       deleted_at: null,
@@ -128,8 +117,6 @@ export async function createDestinataire(
     return { entity: null, existingEntity, status: 406, error: 'Entité déjà existante' };
   }
 
-  // un SIRET déjà porté par une entité qui ne reçoit pas de carcasses (CCG, SVI, association de chasse)
-  // est une erreur de saisie : on ne crée pas de destinataire en double
   if (data.siret) {
     const otherEntity = await prisma.entity.findFirst({
       where: { deleted_at: null, siret: data.siret },
@@ -143,7 +130,6 @@ export async function createDestinataire(
     }
   }
 
-  // on vérifie que l'email est libre AVANT de créer l'entité, sinon on laisse une entité orpheline
   const existingUser = await prisma.user.findUnique({
     where: {
       email: body.email,
@@ -175,7 +161,6 @@ export async function createDestinataire(
       },
     });
   } else {
-    // l'utilisateur existe mais n'a pas de rôles (compte vide)
     ownerUser = await prisma.user.update({
       where: { id: existingUser.id },
       data: {
@@ -200,8 +185,6 @@ export async function createDestinataire(
 
   await inviteUser(ownerUser, invitedBy);
 
-  // le chasseur n'attend pas la classification par Albert : elle tourne après la réponse,
-  // et l'équipe Zacharie est prévenue une fois le type connu
   if (createdEntity.type === EntityTypes.CIRCUIT_COURT && createdEntity.qualite_du_destinataire) {
     void classifyAndNotify(createdEntity, ownerUser);
   } else {
@@ -225,8 +208,6 @@ async function notifyNewPartenaire(entity: Entity) {
   });
 }
 
-// Albert range le destinataire dans une catégorie précise ; en cas de doute il reste CIRCUIT_COURT.
-// Le représentant a un seul rôle, toujours égal au type de son entité : on change les deux.
 export async function classifyAndNotify(entity: Entity, ownerUser: User) {
   try {
     const type = await classifyDestinataire({

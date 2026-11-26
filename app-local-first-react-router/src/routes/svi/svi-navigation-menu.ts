@@ -8,11 +8,6 @@ export default function useSviNavigationMenu(): MainNavigationProps.Item[] {
   const apiKeyApprovals = useZustandStore((state) => state.apiKeyApprovals);
 
   const navigationBase: MainNavigationProps.Item[] = [
-    //   {
-    //     text: 'Tableau de bord',
-    //     isActive: location.pathname === '/app/svi/tableau-de-bord',
-    //     linkProps: { to: '/app/svi/tableau-de-bord', href: '#' },
-    //   },
     {
       text: 'Fiches',
       isActive: location.pathname.startsWith('/app/svi/fei') || location.pathname === '/app/svi',
@@ -23,7 +18,6 @@ export default function useSviNavigationMenu(): MainNavigationProps.Item[] {
       isActive: location.pathname === '/app/svi/carcasses',
       linkProps: { to: '/app/svi/carcasses', href: '#' },
     },
-    // Invisible en production tant que le feature flag trichine n'est pas activé
     ...(TRICHINE_FEATURE_ENABLED
       ? [
           {

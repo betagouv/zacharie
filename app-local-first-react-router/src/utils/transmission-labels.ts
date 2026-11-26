@@ -58,9 +58,7 @@ export function getCurrentStepLabel(
   entitiesIdsWorkingDirectlyFor: ReturnType<typeof useEntitiesIdsWorkingDirectlyForObj>,
   etgRole?: User['etg_role']
 ): TransmissionStep {
-  // Circuit court (commerce de détail, boucher, ...) is a passive viewer : la fiche est toujours clôturée pour lui.
   if (isRoleCircuitCourt(role)) return 'Clôturée';
-  // Le libellé est propre à chaque rôle (chaque fonction gère ses états clôturé et en cours).
   if (role === 'CHASSEUR') {
     return getCurrentStepLabelForChasseur(simpleStatus, transmission);
   }
@@ -74,7 +72,6 @@ export function getCurrentStepLabel(
   return 'En cours' satisfies TransmissionStepGeneric;
 }
 
-// Côté chasseur (examinateur initial / premier détenteur) : où en est sa fiche.
 export function getCurrentStepLabelForChasseur(
   simpleStatus: TransmissionSimpleStatus,
   transmission: CarcasseTransmission
@@ -98,14 +95,12 @@ export function getCurrentStepLabelForChasseur(
   return 'Traitement des carcasses';
 }
 
-// Côté ETG (établissement de traitement) : réception, prise en charge, transport entre ateliers, SVI.
 export function getCurrentStepLabelForEtg(
   simpleStatus: TransmissionSimpleStatus,
   transmission: CarcasseTransmission,
   entitiesIdsWorkingDirectlyFor: ReturnType<typeof useEntitiesIdsWorkingDirectlyForObj>,
   etgRole?: User['etg_role']
 ): TransmissionStep {
-  // une fiche est clôturée quand aucune des carcasse n'est toujours en cours
   if (simpleStatus === 'Clôturée') {
     if (transmission.svi_assigned_at) {
       return 'Inspection vétérinaire terminée' satisfies TransmissionStepForEtg;
@@ -121,7 +116,6 @@ export function getCurrentStepLabelForEtg(
     ) {
       return 'Fiche reçue, pas encore prise en charge' satisfies TransmissionStepForEtg;
     }
-    // mon ETG a transmis la fiche (à un collecteur ou à un autre ETG), pas encore prise en charge
     if (currentOwnerIsMine && transmission.next_owner_entity_id && transmission.next_owner_role !== 'SVI') {
       return 'Fiche envoyée, pas encore prise en charge' satisfies TransmissionStepForEtg;
     }
@@ -140,7 +134,6 @@ export function getCurrentStepLabelForEtg(
     if (entitiesIdsWorkingDirectlyFor[transmission.next_owner_entity_id!]) {
       return 'Fiche reçue, pas encore prise en charge' satisfies TransmissionStepForEtg;
     }
-    // fiche envoyée à un autre établissement que le mien
     return 'Transport vers un autre établissement de traitement' satisfies TransmissionStepForEtg;
   }
   if (transmission.current_owner_role === 'COLLECTEUR_PRO') {
@@ -149,7 +142,6 @@ export function getCurrentStepLabelForEtg(
   return 'En cours' satisfies TransmissionStepGeneric;
 }
 
-// Côté collecteur professionnel : transport vers un ETG, réception, traitement.
 export function getCurrentStepLabelForCollecteurPro(
   simpleStatus: TransmissionSimpleStatus,
   transmission: CarcasseTransmission

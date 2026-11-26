@@ -1,7 +1,3 @@
-// Annuaire des entreprises (API Recherche d'entreprises, data.gouv.fr).
-// API publique sans clé, appelée directement depuis le navigateur.
-// https://recherche-entreprises.api.gouv.fr/docs/
-
 const SEARCH_URL = 'https://recherche-entreprises.api.gouv.fr/search';
 
 export interface EtablissementTrouve {
@@ -26,8 +22,6 @@ interface ApiResult {
   matching_etablissements?: Array<ApiEtablissement> | null;
 }
 
-// l'API ne renvoie que l'adresse complète de l'établissement : on retire le code postal
-// et la commune pour ne garder que le numéro et la voie
 function getAddressLigne1(etablissement: ApiEtablissement): string {
   const adresse = (etablissement.adresse ?? '').trim();
   const suffixe = `${etablissement.code_postal ?? ''} ${etablissement.libelle_commune ?? ''}`.trim();
@@ -58,7 +52,7 @@ async function fetchEtablissements(query: string, signal?: AbortSignal): Promise
     q: query,
     page: '1',
     per_page: '10',
-    etat_administratif: 'A', // seulement les entreprises en activité
+    etat_administratif: 'A',
     minimal: 'true',
     include: 'matching_etablissements',
     limite_matching_etablissements: '1',
@@ -73,7 +67,6 @@ async function fetchEtablissements(query: string, signal?: AbortSignal): Promise
       .map(mapResult)
       .filter((etablissement): etablissement is EtablissementTrouve => etablissement !== null);
   } catch {
-    // hors ligne, quota atteint ou requête annulée : la saisie manuelle reste possible
     return [];
   }
 }

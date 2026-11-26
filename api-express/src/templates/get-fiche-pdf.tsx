@@ -98,7 +98,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'center',
     marginBottom: 20,
-    // paddingBottom: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#000096',
   },
@@ -153,7 +152,6 @@ const styles = StyleSheet.create({
   twoColumnSection: {
     flexDirection: 'row',
     gap: 15,
-    // border: '1px solid red',
   },
   column: {
     flexShrink: 0,
@@ -161,7 +159,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E5E5',
     borderRadius: 4,
-    // border: '1px solid green',
   },
   columnTitle: {
     fontSize: fontBase,
@@ -233,8 +230,6 @@ function getEntityDisplay(role: UserRoles | FeiOwnerRole | EntityTypes | '') {
   }
 }
 
-// Une anomalie grave interdit la commercialisation : le PDF n'affirme alors plus la mise sur le marché,
-// comme la case de certification de l'examen initial côté app.
 export function getCertificationExamenInitialText(
   dateApprobation: Date | null,
   carcasses: Array<Pick<Carcasse, 'examinateur_anomalies_carcasse' | 'examinateur_anomalies_abats'>>
@@ -323,7 +318,6 @@ export async function getFichePdf(carcasse: Carcasse, carcasses: Array<Carcasse>
   const MyDocument = () => (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Header */}
         <View style={styles.header}>
           <Image src={logoMaasaPath} style={styles.logoLeft} />
           <Image src={logoZachariePath} style={styles.logoRight} />
@@ -335,10 +329,8 @@ export async function getFichePdf(carcasse: Carcasse, carcasses: Array<Carcasse>
         <View style={styles.titleSection}>
           <Text style={styles.title}>FICHE D'EXAMEN INITIAL N° {carcasse.fei_numero}</Text>
         </View>
-        {/* Two-column section: Premier détenteur & Destinataire final */}
         <Text style={styles.sectionHeader}>Circuit des carcasses en peau</Text>
         <View style={styles.twoColumnSection} wrap={false}>
-          {/* Left column: Premier détenteur */}
           <View style={styles.column}>
             <Text style={[styles.columnTitle, styles.borderLess]}>Premier détenteur</Text>
 
@@ -368,10 +360,8 @@ export async function getFichePdf(carcasse: Carcasse, carcasses: Array<Carcasse>
             <Text style={styles.fieldValue}>Email : {premierDetenteurUser!.email}</Text>
           </View>
 
-          {/* Right column: Destinataire final */}
           <View style={styles.column}>
             <Text style={[styles.columnTitle, styles.borderLess]}>
-              {/* Destinataire final ({getEntityDisplay(destinataireFinalEntity!.type)}) */}
               {getEntityDisplay(destinataireFinalEntity!.type)}
             </Text>
 

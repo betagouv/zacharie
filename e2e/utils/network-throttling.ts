@@ -1,5 +1,3 @@
-// https://sdetective.blog/blog/qa_auto/pw-cdp/networking-throttle_en
-
 export const NETWORK_PRESETS = {
   Offline: {
     offline: true,

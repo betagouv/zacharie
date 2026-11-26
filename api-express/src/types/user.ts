@@ -20,9 +20,6 @@ export type UserForFei = Prisma.UserGetPayload<{
   select: typeof userFeiSelect;
 }>;
 
-// Ce qu'un chasseur voit d'un propriétaire initial qu'il a cherché par email (ou ajouté à ses partenaires)
-// tant qu'aucune fiche ne les relie : pas de téléphone, pas d'adresse. Les coordonnées arrivent avec
-// les fiches (synchro des carcasses) une fois qu'il est désigné sur l'une d'elles.
 export const userPartenaireSelect = {
   id: true,
   prenom: true,

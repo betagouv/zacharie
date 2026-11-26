@@ -44,7 +44,6 @@ export default function CurrentOwnerConfirm() {
     ? (entities[currentTransmission.next_owner_entity_id]?.nom_d_usage ?? '')
     : '';
 
-  // Detect if user already took charge of their assigned carcasses
   const myAlreadyHandledCarcasses = useMemo(() => {
     return myCarcasses.filter(
       (c) =>
@@ -55,8 +54,6 @@ export default function CurrentOwnerConfirm() {
   }, [myCarcasses, userEntityIds, user.id]);
 
   const canConfirmCurrentOwner = useMemo(() => {
-    // Le bloc de prise en charge ne s'affiche que si la fiche est adressée à ce collecteur comme
-    // prochain détenteur. Sinon il resterait visible après transmission à l'ETG puis au SVI.
     if (currentTransmission.next_owner_role !== FeiOwnerRole.COLLECTEUR_PRO) {
       return false;
     }
@@ -88,8 +85,6 @@ export default function CurrentOwnerConfirm() {
   if (transmissionMetadata.allCarcassesDone) {
     return null;
   }
-  // Le collecteur a déjà pris en charge toutes les carcasses du groupe (il les contrôle/transporte
-  // déjà) : on ne réaffiche pas le bloc de prise en charge, même après transmission au prochain détenteur.
   if (myCarcasses.length > 0 && myAlreadyHandledCarcasses.length === myCarcasses.length) {
     return null;
   }
@@ -162,7 +157,6 @@ export default function CurrentOwnerConfirm() {
       carcasse_intermediaire_id: null,
     });
 
-    // Update carcasses transmission (source of truth) - only my carcasses
     updateCarcassesTransmission(myCarcasseIds, nextTransmission);
     addLog({
       user_id: user.id,
@@ -191,9 +185,6 @@ export default function CurrentOwnerConfirm() {
       next_owner_role: null,
     };
     if (currentTransmission.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) {
-      // Renvoi au premier détenteur : le stockage et le transport étaient ceux de l'envoi annulé, il
-      // les choisira de nouveau. On garde premier_detenteur_prochain_detenteur_id_cache : côté chasseur,
-      // il sert à afficher « Renvoyée par …, à attribuer de nouveau » jusqu'au prochain envoi.
       Object.assign(nextTransmission, {
         premier_detenteur_depot_type: null,
         premier_detenteur_depot_entity_id: null,
@@ -215,8 +206,6 @@ export default function CurrentOwnerConfirm() {
       carcasse_intermediaire_id: null,
       history: createHistoryInput(currentTransmission, nextTransmission),
     });
-    // Sauf si j'ai déjà pris en charge ces carcasses plus tôt dans la chaîne (premier détenteur →
-    // moi → un autre → moi) : la fiche me concerne encore, je continue de la voir.
     const jaiDejaPrisEnCharge = transmissionMetadata.intermediaires.some(
       (i) =>
         i.intermediaire_user_id === user.id ||

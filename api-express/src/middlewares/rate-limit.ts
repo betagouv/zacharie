@@ -2,25 +2,20 @@ import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import prisma from '~/prisma';
 import { ApiKeyLogAction } from '@prisma/client';
 
-// API Key-specific rate limiter: 10 requests per second per API key
 export const apiRateLimit = rateLimit({
-  windowMs: 1000, // 1 second
-  max: 10, // 10 requests per second
+  windowMs: 1000,
+  max: 10,
 
-  // Use raw API key string for rate limiting (before authentication)
   keyGenerator: (req: any) => {
-    // Use the raw API key if available, otherwise fall back to IP with proper IPv6 handling
     return req.rawApiKey || ipKeyGenerator(req.ip);
   },
 
-  // Custom handler to log which API key exceeded the limit
   handler: async (req: any, res, next) => {
     const authHeader = req.headers.authorization;
 
-    const rawApiKey = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null; // Remove 'Bearer ' prefix
+    const rawApiKey = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
 
     if (rawApiKey) {
-      // Try to find the API key in database for logging (but don't fail if not found)
       try {
         const apiKey = await prisma.apiKey.findFirst({
           where: {
@@ -54,7 +49,6 @@ export const apiRateLimit = rateLimit({
       console.warn(`IP ${req.ip} exceeded rate limit on ${req.originalUrl} (no API key provided)`);
     }
 
-    // Send the rate limit response
     res.status(429).json({
       ok: false,
       error: 'Too many requests, please try again later.',

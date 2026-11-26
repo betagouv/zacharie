@@ -7,10 +7,6 @@ import { useDepotDocuments } from '@app/components/laboratoire/use-depot-documen
 import downloadApiFile from '@app/utils/download-api-file';
 import { documentTypeLabels } from '@app/utils/trichine';
 
-/**
- * Documents joints à un échantillon par le laboratoire (photo d'étiquette, échantillon abîmé…).
- * Sans `onDone`, l'échantillon est en lecture seule : ses documents restent téléchargeables.
- */
 export default function EchantillonDocuments({
   echantillonId,
   referenceEchantillon,
@@ -82,7 +78,6 @@ export default function EchantillonDocuments({
             aria-label={`Joindre un fichier à l'échantillon ${referenceEchantillon}`}
             onChange={(event) => {
               deposer(Array.from(event.target.files ?? []));
-              // reset pour pouvoir redéposer le même fichier
               event.target.value = '';
             }}
           />

@@ -4,15 +4,6 @@ import { capture } from '~/third-parties/sentry';
 import { IS_CELLAR_CONFIGURED, trichineDocumentKey, uploadToCellar } from '~/third-parties/cellar';
 import { TrichineDocumentSource } from '~/utils/trichine';
 
-/**
- * Upload d'un document trichine (rapport COFRAC, photographie de larve, document d'échantillon) vers Cellar.
- *
- * La clé de stockage est toujours calculée par le serveur à partir de l'id du document :
- * le client n'envoie que le fichier, jamais un chemin. Sans ça, un client pourrait
- * rattacher n'importe quelle clé du bucket — y compris celle d'un autre laboratoire.
- */
-
-// Le body JSON est plafonné à 5 Mo (index.ts) et le base64 pèse ~4/3 du binaire
 export const MAX_UPLOAD_BYTES = 3.5 * 1024 * 1024;
 
 const EXTENSIONS: Record<string, string> = {
@@ -22,14 +13,12 @@ const EXTENSIONS: Record<string, string> = {
   'image/webp': 'webp',
 };
 
-// Sens inverse, pour servir un document stocké : la clé Cellar ne porte que l'extension
 export const DOCUMENT_CONTENT_TYPE_BY_EXTENSION: Record<string, string> = Object.fromEntries(
   Object.entries(EXTENSIONS).map(([contentType, extension]) => [extension, contentType])
 );
 
 export const uploadedFileSchema = z.object({
   content_type: z.enum(Object.keys(EXTENSIONS) as [string, ...string[]]),
-  // contenu binaire encodé en base64 (sans préfixe data:)
   content: z.string().min(1),
 });
 
@@ -41,7 +30,6 @@ export const uploadedPhotoSchema = uploadedFileSchema.extend({
 
 export const MAX_PHOTOS_PAR_DEPOT = 10;
 
-// Octets magiques attendus en tête de fichier : le content_type déclaré par le client ne suffit pas
 const SIGNATURES: Record<string, Array<{ offset: number; bytes: number[] }>> = {
   'application/pdf': [{ offset: 0, bytes: [0x25, 0x50, 0x44, 0x46, 0x2d] }],
   'image/jpeg': [{ offset: 0, bytes: [0xff, 0xd8, 0xff] }],
@@ -62,7 +50,6 @@ type StoreResult =
   | { kind: 'ok'; document: Awaited<ReturnType<typeof prisma.trichineDocument.create>> }
   | { kind: 'error'; status: number; error: string };
 
-// Dépôt applicatif : le fichier arrive encodé en base64 dans le body JSON
 export async function storeTrichineDocument({
   type,
   file,

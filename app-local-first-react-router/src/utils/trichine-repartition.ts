@@ -7,11 +7,6 @@ import {
 
 export type CarcasseAPrelever = { zacharie_carcasse_id: string; masse_grammes: number };
 
-/**
- * Limites réglementaires d'un pool selon son rang (cf doc/trichine.md §9).
- * Un pool initial est plafonné, un pool petite-fille est au contraire planchonné :
- * une seule carcasse, mais 50 g d'échantillon pour l'isoler.
- */
 export type LimitesPool = {
   maxCarcasses: number;
   maxMasse?: number;
@@ -32,12 +27,6 @@ export const LIMITES_POOL_PETITE_FILLE: LimitesPool = {
   minMasse: TRICHINE_POOL_PETITE_FILLE_MIN_MASSE_GRAMMES,
 };
 
-/**
- * Répartition automatique d'un lot de prélèvements en pools réglementaires
- * (19 carcasses et 100 g maximum par pool initial, 5 carcasses par pool fille).
- * L'ordre d'entrée est conservé : la répartition reste prévisible, et l'utilisateur
- * peut ensuite déplacer une carcasse d'un pool à l'autre.
- */
 export function repartirEnPools(
   carcasses: Array<CarcasseAPrelever>,
   limites: LimitesPool = LIMITES_POOL_INITIAL
@@ -61,7 +50,6 @@ export function repartirEnPools(
   return pools;
 }
 
-/** Un pool dépasse-t-il une limite réglementaire ? Renvoie le message, ou null. */
 export function erreurPool(
   masses: Array<number>,
   limites: LimitesPool = LIMITES_POOL_INITIAL
@@ -79,11 +67,6 @@ export function erreurPool(
   return null;
 }
 
-/**
- * Un pool par groupe (le premier détenteur, par exemple). Les limites réglementaires
- * s'appliquent à l'intérieur de chaque groupe : un groupe trop gros est scindé en
- * plusieurs pools, mais deux groupes ne sont jamais mélangés.
- */
 export function repartirParGroupe(
   carcasses: Array<CarcasseAPrelever>,
   groupeDe: (carcasse: CarcasseAPrelever) => string,
@@ -98,16 +81,10 @@ export function repartirParGroupe(
   return [...groupes.values()].flatMap((groupe) => repartirEnPools(groupe, limites));
 }
 
-/** Un pool par carcasse : aucun résultat n'est mutualisé, chaque analyse est individuelle. */
 export function repartirIndividuellement(carcasses: Array<CarcasseAPrelever>): Array<Array<string>> {
   return carcasses.map((carcasse) => [carcasse.zacharie_carcasse_id]);
 }
 
-/**
- * Aligne un agencement manuel sur la sélection courante : on retire les carcasses
- * désélectionnées et on répartit automatiquement celles qui viennent d'être ajoutées,
- * pour qu'un retour en arrière ne fasse pas perdre le travail de regroupement.
- */
 export function reconcilierPools(
   pools: Array<Array<string>>,
   carcasses: Array<CarcasseAPrelever>,

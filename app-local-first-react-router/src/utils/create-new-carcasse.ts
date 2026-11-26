@@ -53,8 +53,6 @@ export async function createNewCarcasse({
     zacharie_carcasse_id: zacharieCarcasseId,
     numero_bracelet: numeroBracelet,
     fei_numero: fei.numero,
-    // le premier détenteur est choisi sur la fiche avant les carcasses : une carcasse ajoutée après la
-    // validation de l'examen ne repasse plus par updateFei pour le recevoir
     ...mapFeiFieldsToCarcasse(fei),
     type: isPetitGibier ? CarcasseType.PETIT_GIBIER : CarcasseType.GROS_GIBIER,
     nombre_d_animaux: isPetitGibier ? Number(nombreDAnimaux) : 1,
@@ -80,7 +78,7 @@ export async function createNewCarcasse({
     intermediaire_carcasse_refus_motif: null,
     latest_intermediaire_signed_at: null,
     intermediaire_carcasse_manquante: false,
-    svi_carcasse_commentaire: null, // cache of ipm1 and ipm2 comments
+    svi_carcasse_commentaire: null,
     svi_carcasse_status: CarcasseStatus.SANS_DECISION,
     svi_carcasse_status_set_at: null,
     svi_ipm1_presentee_inspection: null,
@@ -134,11 +132,9 @@ export async function createNewCarcasse({
     svi_closed_by_user_id: null,
     current_owner_user_id: user.id,
     current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
-    // examen initial déjà validé : la carcasse rejoint directement le premier détenteur
     current_owner_entity_id: fei.examinateur_initial_approbation_mise_sur_le_marche
       ? fei.premier_detenteur_entity_id
       : null,
-    // premier_detenteur_name_cache porte le nom de la personne quand le premier détenteur n'est pas une association
     current_owner_entity_name_cache:
       fei.examinateur_initial_approbation_mise_sur_le_marche && fei.premier_detenteur_entity_id
         ? fei.premier_detenteur_name_cache
@@ -158,7 +154,6 @@ export async function createNewCarcasse({
     prev_owner_user_id: null,
     prev_owner_entity_id: null,
     prev_owner_role: null,
-    // TRICHINE
     trichine_action_requise: null,
     consommateur_final_email: null,
     notifier_consommateur: false,

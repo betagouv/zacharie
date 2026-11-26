@@ -16,8 +16,6 @@ export type FeiQuickFilters = {
 
 const isActive = (checked: CheckedValues | undefined) => !!checked && Object.values(checked).some(Boolean);
 
-// Un filtre rapide de fiche garde les fiches qui ont au moins une des valeurs cochées ;
-// plusieurs filtres cochés se cumulent.
 export function isFeiExcludedByQuickFilters(meta: FeiQuickFilterMeta, filters: FeiQuickFilters): boolean {
   if (isActive(filters.collecteurIds) && !meta.collecteurIds.some((id) => filters.collecteurIds![id])) {
     return true;

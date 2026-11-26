@@ -128,11 +128,9 @@ router.get(
       const currentYear = now.year();
       const currentSeasonStart = now.month() < 6 ? currentYear - 1 : currentYear;
 
-      // Day offset within current season (days since July 1)
       const seasonStartDate = dayjs(`${currentSeasonStart}-07-01`);
       const dayOffsetInSeason = now.diff(seasonStartDate, 'day');
 
-      // Fetch all circuit-long carcasses grouped by season and species
       const rows = await prisma.$queryRaw<
         Array<{ season_start: number; espece: string; carcasse_count: bigint; nombre_total: bigint }>
       >`
@@ -154,7 +152,6 @@ router.get(
         GROUP BY season_start, c.espece
       `;
 
-      // Also fetch with date cutoff for potentiel calculation
       const rowsWithCutoff = await prisma.$queryRaw<
         Array<{ season_start: number; espece: string; carcasse_count: bigint; nombre_total: bigint }>
       >`
@@ -185,7 +182,6 @@ router.get(
         GROUP BY season_start, c.espece
       `;
 
-      // Calculate tonnage per season (full season = reel, with cutoff = for potentiel)
       function computeTonnage(data: typeof rows): Record<number, number> {
         const result: Record<number, number> = {};
         for (const row of data) {
@@ -199,7 +195,6 @@ router.get(
       const tonnageFull = computeTonnage(rows);
       const tonnageCutoff = computeTonnage(rowsWithCutoff);
 
-      // Build response: for each season, reel = cutoff tonnage, potentiel = previous season's cutoff tonnage
       const allSeasons = [...new Set([...Object.keys(tonnageFull).map(Number)])].sort();
 
       const circuit_long = allSeasons.map((seasonStart) => {
@@ -303,7 +298,6 @@ router.get(
   )
 );
 
-// Bilan des anomalies de fin de saison (calque DGAL), pour tous les ETG.
 router.get(
   '/bilan-anomalies',
   catchErrors(async (req: express.Request, res: express.Response<BilanAnomaliesResponse>) => {

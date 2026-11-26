@@ -46,9 +46,6 @@ const CONTACT_MESSAGE =
 
 type DispatchGroup = Pick<Carcasse, 'fei_numero' | 'premier_detenteur_prochain_detenteur_id_cache'>;
 
-// Carcasses des fiches renvoyées à la clé : celles du périmètre, plus les refusées ou manquantes des
-// mêmes groupes de dispatch (premier détenteur → prochain détenteur), comme /carcasse/refusees côté
-// app. Jamais les carcasses de la fiche parties chez un autre destinataire.
 function carcassesInScopeWhere(
   accessWhere: Prisma.CarcasseWhereInput,
   dispatchGroups: Array<DispatchGroup>
@@ -79,10 +76,6 @@ function carcassesInScopeWhere(
   };
 }
 
-// À partir d'un périmètre d'accès carcasse (role/entity-aware) et d'une plage de dates, retourne
-// les FEI accessibles (en-tête + carcasses mappées). L'ownership vit sur les carcasses : on part
-// donc des carcasses accessibles, on remonte à leurs FEI, puis on charge les carcasses de ces FEI
-// qui sont dans le périmètre.
 async function buildFeisResponse(accessWhere: Prisma.CarcasseWhereInput, dateFrom: string, dateTo: string) {
   const dispatchGroups = await prisma.carcasse.findMany({
     where: {
@@ -108,7 +101,6 @@ async function buildFeisResponse(accessWhere: Prisma.CarcasseWhereInput, dateFro
     prisma.fei.findMany({
       where: { numero: { in: feiNumeros }, deleted_at: null },
       select: feiForApiSelect,
-      // examens initiaux les plus récents en premier
       orderBy: [{ date_mise_a_mort: 'desc' }, { created_at: 'desc' }],
     }),
     prisma.carcasse.findMany({
@@ -206,7 +198,6 @@ router.get(
         return next(new Error(`Votre rôle ne permet pas d'accéder à des fiches. ${CONTACT_SUFFIX}`));
       }
 
-      // Accès autorisé si au moins une carcasse de la fiche est dans le périmètre du user.
       const dispatchGroups = await prisma.carcasse.findMany({
         where: { AND: [accessWhere, { fei_numero, deleted_at: null }] },
         select: { fei_numero: true, premier_detenteur_prochain_detenteur_id_cache: true },

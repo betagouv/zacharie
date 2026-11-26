@@ -13,6 +13,7 @@
     "build": "npx prisma generate && npm run prebuild && vite build",
     "format": "prettier --write . --ignore-unknown",
     "lint": "eslint .",
+    "lint:comments": "eslint -c eslint.comments.config.js .",
     "preview": "vite preview --port 3234",
     "start": "NODE_ENV=production PORT=8080 node ./server-app.js",
     "start-local": "NODE_ENV=production PORT=3234 node ./server-app.js"

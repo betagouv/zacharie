@@ -9,8 +9,6 @@ import API from '@app/services/api';
 import RelationEntityUsersList from '@app/components/RelationEntityUsersList';
 import { getUserRoleLabel } from '@app/utils/get-user-roles-label';
 
-// Fédération dont l'utilisateur est membre (rattachement par l'équipe Zacharie ou par un admin de la
-// fédération). Rien n'est affiché si l'utilisateur n'est membre d'aucune fédération.
 export default function MaFederation() {
   const user = useUser((state) => state.user)!;
   const [federation, setFederation] = useState<EntityWithUserRelations | null>(null);

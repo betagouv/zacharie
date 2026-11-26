@@ -7,7 +7,6 @@ import {
   PROCONNECT_REDIRECT_URI,
 } from '~/config';
 
-// Scopes ProConnect : https://partenaires.proconnect.gouv.fr/docs/fournisseur-service/scope-claims
 export const PROCONNECT_SCOPE = 'openid email given_name usual_name';
 
 export function isProConnectConfigured() {
@@ -16,7 +15,6 @@ export function isProConnectConfigured() {
 
 let configPromise: Promise<client.Configuration> | null = null;
 
-// La discovery OIDC est faite une fois puis mise en cache ; en cas d'échec on retente à l'appel suivant.
 export function getProConnectConfig(): Promise<client.Configuration> {
   if (!configPromise) {
     configPromise = client
@@ -25,7 +23,6 @@ export function getProConnectConfig(): Promise<client.Configuration> {
         PROCONNECT_CLIENT_ID,
         { client_secret: PROCONNECT_CLIENT_SECRET, redirect_uris: [PROCONNECT_REDIRECT_URI] },
         client.ClientSecretPost(PROCONNECT_CLIENT_SECRET),
-        // le mock tourne en http sur localhost, openid-client refuse le http par défaut
         PROCONNECT_MOCK_ENABLED ? { execute: [client.allowInsecureRequests] } : undefined
       )
       .catch((error) => {
@@ -83,7 +80,6 @@ export async function exchangeProConnectCallback(
   if (!idTokenClaims?.sub) {
     throw new Error('ProConnect: id_token sans sub');
   }
-  // l'email n'est pas dans l'id_token ProConnect, il faut appeler userinfo (réponse JSON ou JWT signé)
   const userInfo = await client.fetchUserInfo(config, tokens.access_token, idTokenClaims.sub);
   const email = typeof userInfo.email === 'string' ? userInfo.email.toLowerCase().trim() : '';
   if (!email) {

@@ -27,7 +27,6 @@ test('Fiche sans carcasse : toujours là après déconnexion / reconnexion', asy
   await page.getByRole('button', { name: dayjs.utc().format('dddd DD MMMM') }).click();
   await page.getByRole('textbox', { name: 'Commune de prélèvement du gibier' }).fill('CHASS');
   await page.getByRole('button', { name: 'CHASSENARD' }).click();
-  // la fiche doit être en base avant la déconnexion, qui vide le store local
   const feiSynced = page.waitForResponse(
     (resp) =>
       resp.url().includes('/sync') &&

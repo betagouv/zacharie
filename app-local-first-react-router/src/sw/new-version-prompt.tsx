@@ -5,8 +5,6 @@ import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import { syncData } from '@app/utils/sync-data';
 
 export function showNewVersionPrompt() {
-  // Dans l'app mobile, la page est servie depuis les fichiers téléchargés au lancement : recharger
-  // redonnerait la même version, la nouvelle n'est installée qu'à la réouverture de l'application.
   toast.info(window.ReactNativeWebView ? <NewNativeVersionPrompt /> : <NewVersionPrompt />, {
     toastId: 'nouvelle-version',
     autoClose: false,
@@ -40,8 +38,6 @@ function NewVersionPrompt() {
         return;
       }
     }
-    // reload() recharge la page sur place : dans la WebView Expo, l'URL reste celle de l'app et
-    // n'est donc pas ouverte dans Safari, contrairement à une affectation de window.location.href.
     window.location.reload();
   }
 

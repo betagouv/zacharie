@@ -19,12 +19,8 @@ const COLOR_GRAND = 'var(--background-action-high-blue-france)';
 const COLOR_PETIT = '#6277df';
 const BAR_COLOR = 'var(--background-action-high-blue-france)';
 
-// Borne minimale de l'axe des valeurs. Les décomptes sont entiers : sous 6,
-// l'axe se graduerait en demis (0 / 0,5 / 1).
 const MIN_COUNT_AXIS = 6;
 
-// Tranches d'ancienneté depuis l'arrivée chez l'ETG : plus c'est ancien, plus la
-// transmission au SVI est imminente (ordre = priorité d'inspection à venir).
 const ANCIENNETE_BUCKETS: Array<{ key: string; label: string; min: number; max: number }> = [
   { key: 'today', label: "Aujourd'hui", min: 0, max: 0 },
   { key: '1-2', label: '1 à 2 jours', min: 1, max: 2 },
@@ -103,7 +99,6 @@ export default function SviDashboard() {
     >
       <title>Tableau de bord | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
       <div className="fr-container fr-my-4w">
-        {/* En-tête : ce que représente le tableau de bord */}
         <header className="mb-6">
           <h1 className="fr-h3 mb-1">Carcasses à venir</h1>
           <p className="fr-text--sm m-0 text-gray-600">
@@ -119,7 +114,6 @@ export default function SviDashboard() {
           </div>
         ) : (
           <>
-            {/* Chiffres clés */}
             <section
               aria-label="Chiffres clés"
               className="mb-6"
@@ -153,10 +147,8 @@ export default function SviDashboard() {
               </div>
             </section>
 
-            {/* Graphiques */}
             <section aria-label="Répartition des carcasses à venir">
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                {/* Ancienneté (imminence) — en premier car c'est le plus actionnable */}
                 <ChartCard
                   title="Ancienneté chez l'ETG"
                   hint="Nombre d'animaux par tranche d'attente depuis leur arrivée chez l'ETG. Plus l'attente est longue, plus la transmission au SVI est probablement imminente."
@@ -174,7 +166,6 @@ export default function SviDashboard() {
                   />
                 </ChartCard>
 
-                {/* Répartition grand / petit gibier */}
                 <ChartCard
                   title="Grand / petit gibier"
                   hint="Répartition des animaux à venir entre grand et petit gibier."
@@ -193,7 +184,6 @@ export default function SviDashboard() {
                   />
                 </ChartCard>
 
-                {/* Par espèce */}
                 <ChartCard
                   title="Par espèce"
                   hint="Nombre d'animaux à venir par espèce, du plus fréquent au moins fréquent."
@@ -222,8 +212,6 @@ export default function SviDashboard() {
   );
 }
 
-// Traçabilité amont : sur les fiches qui arrivent, part des carcasses refusées / déclarées
-// manquantes par l'ETG par rapport au total déclaré (l'écart avec ce qui arrivera).
 function TracabiliteAmontSection({ amont }: { amont: SviTracabiliteAmont }) {
   const repartitionData = [
     { name: 'À venir', value: amont.aVenir },
@@ -285,7 +273,6 @@ function TracabiliteAmontSection({ amont }: { amont: SviTracabiliteAmont }) {
   );
 }
 
-// Chiffre clé : le nombre en avant, le libellé en dessous.
 function StatTile({ value, label }: { value: number; label: string }) {
   return (
     <div className="rounded border border-gray-200 bg-white p-4">
@@ -295,7 +282,6 @@ function StatTile({ value, label }: { value: number; label: string }) {
   );
 }
 
-// Carte de graphique : titre + texte d'aide, puis le graphique.
 function ChartCard({
   title,
   hint,

@@ -13,23 +13,15 @@ export default function HygieneScoreGauge({ score, maxScore = 100 }: HygieneScor
   const endX = 130;
   const endY = 70;
 
-  // Calculate the endpoint for the indicator dot
-  // For arc M 20 70 A 50 50 0 0 1 120 70:
-  // - SVG calculates the center at (70, 70) for the upper semicircle
-  // - The arc spans 180 degrees (from 180° at left to 0° at right)
-  // - At angle θ: x = 70 + 50*cos(θ), y = 70 - 50*sin(θ)
   const centerX = (startX + endX) / 2;
-  const centerY = startY; // The center is at y=70
+  const centerY = startY;
 
-  // Calculate angle: 0% = 180° (left), 100% = 0° (right)
   const angleDegrees = 180 - (percentage / 100) * 180;
   const angleRad = (angleDegrees * Math.PI) / 180;
 
-  // Calculate endpoint on the arc
   const scoreEndX = centerX + radius * Math.cos(angleRad);
   const scoreEndY = centerY - radius * Math.sin(angleRad);
 
-  // Determine color based on score
   const getScoreColor = () => {
     if (score >= 80) return 'text-green-600';
     if (score >= 60) return 'text-yellow-600';
@@ -89,7 +81,6 @@ export default function HygieneScoreGauge({ score, maxScore = 100 }: HygieneScor
               />
             </linearGradient>
           </defs>
-          {/* Background arc (full semicircle) */}
           <path
             d={`M ${startX} ${startY} A ${radius} ${radius} 0 0 1 ${endX} ${endY}`}
             stroke="url(#gaugeGradient)"
@@ -98,18 +89,6 @@ export default function HygieneScoreGauge({ score, maxScore = 100 }: HygieneScor
             strokeLinecap="square"
             className="opacity-30"
           />
-          {/* Score arc using stroke-dasharray for precise control */}
-          {/* <path
-            d={`M ${startX} ${startY} A ${radius} ${radius} 0 0 1 ${endX} ${endY}`}
-            stroke={getScoreColorClass()}
-            strokeWidth="16"
-            fill="none"
-            strokeLinecap="square"
-            strokeDasharray={strokeDasharray}
-            strokeDashoffset={strokeDashoffset}
-            className="transition-all duration-500"
-          /> */}
-          {/* Score indicator dot */}
           <circle
             cx={scoreEndX}
             cy={scoreEndY}
@@ -117,12 +96,10 @@ export default function HygieneScoreGauge({ score, maxScore = 100 }: HygieneScor
             fill={getScoreIconColor()}
           />
         </svg>
-        {/* Score text */}
         <div className="absolute right-0 bottom-0 left-0 -mb-2 flex items-center justify-center">
           <div className={`text-5xl font-bold ${getScoreColor()}`}>{score}</div>
         </div>
       </div>
-      {/* Label */}
       <div className="mt-4">
         <Badge className={`${getScoreBackgroundColor()} ${getScoreColor()}`}>{getScoreLabel()}</Badge>
       </div>

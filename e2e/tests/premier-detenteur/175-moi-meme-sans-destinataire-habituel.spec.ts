@@ -10,9 +10,6 @@ test.use({
   launchOptions: { slowMo: 100 },
 });
 
-// Le seed PREMIER_DETENTEUR_SANS_DESTINATAIRE : premier-detenteur@ n'a encore enregistré aucun
-// destinataire. Une fiche précédente garde « Association de chasseurs » (propriétaire initial) en
-// prochain détenteur : elle ne doit pas être reprise comme destinataire.
 const feiId = 'ZACH-20250707-QZ6E0-155242';
 
 test.beforeEach(async ({ page }) => {
@@ -28,10 +25,8 @@ test('Sans destinataire habituel, « Moi-même » est proposé directement', asy
   const moiMeme = modal.getByRole('radio', { name: /^Moi-même/ });
   await expect(moiMeme).toBeVisible({ timeout: 10000 });
   await expect(modal.getByRole('radio')).toHaveCount(1);
-  // la recherche n'est pas affichée tant qu'on ne la demande pas
   await expect(modal.getByPlaceholder('Tapez le nom du destinataire')).toHaveCount(0);
 
-  // Les radios DSFR « rich » : le <label> est l'élément cliquable
   const moiMemeLabel = modal.locator(`label[for="${await moiMeme.getAttribute('id')}"]`);
   await moiMemeLabel.scrollIntoViewIfNeeded();
   await moiMemeLabel.click();

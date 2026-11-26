@@ -20,7 +20,6 @@ test('Date de mise à mort future (J+1) refusée', async ({ page }) => {
   await connectWith(page, 'examinateur@example.fr');
   await page.getByRole('button', { name: 'Nouvelle fiche' }).first().click();
 
-  // Chercher un bouton pour J+1 ; sinon saisir manuellement via le picker
   const jPlus1Label = dayjs().add(1, 'day').format('dddd DD MMMM');
   const jPlus1Btn = page.getByRole('button', { name: jPlus1Label });
 
@@ -28,7 +27,6 @@ test('Date de mise à mort future (J+1) refusée', async ({ page }) => {
     await jPlus1Btn.click();
     await expect(page.getByText(/date.*futur|future|invalide/i).first()).toBeVisible();
   } else {
-    // TODO: verify — si pas de bouton future dans le picker, c'est déjà bloqué côté UI
     await expect(page.getByRole('button', { name: /demain/i })).toHaveCount(0);
   }
 });

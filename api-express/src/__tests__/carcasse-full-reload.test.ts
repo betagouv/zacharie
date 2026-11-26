@@ -6,11 +6,6 @@ import prisma from '~/prisma';
 import { Prisma, UserRoles } from '@prisma/client';
 import { FORCE_FULL_RELOAD_AFTER } from '~/utils/force-full-reload';
 
-// GET /carcasse — un client dont le dernier pull est antérieur à FORCE_FULL_RELOAD_AFTER reçoit tout
-// son périmètre (pas de filtre updated_at) avec fullReload: true, pour remplacer ses copies locales
-// des carcasses sorties de son périmètre.
-
-// On lit la requête SQL de la page (findScopeCarcassesPage) : un pull delta y porte `c.updated_at >=`.
 const sviUser = {
   id: 'user-svi',
   roles: [UserRoles.SVI],
@@ -23,7 +18,6 @@ const app = express();
 app.use(express.json());
 app.use('/carcasse', carcasseRouter);
 
-// vitest.setup.ts ne fournit pas carcasseIntermediaire.findMany — ajouté pour cette suite.
 (prisma.carcasseIntermediaire as any).findMany = vi.fn().mockResolvedValue([]);
 
 beforeEach(() => {
@@ -46,7 +40,6 @@ function getCarcasses(after: number, user: object = sviUser, reloadVersion?: num
     .set('x-test-user', JSON.stringify(user));
 }
 
-// date du filtre updated_at de la page, undefined si tout le périmètre est renvoyé
 function updatedAtFilter() {
   const [strings, ...values] = vi.mocked(prisma.$queryRaw).mock.calls[0] as [TemplateStringsArray, ...any[]];
   const query = Prisma.sql(strings, ...values);

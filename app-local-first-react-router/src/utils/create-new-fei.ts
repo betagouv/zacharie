@@ -69,8 +69,6 @@ export async function createNewFei(
   track('fiche', 'creer', source);
   syncData('create-new-fei');
   if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
-    // if it goes too fast, we have a race condition with the sync with the backend and PG doesn'tlike it
-    // again, "cache lookup failed for type" problem
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
   return newFei;

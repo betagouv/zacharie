@@ -2,21 +2,9 @@ import { useNavigate } from 'react-router';
 import type { GroupBase, StylesConfig } from 'react-select';
 import SelectCustom from '@app/components/SelectCustom';
 
-/**
- * Accès direct par référence : les objets trichine sont identifiés par des références
- * parlantes (E-/P-/F-), c'est ce que citent les laboratoires et les détenteurs au téléphone.
- * À gros volume, on retrouve un objet en le choisissant ici plutôt qu'en filtrant une liste.
- *
- * Combobox et non champ libre : on ne propose que des références qui existent, donc pas
- * d'écran d'erreur au bout d'une faute de frappe. Présentée comme une barre de recherche
- * (loupe, pas de chevron) pour qu'on la lise comme telle et non comme une liste déroulante.
- */
 export type ReferenceOption = {
-  /** Chemin vers lequel naviguer */
   value: string;
-  /** La référence elle-même */
   label: string;
-  /** Contexte affiché à côté, et cherchable */
   detail: string;
 };
 

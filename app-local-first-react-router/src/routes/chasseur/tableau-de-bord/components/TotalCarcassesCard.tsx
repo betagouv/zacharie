@@ -7,7 +7,6 @@ export default function TotalCarcassesCard({ total, season }: TotalCarcassesCard
   return (
     <div className="rounded-3xl bg-white p-6 shadow-sm">
       <div className="flex flex-col items-center justify-center text-center">
-        {/* Icon */}
         <div className="mb-4 flex items-center justify-center">
           <CarcassesIcon
             width={45}
@@ -15,13 +14,10 @@ export default function TotalCarcassesCard({ total, season }: TotalCarcassesCard
             className="text-action-high-blue-france-light"
           />
         </div>
-        {/* Number */}
         <div className="text-action-high-blue-france-light mb-2 text-5xl font-bold">
           {total.toLocaleString('fr-FR')}
         </div>
-        {/* Label */}
         <div className="text-action-high-blue-france-light mb-1 text-xl font-bold">carcasses prélevées</div>
-        {/* Season */}
         <div className="text-action-high-blue-france-light text-sm">Saison {season}</div>
       </div>
     </div>

@@ -10,7 +10,6 @@ test.beforeEach(async () => {
 
 test('81 - SVI avec onboarding incomplet : détecte profil incomplet', async ({ page }) => {
   await connectWith(page, 'svi-nouveau@example.fr');
-  // Either redirected to onboarding or shows completion/coordonnées form
   await expect(
     page
       .getByRole('heading', { name: /Coordonnées/i })

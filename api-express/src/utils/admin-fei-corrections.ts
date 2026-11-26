@@ -2,9 +2,6 @@ import { EntityRelationType, EntityTypes } from '@prisma/client';
 import type { Fei } from '@prisma/client';
 import prisma from '~/prisma';
 
-// Les corrections admin d'une fiche (date, commune, premier détenteur, carcasses) ne sont possibles que
-// tant qu'elle n'est pas clôturée : une clôture intermédiaire ou SVI, ou un certificat SVI émis, fige
-// des documents officiels qui ne seraient plus en phase avec la fiche.
 export async function getAdminFeiCorrectionsBlocage(fei: Pick<Fei, 'numero' | 'deleted_at'> | null) {
   if (!fei) return { blocage: 'Fiche introuvable', ajoutCarcasseBlocage: 'Fiche introuvable' };
   const fei_numero = fei.numero;
@@ -33,16 +30,12 @@ export async function getAdminFeiCorrectionsBlocage(fei: Pick<Fei, 'numero' | 'd
   else if (carcasseCloturee) blocage = 'La fiche est clôturée';
   else if (certificat) blocage = 'Un certificat SVI a déjà été émis sur cette fiche';
 
-  // Une carcasse ajoutée après une prise en charge n'apparaîtrait pas chez l'intermédiaire (il lui faut
-  // sa ligne CarcasseIntermediaire) : c'est alors à lui de passer par « Ajouter une carcasse ».
   const ajoutCarcasseBlocage =
     blocage ?? (intermediaire ? 'La fiche a déjà été prise en charge par un intermédiaire' : null);
 
   return { blocage, ajoutCarcasseBlocage };
 }
 
-// Associations de chasse dont l'examinateur est membre : comme dans l'app (examinateur-select-next),
-// c'est parmi elles, l'examinateur lui-même ou un autre chasseur qu'on choisit le premier détenteur.
 export async function getAssociationsDeChasse(examinateur_user_id: string | null) {
   if (!examinateur_user_id) return [];
   const relations = await prisma.entityAndUserRelations.findMany({

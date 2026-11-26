@@ -25,7 +25,6 @@ interface RelationEntityUserProps {
   displayEntity?: boolean;
   displayUser?: boolean;
   canDelete?: boolean;
-  // les écrans admin Zacharie passent par /admin/user-entity (ProConnect)
   userEntityPath?: '/user-entity' | 'admin/user-entity';
 }
 
@@ -54,11 +53,6 @@ export default function RelationEntityUser({
   ).current;
   const isOpen = useIsModalOpen(entityUsersModal);
 
-  // const canTransmitCarcassesForEntity = entity.EntityRelationsWithUsers.find(
-  //   (relation) =>
-  //     relation.owner_id === user.id &&
-  //     relation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-  // );
   const canHandleCarcassesForEntity = entity.EntityRelationsWithUsers?.find(
     (relation) =>
       relation.owner_id === user.id &&
@@ -75,7 +69,6 @@ export default function RelationEntityUser({
     : canHandleCarcassesForEntity.status === EntityRelationStatus.ADMIN &&
       canHandleCarcassesForEntity.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY;
 
-  // la quitter supprime l'association de Zacharie (cf. DELETE /user-entity)
   const isSoleUserOfAssociation =
     entity.type === EntityTypes.PREMIER_DETENTEUR &&
     isAdminOfEntity &&
@@ -190,7 +183,6 @@ export default function RelationEntityUser({
             )}
           </div>
         )}
-        {/* un compte pas encore activé par l'équipe Zacharie est aussi en attente, même admin de l'entité */}
         {(myRelationIsPending || (canHandleCarcassesForEntity && !user.activated)) &&
           !canApproveRelation &&
           relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY && (

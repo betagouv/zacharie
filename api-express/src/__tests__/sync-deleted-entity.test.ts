@@ -11,8 +11,6 @@ vi.mock('~/third-parties/sentry', () => ({
   captureException: vi.fn(),
 }));
 
-// Une entité supprimée par l'admin peut encore être proposée par la copie locale d'un chasseur :
-// le sync refuse qu'une fiche ou une carcasse la désigne.
 const scope = fakeSyncScope();
 
 const chasseur = {

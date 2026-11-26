@@ -8,7 +8,6 @@ import { mapCarcasseForApi, mapFeiForApi } from '../utils/api';
 import type { CarcasseGetForApi } from '../types/carcasse';
 import type { FeiGetForApi } from '../types/fei';
 
-// Mock app setup for testing
 const app = express();
 app.use(express.json());
 app.use('/v1', v1Router);
@@ -52,14 +51,11 @@ describe('Swagger Documentation Validation', () => {
     test('entity swagger should have FEI and direct carcasse endpoints only', () => {
       const entityPaths = Object.keys(swaggerEntityDocument.paths);
 
-      // Should have FEI endpoint
       expect(entityPaths).toContain('/fei');
 
-      // Should have direct carcasse endpoints (no /user routes)
       expect(entityPaths).toContain('/carcasse');
       expect(entityPaths).toContain('/carcasse/{date_mise_a_mort}/{numero_bracelet}');
 
-      // Should NOT have user routes
       expect(entityPaths).not.toContain('/carcasse/user');
       expect(entityPaths).not.toContain('/carcasse/user/{date_mise_a_mort}/{numero_bracelet}');
     });
@@ -67,26 +63,19 @@ describe('Swagger Documentation Validation', () => {
     test('third-party swagger should have user carcasse, approval request, access token, and FEI user endpoints', () => {
       const thirdPartyPaths = Object.keys(swaggerThirdPartyDocument.paths);
 
-      // Should have user carcasse endpoints
       expect(thirdPartyPaths).toContain('/carcasse/user');
       expect(thirdPartyPaths).toContain('/carcasse/user/{date_mise_a_mort}/{numero_bracelet}');
 
-      // Should have approval request endpoints
       expect(thirdPartyPaths).toContain('/approval-request/user');
-      // expect(thirdPartyPaths).toContain('/approval-request/entite');
 
-      // le lien de création de fiche ne connecte plus l'utilisateur : plus d'access token
       expect(thirdPartyPaths).not.toContain('/access-token/user');
 
-      // Should have FEI user endpoint
       expect(thirdPartyPaths).toContain('/fei/user');
       expect(thirdPartyPaths).toContain('/fei/user/{fei_numero}');
-      // Should NOT have FEI or direct carcasse routes
       expect(thirdPartyPaths).not.toContain('/fei');
       expect(thirdPartyPaths).not.toContain('/carcasse');
       expect(thirdPartyPaths).not.toContain('/carcasse/{date_mise_a_mort}/{numero_bracelet}');
 
-      // Should have nouvelle-fiche frontend endpoint
       expect(thirdPartyPaths).toContain('/nouvelle-fiche');
     });
 
@@ -100,7 +89,6 @@ describe('Swagger Documentation Validation', () => {
       expect(contexteParam).toBeDefined();
       expect(contexteParam.required).toBe(false);
 
-      // Check carcasse parameter (new comma-separated format)
       const carcasseParam = parameters.find((p) => p.name === 'carcasse');
       expect(carcasseParam).toBeDefined();
       expect(carcasseParam.required).toBe(false);
@@ -110,7 +98,6 @@ describe('Swagger Documentation Validation', () => {
       expect(carcasseParam.schema.items.type).toBe('string');
       expect(carcasseParam.schema.items.pattern).toBe('^[^,]+,[^,]+(,[^,]*)?$');
 
-      // Check other optional parameters
       const dateMiseAMortParam = parameters.find((p) => p.name === 'date_mise_a_mort');
       expect(dateMiseAMortParam).toBeDefined();
       expect(dateMiseAMortParam.required).toBe(false);
@@ -190,10 +177,6 @@ describe('Swagger Documentation Validation', () => {
       });
     });
 
-    // Garde-fou anti-dérive : les swagger sont maintenus à la main, donc on compare champ à champ
-    // ce que renvoient réellement les mappers à ce que les deux documents déclarent. Ajouter,
-    // renommer ou retirer un champ dans mapFeiForApi / mapCarcasseForApi casse ce test tant que
-    // les deux swagger n'ont pas été mis à jour.
     const carcasseApiFields = Object.keys(
       mapCarcasseForApi({ fei_numero: '' } as unknown as CarcasseGetForApi, null)!
     );
@@ -275,19 +258,11 @@ describe('Swagger Documentation Validation', () => {
 
     test('Approval request endpoints should have correct request body schemas', () => {
       const userApprovalEndpoint = swaggerThirdPartyDocument.paths['/approval-request/user'].post;
-      // const entiteApprovalEndpoint = swaggerThirdPartyDocument.paths['/approval-request/entite'].post;
 
-      // User approval endpoint
       const userRequestBody = userApprovalEndpoint.requestBody.content['application/json'].schema;
       expect(userRequestBody.properties.email).toBeDefined();
       expect(userRequestBody.properties.email.format).toBe('email');
       expect(userRequestBody.required).toContain('email');
-
-      // Entity approval endpoint
-      // const entiteRequestBody = entiteApprovalEndpoint.requestBody.content['application/json'].schema;
-      // expect(entiteRequestBody.properties.siret).toBeDefined();
-      // expect(entiteRequestBody.properties.siret.pattern).toBe('^\\d{14}$');
-      // expect(entiteRequestBody.required).toContain('siret');
     });
 
     test('Carcasse user endpoint should have correct path and query parameters', () => {
@@ -340,7 +315,6 @@ describe('Swagger Documentation Validation', () => {
     });
 
     test('all third-party endpoints should have proper error responses defined', () => {
-      // /nouvelle-fiche est un lien vers l'app, pas une route de l'API : pas de réponse JSON d'erreur
       const paths = Object.entries(swaggerThirdPartyDocument.paths)
         .filter(([path]) => path !== '/nouvelle-fiche')
         .map(([, pathItem]) => pathItem);
@@ -357,12 +331,10 @@ describe('Swagger Documentation Validation', () => {
     });
 
     test('specific endpoints should have 404 responses', () => {
-      // Entity specific endpoint
       const entitySpecificEndpoint =
         swaggerEntityDocument.paths['/carcasse/{date_mise_a_mort}/{numero_bracelet}'].get;
       expect(entitySpecificEndpoint.responses['404']).toBeDefined();
 
-      // Third-party specific endpoint
       const thirdPartySpecificEndpoint =
         swaggerThirdPartyDocument.paths['/carcasse/user/{date_mise_a_mort}/{numero_bracelet}'].get;
       expect(thirdPartySpecificEndpoint.responses['404']).toBeDefined();
@@ -384,32 +356,20 @@ describe('Swagger Documentation Validation', () => {
       const response = await request(app).get('/v1/docs/tierces-parties/').expect(200);
       expect(response.text).toContain('swagger-ui');
     });
-
-    // test('should redirect /api-docs to /docs/cle-dediee', async () => {
-    //   const response = await request(app).get('/v1/api-docs').expect(302);
-    //   expect(response.headers.location).toBe('/v1/docs/cle-dediee');
-    // });
   });
 
   describe('API Key Authentication', () => {
     test('endpoints should require authentication', async () => {
-      // Test FEI endpoint without auth
       await request(app).get('/v1/fei?date_from=2025-01-01&date_to=2025-01-31').expect(401);
 
-      // Test Carcasse endpoint without auth
       await request(app).get('/v1/carcasse/2025-01-01/BRACELET123').expect(401);
 
-      // Test User Carcasse endpoint without auth
       await request(app).get('/v1/carcasse/user/2025-01-01/BRACELET123?email=test@example.com').expect(401);
     });
 
     test('approval request endpoints should require authentication', async () => {
       await new Promise((resolve) => setTimeout(resolve, 150));
-      // Test user approval endpoint without auth
       await request(app).post('/v1/approval-request/user').send({ email: 'test@example.com' }).expect(401);
-
-      // Test entity approval endpoint without auth
-      // await request(app).post('/v1/approval-request/entite').send({ siret: '12345678901234' }).expect(401);
     });
 
     test('FEI user endpoint should require authentication', async () => {
@@ -426,7 +386,6 @@ describe('Swagger Documentation Validation', () => {
 
     test('endpoints should reject invalid API keys', async () => {
       await new Promise((resolve) => setTimeout(resolve, 150));
-      // Test with invalid API key
       await request(app)
         .get('/v1/fei?date_from=2025-01-01&date_to=2025-01-31')
         .set('Authorization', 'Bearer invalid-key')
@@ -453,19 +412,11 @@ describe('Swagger Documentation Validation', () => {
 
     test('should validate request body in approval request endpoints', async () => {
       await new Promise((resolve) => setTimeout(resolve, 150));
-      // Test invalid email format
       await request(app)
         .post('/v1/approval-request/user')
         .set('Authorization', 'Bearer test-api-key')
         .send({ email: 'invalid-email' })
         .expect(400);
-
-      // Test invalid SIRET format
-      // await request(app)
-      //   .post('/v1/approval-request/entite')
-      //   .set('Authorization', 'Bearer test-api-key')
-      //   .send({ siret: '123' })
-      //   .expect(400);
     });
 
     test('should validate parameters in FEI user endpoint', async () => {
@@ -478,13 +429,11 @@ describe('Swagger Documentation Validation', () => {
 
     test('should validate parameters in FEI user by numero endpoint', async () => {
       await new Promise((resolve) => setTimeout(resolve, 150));
-      // Test invalid email format
       await request(app)
         .get('/v1/fei/user/2025-01-001?email=invalid-email')
         .set('Authorization', 'Bearer test-api-key')
         .expect(400);
 
-      // Test missing email
       await request(app)
         .get('/v1/fei/user/2025-01-001')
         .set('Authorization', 'Bearer test-api-key')
@@ -503,7 +452,6 @@ describe('Swagger Documentation Validation', () => {
       expect(contexteParam).toBeDefined();
       expect(contexteParam.required).toBe(false);
 
-      // Check carcasse parameter (new comma-separated format)
       const carcasseParam = parameters.find((p) => p.name === 'carcasse');
       expect(carcasseParam).toBeDefined();
       expect(carcasseParam.required).toBe(false);
@@ -513,7 +461,6 @@ describe('Swagger Documentation Validation', () => {
       expect(carcasseParam.schema.items.type).toBe('string');
       expect(carcasseParam.schema.items.pattern).toBe('^[^,]+,[^,]+(,[^,]*)?$');
 
-      // Check other optional parameters
       const dateMiseAMortParam = parameters.find((p) => p.name === 'date_mise_a_mort');
       expect(dateMiseAMortParam).toBeDefined();
       expect(dateMiseAMortParam.required).toBe(false);
@@ -619,10 +566,8 @@ describe('Documentation Completeness', () => {
   });
 
   test('should have proper separation of concerns', () => {
-    // Entity swagger should not have FeiResponse in third-party swagger
     expect('ApprovalRequestResponse' in swaggerEntityDocument.components.schemas).toBe(false);
 
-    // Both should have their own specific descriptions
     expect(swaggerEntityDocument.info.description).toContain('accès direct');
     expect(swaggerThirdPartyDocument.info.description).toContain('consentement');
   });

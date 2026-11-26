@@ -9,19 +9,12 @@ test.beforeEach(async () => {
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Scenario 66 — ETG adds a missing carcasse AFTER the FEI has already been transmitted to SVI.
-// La demande est indicative : la carcasse doit
-//   - hériter de l'assignation SVI de la fiche (svi_assigned_at, svi_entity_id, next_owner_*)
-//   - être inspectable par le SVI AVANT que l'examinateur ne signe son examen initial
-//   - ne pas déclencher de boucle de re-transmission côté ETG
 test('Ajout carcasse manquante pré-transmission SVI : visible par SVI, pas de boucle ETG', async ({
   page,
 }) => {
   const feiId = 'ZACH-20250707-QZ6E0-235243';
   const newBracelet = 'MM-LATE-99';
 
-  // Step 1: ETG-1 (still has a CarcasseIntermediaire row from the SVI seed) opens the FEI and adds
-  // a missing carcasse, even though the FEI has already been transmitted to SVI.
   await connectWith(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   const addBtn = page.getByRole('button', { name: 'Ajouter une carcasse manquante' });
@@ -37,16 +30,12 @@ test('Ajout carcasse manquante pré-transmission SVI : visible par SVI, pas de b
   });
   await expect(page.getByText("Carcasse ajoutée après l'examen initial").first()).toBeVisible();
 
-  // Step 2: SVI opens the same FEI and DOES see the newly added carcasse, avec la bannière
-  // informative ET le bouton d'acceptation (il ne s'affiche que si svi_carcasse_status vaut
-  // SANS_DECISION : la carcasse ajoutée doit démarrer dans le même état que les autres).
   await logoutAndConnect(page, 'svi@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   const sviCard = page.getByRole('button', { name: new RegExp(`Cerf élaphe.*${newBracelet}`) }).first();
   await expect(sviCard).toBeVisible({ timeout: 10000 });
   await expect(page.getByText("Carcasse ajoutée après l'examen initial").first()).toBeVisible();
 
-  // Step 3: le SVI inspecte AVANT que l'examinateur n'ait signé quoi que ce soit.
   const accepterBtn = sviCard.getByRole('button', { name: 'Accepter' });
   await accepterBtn.scrollIntoViewIfNeeded();
   const syncResponse = page.waitForResponse(
@@ -57,7 +46,6 @@ test('Ajout carcasse manquante pré-transmission SVI : visible par SVI, pas de b
   await expect(sviCard.getByText(/Décision IPM1\s*:\s*Acceptée/)).toBeVisible({ timeout: 10000 });
   await syncResponse;
 
-  // Step 4: l'examinateur signe l'examen initial après coup — le refus n'était pas un préalable.
   await logoutAndConnect(page, 'examinateur@example.fr');
   await expect(page.getByRole('heading', { name: 'Modifications signalées sur vos carcasses' })).toBeVisible({
     timeout: 10000,
@@ -72,8 +60,6 @@ test('Ajout carcasse manquante pré-transmission SVI : visible par SVI, pas de b
   await page.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page).toHaveURL(/\/app\/chasseur\/demandes-de-modification$/);
 
-  // Step 5: ETG side — la carcasse est toujours là, la bannière a disparu, et aucune CTA de
-  // re-transmission n'apparaît (la fiche appartient au SVI).
   await logoutAndConnect(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await expect(page.getByRole('button', { name: `Cerf élaphe N° ${newBracelet}` })).toBeVisible({
@@ -82,7 +68,6 @@ test('Ajout carcasse manquante pré-transmission SVI : visible par SVI, pas de b
   await expect(page.getByText("Carcasse ajoutée après l'examen initial")).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Transmettre la fiche' })).toHaveCount(0);
 
-  // Step 6: SVI — la décision prise avant la signature est toujours là après re-sync.
   await logoutAndConnect(page, 'svi@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await expect(

@@ -26,7 +26,6 @@ const statusMeta: Record<
   invalid: { severity: 'error', label: 'Invalide' },
 };
 
-// Lit le fichier et renvoie son contenu encodé en base64 (sans le préfixe data:).
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -68,7 +67,6 @@ function Resultat({ row }: { row: LimsResultRow }) {
   );
 }
 
-// Tuile de chiffre clé : libellé au-dessus, valeur en grand
 function Tuile({ label, valeur, accent }: { label: string; valeur: number; accent?: boolean }) {
   return (
     <div
@@ -116,7 +114,6 @@ export default function LaboratoireResultsImport() {
       }
       const previewRows = response.data.rows;
       setRows(previewRows);
-      // Par défaut, on sélectionne toutes les lignes importables
       setSelected(
         new Set(
           previewRows.map((row, index) => (row.status === 'matched' ? index : -1)).filter((i) => i >= 0)
@@ -143,7 +140,6 @@ export default function LaboratoireResultsImport() {
     (checked: boolean) => {
       setSelected(checked ? new Set(matchedIndexes.map(({ index }) => index)) : new Set());
     },
-    // matchedIndexes est dérivé de rows
     [rows] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
@@ -269,7 +265,6 @@ export default function LaboratoireResultsImport() {
                     className="hidden"
                     onChange={(event) => {
                       deposer(event.target.files?.[0]);
-                      // reset pour pouvoir redéposer le même fichier
                       event.target.value = '';
                     }}
                   />

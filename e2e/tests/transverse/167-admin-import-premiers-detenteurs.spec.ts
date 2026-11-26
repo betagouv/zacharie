@@ -2,11 +2,6 @@ import { test, expect, type Page } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Scenario 167 — Un admin Zacharie importe des associations de chasse (premiers détenteurs) depuis
-// un fichier CSV de fédération : colonnes « Raison sociale », « Code postal », « Commune ».
-// La raison sociale est gardée telle quelle (« 4111101 ANDREST »). L'association
-// « Association de chasseurs » (75000 Paris) existe déjà dans le seed : elle est ignorée.
-
 test.use({ launchOptions: { slowMo: 100 } });
 
 test.beforeEach(async () => {
@@ -20,11 +15,8 @@ const csv = [
   'Association de chasseurs;75000;Paris',
 ].join('\n');
 
-// Le login mot de passe ouvre une session normale ; /app/admin exige en plus ProConnect (voir 136)
 async function openAdminEntities(page: Page) {
   await connectWith(page, 'admin@example.fr');
-  // le login renvoie l'admin sur son espace chasseur : on attend cette page avant d'ouvrir /admin,
-  // sinon la navigation part pendant la redirection et ProConnect reçoit un `redirect` imbriqué
   await expect(page).toHaveURL(/\/app\/chasseur/);
   await page.goto('http://localhost:3290/app/admin/entities');
   await expect(page).toHaveURL(/\/app\/proconnect\?redirect=%2Fapp%2Fadmin%2Fentities/);
@@ -55,7 +47,6 @@ test('importer des premiers détenteurs depuis un CSV de fédération', async ({
   await page.getByRole('button', { name: 'Importer (2 premier(s) détenteur(s))' }).click();
   await expect(page.getByText('2 créé(s), 1 déjà enregistré(s).')).toBeVisible({ timeout: 10000 });
 
-  // un second import du même fichier ne crée pas de doublon
   await page.getByRole('button', { name: 'Nouvel import' }).click();
   await page
     .getByLabel('Fichier des premiers détenteurs')

@@ -43,8 +43,6 @@ export default function OnboardingMesInformationsDeChasse() {
 
   const nextPage = '/app/chasseur';
 
-  // Dernière étape de l'onboarding : on finalise l'inscription (onboarding_finished → onboarded_at
-  // côté API), ce qui déclenche l'auto-activation du chasseur non-formateur et son mail d'activation.
   const finishOnboarding = async (extraBody: Record<string, string | null> = {}) => {
     const response = await API.post({
       path: `/user/${user.id}`,

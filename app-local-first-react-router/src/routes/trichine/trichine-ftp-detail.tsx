@@ -49,12 +49,10 @@ const supprimerModal = createModal({ isOpenedByDefault: false, id: 'trichine-ftp
 const annulerModal = createModal({ isOpenedByDefault: false, id: 'trichine-ftp-annuler' });
 const ajouterPoolModal = createModal({ isOpenedByDefault: false, id: 'trichine-ftp-ajouter-pool' });
 
-/** Nombre de carcasses représentées par un pool : une carcasse peut porter plusieurs échantillons. */
 function carcassesDuPool(pool: { TrichineEchantillons: Array<{ zacharie_carcasse_id: string }> }) {
   return new Set(pool.TrichineEchantillons.map((echantillon) => echantillon.zacharie_carcasse_id)).size;
 }
 
-/** Détail d'une fiche de transmission des prélèvements : composition, envoi, suivi. */
 export default function TrichineFTPDetail() {
   const { reference } = useParams();
   const basePath = useTrichineBasePath();
@@ -99,7 +97,6 @@ export default function TrichineFTPDetail() {
   }
 
   const isBrouillon = ftp.statut_logistique === TrichineStatutLogistiqueFTP.BROUILLON;
-  // Le colis est parti mais le laboratoire ne l'a pas réceptionné : l'annulation reste possible
   const isAnnulable = ftp.statut_logistique === TrichineStatutLogistiqueFTP.ENVOYEE;
   const isAnnulee = ftp.statut_logistique === TrichineStatutLogistiqueFTP.ANNULEE;
   const laboratoire = ftp.DestinataireEntity.nom_d_usage || ftp.DestinataireEntity.raison_sociale;
@@ -337,7 +334,6 @@ export default function TrichineFTPDetail() {
                   <p className="fr-text--xs fr-mb-0 text-red-700">Refus : {pool.raison_refus}</p>
                 )}
               </div>
-              {/* Ce que le colis contient pour ce pool : le décompte prime, le détail est dans le pool */}
               <div className="shrink-0 text-right">
                 <p className="fr-text--sm fr-mb-0 font-medium whitespace-nowrap text-gray-900">
                   {pool.TrichineEchantillons.length} échantillon
@@ -470,7 +466,6 @@ function ModifierModalContent({ ftp, onDone }: { ftp: TrichineFTPDetailType; onD
       .catch(console.error);
   }, []);
 
-  // Réaligne le formulaire sur la fiche rechargée après un enregistrement
   useEffect(() => {
     setDestinataire(ftp.destinataire_entity_id);
     setModeTransport(ftp.mode_transport ?? '');
@@ -585,11 +580,6 @@ function AnnulerModalContent({ ftp, onDone }: { ftp: TrichineFTPDetailType; onDo
   );
 }
 
-/**
- * Ajout de pools à une fiche encore au brouillon : une fois le colis parti, la fiche papier fait
- * foi et la composition ne bouge plus. Ne sont proposés que les pools qu'aucune fiche vivante
- * n'emporte déjà.
- */
 function AjouterPoolModalContent({
   ftp,
   poolIdsDeLaFiche,
@@ -606,7 +596,6 @@ function AjouterPoolModalContent({
   const [selectedIds, setSelectedIds] = useState<Array<string>>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Les pools libres bougent vite : on repart des données du serveur à chaque ouverture
   useEffect(() => {
     if (!isOpen) return;
     setSelectedIds([]);

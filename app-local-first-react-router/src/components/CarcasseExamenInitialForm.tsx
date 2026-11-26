@@ -18,9 +18,6 @@ const gibierSelect = {
   petit: petitGibier.especes,
 };
 
-// Formulaire d'examen initial d'une carcasse (espèce, numéro, nombre, anomalies).
-// Toutes les modifications sont enregistrées en direct via le store (local-first).
-// Utilisé dans la modale d'édition (depuis la liste) et dans la page détail.
 export default function CarcasseExamenInitialForm({ carcasse }: { carcasse: Carcasse }) {
   const user = useUser((state) => state.user)!;
   const updateStateCarcasse = useZustandStore((state) => state.updateCarcasse);
@@ -54,7 +51,6 @@ export default function CarcasseExamenInitialForm({ carcasse }: { carcasse: Carc
   const [numero, setNumero] = useState(carcasse.numero_bracelet);
   const [numeroError, setNumeroError] = useState<string | null>(null);
   const [commentaire, setCommentaire] = useState(carcasse.examinateur_commentaire ?? '');
-  // Les anomalies sont une seconde étape : masquées à l'ouverture, accessibles via un bouton.
   const [showAnomalies, setShowAnomalies] = useState(false);
 
   const anomaliesCount =
@@ -74,7 +70,6 @@ export default function CarcasseExamenInitialForm({ carcasse }: { carcasse: Carc
     updateCarcasse({ numero_bracelet: value, examinateur_signed_at: dayjs().toDate() });
   };
 
-  // Enregistré au blur et non à chaque frappe : une seule écriture store + un seul log par saisie.
   const commitCommentaire = (value: string) => {
     const nextCommentaire = value.trim() || null;
     if (nextCommentaire === (carcasse.examinateur_commentaire ?? null)) {

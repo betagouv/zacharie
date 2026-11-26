@@ -8,8 +8,6 @@ test.beforeEach(async () => {
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Scenario 154 — la liste des carcasses suit les modifications locales faites hors ligne, sans
-// attendre un rechargement depuis le serveur.
 test('ETG : une carcasse signalée manquante hors ligne apparaît manquante dans la liste des carcasses', async ({
   page,
   context,
@@ -21,14 +19,13 @@ test('ETG : une carcasse signalée manquante hors ligne apparaît manquante dans
   const row = page.getByRole('row').filter({ hasText: 'MM-001-004' });
   await expect(row).toContainText('Sans décision', { timeout: 10000 });
 
-  // La fiche est ouverte en ligne pour que le serveur de dev ait servi le code de ses deux pages.
   await page.getByRole('link', { name: feiId }).first().click();
   const carcasseBtn = page.getByRole('button', { name: 'Daim N° MM-001-004 Mise à' });
   await expect(carcasseBtn).toBeVisible({ timeout: 10000 });
 
   await context.setOffline(true);
 
-  await new Promise((r) => setTimeout(r, 500)); // react-dsfr modal re-render settle
+  await new Promise((r) => setTimeout(r, 500));
   await carcasseBtn.scrollIntoViewIfNeeded();
   await carcasseBtn.click();
   await page.getByLabel('Daim - N° MM-001-004').getByText('Carcasse manquante').click();

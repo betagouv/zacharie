@@ -16,8 +16,6 @@ export function useCarcasseStatusAndRefus(carcasse: Carcasse) {
     | 'refusé'
     | 'accepté'
     | 'saisie partielle' = useMemo(() => {
-    // On lit l'état de possession de la carcasse elle-même (source de vérité),
-    // pas le snapshot FEI qui peut être périmé après un « Retour à l'envoyeur ».
     if (
       carcasse.current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL ||
       carcasse.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR
@@ -106,7 +104,6 @@ export function useCarcasseStatusAndRefus(carcasse: Carcasse) {
   return { status, motifRefus, statusNewCard };
 }
 
-// « (Prénom Nom) » : qui, au sein de l'entité, a pris en charge les carcasses
 function getUserSuffix(user?: { prenom: string | null; nom_de_famille: string | null }) {
   const name = [user?.prenom, user?.nom_de_famille].filter(Boolean).join(' ');
   return name ? ` (${name})` : '';

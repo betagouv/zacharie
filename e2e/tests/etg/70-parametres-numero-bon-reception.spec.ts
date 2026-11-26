@@ -8,8 +8,6 @@ test.beforeEach(async () => {
   await resetDb('ETG');
 });
 
-// Scenario 70 — Paramètres > Entreprise : le n° de bon de réception n'est demandé à la prise
-// en charge que si l'entreprise a activé le réglage (activé pour ETG 1 dans le seed).
 test('70 - ETG active ou désactive la demande du n° de bon de réception', async ({ page }) => {
   const feiId = 'ZACH-20250707-QZ6E0-165242';
   const reglageLabel = /Demander le n° de bon de réception/i;
@@ -26,7 +24,6 @@ test('70 - ETG active ou désactive la demande du n° de bon de réception', asy
   await page.getByRole('checkbox', { name: reglageLabel }).click({ force: true });
   await expect(page.getByText('Réglage enregistré')).toBeVisible({ timeout: 10000 });
 
-  // réglage désactivé : plus de champ à la prise en charge
   await page.goto('http://localhost:3290/app/etg');
   await page.getByRole('link', { name: feiId }).click();
   await expect(page).toHaveURL(new RegExp(`/app/etg/fei/${feiId}`));
@@ -38,7 +35,6 @@ test('70 - ETG active ou désactive la demande du n° de bon de réception', asy
   await page.getByRole('checkbox', { name: reglageLabel }).click({ force: true });
   await expect(page.getByText('Réglage enregistré')).toBeVisible({ timeout: 10000 });
 
-  // réglage réactivé : le champ est de nouveau demandé
   await page.goto('http://localhost:3290/app/etg');
   await page.getByRole('link', { name: feiId }).click();
   await expect(page).toHaveURL(new RegExp(`/app/etg/fei/${feiId}`));

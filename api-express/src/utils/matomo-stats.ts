@@ -46,18 +46,11 @@ export type MatomoReferrersRow = {
 
 export type DateRange = { from: string; to: string };
 
-/*
- *
- * Requêtes
- *
- */
-
 export function buildReportRequests(siteId: string, { from, to }: DateRange): Array<MatomoRequestParams> {
   const common = { idSite: siteId, period: 'day', date: `${from},${to}`, format: 'json', language: 'fr' };
   return [
     { ...common, method: 'VisitsSummary.get' },
     { ...common, method: 'Actions.getPageUrls', flat: '1', filter_limit: '-1' },
-    // `flat=1` concatène catégorie et action dans un seul libellé : on lit plutôt les sous-tables
     {
       ...common,
       method: 'Events.getCategory',
@@ -68,14 +61,6 @@ export function buildReportRequests(siteId: string, { from, to }: DateRange): Ar
     { ...common, method: 'Referrers.getReferrerType', flat: '1', filter_limit: '-1' },
   ];
 }
-
-/*
- *
- * Parsing des réponses
- * Avec period=day et une plage de dates, chaque rapport est un objet indexé par jour.
- * Un jour sans donnée vaut [] pour VisitsSummary.get.
- *
- */
 
 const count = z.coerce.number().transform(Math.round);
 const label = z.coerce.string();
@@ -131,9 +116,6 @@ export function parseVisits(payload: unknown): Array<MatomoVisitsRow> {
   );
 }
 
-// Plusieurs libellés aplatis peuvent pointer vers la même URL (ligne « Autres » comprise) :
-// on les fusionne pour respecter la clé (date, url).
-// Les jetons et emails passés en paramètre d'URL sont masqués avant d'arriver dans la base lue par Metabase.
 export function parsePages(payload: unknown): Array<MatomoPagesRow> {
   const rows = new Map<string, MatomoPagesRow>();
   for (const [date, pages] of Object.entries(pagesSchema.parse(payload))) {
@@ -186,13 +168,6 @@ export function parseReferrers(payload: unknown): Array<MatomoReferrersRow> {
   );
 }
 
-/*
- *
- * Dates
- *
- */
-
-// J-7 → J-1 : Matomo peut consolider une journée tardivement
 export function slidingWindow(now: Date = new Date()): DateRange {
   const today = dayjs(now).tz(MATOMO_TIMEZONE);
   return {
@@ -213,12 +188,6 @@ export function splitByMonth({ from, to }: DateRange): Array<DateRange> {
   }
   return ranges;
 }
-
-/*
- *
- * Écriture
- *
- */
 
 type Row = Record<string, string | number | null>;
 
@@ -264,7 +233,6 @@ export async function syncMatomoStats(range: DateRange): Promise<void> {
     buildReportRequests(MATOMO_SITE_ID, range)
   );
 
-  // tout est validé avant la première écriture : un rapport invalide n'écrit rien
   const rows = {
     visits: parseVisits(visits),
     pages: parsePages(pages),

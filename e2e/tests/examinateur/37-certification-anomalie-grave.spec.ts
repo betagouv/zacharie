@@ -18,7 +18,6 @@ test.beforeEach(async () => {
   await resetDb('EXAMINATEUR_INITIAL');
 });
 
-// Crée une fiche avec une carcasse portant l'anomalie donnée, jusqu'au bloc de validation.
 async function ficheAvecAnomalie(page: Page, anomalie: string) {
   await connectWith(page, 'examinateur@example.fr');
 

@@ -7,12 +7,6 @@ import prisma from '~/prisma';
 import { Prisma, UserRoles } from '@prisma/client';
 import { FORCE_FULL_RELOAD_AFTER } from '~/utils/force-full-reload';
 
-// Goes through the real /sync orchestrator (sync-fei, sync-carcasse,
-// sync-carcasse-intermediaire are NOT mocked here) to verify the soft-delete
-// cascade chain end-to-end. After the carcasse-first refactor, the same
-// HTTP behavior must hold: a deleted FEI must propagate deleted_at to every
-// carcasse + intermediaire row, and subsequent fetches must exclude them.
-
 vi.mock('~/utils/fei-side-effects', () => ({
   runFeiUpdateSideEffects: vi.fn().mockResolvedValue(undefined),
 }));
@@ -67,10 +61,8 @@ app.use('/carcasse', carcasseRouter);
 (prisma.carcasse as any).count = vi.fn().mockResolvedValue(0);
 (prisma.carcasseIntermediaire as any).findMany = vi.fn().mockResolvedValue([]);
 
-// Default required query params for GET /carcasse/ (zod-validated)
 const CARCASSE_QS = 'after=0&limit=100&withDeleted=false';
 
-// requête SQL de la page de GET /carcasse (findScopeCarcassesPage)
 function carcassePageQuery() {
   const [strings, ...values] = vi.mocked(prisma.$queryRaw).mock.calls[0] as [TemplateStringsArray, ...any[]];
   return Prisma.sql(strings, ...values);
@@ -146,8 +138,6 @@ describe('FEI soft-delete via POST /sync', () => {
       otherChasseur
     );
 
-    // sync.ts swallows the throw via try/catch+capture; the call still returns 200,
-    // but the cascade must not run.
     expect(res.status).toBe(200);
     expect(prisma.fei.update).not.toHaveBeenCalled();
     expect(prisma.carcasse.updateMany).not.toHaveBeenCalled();
@@ -177,8 +167,6 @@ describe('FEI soft-delete via POST /sync', () => {
 
 describe('Carcasse soft-delete via POST /sync', () => {
   test('cascades deleted_at to CarcasseIntermediaire only, FEI untouched', async () => {
-    // Le /sync pré-charge les fiches ET les carcasses existantes (fei.findMany + carcasse.findMany),
-    // puis les passe à syncCarcasse.
     vi.mocked(prisma.fei.findMany).mockResolvedValue([baseFei as any]);
     vi.mocked(prisma.fei.findUnique).mockResolvedValue(baseFei as any);
     vi.mocked(prisma.carcasse.findMany).mockResolvedValue([baseCarcasse as any]);
@@ -212,14 +200,11 @@ describe('Carcasse soft-delete via POST /sync', () => {
       where: { zacharie_carcasse_id: 'ZC-1' },
       data: { deleted_at: DELETED_AT, version: { increment: 1 }, version_user_id: expect.any(String) },
     });
-    // FEI must NOT be touched when only the carcasse is deleted
     expect(prisma.fei.update).not.toHaveBeenCalled();
   });
 });
 
 describe('GET /carcasse/ after soft-delete', () => {
-  // Pin the fetch-side filter: the refactor MUST keep deleted_at-out-of-default
-  // for carcasse-first queries, otherwise soft-deletes leak to clients.
   test('GET /carcasse/ default (withDeleted=false) → excludes deleted_at != null rows', async () => {
     await authed(request(app).get(`/carcasse?${CARCASSE_QS}`), sviUser);
 
@@ -227,15 +212,12 @@ describe('GET /carcasse/ after soft-delete', () => {
   });
 
   test('GET /carcasse/?withDeleted=true&after=... → updated_at gates the delta; deleted_at is not forced null', async () => {
-    // postérieur à FORCE_FULL_RELOAD_AFTER, sinon le serveur force un rechargement complet
     const cutoff = FORCE_FULL_RELOAD_AFTER.getTime() + 1;
     await authed(request(app).get(`/carcasse?after=${cutoff}&limit=100&withDeleted=true`), sviUser);
 
     const query = carcassePageQuery();
     expect(query.sql).toContain('c.updated_at >=');
     expect(query.values).toContain(new Date(cutoff).toISOString());
-    // withDeleted=true ⇒ controller does NOT filter on deleted_at, so soft-deleted
-    // rows whose updated_at >= cutoff (deleted_at write also bumps updated_at) are visible.
     expect(query.sql).not.toContain('deleted_at');
   });
 });

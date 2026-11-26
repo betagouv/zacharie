@@ -76,7 +76,6 @@ export default function ResetMotDePasse() {
     }
   };
 
-  // Helper function to safely access error message
   const getErrorMessage = (field: string): string => {
     if (typeof userResponse === 'object' && userResponse !== null && 'error' in userResponse) {
       if (!userResponse.error) {

@@ -4,7 +4,6 @@ import { useDebounce } from '@uidotdev/usehooks';
 import { searchVilles } from '@app/utils/search-ville';
 import InputNotEditable from '@app/components/InputNotEditable';
 
-// les deux modèles qui portent une adresse (User et Entity) nomment ces champs de la même façon
 const CODE_POSTAL_NAME = 'code_postal';
 const VILLE_NAME = 'ville';
 
@@ -14,7 +13,6 @@ export interface CodePostalEtVille {
 }
 
 interface InputCodePostalEtVilleProps {
-  // une même page peut afficher plusieurs formulaires d'adresse : le préfixe garde les id uniques
   idPrefix?: string;
   required?: boolean;
   notEditable?: boolean;
@@ -51,9 +49,6 @@ export default function InputCodePostalEtVille({
   const containerRef = useRef<HTMLDivElement>(null);
   const villeInputRef = useRef<HTMLInputElement>(null);
 
-  // le parent peut changer l'adresse affichée : chargement asynchrone, choix d'une autre entité...
-  // chaque champ ne suit que sa propre valeur par défaut, sinon l'enregistrement du code postal
-  // effacerait la ville en cours de saisie
   const appliedDefaults = useRef({ codePostal: defaultCodePostal, ville: defaultVille });
   useEffect(() => {
     if (defaultCodePostal !== appliedDefaults.current.codePostal) {
@@ -66,8 +61,6 @@ export default function InputCodePostalEtVille({
     }
   }, [defaultCodePostal, defaultVille]);
 
-  // la liste est recalculée à chaque changement de code postal ou de saisie : elle ne propose
-  // jamais les communes d'un code postal précédent
   useEffect(() => {
     if (!isOpen) {
       setVillesResults([]);
@@ -86,7 +79,6 @@ export default function InputCodePostalEtVille({
     return () => document.removeEventListener('pointerdown', dismissOnClickOutside);
   }, [isOpen]);
 
-  // le code postal est saisi avant la ville : dès qu'il est complet on propose ses communes
   const handleCodePostalChange = (newCodePostal: string) => {
     setCodePostal(newCodePostal);
     setOpenedFrom('codePostal');
@@ -109,13 +101,11 @@ export default function InputCodePostalEtVille({
     setIsOpen(false);
     onChange?.({ codePostal: newCodePostal, ville: newVille });
     onSelect?.({ codePostal: newCodePostal, ville: newVille });
-    // le formulaire parent enregistre au blur : on redonne le focus pour qu'un nouveau blur suive
     villeInputRef.current?.focus();
   };
 
   const handleBlur = (event: React.FocusEvent<HTMLDivElement>) => {
     if (!onBlur) return;
-    // on n'avertit le parent que lorsque le focus quitte le couple code postal + ville
     if (containerRef.current?.contains(event.relatedTarget)) return;
     onBlur({ codePostal, ville });
   };
@@ -123,8 +113,6 @@ export default function InputCodePostalEtVille({
   const villesList = (openedIn: 'codePostal' | 'ville') => {
     const isVisible = isOpen && openedFrom === openedIn && villesResults.length > 0;
     return (
-      // la liste reste montée même vide : sans elle le champ devient `:last-child` et le DSFR
-      // lui retire sa marge basse
       <div
         className={
           isVisible ? '-mt-6 flex max-h-60 w-full flex-col overflow-y-auto border border-gray-200' : 'hidden'
@@ -135,8 +123,6 @@ export default function InputCodePostalEtVille({
             return (
               <button
                 key={result}
-                // sans ça le champ perd le focus dès l'appui : le formulaire parent enregistre alors la
-                // saisie partielle, et sa réponse, arrivée après le clic, écrase la commune choisie
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => handleSelect(result)}
                 type="button"

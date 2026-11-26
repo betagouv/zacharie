@@ -19,7 +19,6 @@ test('Dispatch vers commerce de détail — circuit court direct sans ETG', asyn
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
 
-  // Circuit court : pas d'étape Transport, le stockage est la dernière étape.
   await ajouterVenteDon(page, { destinataire: /Commerce de Détail 1/i });
 
   const transmettre = page.getByRole('button', { name: /^Transmettre/ });
@@ -29,7 +28,5 @@ test('Dispatch vers commerce de détail — circuit court direct sans ETG', asyn
     timeout: 10000,
   });
 
-  // Page /envoyée — le PD seedé n'a pas de numero_cfei : le raccourci « Nouvelle fiche »
-  // doit être caché (sinon le clic appellerait createNewFei() qui jette « Forbidden »).
   await expect(page.getByRole('button', { name: 'Nouvelle fiche' })).toHaveCount(0);
 });

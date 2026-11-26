@@ -2,8 +2,6 @@ import { ALBERT_API_KEY, ALBERT_API_URL, ALBERT_MODEL } from '~/config';
 import type { AlbertAssistantMessage, AlbertMessage, AlbertToolCall } from '~/types/bug-investigation';
 import { capture } from './sentry';
 
-// Albert API (DINUM) expose une API compatible OpenAI : https://guides.ia.numerique.gouv.fr/albert-api
-
 export interface AlbertTool {
   type: 'function';
   function: { name: string; description: string; parameters: Record<string, unknown> };
@@ -11,14 +9,11 @@ export interface AlbertTool {
 
 const MAX_ATTEMPTS = 5;
 const MAX_NETWORK_ATTEMPTS = 2;
-// les modèles à raisonnement peuvent réfléchir plusieurs minutes : on répond en streaming et on
-// n'abandonne que si Albert ne renvoie plus rien
 const IDLE_TIMEOUT_MS = 2 * 60 * 1000;
 const MAX_CALL_DURATION_MS = 10 * 60 * 1000;
 
 type StreamDelta = {
   content?: string | null;
-  // texte de réflexion des modèles à raisonnement (le nom du champ dépend de la version de vLLM)
   reasoning_content?: string | null;
   reasoning?: string | null;
   tool_calls?: Array<{ index: number; id?: string; function?: { name?: string; arguments?: string } }>;
@@ -31,7 +26,6 @@ export type StreamState = {
   finishReason: string;
 };
 
-// assemble les fragments du flux (format OpenAI) : le texte et les appels d'outils arrivent par morceaux
 export function applyStreamChunk(
   state: StreamState,
   chunk: { choices?: Array<{ delta?: StreamDelta; finish_reason?: string | null }> }
@@ -124,7 +118,6 @@ export async function albertChatCompletion({
         body: JSON.stringify({
           model,
           messages,
-          // tool_choice vaut "none" par défaut chez Albert : sans "auto" explicite, le modèle n'appelle aucun outil
           ...(tools?.length ? { tools, tool_choice: toolChoice ?? 'auto' } : {}),
           temperature: 0.2,
           stream: true,
@@ -143,7 +136,6 @@ export async function albertChatCompletion({
           finishReason: state.finishReason,
         };
       }
-      // quota (429) ou indisponibilité passagère : on réessaie avec un délai croissant
       const retryable = response.status === 429 || response.status >= 500;
       if (!retryable || attempt >= MAX_ATTEMPTS) {
         throw new Error(`Albert API ${response.status} : ${(await response.text()).slice(0, 500)}`);
@@ -153,7 +145,6 @@ export async function albertChatCompletion({
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     } catch (error) {
       if ((error as Error).message.startsWith('Albert API')) throw error;
-      // coupure réseau ou délai dépassé : un seul nouvel essai
       networkAttempts++;
       if (networkAttempts >= MAX_NETWORK_ATTEMPTS) {
         throw new Error(`Albert API injoignable : ${abortReason || (error as Error).message}`);

@@ -1,8 +1,6 @@
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useZustandStore from '@app/zustand/store';
 
-// Prévient l'utilisateur que des modifications faites sur cet appareil ont été refusées par le
-// serveur pendant la session : elles ne seront jamais enregistrées.
 export default function SyncRejectionsNotice() {
   const syncRejections = useZustandStore((state) => state.syncRejections);
   if (syncRejections.length === 0) return null;

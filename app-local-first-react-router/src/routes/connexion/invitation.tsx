@@ -25,7 +25,6 @@ export default function CreationDeCompte() {
   const redirect = sanitizeRedirect(searchParams.get('redirect'));
   const communication = searchParams.get('communication');
   const invitationToken = searchParams.get('invitation-token');
-  // we don't user   useMostFreshUser() here on purpose to avoid infinite loop
   const navigate = useNavigate();
 
   const handleRedirect = (user: User) => {
@@ -78,7 +77,6 @@ export default function CreationDeCompte() {
     }
   };
 
-  // Helper function to safely access error message
   const getErrorMessage = (field: string): string => {
     if (typeof userResponse === 'object' && userResponse !== null && 'error' in userResponse) {
       if (!userResponse.error) {
@@ -89,8 +87,6 @@ export default function CreationDeCompte() {
     return '';
   };
 
-  // En développement, StrictMode lance cet effet deux fois : deux nettoyages concurrents, dont le
-  // second effacerait l'utilisateur que le premier vient d'enregistrer. On ne le lance qu'une fois.
   const initStarted = useRef(false);
   useEffect(() => {
     if (initStarted.current) return;

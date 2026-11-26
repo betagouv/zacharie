@@ -92,10 +92,8 @@ export default function SviFiches() {
     const feisToToggle = visibleFeis || [];
     const allSelected = feisToToggle.every((numero) => selectedTransmissions.includes(numero));
     if (allSelected) {
-      // Désélectionner toutes les fiches visibles
       setSelectedTransmissions((prev) => prev.filter((numero) => !feisToToggle.includes(numero)));
     } else {
-      // Sélectionner toutes les fiches visibles
       setSelectedTransmissions((prev) => {
         const newSelection = [...prev];
         feisToToggle.forEach((numero) => {
@@ -112,9 +110,7 @@ export default function SviFiches() {
     try {
       const saved = localStorage.getItem('svi-fiches-filter-statuses');
       if (saved) return JSON.parse(saved) as TransmissionSimpleStatus[];
-    } catch {
-      // ignore
-    }
+    } catch {}
     return [];
   });
 
@@ -138,9 +134,7 @@ export default function SviFiches() {
     try {
       const saved = localStorage.getItem('svi-fiches-filter-premier-detenteurs');
       if (saved) return JSON.parse(saved) as string[];
-    } catch {
-      // ignore
-    }
+    } catch {}
     return [];
   });
 
@@ -155,9 +149,7 @@ export default function SviFiches() {
     try {
       const saved = localStorage.getItem('svi-fiches-filter-etgs');
       if (saved) return JSON.parse(saved) as string[];
-    } catch {
-      // ignore
-    }
+    } catch {}
     return [];
   });
 
@@ -169,9 +161,7 @@ export default function SviFiches() {
     try {
       const saved = localStorage.getItem('svi-fiches-filter-saisons');
       if (saved) return JSON.parse(saved) as number[];
-    } catch {
-      // ignore
-    }
+    } catch {}
     return [];
   });
 
@@ -198,9 +188,7 @@ export default function SviFiches() {
     try {
       const saved = localStorage.getItem('svi-fiches-filter-ccgs');
       if (saved) return JSON.parse(saved) as string[];
-    } catch {
-      // ignore
-    }
+    } catch {}
     return [];
   });
 
@@ -212,9 +200,7 @@ export default function SviFiches() {
     try {
       const saved = localStorage.getItem('svi-fiches-filter-collecteurs');
       if (saved) return JSON.parse(saved) as string[];
-    } catch {
-      // ignore
-    }
+    } catch {}
     return [];
   });
 
@@ -232,9 +218,6 @@ export default function SviFiches() {
   );
 
   const filtersKey = `${filterStatuses.join(',')}|${savedFilterPremierDetenteurs.join(',')}|${savedFilterEtgs.join(',')}|${savedFilterCCGs.join(',')}|${savedFilterCollecteurs.join(',')}|${savedFilterSaisons.join(',')}|${filterDateFrom}|${filterDateTo}|${searchQuery}`;
-  // on réinitialise la page seulement quand les filtres changent vraiment :
-  // setSearchParams change d'identité à chaque navigation (react-router), donc on
-  // compare la valeur précédente de filtersKey plutôt que de garder le 1er render.
   const prevFiltersKey = useRef(filtersKey);
   useEffect(() => {
     if (prevFiltersKey.current === filtersKey) return;
@@ -352,8 +335,6 @@ export default function SviFiches() {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [feiCollecteurIdsByFeiNumero, entities, usersById]);
 
-  // Les carcasses arrivent au SVI via un (ou plusieurs) ETG : on dérive les ETG de chaque
-  // transmission à partir de ses intermédiaires de rôle ETG, pour filtrer par ETG.
   const feiEtgIdsByFeiNumero = useMemo(() => {
     const result: Record<string, string[]> = {};
     for (const transmission of allTransmissions) {
@@ -561,7 +542,6 @@ export default function SviFiches() {
 
   const sidebarContent = (
     <>
-      {/* Recherche */}
       <div className="relative">
         <span
           className="fr-icon--sm fr-icon-search-line absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"
@@ -579,7 +559,6 @@ export default function SviFiches() {
         />
       </div>
 
-      {/* Compteur */}
       <div className="mt-2 flex items-center justify-between border-b border-gray-200 pb-3">
         <span className="text-sm font-medium text-gray-600">
           {filteredTransmissions.length} fiche{filteredTransmissions.length > 1 ? 's' : ''}
@@ -594,7 +573,6 @@ export default function SviFiches() {
         )}
       </div>
 
-      {/* Filtre Statut */}
       <CollapsibleSection
         title="Statut"
         defaultOpen={false}
@@ -635,7 +613,6 @@ export default function SviFiches() {
         </div>
       </CollapsibleSection>
 
-      {/* Filtre Saison */}
       {(saisonOptions.length > 0 || filterSaisons.length > 0) && (
         <CollapsibleSection
           title="Saison"
@@ -674,7 +651,6 @@ export default function SviFiches() {
         </CollapsibleSection>
       )}
 
-      {/* Filtre Date de mise à mort */}
       <CollapsibleSection
         title="Date de mise à mort"
         defaultOpen={false}
@@ -714,7 +690,6 @@ export default function SviFiches() {
         </div>
       </CollapsibleSection>
 
-      {/* Filtre Premier détenteur */}
       {(premierDetenteurOptions.length > 1 || filterPremierDetenteurs.length > 0) && (
         <CollapsibleSection
           title="Premier détenteur"
@@ -753,7 +728,6 @@ export default function SviFiches() {
         </CollapsibleSection>
       )}
 
-      {/* Filtre ETG */}
       {(etgOptions.length > 1 || filterEtgs.length > 0) && (
         <CollapsibleSection
           title="ETG"
@@ -792,7 +766,6 @@ export default function SviFiches() {
         </CollapsibleSection>
       )}
 
-      {/* Filtre CCG */}
       {(ccgOptions.length > 1 || filterCCGs.length > 0) && (
         <CollapsibleSection
           title="Centre de collecte (CCG)"
@@ -831,7 +804,6 @@ export default function SviFiches() {
         </CollapsibleSection>
       )}
 
-      {/* Filtre Collecteur */}
       {(collecteurOptions.length > 1 || filterCollecteurs.length > 0) && (
         <CollapsibleSection
           title="Collecteur"
@@ -880,7 +852,6 @@ export default function SviFiches() {
     <div className="relative">
       <title>Mes fiches | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
 
-      {/* Mobile : bouton filtres sticky */}
       <div className="fr-background-alt--blue-france sticky top-0 z-30 flex items-center justify-between px-4 py-2 md:hidden">
         <span className="text-sm font-medium">
           {filteredTransmissions.length} fiche{filteredTransmissions.length > 1 ? 's' : ''}
@@ -948,7 +919,6 @@ export default function SviFiches() {
         </div>
       </div>
 
-      {/* Mobile : panneau filtres */}
       {showMobileFilters && (
         <div className="fixed inset-0 z-[800] md:hidden">
           <div
@@ -970,14 +940,11 @@ export default function SviFiches() {
         </div>
       )}
 
-      {/* Layout principal */}
       <div className="flex">
-        {/* Sidebar gauche - desktop, collée au bord */}
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 overflow-y-auto border-r border-gray-200 bg-white p-4 md:block">
           {sidebarContent}
         </aside>
 
-        {/* Contenu principal */}
         <div className="mx-auto max-w-5xl min-w-0 flex-1 px-4 pt-4 md:px-6">
           {filteredTransmissions.length > 0 && (
             <div className="hidden w-full flex-wrap items-center justify-end gap-3 py-4 md:flex">
@@ -1177,7 +1144,6 @@ function FeisTableRow({
   const currentStepLabelShort = null;
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
 
-  // Notifier le parent de la visibilité de cette ligne
   useEffect(() => {
     const isVisible = !filter || filter === 'Toutes les fiches' || filter === simpleStatus;
     onVisibilityChange?.(getTransmissionIdFromMetadata(transmission), isVisible);
@@ -1191,7 +1157,6 @@ function FeisTableRow({
       if (line.includes('refusé')) {
         _carcassesOuLotsRefusés = line.split(' (')[0];
       } else {
-        // Enrichir les carcasses acceptées pour afficher le nombre accepté pour le petit gibier
         let enrichedLine = line;
         for (const [espece, abbreviation] of Object.entries(abbreviations)) {
           if (line.toLowerCase().includes(abbreviation.toLowerCase())) {
@@ -1219,7 +1184,6 @@ function FeisTableRow({
     return [_carcassesAcceptées, _carcassesOuLotsRefusés];
   }, [transmission.carcasses, carcassesIntermediaireById]);
 
-  // Filtrer selon le statut si un filtre est défini - APRÈS tous les hooks
   if (filter && filter !== 'Toutes les fiches' && filter !== simpleStatus) {
     return null;
   }

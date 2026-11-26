@@ -19,9 +19,6 @@ test.beforeAll(async () => {
   await resetDb('EXAMINATEUR_INITIAL');
 });
 
-// La confirmation « Continuer » ne vaut que pour l'état des carcasses au moment du clic.
-// Ajouter une carcasse ensuite doit replier les blocs suivants : sinon on transmet la fiche
-// sans jamais voir le message d'avertissement de l'anomalie ajoutée.
 test('Anomalie ajoutée après confirmation — la fiche se replie et le message est revu', async ({ page }) => {
   await connectWith(page, 'examinateur@example.fr');
 
@@ -32,7 +29,6 @@ test('Anomalie ajoutée après confirmation — la fiche se replie et le message
   await page.getByRole('button', { name: 'Pierre Petit' }).click();
   await page.getByRole('button', { name: 'Continuer' }).first().click();
 
-  // Carcasse 1 sans anomalie, puis confirmation.
   await page.getByRole('button', { name: 'Ajouter une carcasse' }).click();
   await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Daim');
   await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
@@ -41,7 +37,6 @@ test('Anomalie ajoutée après confirmation — la fiche se replie et le message
   await expect(page.getByText("Vous n'avez pas renseigné d'anomalie")).toBeVisible();
   await page.getByRole('dialog').getByRole('button', { name: 'Continuer' }).click();
 
-  // Les heures : c'est ce qui, avant le fix, gardait les blocs suivants ouverts pour toujours.
   await page
     .getByRole('textbox', { name: 'Heure du prélèvement de la première carcasse' })
     .fill(dayjs().startOf('day').add(1, 'hour').format('HH:mm'));
@@ -51,10 +46,8 @@ test('Anomalie ajoutée après confirmation — la fiche se replie et le message
     .fill(dayjs().startOf('day').add(2, 'hour').format('HH:mm'));
   await page.getByRole('textbox', { name: 'Heure d’éviscération de la dernière carcasse' }).blur();
 
-  // Le destinataire est un autre utilisateur (Pierre Petit) : ici le bloc suivant est la validation.
   await expect(page.getByRole('heading', { name: "Validation de l'examen initial" })).toBeVisible();
 
-  // Carcasse 2 AVEC une anomalie porteuse d'un message.
   await page.getByRole('button', { name: 'Ajouter une carcasse' }).click();
   await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Daim');
   await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
@@ -65,21 +58,18 @@ test('Anomalie ajoutée après confirmation — la fiche se replie et le message
   await page.getByRole('button', { name: 'Retour' }).click();
   await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
 
-  // La confirmation est invalidée : bloc de validation replié, transmission bloquée.
   await expect(page.getByRole('heading', { name: "Validation de l'examen initial" })).toBeHidden();
   await expect(
     page.getByRole('textbox', { name: 'Heure du prélèvement de la première carcasse' })
   ).toBeHidden();
   await expect(page.getByRole('button', { name: 'Transmettre', exact: true })).toBeDisabled();
 
-  // Re-confirmer fait passer par le message d'avertissement de l'anomalie.
   await page.getByRole('button', { name: 'Continuer' }).click();
   const confirmDialog = page.getByRole('dialog', { name: 'Anomalies renseignées' });
   await expect(confirmDialog.getByText('Abcès unique')).toBeVisible();
   await expect(confirmDialog.getByText(/Ne pas commercialiser ou traitement de la carcasse/)).toBeVisible();
   await confirmDialog.getByRole('button', { name: 'Continuer' }).click();
 
-  // Les heures saisies plus tôt sont conservées, la transmission redevient possible.
   await expect(
     page.getByRole('textbox', { name: 'Heure du prélèvement de la première carcasse' })
   ).toHaveValue(dayjs().startOf('day').add(1, 'hour').format('HH:mm'));

@@ -128,7 +128,6 @@ export function PremierDetenteurCorrectionForm({
   const estUnAutreChasseur =
     !fei.premier_detenteur_entity_id && !!premierDetenteurEmail && premierDetenteurEmail !== examinateurEmail;
   const [choix, setChoix] = useState(() => {
-    // une association dont l'examinateur n'est plus membre ne peut pas être reprise : on fait choisir
     if (fei.premier_detenteur_entity_id) {
       const estSelectionnable = corrections.associationsDeChasse.some(
         (association) => association.id === fei.premier_detenteur_entity_id

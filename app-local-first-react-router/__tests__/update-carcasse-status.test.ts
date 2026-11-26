@@ -68,7 +68,6 @@ const createBaseCarcasse = (overrides: Partial<Carcasse> = {}): Carcasse => ({
   svi_ipm2_traitement_assainissant_poids: null,
   svi_ipm2_poids_saisie: null,
   svi_ipm2_signed_at: null,
-  // FEI flattened fields
   created_at: dayjs().toDate(),
   updated_at: dayjs().toDate(),
   deleted_at: null,
@@ -171,7 +170,7 @@ describe('updateCarcasseStatus', () => {
         intermediaire_carcasse_manquante: false,
         intermediaire_carcasse_refus_intermediaire_id: null,
         svi_ipm1_decision: null,
-        svi_ipm1_date: dayjs().toDate(), // Has date to bypass previous condition
+        svi_ipm1_date: dayjs().toDate(),
         svi_ipm1_presentee_inspection: false,
         svi_ipm2_presentee_inspection: false,
       });

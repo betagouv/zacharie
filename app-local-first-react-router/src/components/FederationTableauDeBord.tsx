@@ -117,10 +117,6 @@ function useEndpoint<T>(path: string, federationId: string | undefined) {
   return { data, loading, error };
 }
 
-/**
- * Période réellement prise en compte par les statistiques : la saison de chasse court du
- * 1er juillet au 30 juin, mais on s'arrête à aujourd'hui tant que la saison n'est pas finie.
- */
 function formatSeasonRange({ seasonStart, seasonEnd }: SeasonRange): string | null {
   if (!seasonStart || !seasonEnd) return null;
   const start = dayjs(seasonStart);
@@ -138,7 +134,6 @@ function buildTitle(valoData: ValorisationData | null): string {
 }
 
 interface Props {
-  /** URL du tableau de bord de la fédération de l'utilisateur ; `${basePath}/:federationId` affiche une autre fédération. */
   basePath: string;
 }
 

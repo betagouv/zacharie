@@ -90,8 +90,6 @@ function SviInspectionCarcasse() {
   );
 
   const canEdit = useMemo(() => {
-    // Une demande de modification (numéro de marquage, carcasse ajoutée) est purement indicative :
-    // elle ne bloque plus l'inspection du SVI. On l'affiche via PendingModificationBanner.
     if (isSviWorkingFor) {
       return true;
     }
@@ -188,7 +186,6 @@ function SviInspectionCarcasse() {
               </div>
             </Section>
           )}
-          {/* Circuit agréé : prélèvement trichine par le SVI (invisible sans le feature flag) */}
           {TRICHINE_FEATURE_ENABLED && carcasse.espece === 'Sanglier' && (
             <TrichineSection carcasse={carcasse} />
           )}

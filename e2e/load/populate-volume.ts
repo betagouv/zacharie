@@ -1,8 +1,3 @@
-// Test de charge : remplit la base de test avec un gros volume pour ETG 1.
-// Part du seed SVI_CLOSED (une fiche clôturée de 4 carcasses passée par ETG 1) et la duplique en SQL.
-//
-// Usage (API de test lancée sur 3291) :
-//   CARCASSES=1000000 npx tsx load/populate-volume.ts
 import pg from 'pg';
 
 const CARCASSES = Number(process.env.CARCASSES ?? 10000);
@@ -13,8 +8,6 @@ if (!DATABASE_URL.endsWith('/zacharietest')) {
   throw new Error('Ce script ne tourne que sur la base zacharietest');
 }
 
-// décale les dates d'une copie : jusqu'à 3 ans en arrière pour les dates de chasse, quelques
-// secondes par copie pour created_at/updated_at (ordre stable pour la pagination)
 const shift = (column: string) => `'${column}', c.${column} - make_interval(secs => g)`;
 const shiftDays = (column: string) => `'${column}', c.${column} - (g % 1095)`;
 

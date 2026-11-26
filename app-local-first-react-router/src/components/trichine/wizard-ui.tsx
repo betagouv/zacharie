@@ -1,19 +1,6 @@
 import type { ReactNode } from 'react';
 
-/**
- * Briques d'interface de l'assistant de prélèvement.
- *
- * Volontairement hors DSFR : l'assistant est un écran de travail dense, en pleine largeur,
- * où les composants DSFR imposent des marges et des largeurs qui cassent la mise en page
- * (`.fr-text--sm` porte 1,5 rem de marge basse, les champs occupent toute la ligne...).
- * On garde en revanche les couleurs de la charte pour rester cohérent avec le reste de l'app.
- */
-
 const BLEU = '#000091';
-
-/* -------------------------------------------------------------------------- */
-/* Boutons                                                                     */
-/* -------------------------------------------------------------------------- */
 
 type VarianteBouton = 'primaire' | 'secondaire' | 'discret';
 
@@ -57,10 +44,6 @@ export function Bouton({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Champs                                                                      */
-/* -------------------------------------------------------------------------- */
-
 const CHAMP =
   'w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-[#0a76f6]';
 
@@ -78,7 +61,6 @@ export function ChampTexte(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      // sans `type`, le piège à focus des modales DSFR prend l'input pour un radio et plante
       type={props.type || 'text'}
       className={CHAMP}
     />
@@ -93,10 +75,6 @@ export function ChampSelect(props: React.SelectHTMLAttributes<HTMLSelectElement>
     />
   );
 }
-
-/* -------------------------------------------------------------------------- */
-/* Pastilles et cartes                                                         */
-/* -------------------------------------------------------------------------- */
 
 const TONS = {
   neutre: 'bg-gray-100 text-gray-700',
@@ -141,10 +119,6 @@ export function Carte({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Fil des étapes                                                              */
-/* -------------------------------------------------------------------------- */
-
 export function FilEtapes({ etapes, courante }: { etapes: Array<string>; courante: number }) {
   return (
     <ul className="m-0 mb-6 flex list-none flex-wrap items-center gap-x-2 gap-y-3 p-0">
@@ -184,11 +158,6 @@ export function FilEtapes({ etapes, courante }: { etapes: Array<string>; courant
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Choix exclusif                                                              */
-/* -------------------------------------------------------------------------- */
-
-/** Choix parmi quelques options : des boutons plutôt qu'un menu déroulant, un clic au lieu de deux. */
 export function ChampChoix<T extends string>({
   label,
   hint,
@@ -229,11 +198,6 @@ export function ChampChoix<T extends string>({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Sous-onglets                                                                */
-/* -------------------------------------------------------------------------- */
-
-/** Deux vues d'une même liste : on bascule de l'une à l'autre sans perdre la sélection. */
 export function Onglets<T extends string>({
   label,
   value,

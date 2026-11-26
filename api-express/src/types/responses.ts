@@ -88,7 +88,6 @@ export interface UserMyRelationsResponse {
   data: {
     user: User;
     detenteursInitiaux: Array<UserPartenaire>;
-    // examinateursInitiaux:  Array<User>,
     associationsDeChasse: Array<EntityWithUserRelation>;
     ccgs: Array<EntityWithUserRelation>;
     collecteursPro: Array<EntityWithUserRelation>;
@@ -281,16 +280,12 @@ export interface CarcassesGetResponse {
     carcassesIntermediaires: Array<CarcasseIntermediaire>;
     carcasseModifRequests: Array<CarcasseModificationRequest>;
     hasMore: boolean;
-    // le client remplace ses carcasses locales au lieu de les merger (voir FORCE_FULL_RELOAD_AFTER)
     fullReload: boolean;
-    // User.carcasses_reload_version : le client la renvoie à son prochain pull (voir doc/rechargement-complet.md)
     reloadVersion: number;
   };
   error: string;
 }
 
-// Nombre de carcasses non supprimées du périmètre de synchro de l'utilisateur, comparé par le client
-// à son store local pour détecter les écarts (observation seulement). Voir GET /carcasse/count.
 export interface CarcassesCountResponse {
   ok: boolean;
   data: {
@@ -300,8 +295,6 @@ export interface CarcassesCountResponse {
   error: string;
 }
 
-// Carcasses d'une fiche hors du périmètre de synchro delta (refusées/manquantes/orphelines),
-// récupérées à la demande par fiche puis mergées dans le store. Voir GET /carcasse/refusees/:fei_numero.
 export interface CarcassesRefuseesResponse {
   ok: boolean;
   data: {
@@ -334,8 +327,6 @@ export interface SviCarcassesAVenirResponse {
   error: string;
 }
 
-// Bilan des anomalies de fin de saison (calque DGAL) : une ligne par ETG et groupe d'espèces.
-// Les nombres sont des nombres d'animaux (un lot de petit gibier compte pour ses animaux).
 export interface BilanAnomaliesLigne {
   etg_id: string;
   etg_nom: string;
@@ -349,7 +340,6 @@ export interface BilanAnomaliesLigne {
   ei_non_valide: number;
   ei_non_identifiee: number;
   saisies_totales_ei: number;
-  // Nombre d'animaux par motif SVI (IPM1 ou IPM2), intitulé du référentiel Zacharie.
   anomalies: Record<string, number>;
 }
 
@@ -365,16 +355,13 @@ export interface BilanAnomaliesResponse {
   error: string;
 }
 
-// Traçabilité amont : sur les fiches en cours d'acheminement vers le SVI (celles ayant au
-// moins une carcasse à venir), répartition en nombre d'animaux entre ce qui a été déclaré
-// et ce qui a été refusé / déclaré manquant par l'ETG (l'écart avec ce qui arrivera).
 export interface SviTracabiliteAmont {
   nbFiches: number;
-  recuesEtg: number; // total déclaré sur ces fiches
-  aVenir: number; // acceptées/prises en charge, à transmettre au SVI (= tuile "Animaux à venir")
+  recuesEtg: number;
+  aVenir: number;
   refuseesEtg: number;
   manquantesEtg: number;
-  enAttente: number; // déclarées mais pas encore décidées par l'ETG (ni acceptées, ni refusées, ni manquantes)
+  enAttente: number;
 }
 
 export interface SviTracabiliteAmontResponse {
@@ -447,9 +434,6 @@ export interface SyncRequest {
       zacharie_carcasse_id: string;
     }
   >;
-  // _approvalPayload (optional) carries the examinateur fields when transitioning a NEW_CARCASSE
-  // request to APPROVED. Not persisted on the modifRequest row — used by side-effects to mutate the
-  // underlying Carcasse server-side.
   carcasseModifRequests: Array<
     Partial<CarcasseModificationRequest> & {
       id: string;
@@ -465,9 +449,6 @@ export interface SyncRequest {
   logs: Array<Partial<Log> & { id: string }>;
 }
 
-// Item que le serveur a refusé d'écrire, pour que le client cesse de le repousser. `id` est celui
-// que porte le store local : numéro pour une fiche, zacharie_carcasse_id pour une carcasse,
-// fei_numero_zacharie_carcasse_id_intermediaire_id pour un intermédiaire.
 export type SyncRejection = {
   kind: 'fei' | 'carcasse' | 'carcasseIntermediaire' | 'carcasseModifRequest';
   id: string;
@@ -482,9 +463,6 @@ export interface SyncResponse {
     carcassesIntermediaires: Array<CarcasseIntermediaire>;
     carcasseModifRequests: Array<CarcasseModificationRequest>;
     syncedLogIds: Array<string>;
-    // Refus définitifs : la version locale ne passera jamais, inutile de la renvoyer. La ligne
-    // serveur faisant foi n'est volontairement PAS jointe — ce serait divulguer la fiche d'un
-    // tiers à quelqu'un à qui on vient d'en refuser l'accès.
     rejected: Array<SyncRejection>;
     shouldRemoveFromLocalStore: Array<SyncRejection>;
   } | null;
@@ -561,17 +539,13 @@ export interface AdminCcgImportResponse {
   error: string;
 }
 
-// Import de résultats labo : fichier CSV au format Zacharie (cf utils/lims-parse.ts)
-// Ce que devient chaque carcasse d'un pool une fois le résultat appliqué
 export type PoolResultEffet = 'liberees' | 'en_attente_confirmation' | 'a_saisir' | 'decision_a_prendre';
 
 export type LimsResultRowStatus = 'matched' | 'unmatched' | 'invalid' | 'conflict';
 
 export interface LimsResultRow {
   reference_pool: string;
-  // Résultat mappé (null si le libellé du fichier n'a pas pu être reconnu)
   resultat_analyse: TrichineResultatAnalyse | null;
-  // Libellé brut du fichier, pour affichage
   raw_resultat: string;
   parasite_identifie?: string;
   nombre_larves?: number;
@@ -580,15 +554,11 @@ export interface LimsResultRow {
   reference_labo?: string;
   commentaire?: string;
   status: LimsResultRowStatus;
-  // Raison quand status ≠ matched, ou avertissement sur une ligne matched (référence interne ignorée)
   message?: string;
-  // Lignes matched : ce que l'import va faire dans Zacharie (cf describePoolResultActions)
   effet?: PoolResultEffet;
   nb_carcasses?: number;
   actions?: string[];
-  // Référence Zacharie du pool (la ligne peut l'avoir désigné par l'alias du laboratoire)
   reference_pool_zacharie?: string;
-  // Fiche par laquelle le pool est arrivé : elle se clôture quand tous ses pools ont un résultat
   ftp?: { numero_fiche: string; recue: boolean; pools_sans_resultat: string[] };
 }
 
@@ -607,8 +577,6 @@ export interface LaboResultsImportResponse {
     applied: number;
     skipped: number;
     errors: number;
-    // avertissement : résultat appliqué, mais la référence interne de la ligne n'a pas été posée
-    // ftp_confirmation : fiche de transmission vers le LNR créée pour un résultat non négatif d'un LVD
     results: Array<{
       reference_pool: string;
       ok: boolean;
@@ -668,7 +636,6 @@ export type AdminTrichinePoolRow = {
   ftp_numero: string | null;
   laboratoire: string | null;
   est_lnr: boolean;
-  // Références internes posées par le SVI et les laboratoires, séparées par des virgules
   aliases: string;
 };
 
@@ -828,9 +795,6 @@ export interface AdminSearchResponse {
   error: string;
 }
 
-// Un groupe de carcasses d'une fiche qui partagent le même détenteur actuel et le même destinataire.
-// Le destinataire (next_owner) reste renseigné tant qu'il n'a pas pris en charge, et pour toujours en
-// circuit court, où le destinataire ne prend jamais en charge dans Zacharie.
 export interface AdminFeiDestinataire {
   current_owner_role: FeiOwnerRole | null;
   current_owner_label: string | null;
@@ -864,7 +828,6 @@ export interface AdminUserFeisResponse {
   error: string;
 }
 
-// Une option de liste déroulante dans les filtres des listes admin.
 export interface AdminFilterOption {
   id: string;
   label: string;
@@ -917,10 +880,8 @@ export interface AdminFeiDetailResponse {
       FeiPremierDetenteurEntity: { nom_d_usage: string } | null;
     };
     destinataires: Array<AdminFeiDestinataire>;
-    // Libellés des détenteurs (entités et utilisateurs) cités par les carcasses, par id.
     ownerLabels: Record<string, string>;
     corrections: {
-      // Raison pour laquelle l'admin ne peut plus corriger la fiche, null si c'est possible
       blocage: string | null;
       ajoutCarcasseBlocage: string | null;
       associationsDeChasse: Array<{ id: string; nom_d_usage: string | null }>;

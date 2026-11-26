@@ -5,9 +5,6 @@ import { populateDb } from '../../scripts/populate-test-db';
 import { applyHistoryTriggers } from '../../scripts/apply-history-triggers';
 import { mountE2eRoutes } from '~/utils/mount-e2e-routes';
 
-// POST /__e2e/reset vide et reseed la base : elle ne doit exister qu'en NODE_ENV=test.
-// Staging et review apps tournent en NODE_ENV=production, comme la prod.
-
 vi.mock('../../scripts/populate-test-db', () => ({ populateDb: vi.fn(async () => {}) }));
 vi.mock('../../scripts/apply-history-triggers', () => ({ applyHistoryTriggers: vi.fn(async () => {}) }));
 
@@ -30,7 +27,6 @@ describe('POST /__e2e/reset', () => {
     expect(applyHistoryTriggers).not.toHaveBeenCalled();
   });
 
-  // premier appel du process : historyTriggersReady est un état de module
   test('pose les triggers d’historique une seule fois par process', async () => {
     const app = buildApp('test');
     await request(app).post('/__e2e/reset').send({});

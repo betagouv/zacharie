@@ -2,21 +2,14 @@ import { test, expect, type Page } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Scenario 171 — Un admin Zacharie saisit les références nationales lues par Metabase pour les KPI
-// (table stats_ref_national) sur /app/admin/stats-ref : ajout, doublon refusé, modification,
-// suppression. Chaque écriture apparaît dans le journal admin.
-
 test.use({ launchOptions: { slowMo: 100 } });
 
 test.beforeEach(async () => {
   await resetDb();
 });
 
-// Le login mot de passe ouvre une session normale ; /app/admin exige en plus ProConnect (voir 136)
 async function openAdminStatsRef(page: Page) {
   await connectWith(page, 'admin@example.fr');
-  // le login renvoie l'admin sur son espace chasseur : on attend cette page avant d'ouvrir /admin,
-  // sinon la navigation part pendant la redirection et ProConnect reçoit un `redirect` imbriqué
   await expect(page).toHaveURL(/\/app\/chasseur/);
   await page.goto('http://localhost:3290/app/admin/stats-ref');
   await expect(page).toHaveURL(/\/app\/proconnect\?redirect=%2Fapp%2Fadmin%2Fstats-ref/);
@@ -51,7 +44,6 @@ test('ajouter, modifier et supprimer une référence stats', async ({ page }) =>
   await expect(row).toContainText('Volume global (carcasses)');
   await expect(row.getByRole('cell', { name: '60000', exact: true })).toBeVisible();
 
-  // la même saison × circuit × gibier × indicateur est refusée
   await addVolumeGlobal2022(page);
   await expect(page.getByText(/existe déjà/)).toBeVisible({ timeout: 10000 });
   await expect(row).toHaveCount(1);

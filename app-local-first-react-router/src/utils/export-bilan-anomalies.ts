@@ -5,10 +5,6 @@ import API from '@app/services/api';
 import { capture } from '@app/services/sentry';
 import type { BilanAnomaliesData, BilanAnomaliesResponse } from '@api/src/types/responses';
 
-// Bilan des anomalies de fin de saison demandé par la DGAL (calque "bilan des anomalies") :
-// un onglet par chapitre du calque, une ligne par ETG et groupe d'espèces.
-// Les cellules vides sont les données absentes de Zacharie, à compléter par le SVI.
-
 type Cell = string | number | CellObject;
 
 function taux(numerateurCol: string, denominateurCol: string, row: number): CellObject {
@@ -32,7 +28,6 @@ function buildWorkbook({ lignes, colonnes_anomalies }: BilanAnomaliesData) {
   const workbook = utils.book_new();
   const etgColumns = ['ETG', 'Département', 'Espèce'];
 
-  // Chapitre I : colonnes D à H, taux de saisie rapportés aux carcasses réceptionnées (D).
   utils.book_append_sheet(
     workbook,
     buildSheet(
@@ -94,7 +89,6 @@ function buildWorkbook({ lignes, colonnes_anomalies }: BilanAnomaliesData) {
   utils.book_append_sheet(
     workbook,
     buildSheet(
-      // Une colonne par motif SVI, avec l'intitulé du référentiel Zacharie.
       [...etgColumns, ...colonnes_anomalies],
       lignes.map((ligne) => [
         ligne.etg_nom,

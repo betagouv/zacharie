@@ -1,4 +1,3 @@
-// Libellés des actions du journal admin (AdminAuditLog.action = méthode + route)
 const ADMIN_ACTION_LABELS: Record<string, string> = {
   'POST /user/connect-as': 'Connexion en tant que',
   'POST /user/nouveau': 'Création d’utilisateur',

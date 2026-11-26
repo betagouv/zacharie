@@ -55,7 +55,6 @@ export async function generateHeaderDocx(data: CarcasseCertificat) {
                         text: data.prefecture_svi ?? '',
                         bold: true,
                         size: 24,
-                        // allCaps: true,
                         font: 'Marianne',
                       }),
                     ],
@@ -66,8 +65,7 @@ export async function generateHeaderDocx(data: CarcasseCertificat) {
                       new TextRun({
                         text: `Service vétérinaire d'inspection de l'établissement de traitement du gibier sauvage de ${data.commune_etg}`,
                         bold: true,
-                        size: 24, // measured in half-points
-                        // allCaps: true,
+                        size: 24,
                         font: 'Marianne',
                       }),
                     ],

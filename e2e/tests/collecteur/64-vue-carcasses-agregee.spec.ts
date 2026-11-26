@@ -8,7 +8,6 @@ test.beforeEach(async () => {
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Scenario 64 — Vue /collecteur/carcasses : toutes carcasses passées listées.
 test('Collecteur voit ses carcasses dans la vue agrégée', async ({ page }) => {
   await connectWith(page, 'collecteur-pro@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/collecteur');

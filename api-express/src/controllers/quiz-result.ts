@@ -157,8 +157,6 @@ function startOfTodayInParis(): Date {
   const year = parts.find((p) => p.type === 'year')?.value;
   const month = parts.find((p) => p.type === 'month')?.value;
   const day = parts.find((p) => p.type === 'day')?.value;
-  // 00:00 in Paris during winter is 23:00 the day before in UTC (CET = UTC+1).
-  // During DST it's 22:00 UTC. We compute the boundary by parsing midnight Paris time.
   const isoLocal = `${year}-${month}-${day}T00:00:00`;
   const tzOffsetMinutes = parisOffsetMinutes();
   const utcMs = Date.parse(isoLocal + 'Z') - tzOffsetMinutes * 60_000;

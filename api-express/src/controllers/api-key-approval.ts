@@ -76,7 +76,6 @@ router.post(
     if (status === ApiKeyApprovalStatus.REJECTED) event = 'USER_REJECTED_ACCESS';
 
     if (event) {
-      // le webhook a besoin de la clé complète (private_key pour l'en-tête Authorization), jamais renvoyée au client
       const approvalWithFullApiKey = await prisma.apiKeyApprovalByUserOrEntity.findUniqueOrThrow({
         where: { id: updatedApproval.id },
         include: { ApiKey: true },

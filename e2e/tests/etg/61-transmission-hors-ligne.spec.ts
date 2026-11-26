@@ -8,7 +8,6 @@ test.beforeEach(async () => {
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Scenario 61 — Transmission hors-ligne : sync différée OK.
 test('ETG transmet hors-ligne puis synchronise au retour online', async ({ page, context }) => {
   const feiId = 'ZACH-20250707-QZ6E0-165242';
   await connectWith(page, 'etg-1@example.fr');
@@ -16,7 +15,6 @@ test('ETG transmet hors-ligne puis synchronise au retour online', async ({ page,
   await page.getByRole('button', { name: 'Prendre en charge' }).click();
   await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
 
-  // Passer hors-ligne.
   await context.setOffline(true);
 
   await page.getByRole('button', { name: 'Cliquez ici pour définir' }).click();
@@ -29,7 +27,6 @@ test('ETG transmet hors-ligne puis synchronise au retour online', async ({ page,
   await transmettre.scrollIntoViewIfNeeded();
   await transmettre.click();
 
-  // Repasser en ligne → sync auto PQueue.
   await context.setOffline(false);
   await expect(page.getByText('SVI 1 a été notifié')).toBeVisible({ timeout: 15000 });
 });

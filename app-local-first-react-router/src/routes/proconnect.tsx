@@ -15,8 +15,6 @@ const errorMessages: Record<string, string> = {
   not_configured: "ProConnect n'est pas configuré sur ce serveur.",
 };
 
-// Étape obligatoire pour les admins Zacharie : le backend refuse /admin sans ProConnect récent.
-// Le bouton est un lien vers l'API, qui redirige vers ProConnect puis revient sur `redirect`.
 export default function ProConnect() {
   const user = useUser((state) => state.user);
   const [searchParams] = useSearchParams();

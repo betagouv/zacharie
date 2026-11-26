@@ -20,9 +20,6 @@ function formatUserName(user?: { prenom: string | null; nom_de_famille: string |
   return `${user.prenom ?? ''} ${user.nom_de_famille ?? ''}`.trim();
 }
 
-// L'ownership (dépôt/transport, intermédiaire, SVI, clôture) est désormais porté PAR CARCASSE.
-// La carcasse est donc la ressource self-contained de l'API : on ne s'appuie sur la FEI que pour
-// les noms d'examinateur / premier détenteur (relations).
 export function mapCarcasseForApi(carcasse: CarcasseGetForApi, fei: FeiGetForApi) {
   if (!carcasse) {
     return null;
@@ -106,9 +103,6 @@ export function mapCarcasseForApi(carcasse: CarcasseGetForApi, fei: FeiGetForApi
   };
 }
 
-// En-tête de la FEI + ses carcasses. Le détail d'ownership (dépôt/transport, intermédiaire, SVI,
-// clôture) vit sur chaque carcasse (cf mapCarcasseForApi), car il diffère potentiellement d'une
-// carcasse à l'autre depuis le passage à l'ownership par carcasse.
 export function mapFeiForApi(fei: FeiGetForApi, carcasses: CarcasseGetForApi[]) {
   if (!fei) {
     return null;
@@ -238,8 +232,6 @@ export const checkApiKeyIsValidMiddleware =
     next();
   };
 
-// Événements webhook réellement émis (cf sendWebhook + carcasse-side-effects / fei-side-effects).
-// Doit rester aligné avec l'enum documenté dans les deux swagger.
 export type WebhookEvent =
   | 'USER_APPROVED_ACCESS'
   | 'USER_REJECTED_ACCESS'
@@ -263,7 +255,6 @@ export async function sendWebhook(
   }
 ) {
   if (!userApprovals) {
-    // sans user, `user_id: null` matcherait toutes les approbations d'entité
     if (!userId) return;
     userApprovals = await prisma.apiKeyApprovalByUserOrEntity.findMany({
       where: {
@@ -278,7 +269,6 @@ export async function sendWebhook(
     if (userApproval.status !== ApiKeyApprovalStatus.APPROVED) continue;
     const apiKey = userApproval.ApiKey;
     if (!apiKey.webhook_url) continue;
-    // en dev, le bac à sable de l'API reçoit les webhooks en http://localhost
     if (!apiKey.webhook_url.startsWith('https://') && !IS_DEV_OR_TEST) continue;
     let fei: FeiGetForApi | null = null;
     let carcasses: CarcasseGetForApi[] = [];
@@ -311,21 +301,19 @@ export async function sendWebhook(
       });
       if (carcasse) {
         carcasses.push(carcasse);
-        // la FEI ne sert qu'aux noms examinateur / premier détenteur de la carcasse
         carcassesFei ??= await prisma.fei.findUnique({
           where: { numero: carcasse.fei_numero },
           select: feiForApiSelect,
         });
       }
     }
-    // même forme que les réponses de l'API v1 (cf WebhookPayload dans les swagger)
     const payload = {
       event,
       fei: fei ? mapFeiForApi(fei, carcasses) : null,
       carcasses: carcasses.map((carcasse) => mapCarcasseForApi(carcasse, carcassesFei)),
     };
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     fetch(apiKey.webhook_url, {
       method: 'POST',
@@ -337,7 +325,7 @@ export async function sendWebhook(
       signal: controller.signal,
     })
       .then((res) => {
-        clearTimeout(timeoutId); // Clear timeout on success
+        clearTimeout(timeoutId);
         return prisma.apiKeyLog.create({
           data: {
             api_key_id: apiKey.id,
@@ -347,7 +335,7 @@ export async function sendWebhook(
         });
       })
       .catch((err) => {
-        clearTimeout(timeoutId); // Clear timeout on error
+        clearTimeout(timeoutId);
         console.error(`Failed to send webhook for event ${event} to ${apiKey.webhook_url}`, err);
       });
   }

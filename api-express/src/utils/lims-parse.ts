@@ -1,13 +1,6 @@
 import { parse as parseCsv } from 'csv-parse/sync';
 import { TrichineResultatAnalyse } from '@prisma/client';
 
-/**
- * Lecture du fichier d'import de résultats trichine. Le format est unique et imposé par Zacharie
- * (documenté aux laboratoires sur /app/laboratoire/results/format) : c'est au laboratoire d'adapter
- * son export LIMS. Fonctions pures (testables sans DB) : le rapprochement aux pools et
- * l'application se font ailleurs.
- */
-
 export const IMPORT_COLUMNS = [
   'reference_pool',
   'resultat_analyse',
@@ -22,9 +15,6 @@ export type ImportColumn = (typeof IMPORT_COLUMNS)[number];
 
 export const IMPORT_REQUIRED_COLUMNS: Array<ImportColumn> = ['reference_pool', 'resultat_analyse'];
 
-// Valeur de la colonne resultat_analyse (normalisée) -> résultat Zacharie, selon le laboratoire.
-// « non_negatif » a le sens réglementaire de chaque laboratoire : pour un LVD, larve détectée à
-// confirmer par le LNR ; pour le LNR, parasite autre que la trichine.
 const RESULTAT_VALUES_LVD: Record<string, TrichineResultatAnalyse> = {
   negatif: TrichineResultatAnalyse.NEGATIF,
   non_negatif: TrichineResultatAnalyse.DOUTEUX,
@@ -43,9 +33,7 @@ const DATE_COLUMNS: Array<ImportColumn> = ['date_debut_analyse', 'date_fin_analy
 
 export type MappedLimsRow = {
   reference_pool: string;
-  // null si la valeur de résultat n'est pas reconnue (→ ligne « invalide » à l'aperçu)
   resultat_analyse: TrichineResultatAnalyse | null;
-  // valeur brute du fichier, conservée pour l'affichage / le diagnostic
   raw_resultat: string;
   parasite_identifie?: string;
   nombre_larves?: number;
@@ -53,13 +41,11 @@ export type MappedLimsRow = {
   date_fin_analyse?: string;
   reference_labo?: string;
   commentaire?: string;
-  // Erreur de format propre à la ligne (date ou nombre de larves mal écrit)
   erreur_format?: string;
 };
 
 export class ImportFormatError extends Error {}
 
-// Minuscule, sans accent, sans espaces autour : « Négatif », « NEGATIF » et « negatif » sont acceptés
 export function normalizeResultatValue(value: string): string {
   return value.normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
 }
@@ -70,12 +56,7 @@ function isValidIsoDate(value: string): boolean {
   return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value);
 }
 
-/**
- * Parse le CSV en lignes clé/valeur. Lève ImportFormatError si une colonne obligatoire manque.
- * Les colonnes inconnues sont ignorées.
- */
 export function parseLimsFile(content: string): Array<Record<string, string>> {
-  // Séparateur détecté sur la ligne d'en-tête (`;` prioritaire)
   const header = content.split(/\r?\n/, 1)[0] ?? '';
   const delimiter = header.includes(';') ? ';' : ',';
   const [headers = [], ...lines] = parseCsv(content, {
@@ -95,7 +76,6 @@ export function parseLimsFile(content: string): Array<Record<string, string>> {
   return lines.map((line) => Object.fromEntries(columns.map((column, index) => [column, line[index] ?? ''])));
 }
 
-/** Lit une ligne brute selon le format Zacharie, pour un LVD ou pour le LNR. */
 export function mapRow(raw: Record<string, string>, isLnr: boolean): MappedLimsRow {
   const get = (column: ImportColumn): string => (raw[column] != null ? String(raw[column]).trim() : '');
   const rawResultat = get('resultat_analyse');

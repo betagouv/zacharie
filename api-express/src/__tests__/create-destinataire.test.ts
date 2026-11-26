@@ -10,7 +10,6 @@ import { inviteUser } from '~/utils/invite-user';
 import { EntityRelationStatus, EntityRelationType, EntityTypes, UserRoles } from '@prisma/client';
 
 vi.mock('~/third-parties/brevo', () => ({
-  // ces deux-là renvoient l'objet enrichi : le code continue de travailler avec leur retour
   updateOrCreateBrevoCompany: vi.fn((entity: unknown) => Promise.resolve(entity)),
   createBrevoContact: vi.fn((user: unknown) => Promise.resolve(user)),
   linkBrevoCompanyToContact: vi.fn().mockResolvedValue(undefined),
@@ -32,8 +31,6 @@ vi.mock('~/third-parties/sentry', () => ({
   captureException: vi.fn(),
 }));
 
-// vitest.setup.ts ne mocke ni entity.create/count, ni user.create, ni le $queryRaw du code
-// trichine de l'entité : on les ajoute ici
 (prisma.entity as any).create = vi.fn();
 (prisma.entity as any).count = vi.fn();
 (prisma.user as any).create = vi.fn();
@@ -85,7 +82,6 @@ const destinataireBody = {
   ville: 'Montpellier',
 };
 
-// le chasseur ne choisit pas le type : il dit « professionnel » et décrit le destinataire
 const { type: _type, ...destinataireSansType } = destinataireBody;
 const chasseurBody = { ...destinataireSansType, particulier: false, qualite_du_destinataire: 'boucherie' };
 
@@ -103,8 +99,6 @@ const createdOwner = {
   roles: [UserRoles.COMMERCE_DE_DETAIL],
 };
 
-// le check d'email libre et createUserId passent tous les deux par user.findUnique :
-// on répond en fonction du critère pour ne pas faire boucler createUserId
 function mockUserFindUnique(userForEmail: unknown) {
   (prisma.user.findUnique as any).mockImplementation(({ where }: any) =>
     Promise.resolve(where?.email ? userForEmail : null)
@@ -272,7 +266,6 @@ describe('POST /entite/partenaire (chasseur)', () => {
   });
 
   test('email d’un compte existant saisi avec des majuscules → 409, aucun compte en double', async () => {
-    // la base ne stocke que des emails en minuscules : on ne répond que pour la valeur exacte
     (prisma.user.findUnique as any).mockImplementation(({ where }: any) =>
       Promise.resolve(
         where?.email === 'boucher@example.fr'

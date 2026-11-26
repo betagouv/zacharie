@@ -13,7 +13,6 @@ type HistoryPageData = NonNullable<AdminHistoryPageResponse['data']>;
 const inputClassName =
   'w-full rounded border border-gray-300 px-3 py-2 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500';
 
-// Qui a modifié quoi : dernières modifications lues dans les tables d'historique, toutes tables confondues
 export default function AdminHistory() {
   const [data, setData] = useState<HistoryPageData | null>(null);
   const [offset, setOffset] = useState(0);

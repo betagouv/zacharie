@@ -4,8 +4,6 @@ import { toast } from 'react-toastify';
 import { capture } from '@app/services/sentry';
 import API from '@app/services/api';
 
-// Télécharge en un seul .zip les certificats des carcasses sélectionnées (registre SVI).
-// Le zip est généré côté serveur (POST /certificat/bulk-zip) ; nécessite d'être en ligne.
 export default function useDownloadCertificats() {
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -18,7 +16,6 @@ export default function useDownloadCertificats() {
         headers: { Accept: 'application/zip' },
         body: { zacharie_carcasse_ids },
       });
-      // en cas d'erreur (aucun certificat, non autorisé...), l'API répond en JSON et non en zip
       if (!(res instanceof Response)) {
         toast.error(res?.error || 'Impossible de télécharger les certificats');
         return;

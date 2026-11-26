@@ -4,7 +4,6 @@ import { migrateLegacySessionCookie } from '~/middlewares/migrate-legacy-session
 
 type Env = 'production' | 'staging' | 'review' | 'test';
 
-// l'env est lu à chaque appel ; `SESSION_COOKIE_NAME` est calculé à l'import, d'où `importCookieModule`
 const env = vi.hoisted(() => ({ current: 'production' as Env }));
 vi.mock('~/config', () => ({
   get IS_DEV_OR_TEST() {
@@ -32,7 +31,6 @@ function fakeRes() {
   };
 }
 
-// réimporte le module pour recalculer `SESSION_COOKIE_NAME` avec l'env courant
 async function importCookieModule(e: Env) {
   env.current = e;
   vi.resetModules();
@@ -51,7 +49,6 @@ describe('cookie de session', () => {
       expect(SESSION_COOKIE_NAME).toBe('__Host-zacharie_jwt');
       for (const options of [cookieOptions(fakeReq({})), logoutCookieOptions(fakeReq({}))]) {
         expect(options).not.toHaveProperty('domain');
-        // exigences du préfixe __Host- : Secure, Path=/, pas de Domain
         expect(options.secure).toBe(true);
         expect(options.path).toBe('/');
         expect(options.httpOnly).toBe(true);
@@ -67,7 +64,6 @@ describe('cookie de session', () => {
       expect(options.secure).toBe(false);
       expect(options.sameSite).toBe('lax');
     }
-    // la WebView native est cross-site : SameSite=None; Secure
     const native = cookieOptions(fakeReq({}, { platform: 'native' }));
     expect(native.secure).toBe(true);
     expect(native.sameSite).toBe('none');
@@ -90,7 +86,6 @@ describe('migration de l’ancien cookie de session (temporaire)', () => {
     );
     expect(res.cookie).toHaveBeenCalledWith('__Host-zacharie_jwt', 'old-token', expect.anything());
     expect(res.cookie.mock.calls[0][2]).not.toHaveProperty('domain');
-    // la requête en cours est authentifiée avec le jeton recopié
     expect(req.cookies['__Host-zacharie_jwt']).toBe('old-token');
     expect(next).toHaveBeenCalled();
   });

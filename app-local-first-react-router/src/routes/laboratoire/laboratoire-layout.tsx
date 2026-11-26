@@ -6,13 +6,6 @@ import Chargement from '@app/components/Chargement';
 import useZustandStore from '@app/zustand/store';
 import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
 
-/**
- * Espace laboratoire (LVD et LNR, rôle LABORATOIRE — cf doc/trichine.md §6.3-6.4).
- * Le LNR voit les mêmes écrans : le backend filtre les FTP par entité destinataire.
- *
- * Navigation latérale (même mécanique que l'espace trichine émetteur et l'espace admin) :
- * l'espace a ses écrans propres, repliables en rail d'icônes, en tiroir sur mobile.
- */
 const links = [
   { to: '/app/laboratoire', label: 'À traiter', icon: 'fr-icon-dashboard-3-line', exact: true },
   { to: '/app/laboratoire/echantillons', label: 'Échantillons', icon: 'fr-icon-test-tube-line' },

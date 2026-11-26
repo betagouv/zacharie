@@ -38,18 +38,11 @@ export async function syncCarcasseIntermediaire(
     throw new Error("L'identifiant du destinataire est obligatoire");
   }
 
-  // Deny by default : sans ce contrôle, créer une ligne d'intermédiaire sur une carcasse tierce
-  // suffisait à s'en donner l'accès en lecture (voir le périmètre ETG/collecteur, qui matche sur
-  // CarcasseIntermediaire.intermediaire_entity_id).
   if (!(await scope.canWriteCarcasse(existingCarcasse.zacharie_carcasse_id))) {
     throw new SyncRejectedError("Vous n'avez pas accès à cette carcasse");
   }
 
-  // L'identité de l'intermédiaire est décidée par le serveur : l'utilisateur courant agit toujours
-  // en son nom propre, pour une entité dont il est membre. Le rôle, lui, vient du client : un ETG
-  // enregistre l'étape de transport d'un collecteur, donc un rôle différent du sien est légitime.
   if (!body.intermediaire_entity_id || !scope.entityIds.includes(body.intermediaire_entity_id)) {
-    // Cette ligne ne devrait jamais arriver, puisqu'elle est interdite par le périmètre de l'utilisateur.
     throw new SyncRejectedError('Vous ne pouvez pas agir au nom de cette entité');
   }
 
@@ -125,8 +118,6 @@ export async function syncCarcasseIntermediaire(
       body[Prisma.CarcasseIntermediaireScalarFieldEnum.nombre_d_animaux_acceptes] ?? null;
   }
 
-  // L'identité n'est posée qu'à la création : une prise en charge déjà enregistrée ne doit jamais
-  // voir son entité ou son utilisateur réécrits par un autre appelant.
   const { intermediaire_entity_id, intermediaire_role, intermediaire_user_id, ...update } = data;
 
   const where = {
@@ -136,12 +127,7 @@ export async function syncCarcasseIntermediaire(
       intermediaire_id: intermediaire_id,
     },
   };
-  // Version périmée : on ne l'écrit pas. Le delta du client (/carcasse) se fonde sur
-  // `carcasse.updated_at` et charge les lignes d'intermédiaire par leur carcasse : on touche donc la
-  // carcasse pour qu'il récupère la version à jour.
   const existingIntermediaire = await prisma.carcasseIntermediaire.findUnique({ where });
-  // Une ligne existante n'est modifiable que par son entité : le contrôle sur
-  // `body.intermediaire_entity_id` plus haut ne porte que sur la ligne créée.
   if (existingIntermediaire && !scope.entityIds.includes(existingIntermediaire.intermediaire_entity_id)) {
     throw new SyncRejectedError('Vous ne pouvez pas agir au nom de cette entité');
   }

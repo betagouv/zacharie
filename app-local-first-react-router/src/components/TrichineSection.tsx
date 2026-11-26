@@ -30,13 +30,6 @@ import {
 
 const echantillonModal = createModal({ isOpenedByDefault: false, id: 'trichine-echantillon-modal' });
 
-/**
- * Section trichine de la carte carcasse (sangliers uniquement, cf doc/trichine.md §6.1 et §6.2).
- * Données chargées directement depuis le serveur (pas de local-first : les
- * résultats viennent des laboratoires, le flux nécessite d'être en ligne).
- *
- * Écran SVI (circuit agréé) : la décision sur un résultat défavorable passe par l'IPM (SAISIE_TOTALE).
- */
 export default function TrichineSection({ carcasse }: { carcasse: Carcasse }) {
   const user = useUser((state) => state.user)!;
   const trichineBasePath = useTrichineBasePath();
@@ -88,7 +81,6 @@ export default function TrichineSection({ carcasse }: { carcasse: Carcasse }) {
     return null;
   }
 
-  // SVI : prélève sur les carcasses assignées à son service (vérifié côté backend)
   const canAct = user.roles.includes(UserRoles.SVI);
   const actionRequise = view?.trichine_action_requise ?? carcasse.trichine_action_requise;
 
@@ -169,8 +161,6 @@ export default function TrichineSection({ carcasse }: { carcasse: Carcasse }) {
 
       {canAct && (
         <div className="flex flex-wrap gap-2">
-          {/* Après un résultat douteux, le prélèvement doit être rattaché au pool douteux :
-              il passe par l'assistant de 2e intention, pas par un échantillon isolé. */}
           {poolDouteux && !resultatDefavorable ? (
             <Button
               linkProps={{

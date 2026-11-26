@@ -29,11 +29,6 @@ export default function RelationEntityUsersList({
   ).current;
   const isOpen = useIsModalOpen(entityUsersModal);
 
-  // const canTransmitCarcassesForEntity = entity.EntityRelationsWithUsers.find(
-  //   (relation) =>
-  //     relation.owner_id === user.id &&
-  //     relation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-  // );
   const canHandleCarcassesForEntity = entity.EntityRelationsWithUsers?.find(
     (relation) =>
       relation.owner_id === user.id &&

@@ -10,33 +10,11 @@ import { ajouterVenteDon } from '../../utils/vente-don';
 import { dateApprobationDuJour } from '../../utils/date-approbation';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
-// Scénario 133 — Chaîne complète, ~300 carcasses, 3 espèces (Daim, Chevreuil, lots de Pigeons),
-// entièrement pilotée par l'UI (login → logout par acteur, aucun état seedé).
-// examinateur → premier détenteur → collecteur → ETG → SVI.
-// Le collecteur et l'ETG retirent quelques carcasses (manquante/refusée + acceptation partielle de lot)
-// HORS-LIGNE, puis repassent EN LIGNE pour synchroniser.
-//
-// TODO mass-inspect : tant que l'inspection de masse SVI n'existe pas, le SVI ne fait que recevoir la fiche.
-// Quand l'inspection de masse arrivera, prolonger ce test pour inspecter/clôturer toutes les carcasses.
-
-// Volumes — un seul endroit à ajuster. Réduits pour le dev (chaque ajout re-rend la liste qui
-// grandit et Playwright en capture un snapshot de trace, donc 300 carcasses = plusieurs minutes). Le flux est identique quel que soit N : ce qui passe à 10
-// passe à 300. Pour la version « charge réelle » : DAIM=145, CHEV=145, PIGEON_LOTS=10 (= 300 lignes),
-// surchargeable par variables d'env : DAIM_COUNT=145 CHEV_COUNT=145 PIGEON_LOTS=10.
 const DAIM_COUNT = 45;
 const CHEV_COUNT = 45;
 const PIGEON_LOTS = [5, 8, 10, 12, 7, 9, 15, 6, 20, 11].slice(0, 10);
 const pad = (n: number) => String(n).padStart(3, '0');
 
-// Pas de slowMo global : la boucle de création tourne à la vitesse d'auto-wait de Playwright.
-// Chaque ajout déclenche une synchro + un re-render de la liste qui grandit → coût croissant par
-// carcasse. Le budget doit tenir dans le pire cas CI : serveur Vite dev « froid » (compilation à la
-// demande des modules pendant la boucle) sur runner 2 cœurs. Mesuré en local : ~0,4s/carcasse à chaud
-// mais ~1,8s/carcasse à froid ; d'où 3s/carcasse + 180s de base (compilation initiale + chaînage
-// multi-acteurs + synchro). Le rythme store → sync côté transmission reste couvert par l'assertion
-// ferme des bandeaux de notification.
-// Pas de trace : Playwright capturerait un snapshot du DOM (qui grossit à chaque carcasse) à chaque
-// action, ce qui fausse la mesure de la vitesse de l'UI. Les logs « addCarcasse … took » suffisent.
 test.use({ trace: 'off' });
 
 test.setTimeout(Number((DAIM_COUNT + CHEV_COUNT + PIGEON_LOTS.length) * 3000 + 180000));
@@ -45,15 +23,11 @@ test.beforeAll(async () => {
   await resetDb('EXAMINATEUR_INITIAL');
 });
 
-// ---------- helpers création (examinateur) ----------
-
 async function addCarcasse(
   page: Page,
   opts: { espece: string; bracelet: string; first?: boolean; lot?: number }
 ) {
   const now = Date.now();
-  // L'ajout se fait désormais dans une modale, rouverte à chaque carcasse (elle se referme après
-  // chaque ajout). La carte fantôme « Ajouter une carcasse » ouvre le formulaire.
   const openModal = page.getByRole('button', { name: 'Ajouter une carcasse' });
   await openModal.scrollIntoViewIfNeeded();
   await openModal.click();
@@ -76,11 +50,7 @@ async function addCarcasse(
   console.log(`addCarcasse ${opts.espece} ${opts.bracelet} took ${Date.now() - now}ms`);
 }
 
-// ---------- helpers marquage (collecteur / ETG) ----------
-
 function carcasseCard(page: Page, espece: string, bracelet: string) {
-  // Les lots de petit gibier affichent le nombre d'animaux : « Pigeons (5) N° PIG-001 ».
-  // On tolère donc ce qui sépare l'espèce du numéro de bracelet.
   return page.getByRole('button', { name: new RegExp(`${espece}.*N° ${bracelet}\\b`) }).first();
 }
 function carcasseDialog(page: Page, espece: string, bracelet: string) {
@@ -91,7 +61,6 @@ async function markManquante(page: Page, espece: string, bracelet: string) {
   const card = carcasseCard(page, espece, bracelet);
   await card.scrollIntoViewIfNeeded();
   await card.click();
-  // Sélectionner « Carcasse manquante » valide + ferme la modale.
   await carcasseDialog(page, espece, bracelet).getByText('Carcasse manquante').click();
   await expect(card).toBeVisible();
 }
@@ -115,7 +84,6 @@ async function markLotPartiel(page: Page, bracelet: string, accepted: number) {
   await card.scrollIntoViewIfNeeded();
   await card.click();
   const dialog = carcasseDialog(page, 'Pigeons', bracelet);
-  // exact: le texte d'aide du refus contient aussi « Lot partiellement accepté » → sans exact, 3 matchs.
   await dialog.getByText('Lot partiellement accepté', { exact: true }).click();
   const input = dialog.getByLabel(/Nombre d'animaux acceptés/);
   await input.fill(String(accepted));
@@ -128,7 +96,6 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   page,
   context,
 }) => {
-  // ===== 1. Examinateur crée la fiche + ~300 carcasses via l'UI =====
   await page.setViewportSize({ width: 350, height: 667 });
   await connectWith(page, 'examinateur@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
@@ -140,10 +107,6 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   await page.getByRole('button', { name: 'Pierre Petit' }).click();
   await page.getByRole('button', { name: 'Continuer' }).first().click();
 
-  // Création hors-ligne : chaque « Ajouter la carcasse » appelle syncData, qui court-circuite quand on
-  // est hors-ligne (useIsOnline pousse isOnline=false dans le store). On évite ainsi ~300 POST /sync et
-  // les re-renders déclenchés par les retours de synchro → boucle nettement plus rapide. On repasse en
-  // ligne juste avant la transmission pour que toute la fiche se synchronise d'un coup.
   await context.setOffline(true);
   for (let i = 1; i <= DAIM_COUNT; i++) {
     await addCarcasse(page, { espece: 'Daim', bracelet: `DAIM-${pad(i)}`, first: i === 1 });
@@ -158,7 +121,6 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   await page.getByRole('button', { name: 'Continuer' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Continuer' }).click();
 
-  // Heures (grand + petit gibier → les deux champs sont présents)
   await page
     .getByRole('textbox', { name: 'Heure du prélèvement de la première carcasse' })
     .fill(dayjs().startOf('day').add(1, 'hour').format('HH:mm'));
@@ -171,9 +133,6 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   await page.getByRole('button', { name: dateApprobationDuJour() }).click();
   await page.getByText('Je, Martin Marie, certifie qu').click();
 
-  // Retour en ligne : la fiche + les ~100 carcasses créées hors-ligne partent dans un POST /sync,
-  // suivi du delta GET /carcasse qui fusionne la version serveur dans le store. On attend que cette
-  // synchro soit retombée AVANT de transmettre : sur CI lent, la fusion arrivait pendant le clic.
   const isSyncPost = (r: Response) =>
     new URL(r.url()).pathname === '/sync' && r.request().method() === 'POST' && r.ok();
   const isCarcasseDelta = (r: Response) => new URL(r.url()).pathname === '/carcasse' && r.ok();
@@ -185,11 +144,6 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
 
   const transmettre = page.getByRole('button', { name: 'Transmettre', exact: true });
   await expect(transmettre).not.toBeDisabled();
-  // La transmission part dans un POST /sync au clic « Transmettre ». On attend la confirmation
-  // serveur (200) AVANT de changer d'utilisateur : sinon la déconnexion de l'examinateur avorte
-  // l'upload en vol (et clearLocalAppState efface l'IndexedDB) → le serveur n'a jamais la
-  // transmission, le PD hérite d'une fiche vide et le select « prochain détenteur » ne devient
-  // jamais éditable.
   const transmissionUploaded = page.waitForResponse(isSyncPost, { timeout: 120000 });
   await transmettre.click();
   await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 60000 });
@@ -198,32 +152,22 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   const feiId = RegExp(/ZACH-\d+-\w+-\d+/).exec(page.url())?.[0];
   expect(feiId).toBeDefined();
 
-  // ===== 2. Premier détenteur transmet au collecteur =====
-  // L'examinateur, après transmission, est sur la page /envoyée. On revient sur un tableau de bord
-  // propre AVANT de changer d'utilisateur : se déconnecter depuis /envoyée contamine le redirect
-  // post-login (transition chasseur → chasseur) et renvoie le PD vers /connexion.
   await page.goto('http://localhost:3290/app/chasseur');
   await logoutAndConnect(page, 'premier-detenteur@example.fr');
   await expect(page).toHaveURL(/\/app\/chasseur/, { timeout: 15000 });
-  // Navigation pleine page (goto) : réhydrate proprement la session du PD depuis le token stocké.
   await page.goto(`http://localhost:3290/app/chasseur/fei/${feiId}`);
-  // Pas d'étape « prendre en charge » dans ce flux : le PD choisit directement le prochain détenteur.
-  // Pas de mode de transport à choisir pour un collecteur professionnel.
   await ajouterVenteDon(page, { destinataire: /Collecteur Pro 1/i });
   const transmettrePd = page.getByRole('button', { name: 'Transmettre la fiche' });
   await transmettrePd.scrollIntoViewIfNeeded();
   await transmettrePd.click();
   await expect(page.getByText(/Collecteur Pro 1 a été notifié/).first()).toBeVisible({ timeout: 60000 });
 
-  // ===== 3. Collecteur : prise en charge en ligne, puis marquage + transmission HORS-LIGNE =====
   await page.setViewportSize({ width: 1280, height: 900 });
   await logoutAndConnect(page, 'collecteur-pro@example.fr');
   await expect(page).toHaveURL(/\/app\/collecteur/);
   await page.getByRole('link', { name: feiId }).click();
   const priseEnChargeColl = page.getByRole('button', { name: /Je contrôle et transporte les carcasses/ });
   await priseEnChargeColl.click();
-  // La liste des carcasses ne devient éditable qu'au re-rendu qui suit la prise en charge : avant, un
-  // clic sur une carte ouvre la modale de consultation, sans « Carcasse manquante ».
   await expect(priseEnChargeColl).toBeHidden({ timeout: 15000 });
 
   await context.setOffline(true);
@@ -244,7 +188,6 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   await context.setOffline(false);
   await expect(page.getByText(/ETG 1 a été notifié/)).toBeVisible({ timeout: 60000 });
 
-  // ===== 4. ETG : prise en charge en ligne, puis marquage + transmission HORS-LIGNE =====
   await logoutAndConnect(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   const priseEnChargeEtg = page.getByRole('button', { name: 'Prendre en charge' });
@@ -264,12 +207,6 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   await transmettreEtg.scrollIntoViewIfNeeded();
   await transmettreEtg.click();
 
-  // La transmission ETG→SVI a été faite hors-ligne : au retour en ligne, on attend la confirmation
-  // serveur (POST /sync 200) plutôt que l'alerte « SVI 1 a été notifié ». Cette alerte est transitoire :
-  // dès que la fiche passe au SVI (svi_assigned_at), la vue éditable de l'ETG se démonte et l'état
-  // « a été notifié » (canEdit && is_synced) est court-circuité → assertion instable. Le POST /sync 200
-  // garantit que le serveur a la transmission avant qu'on déconnecte l'ETG ; la réception réelle est
-  // vérifiée côté SVI juste après.
   const etgTransmissionSynced = page.waitForResponse(
     (r) => new URL(r.url()).pathname === '/sync' && r.request().method() === 'POST' && r.ok(),
     { timeout: 120000 }
@@ -277,7 +214,6 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   await context.setOffline(false);
   await etgTransmissionSynced;
 
-  // ===== 5. SVI reçoit la fiche (pas d'inspection — voir TODO mass-inspect) =====
   await logoutAndConnect(page, 'svi@example.fr');
   await expect(page.getByRole('link', { name: feiId })).toBeVisible({ timeout: 60000 });
   await page.getByRole('link', { name: feiId }).click();

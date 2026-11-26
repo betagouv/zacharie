@@ -19,8 +19,6 @@ import {
   type EtablissementTrouve,
 } from '@app/services/recherche-entreprises';
 
-// un destinataire n'a pas de compte Zacharie : on l'enregistre avec son représentant, qui reçoit
-// une invitation. Le consommateur final n'est pas une entité, il n'est donc pas proposé ici.
 const destinataireTypes: Array<EntityTypes> = [
   EntityTypes.COMMERCE_DE_DETAIL,
   EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
@@ -29,8 +27,6 @@ const destinataireTypes: Array<EntityTypes> = [
 ];
 
 const NOUVELLE_ENTITE_ID = 'nouvelle';
-// les établissements venant de l'annuaire des entreprises ne sont pas des entités Zacharie :
-// on les préfixe pour les reconnaître à la sélection
 const ANNUAIRE_OPTION_PREFIX = 'annuaire-';
 const EXISTING_GROUP_LABEL = 'Déjà dans Zacharie';
 
@@ -59,8 +55,6 @@ export default function AdminNouvelleEntite() {
   const isDestinataire = !!entityType && destinataireTypes.includes(entityType);
   const existingEntity = existingEntities.find((entity) => entity.id === existingEntityId);
 
-  // les destinataires déjà enregistrés servent de suggestions : l'admin voit tout de suite
-  // qu'une raison sociale existe plutôt que de créer un doublon
   useEffect(() => {
     if (!isDestinataire) {
       setExistingEntities([]);
@@ -82,12 +76,9 @@ export default function AdminNouvelleEntite() {
       } as Entity)
     : existingEntity;
 
-  // les champs adresse/SIRET sont non contrôlés : on les remonte avec une clé
-  // qui change à chaque nouveau préremplissage
   const prefillKey = annuairePrefill?.siret ?? 'vide';
 
   function selectAnnuaireEtablissement(etablissement: EtablissementTrouve) {
-    // un établissement déjà enregistré est signalé plutôt que dupliqué
     const existing = existingEntities.find((entity) => entity.siret === etablissement.siret);
     if (existing) {
       setNouvelleRaisonSociale('');
@@ -100,8 +91,6 @@ export default function AdminNouvelleEntite() {
     setNouvelleRaisonSociale(etablissement.raison_sociale);
   }
 
-  // l'annuaire est interrogé à chaque frappe : on attend 300 ms de pause avant l'appel réseau,
-  // et on annule la requête précédente pour qu'une réponse lente n'écrase pas la plus récente
   const annuaireTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const annuaireAbort = useRef<AbortController | null>(null);
   function searchAnnuaire(inputValue: string): Promise<Array<EtablissementTrouve>> {
@@ -224,7 +213,6 @@ export default function AdminNouvelleEntite() {
                 }
                 loadingMessage={() => "Recherche dans l'annuaire des entreprises..."}
                 getOptionLabel={(entity) => {
-                  // l'option de création « Ajouter "…" » n'est pas une entité : elle porte son propre label
                   // @ts-expect-error - __isNew__ et label ne sont pas typés
                   if (entity.__isNew__) return entity.label;
                   return entity.code_postal
@@ -243,7 +231,6 @@ export default function AdminNouvelleEntite() {
                   setExistingEntityId(null);
                   setAnnuairePrefill(null);
                 }}
-                // une raison sociale saisie sans valider avec Entrée est gardée à la sortie du champ
                 onBlur={(event) => {
                   if (!event.target.value) return;
                   setNouvelleRaisonSociale(event.target.value);

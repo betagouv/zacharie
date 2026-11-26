@@ -8,8 +8,6 @@ test.beforeEach(async () => {
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Scenario 45 — Réception avec stockage CCG ETG
-// ETG renseigne un lieu d'entrée/stockage avant de transmettre au SVI.
 test('Réception ETG avec stockage puis transmission SVI', async ({ page }) => {
   const feiId = 'ZACH-20250707-QZ6E0-165242';
   await connectWith(page, 'etg-1@example.fr');
@@ -19,7 +17,6 @@ test('Réception ETG avec stockage puis transmission SVI', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Prendre en charge' }).click();
   await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
-  // Accepter toutes les carcasses rapidement — le lieu d'entrée est implicitement renseigné via la prise en charge.
   for (const carcassLabel of [
     'Daim N° MM-001-001 Mise à',
     'Daim N° MM-001-002 Mise à',
@@ -30,8 +27,6 @@ test('Réception ETG avec stockage puis transmission SVI', async ({ page }) => {
     await btn.scrollIntoViewIfNeeded();
     await btn.click();
     const panel = page.locator("dialog, [role='dialog']").or(page.locator("[class*='fr-modal']"));
-    // Best-effort: sélectionne l'option "Carcasse acceptée" dans le panneau actif.
-    // TODO: verify selector — structure DSFR du panneau peut varier.
     const accept = page.getByText('Carcasse acceptée').first();
     if (await accept.isVisible().catch(() => false)) {
       await accept.click();

@@ -56,7 +56,6 @@ function StatusIcon({
   );
 }
 
-// Ligne mémoïsée : une frappe dans la recherche ne refabrique que les lignes qui changent.
 const UserRow = memo(function UserRow({
   user,
   cfeiStatus,
@@ -90,7 +89,6 @@ const UserRow = memo(function UserRow({
 
   return (
     <div className="border-b border-gray-200 px-2 py-1.5 hover:bg-gray-50">
-      {/* Ligne 1 : identité + pictos statut (à gauche) + dates + actions (à droite) */}
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <Link
           to={`/app/admin/user/${user.id}`}
@@ -116,7 +114,6 @@ const UserRow = memo(function UserRow({
             {role}
           </Badge>
         ))}
-        {/* Cluster de pictos statut */}
         <span className="flex items-center gap-1.5">
           {user.deleted_at && (
             <StatusIcon
@@ -173,7 +170,6 @@ const UserRow = memo(function UserRow({
           />
         </span>
       </div>
-      {/* Ligne 2 : coordonnées + CFEI (gris) */}
       <div className="flex flex-wrap items-center gap-x-2 text-xs text-gray-500">
         {user.email && (
           <span
@@ -257,7 +253,6 @@ export default function AdminUsers() {
     return options;
   }, [users]);
 
-  // Texte de recherche fabriqué une fois par utilisateur, pas à chaque frappe.
   const searchableTextByUserId = useMemo(() => {
     const map = new Map<string, string>();
     users.forEach((user) => {
@@ -337,7 +332,6 @@ export default function AdminUsers() {
     getCfeiValidationStatus,
   ]);
 
-  // Le filtre Statut s'applique par-dessus les filtres de base. Sans statut coché, on cache les supprimés.
   const statusFilteredUsers = useMemo(() => {
     return filteredUsers.filter((user) => {
       if (selectedStatuses.length) {

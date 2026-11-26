@@ -1,5 +1,4 @@
 // @ts-nocheck
-// https://developer.matomo.org/api-reference/tracking-api
 import { MATOMO_URL, MATOMO_IDSITE_1 } from '../config.js';
 import { capture } from './sentry.js';
 
@@ -9,7 +8,6 @@ class _MatomoBackend {
   init({ baseUrl, idsite, _idvc }) {
     this.baseUrl = baseUrl;
     this.idsite = idsite;
-    // this._idvc = _idvc;
     this.initDone = true;
   }
 
@@ -31,7 +29,6 @@ class _MatomoBackend {
   }
 
   computeCustomDimensions(dimensions) {
-    // Get something like this:
     const d = {};
     for (const [key, value] of Object.entries(dimensions)) {
       d[`dimension${key}`] = value;
@@ -44,9 +41,7 @@ class _MatomoBackend {
       idsite,
       rec: 1,
       rand: Date.now(),
-      // _idvc: this._idvc,
       ...params,
-      // ...this.computeCustomDimensions(this.dimensions),
     };
     return Object.keys(params).reduce((paramString, key, index) => {
       const computedParam = `${key}=${params[key]}`;
@@ -56,10 +51,6 @@ class _MatomoBackend {
   }
 
   async logEvent({ userId, category, action, name = '', value = null }) {
-    // e_c — The event category. Must not be empty. (eg. Videos, Music, Games...)
-    // e_a — The event action. Must not be empty. (eg. Play, Pause, Duration, Add Playlist, Downloaded, Clicked...)
-    // e_n — The event name. (eg. a Movie name, or Song name, or File name...)
-    // e_v — The event value. Must be a float or integer value (numeric), not a string.
     const params = {
       e_c: category,
       e_a: action,
@@ -76,7 +67,6 @@ class _MatomoBackend {
       if (!this.initDone) throw new Error('matomo not initialized yet');
       const url = `${this.baseUrl}?${this.computeParams(params, this.idsite)}`;
       if (__DEV__) {
-        // console.log(params, this.dimensions);
         return;
       }
       const res = await fetch(encodeURI(url));

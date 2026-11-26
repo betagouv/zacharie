@@ -26,7 +26,6 @@ import { hashPassword } from '~/service/crypto';
 import createUserId from '~/utils/createUserId';
 import { getAllFederationEntities } from '~/utils/federation-stats';
 
-// tous les comptes de test ont le même mot de passe : un seul hash bcrypt (~60 ms) par process
 let testPasswordHash: Promise<string> | undefined;
 function getTestPasswordHash() {
   testPasswordHash ??= hashPassword('secret-secret');
@@ -41,7 +40,6 @@ export async function populateDb(role?: FeiOwnerRole) {
     throw new Error('populateDb: POSTGRESQL_ADDON_URI must be the local zacharietest database');
   }
 
-  // TRUNCATE ne déclenche pas les triggers d'historique (row-level) : les tables History restent vides
   await prisma.$executeRaw`TRUNCATE
     "AdminAuditLog", "SecurityLog", "Log", "CarcasseIntermediaire", "Carcasse", "Fei",
     "EntityAndUserRelations", "UserRelations", "ApiKeyLog", "ApiKeyApprovalByUserOrEntity", "ApiKey",
@@ -50,42 +48,6 @@ export async function populateDb(role?: FeiOwnerRole) {
     "EntityAndUserRelationsHistory", "stats_ref_national"
     RESTART IDENTITY CASCADE`;
 
-  /* 
-  Martin
-Bernard
-Dubois
-Thomas
-Robert
-Richard
-Petit
-Durand
-Leroy
-Moreau
-Simon
-Laurent
-Lefebvre
-Michel
-Garcia
-  */
-
-  /* 
-Marie
-Pierre
-Sophie
-Jean
-Catherine
-Michel
-Claire
-Philippe
-Anne
-François
-Isabelle
-Nicolas
-Julie
-Thomas
-Christine
-*/
-  // Liste officielle des CFEI : Martin et Petit y figurent, Moreau (CFEI-075-25-003) non → « CFEI introuvable »
   await prisma.officialCfei.createMany({
     data: [
       { numero_cfei: 'CFEI-075-25-001', nom: 'Martin', prenom: 'Marie', departement: '75' },
@@ -247,7 +209,6 @@ Christine
         onboarded_at: dayjs().toDate(),
       },
       {
-        // Second membre de SVI 1 : deux agents du même service sur la même fiche (spec 143).
         id: await createUserId(),
         email: 'svi-1-bis@example.fr',
         roles: [UserRoles.SVI],
@@ -262,7 +223,6 @@ Christine
         onboarded_at: dayjs().toDate(),
       },
       {
-        // Second membre de Collecteur Pro 1 : voit la prise en charge et la transmission faites par un collègue (spec 163).
         id: await createUserId(),
         email: 'collecteur-pro-1-bis@example.fr',
         roles: [UserRoles.COLLECTEUR_PRO],
@@ -277,7 +237,6 @@ Christine
         onboarded_at: dayjs().toDate(),
       },
       {
-        // Second membre d'ETG 1 (réception) : voit la prise en charge et la transmission faites par un collègue (spec 164).
         id: await createUserId(),
         email: 'etg-1-bis@example.fr',
         roles: [UserRoles.ETG],
@@ -326,8 +285,6 @@ Christine
         roles: [UserRoles.CHASSEUR],
         activated: true,
         activated_at: dayjs().toDate(),
-        // Intentionally no prenom, nom, address, telephone, est_forme_a_l_examen_initial
-        // Used by specs 9/10 to test onboarding-incomplete gate
       },
       {
         id: await createUserId(),
@@ -341,8 +298,6 @@ Christine
         code_postal: '75000',
         ville: 'Paris',
         telephone: '0606060609',
-        // est_forme_a_l_examen_initial is null (default)
-        // Used by spec 11: profile complete but formation missing
       },
       {
         id: await createUserId(),
@@ -351,7 +306,6 @@ Christine
         activated: true,
         activated_at: dayjs().toDate(),
         est_forme_a_l_examen_initial: false,
-        // No prenom, nom, address — used by spec 31
       },
       {
         id: await createUserId(),
@@ -368,8 +322,6 @@ Christine
         ville: 'Paris',
         telephone: '0606060611',
         onboarded_at: dayjs().toDate(),
-        // Profile complete + formation (numero_cfei) but pending admin activation:
-        // sees CompteEnAttenteValidationAlert with the "peut créer et préparer" wording.
       },
       {
         id: await createUserId(),
@@ -386,8 +338,6 @@ Christine
         ville: 'Paris',
         telephone: '0606060612',
         onboarded_at: dayjs().toDate(),
-        // Profile complete but no formation (numero_cfei null) and pending activation:
-        // sees CompteEnAttenteValidationAlert with the "ne pourrez transmettre" wording.
       },
       {
         id: await createUserId(),
@@ -407,7 +357,6 @@ Christine
       {
         id: await createUserId(),
         email: 'fnc@example.fr',
-        // membre de fédération sans être chasseur
         roles: [UserRoles.FEDERATION],
         activated: true,
         activated_at: dayjs().toDate(),
@@ -598,7 +547,6 @@ Christine
     ],
   });
 
-  // Fédérations pré-créées (en prod par la migration)
   await prisma.entity.createMany({ data: getAllFederationEntities() });
 
   const entities = await prisma.entity.findMany();
@@ -618,7 +566,6 @@ Christine
 
   const entityAndUserRelations = await prisma.entityAndUserRelations.createMany({
     data: [
-      // le premier détenteur ne voit que les partenaires circuit court qu'il a lui-même enregistrés
       {
         owner_id: users.find((user) => user.email === 'premier-detenteur@example.fr')?.id,
         entity_id: entities.find((entity) => entity.raison_sociale === 'Commerce de Détail 1')?.id,
@@ -752,7 +699,6 @@ Christine
   });
   console.log('Entity and user relations created for test', entityAndUserRelations.count);
 
-  // API key for partage-de-mes-donnees test
   const apiKeyDedicated = await prisma.apiKey.create({
     data: {
       name: 'Test API Key Dedicated',
@@ -760,14 +706,14 @@ Christine
       private_key: 'test-private-key-dedicated',
       public_key: 'test-public-key-dedicated',
       active: true,
-      dedicated_to_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb', // ETG 1
+      dedicated_to_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
       scopes: [ApiKeyScope.FEI_READ_FOR_ENTITY, ApiKeyScope.CARCASSE_READ_FOR_ENTITY],
     },
   });
   await prisma.apiKeyApprovalByUserOrEntity.create({
     data: {
       api_key_id: apiKeyDedicated.id,
-      entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb', // ETG 1
+      entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
       status: 'PENDING',
     },
   });
@@ -780,7 +726,6 @@ Christine
       public_key: 'test-public-key-user',
       active: true,
       scopes: [ApiKeyScope.FEI_READ_FOR_USER, ApiKeyScope.CARCASSE_READ_FOR_USER],
-      // contexte de création des fiches ouvertes par son lien `/app/nouvelle-fiche?contexte=bac-a-sable`
       slug_for_context: 'bac-a-sable',
     },
   });
@@ -797,7 +742,6 @@ Christine
 
   console.log('API keys created for test');
 
-  // bac à sable de l'API (api-playground) : la clé tierce partie lui envoie ses webhooks
   if ((role as string) === 'API_BAC_A_SABLE') {
     await prisma.apiKey.update({
       where: { id: apiKeyUser.id },
@@ -814,8 +758,6 @@ Christine
       });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for premier détenteur)`);
     }
-    // Même fiche que PREMIER_DETENTEUR, mais le premier détenteur est « Association de chasseurs »
-    // (dont premier-detenteur@ est admin) : l'association peut garder les carcasses pour un repas de chasse.
     if ((role as string) === 'PREMIER_DETENTEUR_ASSOCIATION') {
       const fei = await prisma.fei.create({
         data: {
@@ -835,14 +777,11 @@ Christine
         `Fei ${fei.numero} created with ${carcasses.count} carcasses (premier détenteur = association)`
       );
     }
-    // Même fiche que PREMIER_DETENTEUR, mais premier-detenteur@ n'a encore enregistré aucun destinataire
     if ((role as string) === 'PREMIER_DETENTEUR_SANS_DESTINATAIRE') {
       const fei = await prisma.fei.create({ data: feiValidatedByExaminateur });
       const carcasses = await prisma.carcasse.createMany({
         data: getCarcasses(fei, ownershipValidatedByExaminateur),
       });
-      // Fiche précédente dont les carcasses gardent l'association (son propriétaire initial) en
-      // prochain détenteur : elle ne doit pas être reprise comme destinataire de la nouvelle vente / don.
       const feiPrecedente = await prisma.fei.create({
         data: { ...feiValidatedByExaminateur, numero: 'ZACH-20250706-QZ6E0-155242' },
       });
@@ -877,8 +816,6 @@ Christine
       });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (ETG, PD = association)`);
     }
-    // Fiche de « Association de chasseurs » où examinateur@ n'apparaît nulle part : elle n'y a accès
-    // qu'en devenant membre de l'association.
     if ((role as string) === 'ASSOCIATION_FICHE_EXISTANTE') {
       const membre = users.find((user) => user.email === 'examinateur-premier-detenteur@example.fr')!;
       const fei = await prisma.fei.create({
@@ -907,18 +844,6 @@ Christine
       const carcasses = await prisma.carcasse.createMany({
         data: getCarcasses(fei, ownershipValidatedByPremierDetenteur),
       });
-      // await prisma.carcasseIntermediaire.createMany({
-      //   data: getCarcasses(fei).map((c) => ({
-      //     fei_numero: fei.numero,
-      //     numero_bracelet: c.numero_bracelet,
-      //     zacharie_carcasse_id: c.zacharie_carcasse_id!,
-      //     intermediaire_id: `${fei.numero}_${'2a8bc866-a709-47d9-aebe-2768fceb2ecb'}_${users.find((u) => u.email === 'etg-1@example.fr')?.id}`,
-      //     intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
-      //     intermediaire_user_id: users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '',
-      //     intermediaire_role: FeiOwnerRole.ETG,
-      //     prise_en_charge_at: dayjs().subtract(2, 'day').toDate(),
-      //   })),
-      // });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for etg)`);
     }
     if (role === FeiOwnerRole.COLLECTEUR_PRO) {
@@ -926,18 +851,6 @@ Christine
       const carcasses = await prisma.carcasse.createMany({
         data: getCarcasses(fei, ownershipValidatedByPremierDetenteurToCollecteur),
       });
-      // await prisma.carcasseIntermediaire.createMany({
-      //   data: getCarcasses(fei).map((c) => ({
-      //     fei_numero: fei.numero,
-      //     numero_bracelet: c.numero_bracelet,
-      //     zacharie_carcasse_id: c.zacharie_carcasse_id!,
-      //     intermediaire_id: `${fei.numero}_${'a447bab1-8796-48a4-b955-3a5466116bca'}_${users.find((u) => u.email === 'collecteur-pro@example.fr')?.id}`,
-      //     intermediaire_entity_id: 'a447bab1-8796-48a4-b955-3a5466116bca',
-      //     intermediaire_user_id: users.find((u) => u.email === 'collecteur-pro@example.fr')?.id ?? '',
-      //     intermediaire_role: FeiOwnerRole.COLLECTEUR_PRO,
-      //     prise_en_charge_at: dayjs().subtract(2, 'day').toDate(),
-      //   })),
-      // });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for collecteur pro)`);
     }
     if (role === FeiOwnerRole.SVI || (role as string) === 'SVI_CONSIGNE') {
@@ -945,7 +858,6 @@ Christine
       const carcasses = await prisma.carcasse.createMany({
         data: getCarcasses(fei, ownershipTransmittedByEtgToSvi),
       });
-      // Create CarcasseIntermediaire for ETG 1 so the traçabilité chain is coherent
       await prisma.carcasseIntermediaire.createMany({
         data: getCarcasses(fei).map((c) => ({
           fei_numero: fei.numero,
@@ -955,12 +867,10 @@ Christine
           intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
           intermediaire_user_id: users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '',
           intermediaire_role: FeiOwnerRole.ETG,
-          // commentaire distinctif sur une seule carcasse pour couvrir la recherche locale par commentaire (e2e spec 130)
           commentaire: c.numero_bracelet === 'MM-001-001' ? 'RECHERCHE-COMMENTAIRE-TEST' : null,
           prise_en_charge_at: dayjs().subtract(2, 'day').toDate(),
         })),
       });
-      // SVI_CONSIGNE : la carcasse MM-001-001 a une décision IPM1 de mise en consigne signée (certificats SVI, e2e spec 140)
       if ((role as string) === 'SVI_CONSIGNE') {
         const svi = users.find((u) => u.email === 'svi@example.fr');
         await prisma.carcasse.update({
@@ -981,9 +891,6 @@ Christine
       }
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for svi)`);
     }
-    // SVI_SANGLIERS : comme SVI, mais les carcasses de gros gibier sont des sangliers (MM-001-001,
-    // MM-001-002, MM-001-004), sans aucun prélèvement trichine ; les deux laboratoires existent.
-    // Chemin critique du circuit agréé (e2e chains/166-trichine-circuit-agree-negatif).
     if ((role as string) === 'SVI_SANGLIERS') {
       await createLaboratoiresTrichine();
       const fei = await prisma.fei.create({ data: feiTransmittedByEtgToSvi });
@@ -1006,9 +913,6 @@ Christine
       });
       console.log(`Fei ${fei.numero} created with sangliers to sample (for svi)`);
     }
-    // LABORATOIRE_FTP_RECUE : un LVD a réceptionné la FTP F-26-SVI01-0001 du SVI 1, avec deux pools sans
-    // résultat (P-26-SVI01-0001 : MM-001-001 + MM-001-002, P-26-SVI01-0002 : MM-001-004). Import de
-    // résultats côté laboratoire (e2e laboratoire/import-resultats).
     if ((role as string) === 'LABORATOIRE_FTP_RECUE') {
       const { laboratoire } = await createLaboratoiresTrichine();
 
@@ -1019,7 +923,7 @@ Christine
         ),
       });
       const svi = users.find((u) => u.email === 'svi@example.fr')!;
-      const sviEntityId = '37a59a18-7f29-4177-a019-aafad6c73ee0'; // SVI 1
+      const sviEntityId = '37a59a18-7f29-4177-a019-aafad6c73ee0';
       const datePrelevement = dayjs().subtract(3, 'day').startOf('day').toDate();
       const poolsParReference: Record<string, Array<string>> = {
         'P-26-SVI01-0001': ['MM-001-001', 'MM-001-002'],
@@ -1077,13 +981,11 @@ Christine
       });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for commerce de détail)`);
     }
-    // Not a FeiOwnerRole value — special "SVI already closed" seed for testing read-only downstream views.
     if ((role as string) === 'SVI_CLOSED') {
       const fei = await prisma.fei.create({ data: feiClosedBySvi });
       const carcasses = await prisma.carcasse.createMany({
         data: getCarcasses(fei, ownershipClosedBySvi),
       });
-      // Create CarcasseIntermediaire for ETG 1 so the traçabilité chain is coherent
       await prisma.carcasseIntermediaire.createMany({
         data: getCarcasses(fei).map((c) => ({
           fei_numero: fei.numero,
@@ -1097,13 +999,11 @@ Christine
           prise_en_charge_at: dayjs().subtract(2, 'day').toDate(),
         })),
       });
-      // Set per-carcasse SVI decisions so downstream views show real decisions
       await prisma.carcasse.updateMany({
         where: { fei_numero: fei.numero },
         data: {
           svi_carcasse_status: CarcasseStatus.ACCEPTE,
           svi_carcasse_status_set_at: dayjs().subtract(2, 'day').toDate(),
-          // date sans heure, le même jour que la prise en charge ETG
           svi_ipm2_date: dayjs().subtract(2, 'day').startOf('day').toDate(),
         },
       });
@@ -1113,16 +1013,12 @@ Christine
       const etg1User = users.find((u) => u.email === 'etg-1@example.fr');
       const etg1UserId = etg1User?.id ?? '';
       const fei = await prisma.fei.create({ data: feiRefusedByEtg });
-      // Set latest_intermediaire_user_id + intermediaire_closed_by_user_id on the carcasses now
-      // that we have the dynamic ETG user id (owned by entity, no specific current owner user).
       const refusedOwnership: CarcasseOwnership = {
         ...ownershipRefusedByEtg,
         latest_intermediaire_user_id: etg1UserId,
         intermediaire_closed_by_user_id: etg1UserId,
         current_owner_user_id: null,
       };
-      // The carcasse refus_intermediaire_id must match the CarcasseIntermediaire.intermediaire_id
-      // we create below. Format mirrors prod: "{user_id}_{fei_numero}_reception".
       const intermediaireId = `${etg1UserId}_${fei.numero}_reception`;
       const refusedAt = dayjs().subtract(1, 'day').toDate();
       const carcasses = await prisma.carcasse.createMany({
@@ -1135,7 +1031,6 @@ Christine
           latest_intermediaire_signed_at: refusedAt,
         })),
       });
-      // Create the matching CarcasseIntermediaire record (one per carcasse) for the ETG reception.
       await prisma.carcasseIntermediaire.createMany({
         data: getCarcasses(fei).map((c) => ({
           fei_numero: fei.numero,
@@ -1163,7 +1058,6 @@ Christine
       );
     }
     if ((role as string) === 'ETG_TAKEN_CHARGE' || (role as string) === 'ETG_TAKEN_CHARGE_PD_HORS_LIGNE') {
-      // variante hors ligne : l'examinateur a désigné le premier détenteur sans réseau
       const fei = await prisma.fei.create({
         data: {
           ...feiTakenChargeByEtg,
@@ -1175,7 +1069,6 @@ Christine
       const carcasses = await prisma.carcasse.createMany({
         data: getCarcasses(fei, {
           ...ownershipTakenChargeByEtg,
-          // en prod, une carcasse prise en charge par l'ETG vaut `false`, comme une carcasse ajoutée
           ...((role as string) === 'ETG_TAKEN_CHARGE_PD_HORS_LIGNE'
             ? { intermediaire_carcasse_manquante: false }
             : {}),
@@ -1214,11 +1107,6 @@ Christine
       });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (ETG taken charge)`);
     }
-    // Tableau de bord ETG 1 : une fiche du jour (saison en cours), 3 daims + 1 lot de 10 pigeons.
-    //   - MM-001-001 : acceptée, saisie totale pour balle d'abdomen (motif BPH et disqualifiant)
-    //   - MM-001-002 : refusée par l'ETG
-    //   - MM-001-003 : lot de 10 pigeons, 8 acceptés, 2 saisis par le SVI
-    //   - MM-001-004 : acceptée, acceptée par le SVI
     if ((role as string) === 'ETG_TABLEAU_DE_BORD') {
       const etgUserId = users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '';
       const fei = await prisma.fei.create({
@@ -1284,10 +1172,6 @@ Christine
       });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (Collecteur taken charge)`);
     }
-    // 3 fiches prises en charge par ETG 1, pour les filtres rapides de sa liste de carcasses :
-    //   - 600001 : Pierre Petit, via Collecteur Pro 1
-    //   - 600002 : Marie Martin, en direct (sans collecteur)
-    //   - 600003 : Marie Martin, via Collecteur Pro 2
     if ((role as string) === 'ETG_FILTRES_RAPIDES') {
       const etgUserId = users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '';
       const collecteurUserId = users.find((u) => u.email === 'collecteur-pro@example.fr')?.id ?? '';
@@ -1375,20 +1259,12 @@ Christine
       }
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (PD with partage approval)`);
     }
-    // Seeds three fei in the three chasseur-visible states (À compléter / En cours / Clôturée)
-    // all involving the same chasseur (Pierre Petit, premier-detenteur@example.fr).
-    // Used by the fiches-list sorting test to assert the implicit order
-    // `feisAssigned ++ feisOngoing ++ feisDone` in chasseur-fiches.tsx.
     if ((role as string) === 'CHASSEUR_MULTI_STATUS') {
-      // 1. À compléter — fiche validée par l'examinateur, en attente du PD.
-      //    For Pierre, fei.fei_next_owner_user_id === user.id → "feisToTake" → simpleStatus "À compléter".
       const feiACompleter = await prisma.fei.create({ data: feiValidatedByExaminateur });
       await prisma.carcasse.createMany({
         data: getCarcasses(feiACompleter, ownershipValidatedByExaminateur),
       });
 
-      // 2. En cours — fiche transmise par PD et déjà reçue par l'ETG.
-      //    For Pierre, carcasse.current_owner_role === ETG (downstream) → simpleStatus default "En cours".
       const feiEnCours = await prisma.fei.create({ data: feiTakenChargeByEtg });
       await prisma.carcasse.createMany({ data: getCarcasses(feiEnCours, ownershipTakenChargeByEtg) });
       await prisma.carcasseIntermediaire.createMany({
@@ -1404,7 +1280,6 @@ Christine
         })),
       });
 
-      // 3. Clôturée — fiche fermée par SVI.
       const feiCloturee = await prisma.fei.create({ data: feiClosedBySvi });
       await prisma.carcasse.createMany({ data: getCarcasses(feiCloturee, ownershipClosedBySvi) });
       await prisma.carcasseIntermediaire.createMany({
@@ -1424,9 +1299,6 @@ Christine
         `CHASSEUR_MULTI_STATUS seeded: ${feiACompleter.numero}, ${feiEnCours.numero}, ${feiCloturee.numero}`
       );
     }
-    // Seeds several fiches in the same "À compléter" state for the same chasseur
-    // (Pierre Petit, premier-detenteur@example.fr) so the chasseur fiches list spans
-    // multiple pages once ITEMS_PER_PAGE is lowered in test mode. Used by the pagination test.
     if ((role as string) === 'CHASSEUR_MANY_FICHES') {
       const count = 5;
       for (let i = 1; i <= count; i++) {
@@ -1437,7 +1309,6 @@ Christine
       }
       console.log(`CHASSEUR_MANY_FICHES seeded: ${count} fiches À compléter`);
     }
-    // examinateur@example.fr est rattaché au maximum d'associations de chasse (5, dont une demande en attente)
     if ((role as string) === 'CHASSEUR_5_ASSOCIATIONS') {
       const examinateur = users.find((u) => u.email === 'examinateur@example.fr')!;
       for (let i = 1; i <= 5; i++) {
@@ -1489,21 +1360,11 @@ Christine
       });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (ETG all refused to SVI)`);
     }
-    // Tableau de bord des fédérations : trois fiches de la saison en cours, toutes prises en
-    // charge par l'ETG (circuit agréé), chacune avec 3 carcasses grand gibier et 1 lot de
-    // 10 pigeons.
-    //   - Allier (03) et Ardèche (07) par Marie Martin → comptées
-    //   - Allier (03) par le compte admin Zacharie → exclue (fiche de test / tuto vidéo)
-    //   - Ain (01) par Pierre Petit, signée par l'examinateur mais jamais transmise → Pierre Petit
-    //     n'est pas un examinateur actif
-    // La fiche admin a exactement la même forme que celle de l'Allier : si l'exclusion des
-    // comptes admin régresse, les chiffres de l'Allier doublent.
     if ((role as string) === 'FEDERATION_STATS') {
       const adminUserId = users.find((u) => u.email === 'admin@example.fr')?.id ?? '';
 
       const feiAllier = await prisma.fei.create({ data: feiFederationAllier });
       await prisma.carcasse.createMany({ data: getCarcasses(feiAllier, ownershipTakenChargeByEtg) });
-      // Une carcasse grand gibier saisie pour un motif BPH → taux de saisie GG 33,3 % sur l'Allier.
       await prisma.carcasse.update({
         where: { zacharie_carcasse_id: `${feiAllier.numero}_MM-001-001` },
         data: {
@@ -1536,7 +1397,6 @@ Christine
         },
       });
 
-      // Sans carcasse : les chiffres de valorisation et sanitaires restent ceux de l'Allier et de l'Ardèche.
       const feiAinNonTransmise = await prisma.fei.create({ data: feiFederationAinNonTransmise });
 
       console.log(
@@ -1544,8 +1404,6 @@ Christine
       );
     }
 
-    // Une fiche de l'Allier transmise par le premier détenteur à un commerce de détail (circuit
-    // non agréé) : le commerce ne prend jamais en charge, le premier détenteur reste propriétaire courant.
     if ((role as string) === 'FEDERATION_STATS_CIRCUIT_COURT') {
       const fei = await prisma.fei.create({
         data: { ...feiFederationAllier, numero: 'ZACH-20250707-QZ6E0-400005' },
@@ -1560,23 +1418,14 @@ Christine
   console.log('Database populated successfully');
 }
 
-// lancé en CLI (`tsx ./scripts/populate-test-db.ts --role=ETG`) ; importé par l'API de test, il ne fait rien
 if (process.argv[1]?.endsWith('populate-test-db.ts')) {
   const roleArg = process.argv.find((arg) => arg.includes('--role'))?.split('=')[1];
   console.log('Populate db with role', roleArg);
   populateDb(roleArg as FeiOwnerRole);
 }
 
-// Les champs de propriété / transmission ont été retirés de la Fei : ils vivent désormais
-// sur la Carcasse. Chaque fixture de Fei ne porte donc plus que les champs valides de Fei
-// (métadonnées + examinateur initial + identité du premier détenteur), et les champs de
-// propriété sont définis dans des objets `ownership...` appliqués à chaque carcasse.
 type CarcasseOwnership = Partial<Prisma.CarcasseUncheckedCreateInput>;
 
-// L'examinateur désigne directement le premier détenteur (examinateur-select-next) : il n'y a plus
-// d'étape « prendre en charge ». À ce stade la carcasse appartient donc DÉJÀ au premier détenteur
-// (current_owner = PREMIER_DETENTEUR), sans next_owner ni prev_owner — c'est l'état « à compléter »
-// côté PD, qui débloque canEditAsPremierDetenteur.
 const feiValidatedByExaminateur: Prisma.FeiUncheckedCreateInput = {
   numero: 'ZACH-20250707-QZ6E0-155242',
   date_mise_a_mort: '2025-07-07T00:00:00.000Z',
@@ -1635,8 +1484,6 @@ const ownershipValidatedByPremierDetenteurToCollecteur: CarcasseOwnership = {
   premier_detenteur_prochain_detenteur_role_cache: FeiOwnerRole.COLLECTEUR_PRO,
 };
 
-// Le premier détenteur est l'examinateur initial lui-même (Marie Martin / QZ6E0) :
-// côté ETG, le bloc « Premier Détenteur » doit montrer le nom + contact de l'examinateur.
 const feiPremierDetenteurEstExaminateur: Prisma.FeiUncheckedCreateInput = {
   ...feiValidatedByPremierDetenteur,
   numero: 'ZACH-20250707-QZ6E0-165243',
@@ -1650,8 +1497,6 @@ const ownershipPremierDetenteurEstExaminateur: CarcasseOwnership = {
   current_owner_user_name_cache: 'Marie Martin',
 };
 
-// Le premier détenteur est une association de chasse (entité) : côté ETG, le bloc
-// « Premier Détenteur » doit montrer les infos de l'association, pas celles d'un individu.
 const feiPremierDetenteurEstAssociation: Prisma.FeiUncheckedCreateInput = {
   ...feiValidatedByPremierDetenteur,
   numero: 'ZACH-20250707-QZ6E0-165244',
@@ -1784,8 +1629,6 @@ const ownershipClosedBySvi: CarcasseOwnership = {
   ...ownershipTransmittedByEtgToSvi,
   svi_assigned_at: dayjs().subtract(12, 'day').toDate(),
   svi_closed_at: dayjs().subtract(2, 'day').toDate(),
-  // SVI users created via createUserId are dynamic; real closure would set svi_closed_by_user_id.
-  // For fixture simplicity we leave it null; assert on svi_closed_at in tests.
 };
 
 const feiAllRefusedByEtgToSvi: Prisma.FeiUncheckedCreateInput = {
@@ -1802,8 +1645,6 @@ const feiRefusedByEtg: Prisma.FeiUncheckedCreateInput = {
   numero: 'ZACH-20250707-QZ6E0-215242',
 };
 
-// When ETG refuses all carcasses, the fiche STAYS at the ETG (terminal state with
-// intermediaire_closed_at set) — it does NOT get sent back to the PD.
 const ownershipRefusedByEtg: CarcasseOwnership = {
   ...ownershipValidatedByPremierDetenteur,
   current_owner_role: FeiOwnerRole.ETG,
@@ -1824,10 +1665,6 @@ const ownershipRefusedByEtg: CarcasseOwnership = {
   latest_intermediaire_name_cache: 'ETG 1',
 };
 
-// Tableau de bord des fédérations (FDC / FRC / FNC) : les statistiques ne portent que sur la
-// saison de chasse en cours. Les autres fixtures sont datées du 07/07/2025 et n'y apparaissent
-// donc jamais — d'où ces fiches datées d'aujourd'hui. Le segment date du numéro de fiche est
-// inerte (rien ne le parse), seul `date_mise_a_mort` compte pour les statistiques.
 const feiFederationAllier: Prisma.FeiUncheckedCreateInput = {
   numero: 'ZACH-20250707-QZ6E0-400001',
   date_mise_a_mort: dayjs().toDate(),
@@ -1856,8 +1693,6 @@ const feiFederationAinNonTransmise: Prisma.FeiUncheckedCreateInput = {
   examinateur_initial_user_id: '0Y545',
 };
 
-// Laboratoires de la recherche de trichine : « Laboratoire 1 » (LVD, laboratoire@example.fr) et
-// « LNR Parasites » (LNR, lnr@example.fr), destinataire des FTP de confirmation.
 async function createLaboratoiresTrichine() {
   const laboratoire = await prisma.entity.create({
     data: {
@@ -1900,7 +1735,6 @@ async function createLaboratoiresTrichine() {
       status: EntityRelationStatus.ADMIN,
     },
   });
-  // LNR : destinataire de la FTP de confirmation générée sur un non négatif
   const lnr = await prisma.entity.create({
     data: {
       raison_sociale: 'LNR Parasites',
@@ -2005,15 +1839,11 @@ function getCarcasses(
     return {
       ...carcasse,
       ...mapFeiFieldsToCarcasse(fei, carcasse as unknown as Carcasse),
-      // Champs de propriété / transmission : désormais portés par la carcasse.
       ...ownership,
     };
   });
 }
 
-// Recopie sur la carcasse les seuls champs encore présents sur la Fei (métadonnées,
-// examinateur initial, identité du premier détenteur). Les champs de propriété /
-// transmission viennent de l'objet `ownership` (cf getCarcasses).
 function mapFeiFieldsToCarcasse(fei: Fei, carcasse: Prisma.CarcasseUncheckedCreateInput) {
   return {
     date_mise_a_mort: fei.date_mise_a_mort,

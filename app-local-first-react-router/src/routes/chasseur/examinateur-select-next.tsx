@@ -31,7 +31,6 @@ const MISSING_FIELD_TRACKING_NAME = {
 
 type SelectNextForExaminateurProps = {
   disabled?: boolean;
-  // le bloc parent affiche les erreurs de la date et de la commune de mise à mort
   onValidationError?: () => void;
 };
 
@@ -68,8 +67,6 @@ export default function SelectNextForExaminateur({
   const isOnline = useIsOnline();
 
   const nextOwnerSelectLabel = 'Sélectionnez le propriétaire initial pour cette fiche';
-  // quand le premier détenteur est une association, on enregistre aussi l'utilisateur qui agit en son nom :
-  // c'est bien l'entité qui doit être sélectionnée dans la liste
   const [nextOwnerUserOrEntityId, setNextOwnerUserOrEntityId] = useState(
     fei.premier_detenteur_entity_id ?? fei.premier_detenteur_user_id ?? ''
   );
@@ -101,8 +98,6 @@ export default function SelectNextForExaminateur({
 
   const [showErrors, setShowErrors] = useState(false);
 
-  // les messages de la date et de la commune sont affichés par le bloc parent, ici on a juste besoin de
-  // savoir ce qui manque
   const missingFields = useMemo(() => {
     const fields: MissingField[] = [];
     if (!fei.date_mise_a_mort) {
@@ -127,8 +122,6 @@ export default function SelectNextForExaminateur({
   }
 
   function handleSubmitFromSelect(nextOwnerUserId?: string) {
-    // le propriétaire initial peut arriver en argument (« Je suis le propriétaire initial », recherche par
-    // email) : il n'est pas encore dans le state au moment du clic
     const missing = missingFields.filter((field) => field !== 'premier_detenteur' || !nextOwnerUserId);
     if (missing.length > 0) {
       track('fiche', 'bloquer', MISSING_FIELD_TRACKING_NAME[missing[0]]);
@@ -380,7 +373,6 @@ export default function SelectNextForExaminateur({
               const formData = new FormData(event.currentTarget);
               const email = formData.get(Prisma.UserScalarFieldEnum.email) as string;
               if (email === user.email) {
-                // it's me !
                 setNextOwnerUserOrEntityId(user.id);
                 handleSubmitFromSelect(user.id);
                 return;
@@ -413,23 +405,6 @@ export default function SelectNextForExaminateur({
                   },
                 }));
                 setShowSearchUserByEmail(false);
-                // const nextFei = {
-                //   fei_next_owner_user_id: nextPremierDetenteur.id,
-                //   fei_next_owner_user_name_cache: `${nextPremierDetenteur.prenom} ${nextPremierDetenteur.nom_de_famille}`,
-                //   fei_next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-                // };
-                // updateFei(fei.numero, nextFei);
-                // addLog({
-                //   user_id: user.id,
-                //   user_role: UserRoles.CHASSEUR,
-                //   fei_numero: fei.numero,
-                //   action: 'examinateur-trouver-premier-detenteur',
-                //   history: createHistoryInput(fei, nextFei),
-                //   entity_id: null,
-                //   zacharie_carcasse_id: null,
-                //   intermediaire_id: null,
-                //   carcasse_intermediaire_id: null,
-                // });
                 setNextOwnerUserOrEntityId(nextPremierDetenteur.id);
               } else {
                 setSearchingUserError(userSearchResponse.error ?? 'Erreur inconnue');

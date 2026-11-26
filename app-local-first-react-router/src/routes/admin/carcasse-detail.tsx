@@ -421,7 +421,6 @@ function AdminCarcasseDetailContent() {
       >
         {selectedTab === 'identite' && (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {/* 1. Identité */}
             <Section title="Identité">
               <FieldGrid>
                 <Field label="Numéro marquage">{carcasse.numero_bracelet}</Field>
@@ -444,7 +443,6 @@ function AdminCarcasseDetailContent() {
               </FieldGrid>
             </Section>
 
-            {/* 2. Mise à mort & Éviscération */}
             {(carcasse.date_mise_a_mort || carcasse.heure_evisceration) && (
               <Section title="Mise à mort & Éviscération">
                 <FieldGrid>
@@ -460,7 +458,6 @@ function AdminCarcasseDetailContent() {
               </Section>
             )}
 
-            {/* 3. Examen initial */}
             {carcasse.examinateur_signed_at && (
               <Section title="Examen initial (Examinateur)">
                 <FieldGrid>
@@ -502,7 +499,6 @@ function AdminCarcasseDetailContent() {
 
         {selectedTab === 'detenteurs' && (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {/* 4. Premier détenteur */}
             {carcasse.premier_detenteur_user_id && (
               <Section title="Premier détenteur">
                 <FieldGrid>
@@ -534,7 +530,6 @@ function AdminCarcasseDetailContent() {
               </Section>
             )}
 
-            {/* 5. Chaîne intermédiaires */}
             {carcasse.CarcasseIntermediaire.length > 0 && (
               <Section title={`Intermédiaires (${carcasse.CarcasseIntermediaire.length})`}>
                 <div className="overflow-x-auto">
@@ -607,7 +602,6 @@ function AdminCarcasseDetailContent() {
 
         {selectedTab === 'svi' && (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {/* 6. Inspection SVI — IPM1 */}
             {carcasse.svi_ipm1_signed_at && (
               <Section title="Inspection SVI — IPM1">
                 <FieldGrid>
@@ -646,7 +640,6 @@ function AdminCarcasseDetailContent() {
               </Section>
             )}
 
-            {/* 6b. Inspection SVI — IPM2 */}
             {carcasse.svi_ipm2_signed_at && (
               <Section title="Inspection SVI — IPM2">
                 <FieldGrid>
@@ -712,7 +705,6 @@ function AdminCarcasseDetailContent() {
               </Section>
             )}
 
-            {/* SVI commentaire global */}
             {carcasse.svi_carcasse_commentaire && (
               <Section title="Commentaire SVI global">
                 <p className="text-sm">{carcasse.svi_carcasse_commentaire}</p>
@@ -723,7 +715,6 @@ function AdminCarcasseDetailContent() {
 
         {selectedTab === 'propriete' && (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {/* 7. Propriété actuelle */}
             {(carcasse.current_owner_user_id ||
               carcasse.next_owner_user_id ||
               carcasse.prev_owner_user_id) && (
@@ -759,7 +750,6 @@ function AdminCarcasseDetailContent() {
 
         {selectedTab === 'timeline' && (
           <div className="pt-2">
-            {/* 8. Fil de vie (timeline) */}
             <Section title="Fil de vie">
               <div className="relative border-l-2 border-gray-300 pl-4">
                 {timeline.map((event, i) => (

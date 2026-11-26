@@ -30,10 +30,6 @@ const VUES = [
   { value: 'avec-resultat', label: 'Résultat connu' },
 ];
 
-/**
- * Registre réglementaire des échantillons reçus. Vue de consultation : un échantillon n'est
- * jamais analysé seul, tout se joue au niveau du pool — chaque ligne y mène.
- */
 export default function LaboratoireEchantillons() {
   const navigate = useNavigate();
   const [echantillons, setEchantillons] = useState<Array<LaboEchantillonRegistre>>([]);

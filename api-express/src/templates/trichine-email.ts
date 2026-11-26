@@ -1,8 +1,3 @@
-/**
- * Emails de notification trichine (fonctionnalité en TEST).
- * HTML en tables + styles inline pour la compatibilité clients mail (Gmail, Outlook, mobile).
- */
-
 import type { TrichineResultatAnalyse } from '@prisma/client';
 
 export const TRICHINE_EMAIL_CTA_URL = 'https://zacharie.beta.gouv.fr/app/laboratoire';
@@ -20,10 +15,8 @@ export const TRICHINE_RESULTAT_EMAIL_LABELS: Record<TrichineResultatAnalyse, str
 export type TrichineEmailTone = 'success' | 'warning' | 'danger' | 'info';
 
 export type TrichineEmailContent = {
-  /** Objet de l'email, sans préfixe (ajouté par buildTrichineEmail) */
   subject: string;
   tone: TrichineEmailTone;
-  /** Libellé court du badge de statut, ex. « Résultat négatif » */
   badge: string;
   heading: string;
   intro: string;

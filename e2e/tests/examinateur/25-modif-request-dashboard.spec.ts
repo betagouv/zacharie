@@ -9,18 +9,14 @@ test.beforeEach(async () => {
 
 test.use({
   launchOptions: { slowMo: 100 },
-  // CHASSEUR spec: mobile viewport per project convention.
   viewport: { width: 350, height: 667 },
   isMobile: true,
   hasTouch: true,
 });
 
-// Scenario 25 — Dashboard alert modal on /app/chasseur when there are pending demandes; nav menu
-// shows count; landing on the URL again re-opens the modal; no pending → no modal.
 test('Examinateur dashboard alert modal + nav badge + grouping', async ({ page }) => {
   const feiId = 'ZACH-20250707-QZ6E0-235242';
 
-  // Setup: ETG creates a pending RENAME demande.
   await connectWith(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
@@ -31,7 +27,6 @@ test('Examinateur dashboard alert modal + nav badge + grouping', async ({ page }
     timeout: 10000,
   });
 
-  // Examinateur lands on /app/chasseur — modal pops automatically.
   await logoutAndConnect(page, 'examinateur@example.fr');
   await expect(page).toHaveURL(/\/app\/chasseur$/);
   await expect(page.getByRole('heading', { name: 'Modifications signalées sur vos carcasses' })).toBeVisible({
@@ -39,21 +34,17 @@ test('Examinateur dashboard alert modal + nav badge + grouping', async ({ page }
   });
   await expect(page.getByText("Le numéro de marquage d'une carcasse a été modifié.")).toBeVisible();
 
-  // "Plus tard" closes the modal without navigating.
   await page.getByRole('button', { name: 'Plus tard' }).click();
   await expect(page.getByRole('heading', { name: 'Modifications signalées sur vos carcasses' })).toHaveCount(
     0
   );
   await expect(page).toHaveURL(/\/app\/chasseur$/);
 
-  // Re-navigating to /app/chasseur re-opens the modal.
   await page.goto('http://localhost:3290/app/chasseur');
   await expect(page.getByRole('heading', { name: 'Modifications signalées sur vos carcasses' })).toBeVisible({
     timeout: 10000,
   });
 
-  // "Voir la modification" navigates to the dashboard list. Heading uses "Fiche du DD/MM - {Commune}"
-  // (not the FEI numero).
   await page.getByRole('button', { name: 'Voir la modification' }).click();
   await expect(page).toHaveURL(/\/app\/chasseur\/demandes-de-modification$/);
   await expect(page.getByRole('heading', { name: /Fiche du 07\/07.*CHASSENARD/ })).toBeVisible();
@@ -64,7 +55,6 @@ test('Examinateur dashboard alert modal + nav badge + grouping', async ({ page }
 test('No pending demandes → no modal pop-up', async ({ page }) => {
   await connectWith(page, 'examinateur@example.fr');
   await expect(page).toHaveURL(/\/app\/chasseur/);
-  // Nothing pending in this seed → no alert modal.
   await expect(page.getByRole('heading', { name: 'Modifications signalées sur vos carcasses' })).toHaveCount(
     0
   );

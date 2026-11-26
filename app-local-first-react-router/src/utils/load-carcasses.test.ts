@@ -107,7 +107,6 @@ describe('loadCarcasses — rechargement complet', () => {
     expect(mocks.state.carcassesIntermediaireById).toEqual({});
     expect(mocks.state.feis['FEI-SERVEUR']).toBeDefined();
     expect(mocks.state.carcasses['C-SERVEUR']).toBeDefined();
-    // utilisateurs et entités : toujours mergés
     expect(Object.keys(mocks.state.users).sort()).toEqual(['U-SERVEUR', 'U-SORTI']);
     expect(Object.keys(mocks.state.entities).sort()).toEqual(['E-SERVEUR', 'E-SORTIE']);
   });
@@ -221,7 +220,6 @@ describe('loadCarcasses — version de rechargement', () => {
 });
 
 describe('loadCarcasses — carcasses sorties du périmètre', () => {
-  // Le contrôle d'intégrité n'a lieu qu'une fois toutes les 6 heures : on avance l'horloge à chaque test.
   let now = Date.now();
   beforeEach(() => {
     now += 7 * 60 * 60 * 1000;
@@ -240,7 +238,7 @@ describe('loadCarcasses — carcasses sorties du périmètre', () => {
   const carcasseCalls = () => mocks.get.mock.calls.filter(([arg]) => arg.path === '/carcasse');
 
   it('plus de carcasses en local que sur le serveur : recharge tout le périmètre', async () => {
-    mockServerWithCount(2); // 3 en local après le delta, dont C-SORTIE sortie du périmètre
+    mockServerWithCount(2);
     await loadCarcasses();
     await vi.waitFor(() => expect(carcasseCalls()).toHaveLength(2));
     expect(carcasseCalls()[0][0].query.reloadVersion).toBe('3');
@@ -258,8 +256,6 @@ describe('loadCarcasses — carcasses sorties du périmètre', () => {
   });
 
   it("carcasses refusées hors périmètre chargées à l'ouverture d'une fiche : hors du compte, pas de rechargement", async () => {
-    // GET /carcasse/refusees/:fei_numero les ajoute au store alors qu'elles sont hors du périmètre
-    // du pull : un rechargement complet les retirerait, puis l'ouverture de la fiche les remettrait.
     Object.assign(mocks.state.carcasses, {
       'C-REFUSEE': {
         ...base(),
@@ -284,8 +280,6 @@ describe('loadCarcasses — carcasses sorties du périmètre', () => {
   });
 
   it('carcasse refusée du périmètre : comptée comme les autres', async () => {
-    // Le serveur la compte (elle est dans le périmètre) et ne la signale pas hors périmètre : le client
-    // doit la compter aussi, sinon un écart sur les carcasses refusées passerait inaperçu.
     Object.assign(mocks.state.carcasses, {
       'C-REFUSEE': {
         ...base(),

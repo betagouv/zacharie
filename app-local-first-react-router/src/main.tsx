@@ -31,7 +31,6 @@ import { startTabsBroadcast } from './utils/tabs-broadcast.ts';
 import { startOfflineSingleTab } from './utils/offline-single-tab.ts';
 
 startReactDsfr({
-  // defaultColorScheme: "system",
   defaultColorScheme: 'light',
   Link,
 });
@@ -41,10 +40,8 @@ registerServiceWorker();
 startTabsBroadcast();
 startOfflineSingleTab();
 
-// Initialize Matomo tracking
 initMatomo();
 
-//Only in TypeScript projects
 declare module '@codegouvfr/react-dsfr/spa' {
   interface RegisterLink {
     Link: typeof Link;
@@ -68,28 +65,14 @@ if (import.meta.env.VITE_ENV === 'prod' || import.meta.env.VITE_ENV === 'test') 
     ],
     maxValueLength: 10000,
     normalizeDepth: 10,
-    // Set tracesSampleRate to 1.0 to capture 100%
-    // of transactions for performance monitoring.
-    // We recommend adjusting this value in production
     tracesSampleRate: 0.05,
     ignoreErrors: [
       'Network request failed',
-      // "Failed to fetch",
       'NetworkError',
-      // ???
       'withrealtime/messaging',
-      // This error seems to happen only in firefox and to be ignorable.
-      // The "fetch" failed because user has navigated.
-      // Since other browsers don't have this problem, we don't care about it,
-      // it may be a false positive.
       'AbortError: The operation was aborted',
-      // Sur safari, on a des erreur de type "TypeError: cancelled" qui seraient liées
-      // au bouton "X" (ou refresh) pressé pendant un fetch. Il semblerait que la meilleure
-      // approche soit de les ignorer.
-      // Cf: https://stackoverflow.com/a/60860369/978690
       'TypeError: cancelled',
       'TypeError: annulé',
-      // Bot Outlook SafeLinks qui ouvre les liens des emails
       /Object Not Found Matching Id:\d+, MethodName:update/,
       'AbortError: The connection was closed',
     ],
@@ -97,13 +80,11 @@ if (import.meta.env.VITE_ENV === 'prod' || import.meta.env.VITE_ENV === 'test') 
       try {
         const { metrics, tags } = getPerformanceContext();
 
-        // Add as context (detailed data)
         event.contexts = {
           ...event.contexts,
           performance: metrics as unknown as Record<string, unknown>,
         };
 
-        // Add as tags (easy filtering in Sentry UI)
         event.tags = {
           ...event.tags,
           ...tags,
@@ -129,16 +110,6 @@ createRoot(document.getElementById('root')!).render(
           capture(error, { extra: { componentStack } });
         }}
         onReset={() => {
-          // App-level crash recovery. We deliberately do NOT clear the
-          // cache or disconnect the user — the error wasn't caused by
-          // their session, so wiping their local data would punish them
-          // for a bug. We just send them to /app/connexion (which will
-          // bounce them to their role's home if they're still logged in).
-          //
-          // pushState + popstate, NOT window.location.href: inside the
-          // Expo WebView (see expo/ExpoApp.tsx), assigning to
-          // window.location.href opens the URL in Safari instead of
-          // staying inside the WebView.
           window.history.pushState(null, '', '/app/connexion');
           window.dispatchEvent(new PopStateEvent('popstate'));
         }}

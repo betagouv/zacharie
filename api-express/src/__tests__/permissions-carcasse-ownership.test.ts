@@ -6,14 +6,6 @@ import prisma from '~/prisma';
 import { EntityRelationStatus, EntityRelationType, Prisma, UserRoles } from '@prisma/client';
 import { FORCE_FULL_RELOAD_AFTER } from '~/utils/force-full-reload';
 
-// Permissions for the unified GET /carcasse/ endpoint. After the carcasse-first
-// refactor, the three role-segmented routes (/carcasse/svi, /carcasse/etg,
-// /carcasse/collecteur_pro) collapsed into a single route that branches by
-// req.user.roles internally. Permission to see a carcasse derives from
-// carcasse-level ownership fields (svi_entity_id, current_owner_entity_id,
-// next_owner_entity_id) and CarcasseIntermediaire entity relations — never
-// from FEI ownership fields. These tests pin that contract.
-
 const sviUser = {
   id: 'user-svi',
   roles: [UserRoles.SVI],
@@ -62,14 +54,12 @@ const app = express();
 app.use(express.json());
 app.use('/carcasse', carcasseRouter);
 
-// Default required query params (zod schema rejects requests missing any of them)
 const DEFAULT_QS = 'after=0&limit=100&withDeleted=false';
 
 function authed(req: request.Test, user: object) {
   return req.set('x-test-user', JSON.stringify(user));
 }
 
-// La page d'ids se lit en SQL brut (findScopeCarcassesPage) : on recompose la requête envoyée.
 function pageQuery() {
   const [strings, ...values] = vi.mocked(prisma.$queryRaw).mock.calls[0] as [TemplateStringsArray, ...any[]];
   return Prisma.sql(strings, ...values);
@@ -82,7 +72,6 @@ function mockPageIds(ids: Array<string>) {
   );
 }
 
-// vitest.setup.ts doesn't include these — add them for this suite.
 (prisma.carcasse as any).count = vi.fn().mockResolvedValue(0);
 (prisma.carcasseIntermediaire as any).findMany = vi.fn().mockResolvedValue([]);
 
@@ -120,13 +109,10 @@ describe('Auth / activation / query validation', () => {
 });
 
 describe('Role branching — périmètre en SQL brut', () => {
-  // Une requête par branche du OR de getCarcasseAccessWhere (cf getCarcasseScopeBranches). Son
-  // équivalence avec getCarcasseAccessWhere est vérifiée sur une vraie base dans carcasse-scope.db.test.ts.
   test('SVI user → svi_assigned_at + svi_entity_id / next_owner_entity_id scoped by user entities', async () => {
     const res = await authed(request(app).get(`/carcasse?${DEFAULT_QS}`), sviUser);
     expect(res.status).toBe(200);
 
-    // entityAndUserRelations is fetched first to derive the user's entity scope
     expect(prisma.entityAndUserRelations.findMany).toHaveBeenCalledWith({
       where: {
         owner_id: sviUser.id,
@@ -143,7 +129,6 @@ describe('Role branching — périmètre en SQL brut', () => {
     expect(query.sql).toContain('c.deleted_at IS NULL');
     expect(query.values.filter((value) => value === 'entity-1' || value === 'entity-2')).toHaveLength(4);
 
-    // CRITICAL: must NOT scope by FEI ownership fields.
     expect(query.sql).not.toContain('fei_current_owner');
     expect(query.sql).not.toContain('"Fei"');
   });
@@ -170,8 +155,6 @@ describe('Role branching — périmètre en SQL brut', () => {
     ]) {
       expect(query.sql).toContain(`c.${column} IN`);
     }
-    // Désignation du premier détenteur (entité) : exposée aux membres de l'entité seulement
-    // une fois la fiche réellement transmise (sortie de l'examinateur initial).
     expect(query.sql.match(/c\.current_owner_role <> /g)).toHaveLength(2);
     expect(query.values.filter((value) => value === chasseurUser.id)).toHaveLength(5);
     expect(query.sql).toContain('c.deleted_at IS NULL');
@@ -194,7 +177,6 @@ describe('Role branching — périmètre en SQL brut', () => {
     expect(query.sql).not.toContain('fei_current_owner');
     expect(query.values.filter((value) => value === 'entity-1' || value === 'entity-2')).toHaveLength(6);
 
-    // les carcasses de la page sont relues par id, pas par un where de périmètre
     const findManyArgs = vi.mocked(prisma.carcasse.findMany).mock.calls[0][0]!;
     expect(findManyArgs.where).toEqual({ zacharie_carcasse_id: { in: ['C-1'] } });
   });
@@ -319,7 +301,6 @@ describe('Pagination + delta-fetch contract', () => {
   });
 
   test('after=<timestamp> with withDeleted=false → updated_at >= after', async () => {
-    // postérieur à FORCE_FULL_RELOAD_AFTER, sinon le serveur force un rechargement complet
     const cutoff = FORCE_FULL_RELOAD_AFTER.getTime() + 1;
     await authed(request(app).get(`/carcasse?after=${cutoff}&limit=100&withDeleted=false`), sviUser);
 
@@ -330,17 +311,13 @@ describe('Pagination + delta-fetch contract', () => {
   });
 
   test('withDeleted=true → deleted_at is NOT filtered; updated_at gates the delta', async () => {
-    // postérieur à FORCE_FULL_RELOAD_AFTER, sinon le serveur force un rechargement complet
     const cutoff = FORCE_FULL_RELOAD_AFTER.getTime() + 1;
     await authed(request(app).get(`/carcasse?after=${cutoff}&limit=100&withDeleted=true`), sviUser);
 
     const query = pageQuery();
     expect(query.sql).toContain('c.updated_at >=');
     expect(query.values).toContain(new Date(cutoff).toISOString());
-    // when withDeleted=true the controller does NOT filter on deleted_at,
-    // so soft-deleted rows updated after the cutoff are visible.
     expect(query.sql).not.toContain('deleted_at');
-    // role-based scope is preserved (here: SVI scope)
     expect(query.sql).toContain('c.svi_entity_id IN');
   });
 

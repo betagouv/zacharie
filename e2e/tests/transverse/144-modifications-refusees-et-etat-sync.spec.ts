@@ -7,8 +7,6 @@ dayjs.locale('fr');
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Scenario 144 — Modifications refusées par le serveur + état de synchro après rechargement.
-
 test.use({
   viewport: { width: 350, height: 667 },
   hasTouch: true,
@@ -20,8 +18,6 @@ test.beforeEach(async () => {
   await resetDb('EXAMINATEUR_INITIAL');
 });
 
-// un /sync peut encore être en vol dans le page.route à la fin du test : on ignore ses erreurs une fois
-// le test terminé
 test.afterEach(async ({ page }) => {
   await page.unrouteAll({ behavior: 'ignoreErrors' });
 });
@@ -38,12 +34,6 @@ async function creerFiche(page: Page) {
   return feiNumero!;
 }
 
-// Le parcours UI ne permet pas de provoquer un refus d'autorisation de /sync (les écrans
-// n'exposent que ce que l'utilisateur a le droit de modifier). On laisse donc la requête aller au
-// vrai serveur et on ajoute, dans sa réponse, un refus pour la première fiche envoyée — exactement la
-// forme que renvoie `handleSyncError` sur une SyncRejectedError. Le refus porte sur la version
-// envoyée : la création de fiche enchaîne plusieurs modifications, chacune repart au serveur, donc on
-// refuse chaque envoi de la fiche, comme le ferait un vrai refus d'autorisation, jusqu'à `stop()`.
 async function refuserLaPremiereFicheEnvoyee(page: Page, reason: string) {
   let feiRefusee: string | null = null;
   let actif = true;
@@ -56,8 +46,6 @@ async function refuserLaPremiereFicheEnvoyee(page: Page, reason: string) {
     if (actif && feiEnvoyee && json.data) {
       json.data.rejected = [...(json.data.rejected ?? []), { kind: 'fei', id: feiRefusee, reason }];
     }
-    // L'app annule un /sync en vol quand la même fiche change encore (un AbortController par
-    // enregistrement) : la route est alors déjà close, il n'y a plus de réponse à rendre.
     await route.fulfill({ response, json }).catch((error: Error) => {
       if (!error.message.includes('Route is already handled')) throw error;
     });
@@ -95,7 +83,6 @@ test('Après un refus, une nouvelle modification de la même fiche est envoyée 
 
   const feiNumero = await creerFiche(page);
   await expect(page.getByText('1 modification refusée par le serveur')).toBeVisible({ timeout: 10000 });
-  // « En ligne » : plus rien en attente d'envoi, la dernière version de la fiche a été refusée.
   await expect(page.getByText('En ligne', { exact: true })).toBeVisible({ timeout: 10000 });
   refus.stop();
 
@@ -106,7 +93,6 @@ test('Après un refus, une nouvelle modification de la même fiche est envoyée 
     if (payload?.feis?.some((fei) => fei.numero === feiNumero)) ficheRenvoyee = true;
   });
 
-  // Nouvelle modification de la fiche refusée : elle porte un nouvel updated_at, donc elle doit partir.
   const premierDetenteur = page.getByRole('button', { name: 'Pierre Petit' });
   await premierDetenteur.scrollIntoViewIfNeeded();
   await premierDetenteur.click();
@@ -114,9 +100,6 @@ test('Après un refus, une nouvelle modification de la même fiche est envoyée 
   await continuer.scrollIntoViewIfNeeded();
   await continuer.click();
 
-  // Les écrans chasseur ne lancent pas de synchro à chaque modification : elle part au retour sur
-  // l'onglet (tabs-broadcast.ts). On simule ce retour sans recharger la page, ce qui viderait la
-  // liste des refus de la session.
   await expect(async () => {
     await page.evaluate(() => window.dispatchEvent(new Event('focus')));
     expect(ficheRenvoyee).toBe(true);
@@ -133,19 +116,14 @@ test('Après un rechargement, une modification non synchronisée reste signalée
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
   await expect(page.getByText('En ligne', { exact: true })).toBeVisible({ timeout: 10000 });
 
-  // Modification faite hors ligne : elle reste en local, non synchronisée.
   await context.setOffline(true);
   await creerFiche(page);
   await expect(page.getByText('Synchronisation en cours', { exact: true })).toBeVisible({ timeout: 10000 });
 
-  // Un vrai rechargement hors ligne échoue en e2e : le serveur Vite de dev ne précache rien dans le
-  // service worker (voir 106). On rend donc l'API injoignable — la modification ne peut toujours pas
-  // partir — tout en laissant le navigateur recharger les fichiers de l'app.
   await page.route('http://localhost:3291/**', (route) => route.abort('internetdisconnected'));
   await context.setOffline(false);
   await page.reload();
 
-  // L'état est recalculé à l'hydratation depuis les items persistés : la fiche n'est pas synchronisée.
   await expect(page.getByText('Synchronisation en cours', { exact: true })).toBeVisible({ timeout: 15000 });
   await expect(page.getByText('En ligne', { exact: true })).not.toBeVisible();
 });

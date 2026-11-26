@@ -14,8 +14,6 @@ const feiId = 'ZACH-20250707-QZ6E0-155242';
 
 test.beforeEach(async ({ page }) => {
   await resetDb('PREMIER_DETENTEUR');
-  // Le champ « Raison Sociale » interroge l'annuaire des entreprises (API externe) : on le neutralise
-  // pour que le test ne dépende pas du réseau ni des résultats réels.
   await page.route('https://recherche-entreprises.api.gouv.fr/**', (route) =>
     route.fulfill({ json: { results: [] } })
   );
@@ -39,13 +37,11 @@ async function remplirRepresentantEtAdresse(page: Page) {
     await input.scrollIntoViewIfNeeded();
     await input.fill(value);
   }
-  // InputVille affiche un autocomplete basé sur le code postal : on sélectionne la suggestion.
   const villeSuggestion = modal.getByRole('button', { name: /75015 PARIS/i }).first();
   await villeSuggestion.scrollIntoViewIfNeeded();
   await villeSuggestion.click();
 }
 
-// Le formulaire inline a son propre bouton « Enregistrer », distinct de celui de la modale vente / don.
 async function enregistrerPartenaire(page: Page) {
   const submit = venteDonModal(page)
     .locator('#partenaire_data_form')
@@ -61,7 +57,6 @@ test('Un particulier ajouté comme destinataire est nommé par son représentant
   await particulier.scrollIntoViewIfNeeded();
   await particulier.click();
 
-  // Pas de raison sociale, ni de qualité, ni de SIRET pour un particulier
   await expect(modal.locator("[class*='raison_sociale'] input")).toHaveCount(0);
   await expect(modal.locator('#partenaire-nouveau-qualite_du_destinataire')).toHaveCount(0);
   await expect(modal.locator('#partenaire_data_form input[name="siret"]')).toHaveCount(0);
@@ -69,7 +64,6 @@ test('Un particulier ajouté comme destinataire est nommé par son représentant
   await remplirRepresentantEtAdresse(page);
   await enregistrerPartenaire(page);
 
-  // Le formulaire inline disparaît et le consommateur final est sélectionné comme prochain détenteur
   await expect(modal.getByText('Ajouter un destinataire')).toBeHidden({ timeout: 15000 });
   await expect(modal.getByPlaceholder('Tapez le nom du destinataire')).toHaveValue(/^Jean Dupont/, {
     timeout: 10000,
@@ -83,7 +77,6 @@ test('Un destinataire professionnel exige une raison sociale', async ({ page }) 
   await qualite.scrollIntoViewIfNeeded();
   await qualite.fill('boucherie');
 
-  // La raison sociale est préremplie avec le nom tapé dans la recherche : on la vide
   const effacerRaisonSociale = modal.locator("[class*='raison_sociale__clear-indicator']");
   await effacerRaisonSociale.scrollIntoViewIfNeeded();
   await effacerRaisonSociale.click();
@@ -97,8 +90,6 @@ test('Un destinataire professionnel exige une raison sociale', async ({ page }) 
       requetesCreation.push(request.url());
     }
   });
-  // La raison sociale (liste déroulante) n'est pas validée par le navigateur : le formulaire bloque
-  // l'envoi avec une alerte. L'alerte bloque le clic tant qu'elle est ouverte : on la ferme dans le handler.
   const alertes: Array<string> = [];
   page.once('dialog', (dialog) => {
     alertes.push(dialog.message());

@@ -23,8 +23,6 @@ describe('isStaleWrite', () => {
     expect(isStaleWrite({ version: 3, version_user_id: svi.id }, 3, etg)).toBe(false);
   });
 
-  // `syncData` annule côté client la requête en cours quand une nouvelle part, mais le serveur la
-  // traite : la requête suivante du même utilisateur arrive avec une version qu'il a lui-même dépassée.
   test('une version inférieure, dépassée par sa propre écriture → acceptée', () => {
     expect(isStaleWrite({ version: 3, version_user_id: etg.id }, 2, etg)).toBe(false);
   });

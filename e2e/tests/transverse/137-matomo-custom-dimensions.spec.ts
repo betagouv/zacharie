@@ -47,8 +47,6 @@ async function getLastCustomDimension(page: Page, dimensionId: number): Promise<
   }, dimensionId);
 }
 
-// un test (donc une page neuve) par route : en dev Vite chaque page charge ~490 modules, et enchaîner
-// tous les rechargements dans le même onglet finit en net::ERR_INSUFFICIENT_RESOURCES côté Chromium
 for (const route of PUBLIC_ROUTES) {
   test(`public page ${route} (logged out): custom dimension "non connecté" + "non admin"`, async ({
     page,

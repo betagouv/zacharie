@@ -5,7 +5,6 @@ type SyncableState = Pick<
   'feis' | 'carcasses' | 'carcassesIntermediaireById' | 'modifRequestsByCarcasseId' | 'logs'
 >;
 
-// Vrai si au moins un item local attend encore d'être écrit côté serveur.
 export function hasUnsyncedData(state: SyncableState): boolean {
   return (
     Object.values(state.feis).some((f) => !f.is_synced) ||

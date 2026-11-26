@@ -12,7 +12,6 @@ export const lesionsList = Object.keys(lesions).reduce(
   {} as Record<CarcasseType, string[]>
 );
 
-// Libellé court (vulgarisation) par motif, tous types confondus, pour les affichages condensés.
 const motifShortLabelMap = Object.values(lesions)
   .flat()
   .reduce(

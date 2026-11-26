@@ -25,14 +25,12 @@ test('Profil examinateur : un numéro CFEI hors format affiche un avertissement,
   );
   const numeroCfei = page.locator('#numero_cfei');
   await numeroCfei.scrollIntoViewIfNeeded();
-  // Numéro du seed (CFEI-075-25-001) : au bon format
   await expect(numeroCfei).toHaveValue('CFEI-075-25-001');
   await expect(avertissement).toBeHidden();
 
   await numeroCfei.fill('123');
   await expect(avertissement).toBeVisible();
 
-  // Le numéro hors format est quand même enregistré
   const enregistrement = page.waitForResponse(
     (response) => response.url().includes('/user/') && response.request().method() === 'POST' && response.ok()
   );

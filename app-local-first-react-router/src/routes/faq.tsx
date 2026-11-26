@@ -84,7 +84,6 @@ export default function Faq() {
         </title>
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-            {/* Section 1 : Guides par rôle */}
             <h2 className="fr-h3 fr-mb-2w">Mode d'emploi</h2>
             <Tabs
               selectedTabId={selectedTabId}
@@ -97,7 +96,6 @@ export default function Faq() {
               {selectedTabId === 'svi' && isSVI && <TabSVI />}
             </Tabs>
 
-            {/* Section 2 : FAQ Q&A */}
             <h2 className="fr-h3 fr-mb-2w">Questions fréquentes</h2>
             <div className="mb-6 bg-white md:shadow-sm">
               <div className="p-4 md:p-8">
@@ -210,7 +208,6 @@ export default function Faq() {
               </div>
             </div>
 
-            {/* CallOut contact */}
             <CallOut className="bg-white">
               Besoin d'aide ? Contactez-nous au <a href="tel:+33189316644">01 89 31 66 40</a> ou par e-mail à{' '}
               <a href="mailto:contact@zacharie.beta.gouv.fr">contact@zacharie.beta.gouv.fr</a>. Vous pouvez

@@ -9,8 +9,6 @@ export function formatOwner(label: string | null, role: FeiOwnerRole | null): st
   return `${label ?? '—'} (${getUserRoleLabel(role)})`;
 }
 
-// Un destinataire en circuit court ne prend jamais en charge dans Zacharie : la fiche lui est envoyée
-// et le reste. Sinon, tant que next_owner est renseigné, la prise en charge est attendue.
 export function getNextOwnerStatus(role: FeiOwnerRole): string {
   return isRoleCircuitCourt(role) ? 'envoyée' : 'en attente de prise en charge';
 }

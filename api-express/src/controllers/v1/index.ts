@@ -14,7 +14,6 @@ router.use('/approval-request', passport.initialize({ userProperty: 'apiKey' }),
 router.use('/fei', passport.initialize({ userProperty: 'apiKey' }), feiRouter);
 router.use('/carcasse', passport.initialize({ userProperty: 'apiKey' }), carcassesRouter);
 
-// Entity API Documentation (direct access)
 router.use('/docs/cle-dediee', swaggerUi.serveFiles(swaggerCleDediee));
 router.get(
   '/docs/cle-dediee',
@@ -24,7 +23,6 @@ router.get(
   })
 );
 
-// Third-party API Documentation (user delegation)
 router.use('/docs/tierces-parties', swaggerUi.serveFiles(swaggerTiercePartie));
 router.get(
   '/docs/tierces-parties',

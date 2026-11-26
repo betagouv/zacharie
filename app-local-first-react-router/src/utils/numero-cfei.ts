@@ -1,6 +1,3 @@
-// Numéro d'attestation CFEI : CFEI-DEP-AA-NNN ou DEP-FREI-AA-NNN (département sur 2 ou 3 chiffres ou 2A/2B,
-// année sur 2 chiffres).
-// Le contrôle n'est qu'un avertissement affiché sous le champ : un numéro hors format est quand même enregistré.
 const NUMERO_CFEI_REGEX = /^(CFEI-(\d{2,3}|2[AB])|(\d{2,3}|2[AB])-FREI)-\d{2}-\d+$/i;
 
 export const NUMERO_CFEI_FORMAT_MESSAGE =

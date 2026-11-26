@@ -13,14 +13,10 @@ import type {
 import { getBilanAnomalies } from '~/utils/bilan-anomalies';
 import { carcassesAVenirChezEtgWhere, getEtgsLinkedToSviUser } from '~/utils/svi';
 
-// Nombre d'animaux comptés par carcasse, comme ailleurs dans l'app :
-// petit gibier = un lot de plusieurs animaux, grand gibier = 1 carcasse = 1 animal.
 function countAnimaux(carcasse: { type: CarcasseType | null; nombre_d_animaux: number | null }): number {
   return carcasse.type === CarcasseType.PETIT_GIBIER ? (carcasse.nombre_d_animaux ?? 1) : 1;
 }
 
-// Volumétrie SVI : carcasses acceptées par un ETG rattaché au SVI mais pas encore transmises.
-// Servi hors store local-first (le store SVI ne contient que les carcasses déjà transmises).
 router.get(
   '/carcasses-a-venir',
   passport.authenticate('user', { session: false }),
@@ -37,8 +33,6 @@ router.get(
       return;
     }
 
-    // Carcasses actuellement chez l'ETG, acceptées (prise_en_charge sans refus/manquante),
-    // pas encore transmises au SVI.
     const carcasses = await prisma.carcasse.findMany({
       where: {
         deleted_at: null,
@@ -87,9 +81,6 @@ router.get(
   })
 );
 
-// Traçabilité amont : sur les fiches en cours d'acheminement vers le SVI (celles ayant au
-// moins une carcasse à venir), répartition en nombre d'animaux entre le déclaré et ce qui
-// a été refusé / déclaré manquant par l'ETG (l'écart avec ce qui arrivera réellement).
 router.get(
   '/tracabilite-amont',
   passport.authenticate('user', { session: false }),
@@ -115,8 +106,6 @@ router.get(
       return;
     }
 
-    // 1. Carcasses à venir : acceptées/prises en charge chez l'ETG, pas encore transmises
-    // au SVI (filtre identique à /carcasses-a-venir → aVenir = tuile "Animaux à venir").
     const carcassesAVenir = await prisma.carcasse.findMany({
       where: {
         deleted_at: null,
@@ -135,7 +124,6 @@ router.get(
       return;
     }
 
-    // 2. Toutes les carcasses de ces fiches passées par un ETG rattaché au SVI.
     const carcasses = await prisma.carcasse.findMany({
       where: {
         deleted_at: null,
@@ -156,8 +144,6 @@ router.get(
       const animaux = countAnimaux(carcasse);
       amont.recuesEtg += animaux;
 
-      // Ordre important : manquante avant refus (le champ _refus_intermediaire_id est aussi
-      // posé pour une manquante), comme dans updateCarcasseStatus.
       if (carcasse.intermediaire_carcasse_manquante) {
         amont.manquantesEtg += animaux;
       } else if (carcasse.intermediaire_carcasse_refus_intermediaire_id) {
@@ -165,15 +151,12 @@ router.get(
       }
     }
 
-    // Reliquat : déclarées mais ni acceptées (à venir), ni refusées, ni manquantes
-    // = en attente de décision de l'ETG (+ éventuelles déjà transmises, rares ici).
     amont.enAttente = Math.max(0, amont.recuesEtg - amont.aVenir - amont.refuseesEtg - amont.manquantesEtg);
 
     res.status(200).send({ ok: true, data: { amont }, error: '' });
   })
 );
 
-// Bilan des anomalies de fin de saison (calque DGAL), pour les ETG rattachés au SVI.
 router.get(
   '/bilan-anomalies',
   passport.authenticate('user', { session: false }),

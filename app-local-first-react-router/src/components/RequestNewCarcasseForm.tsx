@@ -27,15 +27,6 @@ const gibierSelect = {
   petit: petitGibier.especes,
 };
 
-// ----------------------------------------------------------------------------
-// RequestNewCarcasseButton
-// Ouvre une modal pour pré-remplir une carcasse manquante. L'intermédiaire crée
-// localement (1) une Carcasse sans signature examinateur, (2) une CI row pour
-// son passage (pour qu'elle apparaisse dans sa liste plutôt que dans
-// "déjà refusées") et (3) une demande de type NEW_CARCASSE. Tout part par le
-// pipeline /sync ; le backend notifie l'examinateur initial et lui présentera
-// l'examen à signer. La carcasse suit son parcours sans attendre cette signature.
-// ----------------------------------------------------------------------------
 export default function RequestNewCarcasseButton({
   feiNumero,
   transmission,
@@ -94,15 +85,9 @@ export default function RequestNewCarcasseButton({
       return;
     }
 
-    // If the FEI has already been transmitted to the next owner (SVI typically) before the carcasse
-    // is added, inherit the transmission state on the new carcasse so it joins the same flow rather
-    // than getting stranded at the requester. Without this, the SVI never sees the carcasse and the
-    // ETG is asked to re-transmit endlessly after approval.
     const feiAlreadyTransmitted = !!transmission.next_owner_entity_id;
     const feiAlreadyAssignedToSvi = !!transmission.svi_assigned_at && !!transmission.svi_entity_id;
 
-    // 1) Create the Carcasse locally with no examinateur signature — the examinateur will sign on
-    // approval. Fields not set here keep their default/null from the carcasse schema.
     const newCarcasse: Carcasse = {
       zacharie_carcasse_id: zacharieCarcasseId,
       fei_numero: feiNumero,
@@ -116,13 +101,11 @@ export default function RequestNewCarcasseButton({
       heure_evisceration_derniere_carcasse_fei: null,
       consommateur_final_usage_domestique: null,
       date_mise_a_mort: fei.date_mise_a_mort,
-      // EXAMINATEUR fields intentionally left null — filled on approval
       examinateur_carcasse_sans_anomalie: null,
       examinateur_anomalies_carcasse: [],
       examinateur_anomalies_abats: [],
       examinateur_commentaire: null,
       examinateur_signed_at: null,
-      // PREMIER DETENTEUR caches (inherit from FEI)
       premier_detenteur_depot_type: transmission.premier_detenteur_depot_type ?? null,
       premier_detenteur_depot_entity_id: transmission.premier_detenteur_depot_entity_id ?? null,
       premier_detenteur_depot_entity_name_cache:
@@ -134,14 +117,11 @@ export default function RequestNewCarcasseButton({
         transmission.premier_detenteur_prochain_detenteur_role_cache ?? null,
       premier_detenteur_prochain_detenteur_id_cache:
         transmission.premier_detenteur_prochain_detenteur_id_cache ?? null,
-      // INTERMEDIAIRE
       intermediaire_carcasse_refus_intermediaire_id: null,
       intermediaire_carcasse_refus_motif: null,
       intermediaire_carcasse_manquante: false,
       latest_intermediaire_signed_at: null,
       svi_carcasse_commentaire: null,
-      // Même statut de départ que les carcasses créées par l'examinateur : sans lui, le SVI perd le
-      // bouton « Accepter la carcasse », qui n'apparaît que sur SANS_DECISION.
       svi_carcasse_status: CarcasseStatus.SANS_DECISION,
       svi_carcasse_status_set_at: null,
       svi_ipm1_date: null,
@@ -180,7 +160,6 @@ export default function RequestNewCarcasseButton({
       svi_ipm2_poids_saisie: null,
       svi_ipm2_poids_type: null,
       svi_ipm2_signed_at: null,
-      // ownership copies (from FEI)
       created_by_user_id: user.id,
       examinateur_initial_offline: null,
       examinateur_initial_user_id: fei.examinateur_initial_user_id,
@@ -223,7 +202,6 @@ export default function RequestNewCarcasseButton({
       prev_owner_user_id: transmission.prev_owner_user_id ?? null,
       prev_owner_entity_id: transmission.prev_owner_entity_id ?? null,
       prev_owner_role: transmission.prev_owner_role ?? null,
-      // TRICHINE
       trichine_action_requise: null,
       consommateur_final_email: null,
       notifier_consommateur: false,
@@ -261,11 +239,8 @@ export default function RequestNewCarcasseButton({
     };
     createCarcasse(newCarcasse);
 
-    // 2) Create the CarcasseIntermediaire row for the current intermediaire so the new carcasse
-    // appears in their main list (and not in "Carcasses déjà refusées").
     createCarcassesIntermediaire([intermediaire], [zacharieCarcasseId]);
 
-    // 3) Create the modif request — the backend's side effects will notify the examinateur.
     createCarcasseModifRequest(modifRequest);
     syncData('RequestNewCarcasseForm.onSubmit');
 

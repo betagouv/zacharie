@@ -33,7 +33,6 @@ test('Changement de prochain détenteur après sélection — cohérence du form
   await allerAEtape(page, 'Stockage');
   await choisirStockage(page, 'aucun');
 
-  // Retour à l'étape 1 pour changer de destinataire : le stockage déjà choisi est conservé.
   await etapePrecedente(page);
   await etapePrecedente(page);
   await expect(etapeCourante(page)).toContainText('Destinataire');
@@ -45,7 +44,6 @@ test('Changement de prochain détenteur après sélection — cohérence du form
   await choisirTransport(page, 'moi');
   await enregistrerVenteDon(page);
 
-  // La carte récapitule le nouveau destinataire et le stockage conservé.
   const carte = page.getByRole('button', { name: /ETG 2/ }).first();
   await expect(carte).toBeVisible();
   await expect(carte).toContainText('Pas de stockage');

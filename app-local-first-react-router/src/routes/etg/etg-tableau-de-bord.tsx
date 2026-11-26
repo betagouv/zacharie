@@ -24,8 +24,6 @@ import departementsRegions from '@app/data/departements-regions.json';
 
 type Categorie = 'TOUT' | CarcasseType;
 
-// Les volumes sont comptés en animaux : 1 carcasse de grand gibier = 1, un lot de petit gibier = son
-// nombre d'animaux.
 type CarcasseReception = {
   carcasse: Carcasse;
   refus: string | null;
@@ -35,10 +33,8 @@ type CarcasseReception = {
   animauxAcceptes: number;
 };
 
-// Refus partiel d'un lot de petit gibier : l'ETG ne saisit pas de motif.
 const MOTIF_REFUS_PARTIEL = 'Non renseigné (lot accepté partiellement)';
 
-// Décisions SVI définitives : la carcasse a été inspectée.
 const DECISIONS_SVI_FINALES: Array<CarcasseStatus> = [
   CarcasseStatus.ACCEPTE,
   CarcasseStatus.SAISIE_TOTALE,
@@ -51,7 +47,6 @@ const MAX_BARRES = 15;
 
 const departementsNoms: Record<string, string> = departementsRegions.departements;
 
-// Département de chasse déduit du code postal de la commune de mise à mort ("03510 CHASSENARD").
 function getDepartementLabel(communeMiseAMort: string | null): string {
   const codePostal = communeMiseAMort?.trim().split(' ')[0] ?? '';
   if (!/^\d{5}$/.test(codePostal)) return 'Non renseigné';
@@ -80,7 +75,6 @@ function countBy(items: Array<[string, number]>) {
   return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, MAX_BARRES);
 }
 
-// Sens d'une hausse pour l'établissement : favorable (vert), défavorable (rouge) ou sans jugement (gris).
 type SensHausse = 'favorable' | 'defavorable' | 'neutre';
 
 const EVOLUTION_COLORS: Record<'bonne' | 'mauvaise' | 'neutre', string> = {
@@ -89,8 +83,6 @@ const EVOLUTION_COLORS: Record<'bonne' | 'mauvaise' | 'neutre', string> = {
   neutre: 'text-gray-500',
 };
 
-// Valeur de la même période de la saison précédente et évolution : variation relative en % pour un
-// volume, écart en points pour un taux ou un score.
 function Evolution({
   current,
   previous,
@@ -135,14 +127,11 @@ function getScoreNiveau(score: number) {
   return { label: 'À améliorer', severity: 'error' as const };
 }
 
-// Animaux saisis par le SVI : 1 pour une carcasse, le nombre de carcasses saisies pour un lot.
 function getAnimauxSaisis(r: CarcasseReception): number {
   if (r.carcasse.type !== CarcasseType.PETIT_GIBIER) return 1;
   return Math.min(r.carcasse.svi_ipm2_nombre_animaux ?? r.animauxAcceptes, r.animauxAcceptes);
 }
 
-// Score BPH moyen des apporteurs (moyenne simple) : score hygiène de chaque apporteur, calculé sur les
-// carcasses de grand gibier qu'il a apportées à l'établissement, acceptées et inspectées par le SVI.
 function computeScoreBphMoyen(inspectees: Array<CarcasseReception>): number | null {
   const parApporteur = new Map<string, { inspectees: number; saisiesBph: number }>();
   for (const r of inspectees) {
@@ -233,7 +222,6 @@ export default function EtgTableauDeBord() {
     loadData('etg-tableau-de-bord');
   }, []);
 
-  // Saison en cours jusqu'à aujourd'hui, comparée à la même période de la saison précédente.
   const periodes = useMemo(() => {
     const today = dayjs().endOf('day');
     const saison = getSaisonStartYear(today.toDate());
@@ -244,7 +232,6 @@ export default function EtgTableauDeBord() {
     };
   }, []);
 
-  // Décision de mon ETG à réception, par carcasse (refus ou prise en charge).
   const receptions = useMemo(() => {
     const myEtgIds = new Set(
       Object.values(entities)

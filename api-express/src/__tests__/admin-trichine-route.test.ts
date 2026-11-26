@@ -5,16 +5,12 @@ import prisma from '~/prisma';
 import trichineAdminRouter from '~/controllers/admin/trichine';
 import adminRouter from '~/controllers/admin';
 
-// Section trichine de l'admin : les listes de diagnostic. Contrat épinglé ici : ces routes vivent
-// derrière le garde admin, et les listes sont bornées.
-
 vi.mock('~/third-parties/sentry', () => ({ capture: vi.fn() }));
 
 const app = express();
 app.use(express.json());
 app.use('/admin', trichineAdminRouter);
 
-// Application réelle : le routeur admin applique son authentification avant de monter ses sous-routeurs
 const appAvecGarde = express();
 appAvecGarde.use(express.json());
 appAvecGarde.use('/admin', adminRouter);

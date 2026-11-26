@@ -60,9 +60,6 @@ router.get(
       if (types.length) and.push({ type: { in: types } });
       if (especes.length) and.push({ espece: { in: especes } });
       if (sviIds.length) and.push({ svi_entity_id: { in: sviIds } });
-      // `latest_intermediaire_entity_id` ne porte pas l'ETG/collecteur (il vaut le SVI
-      // une fois la carcasse assignée) : on passe par les intermédiaires, qui gardent
-      // tout l'historique avec leur rôle.
       if (etgIds.length) {
         and.push({
           CarcasseIntermediaire: {
@@ -97,7 +94,6 @@ router.get(
       if (dateMiseAMort) and.push({ date_mise_a_mort: dateMiseAMort });
       if (createdAt) and.push({ created_at: createdAt });
 
-      // Les carcasses supprimées restent listées : les routes admin les affichent, badgées.
       const where: Prisma.CarcasseWhereInput = and.length ? { AND: and } : {};
 
       const [carcasses, total] = await Promise.all([
@@ -118,8 +114,6 @@ router.get(
   )
 );
 
-// Options des listes déroulantes de filtres : uniquement les valeurs et acteurs qui
-// apparaissent réellement sur des carcasses, pour garder des listes courtes.
 router.get(
   '/carcasses/filter-options',
   catchErrors(
@@ -132,8 +126,6 @@ router.get(
         await Promise.all([
           prisma.carcasse.groupBy({ by: ['espece'], where: { espece: { not: null } } }),
           prisma.carcasse.groupBy({ by: ['svi_entity_id'], where: { svi_entity_id: { not: null } } }),
-          // Le rôle porté par l'intermédiaire lui-même est plus fiable que Entity.type :
-          // c'est celui sur lequel le filtre s'appuie.
           prisma.carcasseIntermediaire.groupBy({
             by: ['intermediaire_entity_id', 'intermediaire_role'],
             where: { deleted_at: null },
@@ -297,10 +289,6 @@ router.get(
   )
 );
 
-// Soft delete d'une carcasse de test ou de démo et de ses lignes d'intermédiaire, comme la
-// suppression côté client (syncCarcasse). Refusé sur une fiche clôturée, comme les autres corrections
-// admin de la fiche. `nextVersion` rend périmée toute écriture hors ligne d'un
-// client sur ces lignes, et le bump d'updated_at leur propage la suppression au prochain pull.
 router.post(
   '/carcasse/:zacharie_carcasse_id/soft-delete',
   catchErrors(

@@ -36,13 +36,6 @@ function resolveOwnerName(
   return null;
 }
 
-/**
- * Premier détenteur d'une fiche. Le name_cache peut être absent (ex. fiche transmise avant que
- * le cache soit rempli) : on résout d'abord depuis l'id du premier détenteur, le cache n'est
- * qu'un fallback.
- *
- * Lecture non réactive du store : même raison que pour getPreviousDetenteur ci-dessous.
- */
 export function getPremierDetenteur(
   transmission: CarcasseTransmissionWihMetadata,
   usersById: Record<UserForFei['id'], UserForFei>
@@ -62,18 +55,6 @@ export function getPremierDetenteur(
   };
 }
 
-/**
- * Détenteur précédent d'une fiche : celui qui m'a donné la fiche.
- * On reconstitue la chaîne de possession ordonnée (premier détenteur en tête,
- * puis les intermédiaires par created_at croissant) et on prend l'élément qui
- * précède ma première entrée. Si je ne suis pas encore dans la chaîne (fiche
- * attribuée mais pas encore prise en charge), c'est le dernier détenteur de la
- * chaîne. Ce détenteur ne change donc jamais une fois la fiche reçue.
- *
- * Lecture non réactive du store : la fonction est appelée pendant le rendu d'un
- * composant qui souscrit déjà au store (la liste des fiches), donc un changement
- * pertinent re-rend le parent et relance ce calcul.
- */
 export function getPreviousDetenteur(
   transmission: CarcasseTransmissionWihMetadata,
   usersById: Record<UserForFei['id'], UserForFei>,
@@ -83,9 +64,6 @@ export function getPreviousDetenteur(
   const entities = useZustandStore.getState().entities;
   const premierDetenteur = getPremierDetenteur(transmission, usersById);
 
-  // transmission.intermediaires est en ordre chronologique décroissant (index 0 = plus récent,
-  // dernier index = plus ancien). On raisonne directement sur cet ordre, sans copie ni reverse :
-  // cette fonction tourne pour chaque carte de la liste, on évite toute allocation.
   const intermediaires = transmission.intermediaires;
   const lastIndex = intermediaires.length - 1;
   if (intermediaires.length === 0) {
@@ -102,8 +80,6 @@ export function getPreviousDetenteur(
     return false;
   };
 
-  // Ma première entrée dans la chaîne (la plus ancienne) = le plus grand index qui est moi,
-  // puisque l'ordre est décroissant. On scanne depuis le plus ancien (fin) vers le plus récent.
   let myEarliestIndex = -1;
   for (let i = lastIndex; i >= 0; i--) {
     if (isMine(intermediaires[i])) {
@@ -112,18 +88,14 @@ export function getPreviousDetenteur(
     }
   }
 
-  // Ma première entrée est tout au bout de la chaîne (juste après le premier détenteur) :
-  // c'est lui qui m'a donné la fiche.
   if (myEarliestIndex === lastIndex) {
     return premierDetenteur;
   }
 
   let previous;
   if (myEarliestIndex === -1) {
-    // Pas encore pris en charge : le détenteur précédent est le dernier de la chaîne (le plus récent).
     previous = intermediaires[0];
   } else {
-    // Celui qui m'a donné la fiche est juste plus ancien que ma première entrée → index supérieur.
     previous = intermediaires[myEarliestIndex + 1];
   }
 

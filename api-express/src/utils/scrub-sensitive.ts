@@ -1,21 +1,16 @@
-// Masquage des secrets et des données personnelles avant tout envoi à Sentry ou dans les logs.
 const VALEUR_MASQUEE = '[masqué]';
 
-// Mots de passe, jetons (session, reset, invitation, access token, push), clés d'API, cookies.
 export const CLES_SECRETES =
   /password|passwd|token|secret|authorization|cookie|jwt|private[-_]?key|^(x-)?api[-_]?key$|^key$/i;
 
-// Identité en clair : e-mails, téléphones, adresses, noms.
 const CLES_IDENTITE = /_name_cache$|email|telephone|ad+ress|^prenom$|^nom$|^nom_de_famille$|nom_prenom/i;
 
-// Valeur d'un paramètre d'URL sensible (ex. `?reset-password-token=...`, `&email=...`).
 const PARAMS_URL_SENSIBLES =
   /(^|[?&])([^=&#\s"']*(?:token|password|secret|key|email)[^=&#\s"']*)=([^&#\s"']*)/gi;
 const JWT = /eyJ[\w-]+\.[\w-]+\.[\w-]+/g;
 const BEARER = /Bearer\s+[\w.~+/=-]+/gi;
 const JETON_PUSH_EXPO = /Expo(nent)?PushToken\[[^\]]*\]/g;
 const ADRESSE_EMAIL = /[\w.+-]+@[\w-]+(\.[\w-]+)+/g;
-// Contenu d'un fichier déposé (base64) sous sa forme JSON : Sentry sérialise le body en chaîne
 const CONTENU_FICHIER_JSON = /"content"\s*:\s*"([^"]*)"/g;
 
 function contenuMasque(contenu: string): string {
@@ -47,7 +42,6 @@ export function scrubSensitive(value: unknown, depth = 0, seen = new WeakSet<obj
   } else {
     const scrubbedObject: Record<string, unknown> = {};
     for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
-      // Contenu d'un fichier déposé : seule sa taille sert au diagnostic
       if (key === 'content' && typeof item === 'string') {
         scrubbedObject[key] = contenuMasque(item);
       } else if (
@@ -62,7 +56,6 @@ export function scrubSensitive(value: unknown, depth = 0, seen = new WeakSet<obj
     }
     scrubbed = scrubbedObject;
   }
-  // `seen` ne sert qu'à détecter les cycles : un même objet référencé deux fois reste lisible.
   seen.delete(value);
   return scrubbed;
 }

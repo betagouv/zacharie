@@ -20,7 +20,6 @@ export default function Connexion() {
   const [initialLoading, setInitialLoading] = useState(!!user);
   const [isLoading, setIsLoading] = useState(false);
   const [userResponse, setUserResponse] = useState<UserConnexionResponse | null>(null);
-  // we don't user   useMostFreshUser() here on purpose to avoid infinite loop
   const navigate = useNavigate();
 
   const redirect = sanitizeRedirect(searchParams.get('redirect'));
@@ -79,7 +78,6 @@ export default function Connexion() {
     }
   };
 
-  // Helper function to safely access error message
   const getErrorMessage = (field: string): string => {
     if (typeof userResponse === 'object' && userResponse !== null && 'error' in userResponse) {
       if (!userResponse.error) {

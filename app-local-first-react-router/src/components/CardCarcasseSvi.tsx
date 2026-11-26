@@ -27,8 +27,6 @@ const ipm2DecisionLabel: Record<IPM2Decision, string> = {
   [IPM2Decision.TRAITEMENT_ASSAINISSANT]: 'Traitement assainissant',
 };
 
-// une ligne par information, listes mises bout à bout : la carte reste lisible d'un coup d'œil,
-// le détail complet est sur la page de la carcasse
 function getIpm1Lines(carcasse: Carcasse): Array<string> {
   if (!carcasse.svi_ipm1_presentee_inspection) {
     return ['Carcasse manquante'];
@@ -111,7 +109,6 @@ function getIpm2Lines(carcasse: Carcasse): Array<string> {
 }
 
 export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifierProps) {
-  // const { fei, inetermediairesPopulated } = useLoaderData<typeof clientLoader>();
   const params = useParams();
   const navigate = useNavigate();
 
@@ -144,8 +141,6 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
     : {};
 
   const status = getSimplifiedCarcasseStatus(carcasse);
-  // la mise en consigne est un statut « en cours de traitement » pour le reste de l'app,
-  // mais le SVI doit la repérer d'un coup d'œil : il devra y revenir (levée de consigne ou saisie)
   const isMiseEnConsigne = carcasse.svi_carcasse_status === CarcasseStatus.CONSIGNE;
   const miseEnConsigneLabel =
     carcasse.type === CarcasseType.PETIT_GIBIER ? 'Mis en consigne' : 'Mise en consigne';
@@ -180,7 +175,6 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
         isMiseEnConsigne && 'border-warning-main-525! border-l-3! border-solid',
         status === 'accepté' && 'border-action-high-blue-france! border-l-3! border-solid',
         status === 'saisie partielle' && 'border-action-high-blue-france! border-l-3! border-solid',
-        // priseEnCharge && 'border-action-high-blue-france!',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -319,7 +313,6 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
           <Button
             iconId="fr-icon-check-line"
             onClick={async (e) => {
-              // la carte entière est un bouton qui navigue vers la carcasse : on ne veut que l'acceptation
               e.stopPropagation();
               const result = await approveCarcasse(carcasse);
               if (!result.ok) {

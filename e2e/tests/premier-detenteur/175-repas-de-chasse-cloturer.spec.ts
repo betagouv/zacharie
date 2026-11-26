@@ -18,15 +18,10 @@ test.use({
   launchOptions: { slowMo: 100 },
 });
 
-// Quand les carcasses restent chez le premier détenteur (repas de chasse de son association, ou
-// usage domestique), rien n'est transmis : le bouton de la fiche devient « Clôturer » (« Clôturer la
-// fiche » quand le premier détenteur n'est pas l'examinateur).
-
 function boutonFiche(page: Page, action: 'Transmettre' | 'Clôturer') {
   return page.getByRole('button', { name: new RegExp(`^${action}`) });
 }
 
-// La page de confirmation ne parle pas de transmission : personne n'est notifié.
 async function expectFicheCloturee(page: Page) {
   await expect(page.getByRole('heading', { name: 'Votre fiche est clôturée' })).toBeVisible({
     timeout: 10000,
@@ -35,8 +30,6 @@ async function expectFicheCloturee(page: Page) {
 }
 
 test.describe('Premier détenteur = association', () => {
-  // Seed PREMIER_DETENTEUR_ASSOCIATION : premier-detenteur@ est admin de « Association de chasseurs »,
-  // premier détenteur de la fiche (daims uniquement : pas de rappel trichine).
   const feiId = 'ZACH-20250707-QZ6E0-155242';
 
   test.beforeEach(async ({ page }) => {
@@ -75,7 +68,6 @@ test.describe('Premier détenteur = association', () => {
 });
 
 test.describe('Premier détenteur = moi-même', () => {
-  // Seed PREMIER_DETENTEUR : premier-detenteur@ a « Commerce de Détail 1 » comme destinataire habituel.
   const feiId = 'ZACH-20250707-QZ6E0-155242';
 
   test.beforeEach(async ({ page }) => {

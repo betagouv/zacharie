@@ -36,14 +36,5 @@ export default function useLandingPageNavigationMenu(): MainNavigationProps.Item
         href: '#',
       },
     },
-    // TODO: add quiz back when ready
-    // {
-    //   text: 'Quiz',
-    //   isActive: location.pathname === '/quiz',
-    //   linkProps: {
-    //     to: '/quiz?from=menu',
-    //     href: '#',
-    //   },
-    // },
   ];
 }

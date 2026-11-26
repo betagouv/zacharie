@@ -13,7 +13,6 @@ export async function initRelanceInscriptionCron() {
       async () =>
         await setupCronJob({
           name: 'Relance inscription profil incomplet',
-          // every hour
           cronTime: '0 * * * *',
           job: relanceProfilIncomplet,
           runOnInit: true,
@@ -25,9 +24,6 @@ export async function initRelanceInscriptionCron() {
     .catch(capture);
 }
 
-// Relance unique des chasseurs ayant créé leur compte mais non terminé leur inscription
-// (onboarded_at non renseigné), 24h après la création.
-// Garde-fou : on borne à 7 jours pour ne pas relancer tout le backlog historique au déploiement.
 export async function relanceProfilIncomplet() {
   console.log('Relance inscription profil incomplet');
   const now = dayjs();

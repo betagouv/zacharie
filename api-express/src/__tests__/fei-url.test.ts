@@ -3,8 +3,6 @@ import { UserRoles } from '@prisma/client';
 import { VITE_APP_URL } from '~/config';
 import { getCircuitCourtFeiUrl, getFeiUrlForRole } from '~/utils/fei-url';
 
-// `VITE_APP_URL` est l'origine du front (cf. `controllers/user.ts`, CORS) : le préfixe `/app` des
-// routes applicatives est ajouté ici. Sans lui les liens tombent sur la page 404 du site vitrine.
 const feiNumero = 'ZACH-TEST-001';
 const prochainDetenteurIdCache = 'etg-1';
 

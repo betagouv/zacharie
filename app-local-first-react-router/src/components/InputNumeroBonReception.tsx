@@ -4,9 +4,6 @@ import { Input } from '@app/components/Input';
 import useZustandStore from '@app/zustand/store';
 import { useEtgIds } from '@app/utils/get-entity-relations';
 
-// Les bons de réception sont numérotés en série par l'ETG : on rappelle ceux du jour et de la veille
-// pour éviter de les retaper à la main sur le terrain. La source est le store local
-// (les fiches de mes ETG), donc les rappels fonctionnent hors-ligne.
 function useNumerosBonReceptionRecents(): { aujourdhui: string[]; hier: string[] } {
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const etgsIds = useEtgIds();
@@ -56,7 +53,6 @@ export default function InputNumeroBonReception({ value, onChange, className }: 
 
   return (
     <Input
-      // champ secondaire : le CTA de la page reste « Prendre en charge »
       className={['max-w-xs [&_.fr-input]:text-sm [&_.fr-label]:text-sm', className]
         .filter(Boolean)
         .join(' ')}

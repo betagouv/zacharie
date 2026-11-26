@@ -5,9 +5,6 @@ import { UserRoles } from '@prisma/client';
 import type { User } from '@prisma/client';
 import { fakeSyncScope } from './fake-sync-scope';
 
-// Comme sync-carcasse.test.ts : ici on couvre l'identité et le mapping, l'autorisation d'accès à
-// la carcasse est testée dans permissions-sync-write.test.ts.
-// L'utilisateur travaille pour entity-A.
 const scope = fakeSyncScope({ entityIds: ['entity-A'] });
 
 const baseFei = { numero: 'FEI-1', deleted_at: null } as any;
@@ -118,7 +115,6 @@ describe('syncCarcasseIntermediaire — upsert', () => {
       numero_bon_reception: 'BR-2025-0042',
       is_synced: true,
     });
-    // l'update reprend le create, moins l'identité de l'intermédiaire
     expect(upsertCall.update).toEqual({
       ...upsertCall.create,
       intermediaire_entity_id: undefined,
@@ -262,8 +258,6 @@ describe("syncCarcasseIntermediaire — identité de l'intermédiaire", () => {
     ).rejects.toThrow('Vous ne pouvez pas agir au nom de cette entité');
   });
 
-  // Un ETG enregistre l'étape de transport du collecteur : le rôle porté par l'enregistrement
-  // n'est pas celui de l'utilisateur qui l'écrit.
   test("un rôle différent de celui de l'utilisateur est accepté", async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(baseCarcasse);
@@ -284,7 +278,6 @@ describe("syncCarcasseIntermediaire — identité de l'intermédiaire", () => {
 });
 
 describe("syncCarcasseIntermediaire — ligne d'une autre entité", () => {
-  // Le collecteur (entity-A) a transporté la carcasse jusqu'à l'ETG (entity-etg), qui l'a refusée.
   const ligneEtg = {
     ...baseCi,
     intermediaire_id: 'INT-ETG',

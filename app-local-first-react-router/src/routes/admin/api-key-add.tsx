@@ -117,7 +117,6 @@ export default function AdminNewApiKey() {
               <ButtonsGroup
                 buttons={[
                   {
-                    // children: navigation.state === 'idle' ? 'Créer' : 'Création en cours...',
                     children: isLoading ? 'Création en cours...' : 'Créer',
                     disabled: isLoading,
                     type: 'submit',

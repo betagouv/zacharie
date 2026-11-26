@@ -44,12 +44,10 @@ test('Double-clic Transmettre — pas de double soumission', async ({ page }) =>
   await page.getByText('Je, Martin Marie, certifie qu').click();
 
   const transmettre = page.getByRole('button', { name: 'Transmettre', exact: true });
-  // Double-click rapidly — should not create 2 fiches
   await transmettre.dblclick();
 
   await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 10000 });
 
-  // Vérifier qu'une seule fiche a été créée
   await page.getByRole('link', { name: 'Voir toutes les fiches' }).click();
   await expect(page.getByRole('link', { name: /ZACH-\d+-\w+-\d+/ })).toHaveCount(1, { timeout: 10000 });
 });

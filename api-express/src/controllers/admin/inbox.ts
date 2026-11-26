@@ -31,10 +31,6 @@ router.get(
           prisma.user.count({
             where: { onboarded_at: null, created_at: { lt: ilYASeptJours }, deleted_at: null },
           }),
-          // même règle que getLockoutState : un blocage (LOGIN_LOCKED) de la fenêtre, sans déblocage admin après lui.
-          // created_at est un timestamp sans fuseau stocké en UTC : la borne est calculée en UTC côté base,
-          // quel que soit le TimeZone de la session. Elle est écrite en ligne (pas de CTE) pour que le
-          // planificateur estime le nombre de lignes de la fenêtre et passe par l'index created_at
           prisma.$queryRaw<ComptesBloques>`
             SELECT u.id, u.prenom, u.nom_de_famille, u.email
             FROM "User" u

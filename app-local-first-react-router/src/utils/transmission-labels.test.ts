@@ -10,8 +10,6 @@ import {
 import type { CarcasseTransmission } from '@app/types/carcasse';
 import type { useEntitiesIdsWorkingDirectlyForObj } from '@app/utils/get-entity-relations';
 
-// `@app/zustand/user` pulls in the whole IndexedDB/localStorage store chain (via circuit-court.ts),
-// which we don't need here — stub it so the module graph stays light.
 vi.mock('@app/zustand/user', () => ({ default: {} }));
 
 import {
@@ -27,12 +25,10 @@ import {
 
 type EntitiesObj = ReturnType<typeof useEntitiesIdsWorkingDirectlyForObj>;
 
-// Minimal transmission factory — only the fields the label logic reads.
 function t(overrides: Partial<CarcasseTransmission> = {}): CarcasseTransmission {
   return { fei_numero: 'FEI-TEST', ...overrides } as CarcasseTransmission;
 }
 
-// Helper to fake "entity ids I work directly for". A key present (truthy value) means "mine".
 function working(...ids: string[]): EntitiesObj {
   return Object.fromEntries(ids.map((id) => [id, {}])) as unknown as EntitiesObj;
 }
@@ -265,7 +261,6 @@ describe('getCurrentStepLabelForEtg', () => {
     expect(
       getCurrentStepLabelForEtg('En cours', transportDone, working('etg-mine'), UserEtgRoles.TRANSPORT)
     ).toBe("En attente de prise en charge par l'atelier");
-    // la réception de l'ETG, elle, doit prendre en charge la fiche
     expect(
       getCurrentStepLabelForEtg('En cours', transportDone, working('etg-mine'), UserEtgRoles.RECEPTION)
     ).toBe('Fiche reçue, pas encore prise en charge');

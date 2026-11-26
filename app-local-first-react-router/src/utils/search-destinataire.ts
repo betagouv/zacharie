@@ -2,7 +2,6 @@ type DestinataireOption = { label: string | null; value: string };
 
 export type DestinataireResult<T extends DestinataireOption> = {
   option: T;
-  // vrai quand au moins un mot ne correspond qu'avec une faute de frappe
   isFuzzy: boolean;
 };
 
@@ -20,8 +19,6 @@ export function normalizeDestinataire(value: string): string {
     .trim();
 }
 
-// Nombre de fautes tolérées selon la longueur du mot tapé : aucune sous 5 lettres, sinon
-// un début de saisie comme « guel » trouverait aussi « Guéret ».
 function maxTypos(token: string): number {
   if (/^\d+$/.test(token)) return 0;
   if (token.length >= 8) return 2;
@@ -29,8 +26,6 @@ function maxTypos(token: string): number {
   return 0;
 }
 
-// Distance de Damerau-Levenshtein (variante « optimal string alignment ») entre le mot tapé et
-// le meilleur début du mot cible : « guel » est à 0 de « guellier », « guelier » à 1.
 function typoDistanceToWordStart(token: string, word: string): number {
   const rows = token.length + 1;
   const cols = word.length + 1;
@@ -56,7 +51,6 @@ function isShortToken(token: string): boolean {
 function scoreToken(token: string, words: Array<string>, fullLabel: string): number | null {
   if (words.includes(token)) return SCORE_EXACT_WORD;
   if (words.some((word) => word.startsWith(token))) return SCORE_WORD_START;
-  // un mot court (« 1 », « de ») trouvé au milieu d'un mot ne veut rien dire
   if (isShortToken(token)) return null;
   if (fullLabel.includes(token)) return SCORE_INSIDE_WORD;
   const allowed = maxTypos(token);
@@ -69,9 +63,6 @@ function scoreToken(token: string, words: Array<string>, fullLabel: string): num
   return best === null ? null : SCORE_TYPO + best;
 }
 
-// Chaque mot tapé doit correspondre à un mot du destinataire, exactement, en début de mot,
-// en milieu de mot ou avec une faute de frappe. Les mots de 1 ou 2 lettres (« le », « de »)
-// sont ignorés, sauf si la recherche n'a que ça ; les nombres courts (« ETG 1 ») sont gardés.
 export function searchDestinataires<T extends DestinataireOption>(
   options: Array<T>,
   search: string

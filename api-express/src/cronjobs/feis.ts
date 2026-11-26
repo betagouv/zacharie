@@ -1,12 +1,3 @@
-// import { getAtmoIndicator } from '~/aggregators/indice_atmo.ts';
-// import { getPollensIndicator } from '~/aggregators/pollens.ts';
-// import { getIndiceUVIndicator } from '~/aggregators/indice_uv.ts';
-// import { setupCronJob } from './utils';
-// import { capture } from '~/third-parties/sentry';
-// import { getWeatherAlert } from '~/aggregators/weather_alert';
-// import { getBathingWaterIndicator } from '~/aggregators/bathing_water';
-// // import { getDrinkingWaterIndicator } from '~/aggregators/drinking_water';
-
 import { capture } from '~/third-parties/sentry';
 import { setupCronJob } from './utils';
 import prisma from '~/prisma';
@@ -22,19 +13,6 @@ import { carcasseAvecTrichineNegatifFilter, TRICHINE_ESPECE_CONCERNEE } from '~/
 import { nextVersion } from '~/utils/sync-version';
 import { BrevoTemplateId } from '~/third-parties/brevo-templates';
 
-// /*
-// *
-// *
-
-// Initialization of the cron jobs
-// We call them one after the other,
-// in order to avoid to launch them all at the same time
-// and have logs that are mixed and not readable.
-
-// Test it: run `npm run dev-cronjobs` and check the logs
-
-// */
-
 export async function initFeisCron() {
   await Promise.resolve()
     .then(() => {
@@ -44,7 +22,6 @@ export async function initFeisCron() {
       async () =>
         await setupCronJob({
           name: 'Automatic Closing of Feis',
-          // every day at 8am
           cronTime: '0 8 * * *',
           job: automaticClosingOfFeis,
           runOnInit: true,
@@ -59,33 +36,23 @@ export async function initFeisCron() {
 export function getCarcassesToAutoCloseWhere(): Prisma.CarcasseWhereInput {
   return {
     svi_assigned_at: {
-      // start of day of assigned day is older than 10 days of start of day of today
       lte: dayjs().subtract(10, 'days').startOf('day').toDate(),
     },
     svi_closed_at: null,
     svi_automatic_closed_at: null,
     deleted_at: null,
-    // Une demande de modification en cours n'exclut pas la carcasse : elle est indicative, elle ne
-    // bloque ni l'ETG ni le SVI, donc elle ne doit pas non plus retenir l'auto-clôture.
   };
 }
 
 type AutomaticClosingOptions = {
-  // en local le cron ne fait rien ; le script manuel passe `force` pour exécuter quand même
   force?: boolean;
 };
 
 export async function automaticClosingOfFeis({ force = false }: AutomaticClosingOptions = {}) {
   console.log('Automatic closing of feis');
-  // Auto-clôture PAR CARCASSE : chaque carcasse assignée au SVI depuis plus de 10 jours
-  // est clôturée individuellement. La FEI n'est marquée close que lorsque TOUTES ses
-  // carcasses sont dans un état terminal (multi-destinataire : les lots progressent séparément).
   const carcassesToAutoClose = await prisma.carcasse.findMany({
     where: {
       ...getCarcassesToAutoCloseWhere(),
-      // Un sanglier ne s'auto-clôture qu'une fois un résultat de recherche de trichine négatif
-      // revenu. Sans résultat, ou avec un résultat défavorable, la décision revient au SVI
-      // (cf doc/trichine.md §6.2).
       ...(TRICHINE_FEATURE_ENABLED
         ? {
             OR: [
@@ -157,8 +124,6 @@ export async function automaticClosingOfFeis({ force = false }: AutomaticClosing
     });
   }
 
-  // Pour chaque FEI touchée : clôturer la FEI + notifier uniquement si TOUTES ses carcasses sont terminales.
-  // Regroupement par (fei_numero, destinataire du premier détenteur) ; le destinataire peut être null.
   const transmissions = new Map<
     string,
     { fei_numero: string; premier_detenteur_prochain_detenteur_id_cache: string | null }
@@ -170,7 +135,6 @@ export async function automaticClosingOfFeis({ force = false }: AutomaticClosing
       premier_detenteur_prochain_detenteur_id_cache: c.premier_detenteur_prochain_detenteur_id_cache,
     });
   }
-  // une transmission en erreur ne doit pas empêcher de notifier les suivantes
   for (const { fei_numero, premier_detenteur_prochain_detenteur_id_cache } of transmissions.values()) {
     try {
       await notifyTransmissionClosed(fei_numero, premier_detenteur_prochain_detenteur_id_cache);
@@ -196,7 +160,6 @@ async function notifyTransmissionClosed(
   if (!allCarcassesDone) return;
 
   const { object, text, params, push } = await formatFeiClosedEmail(fei_numero, carcasses);
-  // auto close and notify examinateur and premier detenteur
   const notification = {
     title: object,
     email: text,

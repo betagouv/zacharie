@@ -1,13 +1,6 @@
 import { CarcasseTransmission, CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
 import { Carcasse } from '@prisma/client';
 
-// parce qu'un Premier Détenteur peut
-// dispatcher ses carcasses d'une même Fei
-// à destination de plusieurs Prochains Détenteurs
-// chaque "groupe de carcasse" a ensuite un cycle de vie différent
-// toutefois, elles peuvent se retrouver chez le même SVI,
-// voire chez le même Destinataire après un trajet différent
-// il faut donc un autre moyen de les discriminer selon un identifiant unique : le voici
 export function getTransmissionId(
   transmission: Pick<CarcasseTransmission, 'fei_numero' | 'premier_detenteur_prochain_detenteur_id_cache'>
 ) {
@@ -21,10 +14,6 @@ export function buildTransmissionId(numero: string, id?: string) {
   return `${numero}__`;
 }
 
-// id de transmission à partir de l'objet enrichi (listes/grilles de fiches),
-// identique à la clé sous laquelle `useTransmissions` indexe la transmission.
-// une fiche tout juste créée n'a pas encore de carcasse : son content est la Fei brute
-// (sans fei_numero), on retombe alors sur l'id simulé par le seul numéro de fiche.
 export function getTransmissionIdFromMetadata(transmission: CarcasseTransmissionWihMetadata) {
   if (!transmission.content.premier_detenteur_prochain_detenteur_id_cache) {
     return buildTransmissionId(transmission.fei.numero);

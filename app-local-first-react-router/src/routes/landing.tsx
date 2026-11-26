@@ -11,7 +11,6 @@ export default function LandingPage() {
         la Souveraineté Alimentaire
       </title>
       <main>
-        {/* Hero Section */}
         <section className="min-h-96 bg-[#A38A6C] bg-[url('/landing/gradient-cerf.webp')] bg-cover bg-center bg-no-repeat py-16 pb-32 lg:min-h-[740px] lg:py-24 2xl:py-36">
           <div className="h-full w-full px-4 lg:px-8 xl:px-32 2xl:px-[12%]">
             <div className="grid h-full items-center gap-12 lg:grid-cols-2">
@@ -116,10 +115,8 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Features Section */}
         <section className="relative grid items-center bg-white lg:flex">
           <div className="relative z-10 -mt-8 flex justify-start lg:-mt-16 lg:basis-1/2 2xl:basis-1/3">
-            {/* Phone mockup */}
             <img
               src="/landing/MAIN APPLI_TBD.webp"
               alt="Mockup de l'application Zacharie sur smartphone"
@@ -189,7 +186,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Testimonials Section */}
         <section className="bg-[url('/landing/testimonials-bg.webp')] bg-cover bg-center bg-no-repeat py-12">
           <div className="h-full w-full px-4 lg:px-8 xl:px-[12%]">
             <div className="grid gap-8 lg:grid-cols-2 2xl:gap-30">
@@ -224,7 +220,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Partenaires de valorisation Section */}
         <section className="bg-action-high-blue-france/5 py-8">
           <div className="w-full px-4 lg:px-8 xl:px-32 2xl:px-[12%]">
             <div className="grid items-center gap-12 lg:grid-cols-2">
@@ -279,7 +274,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Répartition des carcasses Section */}
         <section className="grid items-stretch bg-white bg-[url('/landing/testimonials-bg.webp')] bg-cover bg-center bg-no-repeat lg:grid-cols-2">
           <div className="min-h-72">
             <img
@@ -314,7 +308,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Le saviez-vous Section */}
         <section className="grid items-stretch lg:grid-cols-2">
           <div className="bg-action-high-blue-france/5 flex flex-col justify-center gap-6 p-8 text-center lg:p-16 2xl:px-32">
             <h2 className="text-action-high-blue-france text-2xl font-bold lg:text-right lg:text-3xl 2xl:text-4xl">
@@ -345,7 +338,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Contact Section */}
         <section className="bg-[url('/landing/testimonials-bg.webp')] bg-cover bg-center bg-no-repeat py-16 lg:py-24">
           <div className="flex h-full w-full flex-col items-center justify-center px-4 text-center lg:px-8 xl:px-[12%] 2xl:min-h-96">
             <h3 className="text-action-high-blue-france mb-8 rounded text-2xl font-medium text-shadow-2xs lg:text-3xl 2xl:mb-16 2xl:text-4xl">

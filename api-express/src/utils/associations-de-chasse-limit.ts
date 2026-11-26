@@ -5,7 +5,6 @@ export const MAX_ASSOCIATIONS_DE_CHASSE = 5;
 
 export const MAX_ASSOCIATIONS_DE_CHASSE_ERROR = `Vous ne pouvez pas être rattaché à plus de ${MAX_ASSOCIATIONS_DE_CHASSE} associations de chasse.`;
 
-// les demandes en attente comptent : sinon un chasseur pourrait en demander autant qu'il veut
 export async function hasReachedMaxAssociationsDeChasse(userId: string) {
   const count = await prisma.entityAndUserRelations.count({
     where: {

@@ -27,12 +27,10 @@ test('0 carcasse → bouton Transmettre désactivé', async ({ page }) => {
   await page.getByRole('button', { name: 'Pierre Petit' }).click();
   await page.getByRole('button', { name: 'Continuer' }).first().click();
 
-  // Aucune carcasse ajoutée
   const transmettre = page.getByRole('button', { name: 'Transmettre', exact: true });
   if (await transmettre.count()) {
     await expect(transmettre).toBeDisabled();
   } else {
-    // Transmettre pas encore atteignable tant que bloc 2 non validé — attendu
     await expect(page.getByRole('button', { name: /Ajouter une carcasse/i }).first()).toBeVisible();
   }
 });

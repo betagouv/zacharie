@@ -29,7 +29,6 @@ interface TableProps<T> {
   withCheckbox?: boolean;
   onRowClick?: (item: T) => void;
   rowDisabled?: (item: T) => boolean;
-  /** Lignes que la sélection ne peut pas prendre : leur case est présente mais désactivée */
   checkboxDisabled?: (item: T) => boolean;
   nullDisplay?: string;
   className?: string;
@@ -83,8 +82,6 @@ export default function TableFilterable<T>({
     toggleRow(event.currentTarget.id);
   };
 
-  // La sélection peut couvrir plusieurs pages alors que `data` n'est que la page affichée :
-  // la case d'en-tête n'ajoute/retire donc que les lignes visibles, sans écraser le reste.
   const pageKeys = data.filter((item) => !checkboxDisabled(item)).map((item) => item[rowKey] as string);
   const isWholePageChecked = pageKeys.length > 0 && pageKeys.every((key) => checked.includes(key));
   const toggleWholePage = () => {

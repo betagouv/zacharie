@@ -58,7 +58,6 @@ export default function EtgUtilisateur() {
     loadData('etg-utilisateur');
   }, []);
 
-  // carcasses de l'utilisateur dans le périmètre ETG (déjà scopé dans le store)
   const userCarcasses = useMemo(() => {
     if (!userId) return [];
     const interCarcasseIds = new Set<string>();
@@ -77,8 +76,6 @@ export default function EtgUtilisateur() {
     );
   }, [carcassesRegistry, carcassesIntermediaireById, userId]);
 
-  // Rajouts de carcasse par l'ETG : carcasses oubliées par ce chasseur à l'examen initial et
-  // ajoutées par l'ETG à la réception (modif request NEW_CARCASSE émise par une entité ETG).
   const rajoutsEtg = useMemo(() => {
     if (!userId) return { count: 0, total: 0, taux: 0 };
     const etgEntityIds = new Set(
@@ -189,7 +186,6 @@ export default function EtgUtilisateur() {
   );
 }
 
-// Libellé de statut unifié (masculin/féminin fusionnés pour ne pas dédoubler les parts du donut).
 type StatusDisplayLabel =
   | 'Saisie totale'
   | 'Saisie partielle'
@@ -216,25 +212,20 @@ function normalizeStatusLabel(label: CarcasseStatusLabel): StatusDisplayLabel {
   }
 }
 
-// Couleur stable par statut SVI (même statut = même couleur d'un utilisateur à l'autre).
 const STATUS_COLORS: Record<StatusDisplayLabel, string> = {
-  'Saisie totale': '#e1000f', // rouge
-  'Saisie partielle': '#fa5252', // rouge clair
-  'En traitement assainissant': '#7048e8', // violet
-  'Consigné(e)': '#f59f00', // ambre
-  'Levée de consigne': '#37b24d', // vert
-  'Accepté(e)': '#1971c2', // bleu
-  'Manquant(e)': '#868e96', // gris
-  'Sans décision': '#ced4da', // gris clair
+  'Saisie totale': '#e1000f',
+  'Saisie partielle': '#fa5252',
+  'En traitement assainissant': '#7048e8',
+  'Consigné(e)': '#f59f00',
+  'Levée de consigne': '#37b24d',
+  'Accepté(e)': '#1971c2',
+  'Manquant(e)': '#868e96',
+  'Sans décision': '#ced4da',
 };
 
-// Motifs de la décision finale (saisie totale / partielle).
 const getSaisieMotifs = (c: Carcasse) => c.svi_ipm2_lesions_ou_motifs ?? [];
-// Motifs de la mise en consigne (raisons initiales, conservées même après levée).
 const getConsigneMotifs = (c: Carcasse) => c.svi_ipm1_lesions_ou_motifs ?? [];
 
-// Statistiques d'un périmètre (saisies totales, partielles, consignes levées) :
-// taux par rapport au total, part liée à l'hygiène, et motifs associés.
 function computePerimetre(
   carcasses: Array<Carcasse>,
   total: number,
@@ -298,7 +289,6 @@ function SaisieStats({ carcasses }: { carcasses: Array<Carcasse> }) {
         pct: total > 0 ? Math.round((value / total) * 100) : 0,
       }));
 
-    // Saisies globales = saisies totales + partielles (hors consignes levées).
     const saisiesGlobales = [...saisiesTotales, ...saisiesPartielles];
     const saisiesCount = saisiesGlobales.length;
     return {
@@ -394,7 +384,6 @@ function SaisieStats({ carcasses }: { carcasses: Array<Carcasse> }) {
   );
 }
 
-// Section saisies/consignes : taux du périmètre, part liée à l'hygiène, motifs associés.
 function PerimetreSection({
   title,
   tauxLabel,

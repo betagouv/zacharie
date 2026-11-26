@@ -23,7 +23,6 @@ test('Le compte est verrouillé après 5 tentatives échouées avec un mauvais m
     await expect(page.getByText('Email ou mot de passe incorrect')).toBeVisible({ timeout: 5000 });
   }
 
-  // 5th attempt triggers lockout
   await connectWith(page, email, wrongPassword, false);
   await expect(page.getByText('Trop de tentatives')).toBeVisible({ timeout: 5000 });
 });
@@ -49,7 +48,6 @@ test('Un email inexistant est aussi verrouillé après 5 tentatives', async ({ p
     await expect(page.getByText('Email ou mot de passe incorrect')).toBeVisible({ timeout: 5000 });
   }
 
-  // 5th attempt triggers lockout even for non-existing email
   await connectWith(page, fakeEmail, wrongPassword, false);
   await expect(page.getByText('Trop de tentatives')).toBeVisible({ timeout: 5000 });
 });

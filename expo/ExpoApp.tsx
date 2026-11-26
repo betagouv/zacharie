@@ -29,17 +29,10 @@ SplashScreen.preventAutoHideAsync();
 
 const initScript = `window.ENV = {};window.ENV.APP_PLATFORM = "native";true`;
 
-/**
- * Chemin (+ query) d'un lien universel `https://zacharie.beta.gouv.fr/...` ou
- * d'un lien `zacharie://...`. Ces liens (mail de réinitialisation de mot de
- * passe, invitation, notification) ouvrent l'app : on doit charger ce
- * chemin-là, et non l'`initial-path` stocké.
- */
 function getPathFromDeepLink(url: string | null | undefined): string | null {
   if (!url) return null;
   try {
     const parsed = new URL(url);
-    // en scheme custom (`zacharie://app/connexion`), le premier segment est le host
     const pathname = parsed.protocol === 'zacharie:' ? `/${parsed.host}${parsed.pathname}` : parsed.pathname;
     const path = `${pathname}${parsed.search}`.replace(/\/{2,}/g, '/');
     if (!path || path === '/') return null;
@@ -49,10 +42,6 @@ function getPathFromDeepLink(url: string | null | undefined): string | null {
   }
 }
 
-/**
- * Chemin de l'app (`/app/...`) porté par une notification push (`data.url`, cf.
- * api-express/src/third-parties/expo-push.ts) : on l'ouvre quand on touche la notification.
- */
 function getPathFromNotificationResponse(response: Notifications.NotificationResponse | null): string | null {
   const url = response?.notification.request.content.data?.url;
   if (typeof url !== 'string' || !url.startsWith('/app/')) return null;
@@ -78,8 +67,6 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Hand off the native splash to <Chargement /> only once Marianne is
-    // available, otherwise the loader briefly renders with the system font.
     if (fontsLoaded) {
       setTimeout(() => {
         SplashScreen.hideAsync();
@@ -93,7 +80,6 @@ function App() {
       Notifications.getLastNotificationResponseAsync().catch(() => null),
       AsyncStorage.getItem('initial-path'),
     ]).then(([initialUrl, notificationResponse, storedPath]) => {
-      // un lien ouvert depuis un mail ou une notification prime sur le dernier chemin mémorisé
       const initialPath =
         getPathFromDeepLink(initialUrl) ||
         getPathFromNotificationResponse(notificationResponse) ||
@@ -118,8 +104,6 @@ function App() {
     });
   }, []);
 
-  // Au retour au premier plan, on vérifie seulement si une nouvelle version existe : elle n'est téléchargée
-  // qu'au prochain lancement. La page affiche alors un message invitant à rouvrir l'application.
   const isCheckingSpa = useRef(false);
   useEffect(() => {
     if (!spaReady) return;
@@ -138,7 +122,6 @@ function App() {
     return () => subscription.remove();
   }, [spaReady]);
 
-  // lien ouvert alors que l'app tourne déjà : la SPA navigue via pushState + popstate
   useEffect(() => {
     const subscription = Linking.addEventListener('url', ({ url }) => {
       const path = getPathFromDeepLink(url);
@@ -156,7 +139,6 @@ function App() {
         .then((response) => {
           console.log('getLastNotificationResponseAsync', response);
           if (response) {
-            // ref.current?.injectJavaScript(`window.onNotificationResponseReceived('${JSON.stringify(response)}');`);
             Notifications.clearLastNotificationResponseAsync();
           }
         })
@@ -170,7 +152,6 @@ function App() {
   const onPushNotification = (event: WebViewMessageEvent) => {
     const requestPush = event.nativeEvent.data === 'request-native-push-permission';
     const requestExpoPush = event.nativeEvent.data === 'request-native-expo-push-permission';
-    // const readToken = event.nativeEvent.data === "request-native-get-token-if-exists";
     const readExpoToken = event.nativeEvent.data === 'request-native-get-expo-token';
     registerForPushNotificationsAsync({
       force: requestPush || requestExpoPush,
@@ -187,7 +168,7 @@ function App() {
   const onAndroidBackPress = () => {
     if (ref.current) {
       ref.current.goBack();
-      return true; // prevent default behavior (exit app)
+      return true;
     }
     return false;
   };
@@ -237,7 +218,6 @@ function App() {
   useEffect(() => {
     responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
       console.log('responseListener', response);
-      // notification touchée alors que l'app tourne déjà : la SPA navigue via pushState + popstate
       const path = getPathFromNotificationResponse(response);
       if (path) navigateInWebView(ref.current, path);
     });
@@ -267,9 +247,6 @@ function App() {
             originWhitelist={['*']}
             pullToRefreshEnabled
             allowsBackForwardNavigationGestures
-            // La page s'est arrêtée (mémoire) : aucun fichier n'est utilisé, on peut installer la nouvelle
-            // version avant de recharger. Sinon l'app, gardée en mémoire des semaines (iPad, Mac), recharge
-            // toujours la version téléchargée à son lancement.
             onContentProcessDidTerminate={() => {
               checkAndDownloadSpa().finally(() => ref.current?.reload());
             }}

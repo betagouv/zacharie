@@ -5,8 +5,6 @@ export const BAC_A_SABLE_URL = 'http://localhost:3292';
 const PGBASEURL = process.env.PGBASEURL ?? 'postgres://postgres:postgres@localhost:5432';
 const DATABASE = 'zacharie-api-playground-test';
 
-// Base du bac à sable : créée si besoin, puis vidée. On vide (TRUNCATE) sans supprimer les tables,
-// car le serveur du bac à sable ne crée ses tables qu'une fois au démarrage.
 export async function resetBacASable() {
   const admin = new pg.Client({ connectionString: `${PGBASEURL}/postgres` });
   await admin.connect();
@@ -24,7 +22,6 @@ export async function resetBacASable() {
   await client.end();
 }
 
-// Le bac à sable est rendu côté serveur : on attend que React ait pris la main avant d'agir
 export async function gotoBacASable(page: Page, path: string) {
   await page.goto(`${BAC_A_SABLE_URL}${path}`);
   await page.waitForLoadState('networkidle');

@@ -11,7 +11,6 @@ test.use({
   launchOptions: { slowMo: 100 },
 });
 
-// Seed : « Association de chasseurs » a deux admins, premier-detenteur@ et examinateur-premier-detenteur@.
 const PROFIL_URL = 'http://localhost:3290/app/chasseur/profil/informations-de-chasse';
 const ASSOCIATION = 'Association de chasseurs';
 
@@ -19,7 +18,6 @@ test.beforeEach(async () => {
   await resetDb('PREMIER_DETENTEUR');
 });
 
-// accepte toutes les boîtes de dialogue (confirm / alert) et garde leurs messages
 function acceptAndRecordDialogs(page: Page) {
   const messages: string[] = [];
   page.on('dialog', async (dialog) => {
@@ -70,7 +68,6 @@ test('Le dernier admin ne peut ni quitter l’association ni retirer ses droits 
   await connectWith(page, 'examinateur-premier-detenteur@example.fr');
   await expect(page).toHaveURL(/\/app\/chasseur/, { timeout: 15000 });
 
-  // l'autre admin devient simple membre
   let usersDialog = await openUsersDialog(page);
   const otherAdminRow = usersDialog
     .locator('.bg-contrast-grey')
@@ -82,11 +79,9 @@ test('Le dernier admin ne peut ni quitter l’association ni retirer ses droits 
     .poll(() => dialogs.at(-1), { timeout: 10000 })
     .toBe("Voulez-vous vraiment retirer les droits d'administrateur à cet utilisateur ?");
 
-  // la liste est rechargée après la modification (la modale se ferme) : on la rouvre
   usersDialog = await openUsersDialog(page);
   await expect(otherAdminRow.getByText('Membre', { exact: true })).toBeVisible({ timeout: 10000 });
 
-  // retirer ses propres droits d'admin est refusé
   const myRow = usersDialog
     .locator('.bg-contrast-grey')
     .filter({ hasText: 'examinateur-premier-detenteur@example.fr' });
@@ -98,7 +93,6 @@ test('Le dernier admin ne peut ni quitter l’association ni retirer ses droits 
       'Vous êtes le seul administrateur de cette entité. Nommez un autre administrateur avant de retirer vos droits.'
     );
 
-  // quitter l'association est refusé
   await leaveAssociation(page);
   await expect
     .poll(() => dialogs.at(-1), { timeout: 10000 })
@@ -106,7 +100,6 @@ test('Le dernier admin ne peut ni quitter l’association ni retirer ses droits 
       'Vous êtes le seul administrateur de cette entité. Nommez un autre administrateur avant de la quitter.'
     );
 
-  // l'association et les droits d'admin sont toujours là
   await page.goto(PROFIL_URL);
   await expect(associationCard(page).getByRole('button', { name: 'Voir les utilisateurs' })).toBeVisible({
     timeout: 10000,

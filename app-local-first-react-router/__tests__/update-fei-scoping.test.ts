@@ -44,15 +44,11 @@ describe('updateFei ne réécrit que les carcasses encore chez le chasseur', () 
     useZustandStore.setState({
       feis: { [FEI_NUMERO]: makeFei() },
       carcasses: {
-        // encore chez le chasseur
         RESTANTE: makeCarcasse('RESTANTE'),
-        // destinataire choisi, pas encore prise en charge
         ENVOYEE: makeCarcasse('ENVOYEE', { next_owner_entity_id: 'ETG-1' }),
-        // gardée par le premier détenteur pour son usage domestique privé
         GARDEE: makeCarcasse('GARDEE', {
           consommateur_final_usage_domestique: new Date('2026-05-22T11:00:00.000Z'),
         }),
-        // prise en charge par l'ETG
         CHEZ_ETG: makeCarcasse('CHEZ_ETG', {
           current_owner_role: FeiOwnerRole.ETG,
           current_owner_entity_id: 'ETG-1',
@@ -61,10 +57,6 @@ describe('updateFei ne réécrit que les carcasses encore chez le chasseur', () 
     });
   });
 
-  // Régression : createCarcasse appelle updateFei, qui repassait TOUTES les carcasses de la fiche
-  // en is_synced=false. Le /sync repoussait alors les carcasses prises en charge par l'aval,
-  // entières, depuis le snapshot local du chasseur — et syncCarcasse applique le body sans comparer
-  // updated_at, donc le snapshot périmé écrasait la prise en charge.
   test('les carcasses prises en charge en aval ne sont pas remises en file de synchronisation', () => {
     useZustandStore.getState().updateFei(FEI_NUMERO, { commune_mise_a_mort: 'CHASSENARD' });
 
@@ -73,9 +65,6 @@ describe('updateFei ne réécrit que les carcasses encore chez le chasseur', () 
     expect(carcasses.CHEZ_ETG.is_synced).toBe(true);
   });
 
-  // La frontière est la prise en charge, pas le choix du destinataire : tant que l'ETG n'a pas pris
-  // en charge, le chasseur reste détenteur courant, peut encore corriger la fiche, et ces
-  // corrections doivent bien redescendre sur la carcasse.
   test('une carcasse transmise mais pas encore prise en charge suit toujours la fiche', () => {
     useZustandStore.getState().updateFei(FEI_NUMERO, { heure_mise_a_mort_premiere_carcasse: '07:15' });
 
@@ -93,9 +82,6 @@ describe('updateFei ne réécrit que les carcasses encore chez le chasseur', () 
     expect(carcasses.ENVOYEE.next_owner_entity_id).toBe('ETG-1');
   });
 
-  // Régression : `consommateur_final_usage_domestique` est propre à la carcasse — le premier
-  // détenteur ne garde parfois qu'une partie de son gibier. Recopié depuis la fiche, il était remis
-  // à null à la moindre modification de celle-ci et la carcasse gardée repartait « à attribuer ».
   test("l'usage domestique privé d'une carcasse survit à une modification de la fiche", () => {
     useZustandStore.getState().updateFei(FEI_NUMERO, { commune_mise_a_mort: 'CHASSENARD' });
 

@@ -47,7 +47,6 @@ export default function LaboratoireFTP() {
   const { reference } = useParams();
   const { isDownloading, onDownloadFtpPdf } = useDownloadFtpPdf('laboratoire');
   const [ftp, setFtp] = useState<LaboFTPDetail | null>(null);
-  // Une fiche que le labo a émise (confirmation vers le LNR) se consulte, elle ne se traite pas
   const [direction, setDirection] = useState<LaboFTPDirection>('recue');
   const [historique, setHistorique] = useState<Array<TrichineHistoriqueStatut>>([]);
   const [isLnr, setIsLnr] = useState(false);
@@ -227,7 +226,6 @@ export default function LaboratoireFTP() {
         </TrichineCard>
       )}
 
-      {/* Le LNR consulte les photographies jointes par le LVD */}
       {!envoyee && photosLarve.length > 0 && (
         <TrichineCard titre="Photographies jointes par le laboratoire émetteur">
           <LarvePhotos

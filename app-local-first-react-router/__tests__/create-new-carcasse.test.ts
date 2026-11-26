@@ -31,7 +31,6 @@ function makeFei(overrides: Partial<Fei> = {}): Fei {
     examinateur_initial_approbation_mise_sur_le_marche: true,
     examinateur_initial_date_approbation_mise_sur_le_marche: new Date(),
     consommateur_final_usage_domestique: null,
-    // FEI is already owned by the PREMIER_DETENTEUR — the carcasse must NOT inherit those values
     fei_current_owner_user_id: 'PD-USER-1',
     fei_current_owner_user_name_cache: 'Pierre Petit',
     fei_current_owner_entity_id: 'PD-ENTITY-1',
@@ -57,8 +56,6 @@ describe('createNewCarcasse', () => {
   });
 
   test('new carcasse is born as EXAMINATEUR_INITIAL owned by the examinateur, with empty prev/consommateur', async () => {
-    // Examen initial pas encore certifié : la carcasse démarre chez l'examinateur et n'hérite
-    // pas des fei_current_owner_*.
     const fei = makeFei({ examinateur_initial_approbation_mise_sur_le_marche: false });
 
     await createNewCarcasse({
@@ -97,7 +94,7 @@ describe('createNewCarcasse', () => {
       zacharieCarcasseId: `${fei.numero}_NEW-BRACELET-2`,
       numeroBracelet: 'NEW-BRACELET-2',
       espece: 'Daim',
-      nombreDAnimaux: '5', // ignored for gros gibier
+      nombreDAnimaux: '5',
       fei,
     });
 
@@ -106,8 +103,6 @@ describe('createNewCarcasse', () => {
     expect(carcasse.nombre_d_animaux).toBe(1);
   });
 
-  // Examen initial déjà certifié : la fiche est passée au premier détenteur, une carcasse ajoutée
-  // ensuite y est directement, pour que les autres membres de l'association la voient aussi.
   test('carcasse added after the examen certification is born as PREMIER_DETENTEUR of the association', async () => {
     const fei = makeFei({
       premier_detenteur_entity_id: 'PD-ENTITY-1',

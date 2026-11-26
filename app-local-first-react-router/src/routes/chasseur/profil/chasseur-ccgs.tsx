@@ -17,7 +17,6 @@ export default function MesCCGs() {
   const [userCCGs, setUserCCGs] = useState<Array<Entity>>([]);
   const user = useUser((state) => state.user)!;
 
-  // Add this handler for CCG radio buttons
   const handleUserSubmit = useCallback(
     async (checked_has_ccg: boolean) => {
       const body: Record<string, string | null> = {};
@@ -48,8 +47,6 @@ export default function MesCCGs() {
     refreshUserCCGs();
   }, []);
 
-  // aucune option n'est cochée tant que l'utilisateur n'a pas répondu
-  // `checked_has_ccg` renseigné sans CCG enregistré = l'utilisateur a répondu "Non"
   const [ccgAnswer, setCCGAnswer] = useState<'oui' | 'non' | null>(user.checked_has_ccg ? 'non' : null);
   const [newCCGExpanded, setNewCCGExpanded] = useState(false);
   const [registerOneMoreCCG, setRegisterOneMoreCCG] = useState(false);
@@ -127,7 +124,6 @@ export default function MesCCGs() {
                   checked: ccgAnswer === 'non',
                   name: 'not_checked_has_ccg',
                   onClick: () => {
-                    // on enregistre que l'utilisateur a répondu, même s'il n'a pas de chambre froide
                     handleUserSubmit(true);
                     setNewCCGExpanded(false);
                     setRegisterOneMoreCCG(false);
@@ -140,7 +136,6 @@ export default function MesCCGs() {
           />
         )}
 
-        {/* Only show CCG list and add buttons if user has CCGs or checked_has_ccg is true */}
         {(userCCGs.length > 0 || user.checked_has_ccg) && (
           <>
             {userCCGs.map((entity) => {

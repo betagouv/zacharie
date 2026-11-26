@@ -14,10 +14,6 @@ import { syncCarcasseIntermediaire } from '~/utils/sync-carcasse-intermediaire';
 import { syncCarcasseModifRequest } from '~/utils/sync-carcasse-modification-request';
 import { createSyncScope } from '~/utils/sync-scope';
 
-// Cloisonnement en écriture (lot 3 de l'audit) : avant, tout compte activé pouvait écraser la
-// fiche, la carcasse ou l'intermédiaire d'un tiers en connaissant son identifiant. Ces tests
-// construisent un vrai `SyncScope` (pas de mock) contre un prisma mocké.
-
 const attaquant = {
   id: 'user-etg-2',
   roles: [UserRoles.ETG],
@@ -33,7 +29,6 @@ const proprietaire = {
   isZacharieAdmin: false,
 } as unknown as User;
 
-// Fiche d'un tiers : ni créée, ni examinée, ni détenue par l'attaquant.
 const feiTierce = {
   numero: 'FEI-VICTIME',
   deleted_at: null,
@@ -52,9 +47,7 @@ const carcasseTierce = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // L'attaquant appartient bien à une entité — ce n'est pas ce qui doit le bloquer.
   vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValue([{ entity_id: 'entity-etg-2' }] as any);
-  // Aucune carcasse de la fiche tierce n'est dans son périmètre.
   vi.mocked(prisma.carcasse.findMany).mockResolvedValue([]);
   vi.mocked(prisma.carcasse.count).mockResolvedValue(0);
 });
@@ -106,9 +99,6 @@ describe('syncFei — écriture sur une fiche tierce', () => {
 });
 
 describe("syncFei — asso désignée premier détenteur, fiche encore chez l'examinateur", () => {
-  // Le périmètre de lecture n'ouvre la fiche aux membres de l'asso désignée qu'une fois celle-ci
-  // sortie de l'examinateur initial (`current_owner_role != EXAMINATEUR_INITIAL` dans
-  // `getCarcasseAccessWhere`). L'écriture doit s'aligner : la désignation seule ne suffit pas.
   const membreAsso = {
     id: 'user-asso',
     roles: [UserRoles.CHASSEUR],
@@ -124,7 +114,6 @@ describe("syncFei — asso désignée premier détenteur, fiche encore chez l'ex
 
   test('désignée mais pas encore transmise : aucune carcasse dans le périmètre → écriture refusée', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
-    // La fiche est encore chez l'examinateur : le WHERE de lecture ne matche aucune carcasse.
     vi.mocked(prisma.carcasse.count).mockResolvedValue(0);
 
     await expect(
@@ -152,7 +141,6 @@ describe("syncFei — asso désignée premier détenteur, fiche encore chez l'ex
     );
 
     expect(prisma.fei.update).toHaveBeenCalled();
-    // Le décompte porte bien la condition de sortie de l'examinateur initial.
     const countArgs = vi.mocked(prisma.carcasse.count).mock.calls[0][0];
     expect(countArgs?.where).toMatchObject({
       fei_numero: 'FEI-VICTIME',
@@ -183,11 +171,8 @@ describe("syncFei — asso désignée premier détenteur, fiche encore chez l'ex
 });
 
 describe('syncFei — auto-attribution des colonnes de rattachement', () => {
-  // `canWriteFei` accorde l'écriture sur ces colonnes-là : un détenteur aval qui les réécrit se
-  // donne un accès à la fiche que la fin du circuit ne lui retirera plus.
   test("un détenteur aval ne peut pas s'inscrire comme premier détenteur", async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
-    // Il détient une carcasse de la fiche : c'est par là qu'il obtient le droit d'écrire.
     vi.mocked(prisma.carcasse.count).mockResolvedValue(1);
     vi.mocked(prisma.fei.update).mockResolvedValueOnce(feiTierce);
 
@@ -203,8 +188,6 @@ describe('syncFei — auto-attribution des colonnes de rattachement', () => {
       await createSyncScope(attaquant)
     );
 
-    // La fiche n'est pas rejetée, les colonnes de rattachement sont ignorées — dont le name cache,
-    // qui est la valeur affichée partout dans l'app.
     const updateArgs = vi.mocked(prisma.fei.update).mock.calls[0][0];
     expect(updateArgs.data).not.toHaveProperty('commune_mise_a_mort');
     expect(updateArgs.data).not.toHaveProperty('premier_detenteur_entity_id');
@@ -231,8 +214,6 @@ describe('syncFei — auto-attribution des colonnes de rattachement', () => {
     expect(prisma.fei.update).toHaveBeenCalled();
   });
 
-  // L'approbation de mise sur le marché est la signature réglementaire de l'examinateur initial.
-  // Contrairement aux refus, cette écriture-là réussit silencieusement : rien ne la signalerait.
   test("un détenteur aval ne peut pas signer l'approbation de mise sur le marché", async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
     vi.mocked(prisma.carcasse.count).mockResolvedValue(1);
@@ -270,8 +251,6 @@ describe('syncFei — auto-attribution des colonnes de rattachement', () => {
     expect(updateArgs.data).toMatchObject({ examinateur_initial_approbation_mise_sur_le_marche: true });
   });
 
-  // Quand une asso est désignée premier détenteur, c'est un de ses membres qui valide, et il n'est
-  // rattaché à la fiche que par son entité — `isFeiOwner` seul l'aurait bloqué à tort.
   test("un membre de l'asso désignée premier détenteur signe l'approbation", async () => {
     const membreAsso = {
       id: 'user-chasseur-asso',
@@ -313,8 +292,6 @@ describe('syncFei — auto-attribution des colonnes de rattachement', () => {
 });
 
 describe("syncCarcasse — auto-attribution de l'examen initial", () => {
-  // `examinateur_initial_user_id` commande l'approbation des demandes de modification : se
-  // l'attribuer revient à approuver ses propres demandes.
   test("un détenteur aval ne peut pas s'attribuer l'examen initial", async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(carcasseTierce);
@@ -329,7 +306,6 @@ describe("syncCarcasse — auto-attribution de l'examen initial", () => {
       await createSyncScope(attaquant)
     );
 
-    // La colonne suit la fiche, pas le corps de la requête.
     const updateArgs = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
     expect(updateArgs.data).toMatchObject({ examinateur_initial_user_id: proprietaire.id });
   });
@@ -361,8 +337,6 @@ describe("syncCarcasse — auto-attribution de l'examen initial", () => {
 });
 
 describe('examinateur initial — fixé à la création, jamais réécrit par la synchro', () => {
-  // Premier détenteur désigné, distinct de l'examinateur : `isFeiOwner` lui ouvre les colonnes de
-  // rattachement, mais l'examinateur initial n'en fait pas partie.
   const premierDetenteur = {
     id: 'user-pd',
     roles: [UserRoles.CHASSEUR],
@@ -482,15 +456,11 @@ describe('syncCarcasse — écriture sur une carcasse tierce', () => {
     expect(prisma.carcasse.update).toHaveBeenCalled();
   });
 
-  // Le périmètre ne mémorise que les accès accordés : une carcasse créée ou transmise plus tard
-  // dans la même requête doit pouvoir y entrer, un refus mis en cache la bloquerait à tort.
   test('un refus antérieur dans la même requête ne fige pas le périmètre', async () => {
     const scope = await createSyncScope(attaquant);
-    // Au moment du pré-chargement, la carcasse n'est pas encore dans le périmètre.
     await scope.prefetch(['ZC-VICTIME']);
     expect(await scope.canWriteCarcasse('ZC-VICTIME')).toBe(false);
 
-    // Elle vient de lui être transmise par une écriture antérieure du même lot.
     vi.mocked(prisma.carcasse.findMany).mockResolvedValue([{ zacharie_carcasse_id: 'ZC-VICTIME' }] as any);
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(carcasseTierce);
@@ -546,8 +516,6 @@ describe('syncCarcasse — écriture sur une carcasse tierce', () => {
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(null);
     vi.mocked(prisma.carcasse.create).mockResolvedValueOnce(carcasseTierce);
     vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(carcasseTierce);
-    // La ligne nue tout juste créée ne matche aucun périmètre : si le scope ne l'accordait pas de
-    // lui-même, un update en échec la rendrait définitivement inaccessible à son propre créateur.
     vi.mocked(prisma.carcasse.findMany).mockResolvedValue([]);
 
     const scope = await createSyncScope(proprietaire);
@@ -562,8 +530,6 @@ describe('syncCarcasse — écriture sur une carcasse tierce', () => {
     await expect(scope.canWriteCarcasse('ZC-NOUVELLE')).resolves.toBe(true);
   });
 
-  // Les droits par rôle (examen, suppression…) se lisent sur la fiche du corps : envoyer une
-  // carcasse de son périmètre avec sa propre fiche ne doit pas en faire l'examinateur.
   test('une carcasse ne peut pas être écrite via une autre fiche que la sienne', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce({
       ...feiTierce,
@@ -638,8 +604,6 @@ describe('syncCarcasse — écriture sur une carcasse tierce', () => {
 });
 
 describe('syncCarcasseIntermediaire — écriture sur une carcasse tierce', () => {
-  // C'était l'escalade la plus directe : créer une ligne d'intermédiaire à son propre nom sur une
-  // carcasse tierce la faisait entrer dans le périmètre de lecture ETG/collecteur.
   test("on ne peut pas s'ajouter comme intermédiaire sur une carcasse hors périmètre", async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(carcasseTierce);
@@ -690,8 +654,6 @@ describe('syncCarcasseIntermediaire — écriture sur une carcasse tierce', () =
 });
 
 describe('syncCarcasseModifRequest — demande de modification sur une carcasse tierce', () => {
-  // Créer une demande sur une carcasse tierce écrivait sur sa ligne (bump d'updated_at) et
-  // notifiait son examinateur initial, sans aucun contrôle de périmètre.
   test('un utilisateur hors périmètre ne peut pas créer de demande', async () => {
     vi.mocked(prisma.carcasseModificationRequest.findUnique).mockResolvedValueOnce(null);
 
@@ -768,8 +730,6 @@ describe('syncCarcasseModifRequest — demande de modification sur une carcasse 
 });
 
 describe('SyncScope.outOfScope — carcasses sorties du périmètre par une écriture du lot', () => {
-  // Un renvoi à l'expéditeur vide next_owner_* : la carcasse, accordée en début de requête, n'est
-  // plus dans le périmètre une fois écrite. Le cache des accès accordés ne doit pas le masquer.
   test('relit la base sans tenir compte des accès accordés plus tôt dans la requête', async () => {
     const scope = await createSyncScope(attaquant);
     vi.mocked(prisma.carcasse.findMany).mockResolvedValueOnce([{ zacharie_carcasse_id: 'ZC-1' }] as any);

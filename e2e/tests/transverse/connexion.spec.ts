@@ -8,8 +8,6 @@ test.use({
   },
 });
 
-// 135-changer-mot-de-passe tourne juste avant dans ce dossier et laisse
-// examinateur@example.fr avec un autre mot de passe : on repart d'une base saine.
 test.beforeAll(async () => {
   await resetDb();
 });

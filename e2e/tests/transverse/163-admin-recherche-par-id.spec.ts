@@ -3,13 +3,10 @@ import type { Page } from '@playwright/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Scenario 163 — Dans l'admin, la recherche des listes « Utilisateurs » et « Entités » trouve aussi par id.
-
 test.beforeEach(async () => {
   await resetDb('SVI');
 });
 
-// Le login mot de passe ouvre une session normale ; /app/admin exige en plus ProConnect (voir 136)
 async function openAdmin(page: Page, path: string) {
   await connectWith(page, 'admin@example.fr');
   await expect(page).toHaveURL(/\/app\/chasseur/);

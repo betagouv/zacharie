@@ -9,9 +9,6 @@ test.beforeEach(async () => {
   await resetDb('ETG');
 });
 
-// Scenario 69 — N° de bon de réception
-// L'ETG le saisit au moment de la prise en charge ; il est reporté sur chaque carcasse
-// prise en charge et reste lisible par le SVI après transmission.
 test('69 - ETG saisit le n° de bon de réception, le SVI le voit après transmission', async ({ page }) => {
   const feiId = 'ZACH-20250707-QZ6E0-165242';
   const numeroBonReception = 'BR-2025-0042';
@@ -31,8 +28,6 @@ test('69 - ETG saisit le n° de bon de réception, le SVI le voit après transmi
   await priseEnCharge.click();
   await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
 
-  // la date de prise en charge est déjà celle de la prise en charge : le bouton Enregistrer
-  // reste désactivé tant qu'elle n'est pas modifiée, on enchaîne directement sur le destinataire
   const dateShortcut = page.getByRole('button', { name: 'Cliquez ici pour définir' });
   await dateShortcut.scrollIntoViewIfNeeded();
   await dateShortcut.click();

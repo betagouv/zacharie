@@ -4,7 +4,6 @@ type Batch = { puts: Array<[IDBValidKey, unknown]>; deletes: IDBValidKey[] };
 
 const idb = new Map<IDBValidKey, unknown>();
 const failures = { read: false, write: false, abortsWithoutError: 0, connectionClosing: 0 };
-// iOS WebKit : connexion IndexedDB fermée par le système
 const throwIfConnectionClosing = () => {
   if (failures.connectionClosing > 0) {
     failures.connectionClosing--;
@@ -14,7 +13,6 @@ const throwIfConnectionClosing = () => {
     );
   }
 };
-// transactions d'écriture validées, dans l'ordre
 const batches: Batch[] = [];
 
 vi.mock('idb-keyval', () => ({
@@ -31,7 +29,6 @@ vi.mock('idb-keyval', () => ({
     idb.delete(key);
   }),
   keys: vi.fn(async () => [...idb.keys()]),
-  // une « transaction » : le callback empile ses put/delete, promisifyRequest les valide d'un coup
   createStore: vi.fn(() => (_mode: IDBTransactionMode, callback: (store: unknown) => unknown) => {
     const batch: Batch = { puts: [], deletes: [] };
     return callback({
@@ -43,7 +40,6 @@ vi.mock('idb-keyval', () => ({
   promisifyRequest: vi.fn(async (batch: Batch) => {
     throwIfConnectionClosing();
     if (failures.write) throw new Error('QuotaExceededError');
-    // transaction annulée par WebKit (app iOS en arrière-plan) : rejet avec null
     if (failures.abortsWithoutError > 0) {
       failures.abortsWithoutError--;
       throw null;
@@ -68,7 +64,6 @@ const RECORD_KEYS = ['feis'];
 
 const putKeys = (batch: Batch) => batch.puts.map(([key]) => key);
 
-// environnement node : un document minimal pour la visibilité de l'app
 const fakeDocument = Object.assign(new EventTarget(), {
   visibilityState: 'visible' as DocumentVisibilityState,
 });
@@ -181,7 +176,6 @@ describe('createSlicedIDBStorage', () => {
       extra: { slices: { feis: 1, logs: 1 } },
     });
 
-    // Same references: the failed slices are written again
     failures.write = false;
     await storage.setItem('x', { state: { feis, logs }, version: 11 });
     expect(idb.get('zs:feis/A')).toBe(record);
@@ -210,14 +204,11 @@ describe('createSlicedIDBStorage', () => {
       () => new Promise<undefined>((_resolve, reject) => (rejectFirst = reject))
     );
     const first = storage.setItem('x', { state: { feis: { A: recordA }, logs }, version: 11 });
-    // pendant la première écriture : une autre modification
     const second = storage.setItem('x', { state: { feis: { A: recordA, B: recordB }, logs }, version: 11 });
-    // une seule écriture à la fois
     expect(promisifyRequest).toHaveBeenCalledTimes(1);
     rejectFirst(new Error('QuotaExceededError'));
     await Promise.all([first, second]);
 
-    // la seconde écriture repart du dernier état bien écrit : A et B sont sur le disque
     expect(idb.get('zs:feis/A')).toBe(recordA);
     expect(idb.get('zs:feis/B')).toBe(recordB);
     expect(idb.get('zs:logs')).toBe(logs);
@@ -238,12 +229,9 @@ describe('createSlicedIDBStorage', () => {
 
   it('supprime les clés zs:* qui ne sont plus persistées sous cette forme', async () => {
     idb.set('zs:__meta__', { version: 10 });
-    // tranche entière de la v10, désormais stockée enregistrement par enregistrement
     idb.set('zs:carcasses', { C1: { zacharie_carcasse_id: 'C1' } });
     idb.set('zs:carcasses/C2', { zacharie_carcasse_id: 'C2' });
-    // clé autrefois persistée, retirée de PERSISTED_KEYS
     idb.set('zs:carcassesRegistry', [{ zacharie_carcasse_id: 'C1' }]);
-    // clé hors du préfixe zs: (autre usage d'idb-keyval)
     idb.set('autre-cle', 'conservee');
 
     const storage = createSlicedIDBStorage(['carcasses'], ['carcasses']);
@@ -326,7 +314,6 @@ describe('createSlicedIDBStorage', () => {
     expect(capture).not.toHaveBeenCalled();
     expect(toast.error).not.toHaveBeenCalled();
 
-    // les écritures ne sont pas bloquées
     await storage.setItem('x', { state: { feis: { A: 1, B: 2 }, logs: [1] }, version: 11 });
     expect(idb.get('zs:feis/B')).toBe(2);
   });

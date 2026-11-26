@@ -8,12 +8,10 @@ test.beforeEach(async () => {
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Scenario 67 — Onboarding complet : /collecteur/onboarding/coordonnees → /entreprise.
 test('Parcours onboarding collecteur : coordonnees → entreprise', async ({ page }) => {
   await connectWith(page, 'collecteur-pro-nouveau@example.fr');
   await expect(page).toHaveURL(/\/app\/collecteur\/onboarding\//, { timeout: 10000 });
 
-  // TODO: verify selector — noms exacts des champs onboarding (Prénom/Nom/Téléphone/Adresse).
   const inputs = page.getByRole('textbox');
   const count = await inputs.count();
   for (let i = 0; i < count; i++) {
@@ -29,6 +27,5 @@ test('Parcours onboarding collecteur : coordonnees → entreprise', async ({ pag
     await next.scrollIntoViewIfNeeded();
     await next.click();
   }
-  // Arrive finalement sur entreprise ou app collecteur.
   await expect(page).toHaveURL(/\/app\/collecteur/, { timeout: 10000 });
 });

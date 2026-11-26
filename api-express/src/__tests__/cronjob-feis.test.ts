@@ -27,7 +27,6 @@ vi.mock('~/third-parties/sentry', () => ({ capture: vi.fn() }));
 const sviEntityId = 'svi-entity-1';
 const sviAssignedAt = dayjs().subtract(11, 'days').toDate();
 
-// Carcasse cron-eligible : 10+ jours sous SVI, sans décision IPM → updateCarcasseStatus renvoie ACCEPTE.
 const makeCarcasse = (overrides: any = {}) => ({
   zacharie_carcasse_id: 'ZACH-TEST-001_BR-A',
   fei_numero: 'ZACH-TEST-001',
@@ -113,14 +112,12 @@ describe('automaticClosingOfFeis — per-carcasse closure fields', () => {
       expect(data.current_owner_role).toBe(FeiOwnerRole.SVI);
       expect(data.current_owner_entity_id).toBe(sviEntityId);
       expect(data.current_owner_user_id).toBeNull();
-      // FIXME — noms non dérivables pour l'instant, null intentionnel.
       expect(data.current_owner_user_name_cache).toBeNull();
       expect(data.current_owner_entity_name_cache).toBeNull();
       expect(data.next_owner_role).toBeNull();
       expect(data.next_owner_user_id).toBeNull();
       expect(data.next_owner_entity_id).toBeNull();
       expect(data.next_owner_entity_name_cache).toBeNull();
-      // 10+ jours, pas de décision IPM → ACCEPTE
       expect(data.svi_carcasse_status).toBe(CarcasseStatus.ACCEPTE);
     }
   });
@@ -176,8 +173,6 @@ describe('automaticClosingOfFeis — per-carcasse closure fields', () => {
 });
 
 describe('automaticClosingOfFeis — notifies chasseurs only when all carcasses of the transmission are terminal', () => {
-  // La clôture vit désormais par carcasse (svi_automatic_closed_at) : plus de Fei.update.
-  // On notifie examinateur + premier détenteur uniquement quand TOUT le lot est terminal.
   test('notifies examinateur + premier détenteur when every carcasse of the transmission is terminal', async () => {
     const carcasse = makeCarcasse({
       examinateur_initial_user_id: 'exam-1',
@@ -185,8 +180,8 @@ describe('automaticClosingOfFeis — notifies chasseurs only when all carcasses 
       premier_detenteur_prochain_detenteur_id_cache: sviEntityId,
     });
     vi.mocked(prisma.carcasse.findMany)
-      .mockResolvedValueOnce([carcasse] as any) // sélection des carcasses à auto-clôturer
-      .mockResolvedValueOnce([{ ...carcasse, svi_automatic_closed_at: new Date() }] as any); // lot terminal
+      .mockResolvedValueOnce([carcasse] as any)
+      .mockResolvedValueOnce([{ ...carcasse, svi_automatic_closed_at: new Date() }] as any);
     (prisma.carcasse.update as any).mockImplementation(async ({ data }: any) => ({ ...carcasse, ...data }));
     vi.mocked(prisma.user.findUnique).mockImplementation((({ where }: any) =>
       Promise.resolve(
@@ -259,8 +254,8 @@ describe('automaticClosingOfFeis — notifies chasseurs only when all carcasses 
     });
     vi.mocked(prisma.carcasse.findMany)
       .mockResolvedValueOnce([carcasseA, carcasseB, carcasseC] as any)
-      .mockResolvedValueOnce([] as any) // A : plus aucune carcasse
-      .mockRejectedValueOnce(new Error('db error')) // B : erreur
+      .mockResolvedValueOnce([] as any)
+      .mockRejectedValueOnce(new Error('db error'))
       .mockResolvedValueOnce([{ ...carcasseC, svi_automatic_closed_at: new Date() }] as any);
     (prisma.carcasse.update as any).mockImplementation(async ({ data }: any) => ({ ...carcasseA, ...data }));
     vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: 'exam-1' } as any);

@@ -18,24 +18,10 @@ const FRONTEND_URL = 'https://zacharie.beta.gouv.fr';
 export type SyncModifRequestResult = {
   saved: CarcasseModificationRequest;
   isNew: boolean;
-  transitionedTo: CarcasseModificationRequestStatus | null; // set when status flipped
-  justCancelled: boolean; // set when deleted_at flipped from null to non-null while still PENDING
+  transitionedTo: CarcasseModificationRequestStatus | null;
+  justCancelled: boolean;
 };
 
-/**
- * Sync a single CarcasseModificationRequest from the client.
- *
- * Une demande est INDICATIVE : elle ne bloque ni l'intermédiaire ni le SVI. La modification est
- * appliquée dès la création ; l'examinateur initial en est informé et donne son avis a posteriori.
- *
- * Server-side, applies authoritative state transitions:
- *  - on create (status=PENDING)            → RENAME : renomme la carcasse tout de suite ; notifie l'examinateur
- *  - on approve (PENDING → APPROVED)       → NEW : signe l'examen initial ; notifie le demandeur
- *  - on reject  (PENDING → REJECTED)       → NEW : soft-delete la Carcasse (sauf si le SVI l'a inspectée)
- *  - on cancel  (deleted_at set, was null) → RENAME : rétablit l'ancien numéro ; NEW : soft-delete
- * Validates that approval/rejection comes from the actual examinateur initial.
- * Cancellation only allowed by the requester while still PENDING.
- */
 export async function syncCarcasseModifRequest(
   body: Prisma.CarcasseModificationRequestUncheckedCreateInput,
   user: User,
@@ -48,15 +34,11 @@ export async function syncCarcasseModifRequest(
     where: { id: body.id },
   });
 
-  // Deny by default : une demande ne porte que sur une carcasse du périmètre de l'utilisateur.
-  // Sans ce contrôle, un POST /sync suffisait à écrire sur la carcasse d'un tiers (bump de son
-  // updated_at) et à notifier son examinateur initial.
   const zacharieCarcasseId = existing?.zacharie_carcasse_id ?? body.zacharie_carcasse_id;
   if (!(await scope.canWriteCarcasse(zacharieCarcasseId))) {
     throw new SyncRejectedError("Vous n'avez pas accès à cette carcasse");
   }
 
-  // -- CREATE -------------------------------------------------------------
   if (!existing) {
     if (!Object.values(CarcasseModificationRequestType).includes(body.type)) {
       throw new SyncRejectedError('Type de demande inconnu');
@@ -66,15 +48,9 @@ export async function syncCarcasseModifRequest(
       select: { fei_numero: true, numero_bracelet: true, created_by_user_id: true },
     });
     if (!carcasse) throw new Error('Carcasse introuvable');
-    // L'identité du demandeur est décidée par le serveur : on demande toujours en son nom propre,
-    // pour une entité dont on est membre, et une demande naît toujours PENDING.
     if (!body.requested_by_entity_id || !scope.entityIds.includes(body.requested_by_entity_id)) {
-      // Cette ligne ne devrait jamais arriver, puisqu'elle est interdite par le périmètre de l'utilisateur.
       throw new SyncRejectedError('Vous ne pouvez pas agir au nom de cette entité');
     }
-    // Une demande « carcasse ajoutée » accompagne la carcasse que le demandeur vient de créer : son
-    // annulation ou son refus supprime la carcasse. Sur la carcasse d'un autre, elle servirait à
-    // supprimer une carcasse qu'on n'a pas le droit de supprimer.
     if (
       body.type === CarcasseModificationRequestType.NEW_CARCASSE &&
       carcasse.created_by_user_id !== user.id
@@ -84,15 +60,10 @@ export async function syncCarcasseModifRequest(
       );
     }
     const isRename = body.type === CarcasseModificationRequestType.BRACELET_RENAME;
-    // Le numéro d'origine est lu sur la carcasse : c'est lui que l'annulation rétablit. Sauf pour
-    // l'auteur de la carcasse, qui peut déjà avoir écrit le nouveau numéro sur la carcasse dans la
-    // même synchro (il en saisit l'identité) : son numéro d'origine vient alors de sa demande.
     const numeroBraceletBefore =
       carcasse.created_by_user_id === user.id
         ? (body.numero_bracelet_before ?? carcasse.numero_bracelet)
         : carcasse.numero_bracelet;
-    // Une demande annulée hors ligne avant sa première synchro est enregistrée annulée : elle
-    // n'applique rien et ne notifie personne.
     const isCancelled = !!body.deleted_at;
     const created = await prisma.carcasseModificationRequest.create({
       data: {
@@ -112,10 +83,6 @@ export async function syncCarcasseModifRequest(
         is_synced: true,
       },
     });
-    // Bump the carcasse so other users pull this new request on their next delta sync — the client
-    // loads modif requests by carcasse, gated on carcasse.updated_at.
-    // Le renommage est appliqué immédiatement : c'est l'intermédiaire qui lit le numéro physique sur
-    // la carcasse, il fait foi. L'examinateur est notifié pour information.
     const renameNow =
       !isCancelled &&
       created.type === CarcasseModificationRequestType.BRACELET_RENAME &&
@@ -130,7 +97,6 @@ export async function syncCarcasseModifRequest(
     return { saved: created, isNew: true, transitionedTo: null, justCancelled: false };
   }
 
-  // -- UPDATE -------------------------------------------------------------
   const incomingStatus = body.status as CarcasseModificationRequestStatus | undefined;
   const willTransition =
     !!incomingStatus &&
@@ -144,13 +110,11 @@ export async function syncCarcasseModifRequest(
     existing.status === CarcasseModificationRequestStatus.PENDING;
 
   if (willTransition) {
-    // Only the examinateur initial of the underlying carcasse may approve/reject.
     const carcasse = await prisma.carcasse.findUnique({
       where: { zacharie_carcasse_id: existing.zacharie_carcasse_id },
     });
     if (!carcasse) throw new Error('Carcasse introuvable');
     if (carcasse.examinateur_initial_user_id !== user.id) {
-      // Cette ligne ne devrait jamais arriver, puisqu'elle est interdite par le périmètre de l'utilisateur.
       throw new SyncRejectedError("Seul l'examinateur initial peut approuver ou refuser une demande");
     }
   }
@@ -159,14 +123,10 @@ export async function syncCarcasseModifRequest(
     throw new SyncRejectedError("Seul l'auteur de la demande peut l'annuler");
   }
 
-  // Une demande ne change ensuite que de deux façons : son auteur l'annule, ou l'examinateur la
-  // tranche. Le reste est posé à la création et ne bouge plus.
   const saved = await prisma.carcasseModificationRequest.update({
     where: { id: body.id },
     data: {
       ...(justCancelled ? { deleted_at: incomingDeletedAt } : {}),
-      // Seule une transition depuis PENDING enregistre une décision : un statut déjà résolu ne peut
-      // pas être réécrit, ni renvoyé à PENDING.
       ...(willTransition
         ? {
             status: incomingStatus,
@@ -196,9 +156,6 @@ export async function syncCarcasseModifRequest(
   };
 }
 
-// Une carcasse déjà inspectée par le SVI n'est plus ni supprimable ni renommable : un certificat a
-// pu être émis dessus, avec le numéro de marquage figé dedans. La demande étant indicative, on se
-// contente alors d'enregistrer la décision de l'examinateur sans toucher à la carcasse.
 async function isCarcasseFrozenBySvi(zacharieCarcasseId: string): Promise<boolean> {
   const carcasse = await prisma.carcasse.findUnique({
     where: { zacharie_carcasse_id: zacharieCarcasseId },
@@ -218,13 +175,6 @@ async function isCarcasseFrozenBySvi(zacharieCarcasseId: string): Promise<boolea
   );
 }
 
-/**
- * Side-effects of a modifRequest sync. Runs after the row is saved.
- *   - on create: notify examinateur (le renommage, lui, est déjà appliqué par syncCarcasseModifRequest)
- *   - on approve: NEW → signe l'examen initial ; notify requester
- *   - on reject:  NEW → soft-delete Carcasse ; notify requester
- * Returns the (possibly updated) Carcasse so the sync response can include it.
- */
 export async function runCarcasseModifRequestSideEffects(
   result: SyncModifRequestResult,
   user: User,
@@ -244,9 +194,6 @@ export async function runCarcasseModifRequestSideEffects(
   }
 
   if (justCancelled) {
-    // The requester cancelled their own request. On défait ce que la demande avait appliqué :
-    // NEW_CARCASSE → la carcasse n'existait que pour cette demande, on la supprime ; RENAME → on
-    // rétablit le numéro d'origine. Rien de tout ça si le SVI est déjà passé dessus.
     if (await isCarcasseFrozenBySvi(saved.zacharie_carcasse_id)) return;
     if (saved.type === CarcasseModificationRequestType.NEW_CARCASSE) {
       await prisma.carcasse.update({
@@ -263,7 +210,6 @@ export async function runCarcasseModifRequestSideEffects(
   }
 
   if (transitionedTo === CarcasseModificationRequestStatus.APPROVED) {
-    // BRACELET_RENAME : rien à faire, le numéro a été corrigé dès la création de la demande.
     if (saved.type === CarcasseModificationRequestType.NEW_CARCASSE) {
       await prisma.carcasse.update({
         where: { zacharie_carcasse_id: saved.zacharie_carcasse_id },
@@ -282,8 +228,6 @@ export async function runCarcasseModifRequestSideEffects(
   }
 
   if (transitionedTo === CarcasseModificationRequestStatus.REJECTED) {
-    // Un refus de renommage ne rétablit pas l'ancien numéro : c'est l'intermédiaire qui a la
-    // carcasse sous les yeux. Le désaccord est enregistré dans l'historique et notifié.
     if (saved.type === CarcasseModificationRequestType.NEW_CARCASSE) {
       if (!(await isCarcasseFrozenBySvi(saved.zacharie_carcasse_id))) {
         await prisma.carcasse.update({
@@ -296,8 +240,6 @@ export async function runCarcasseModifRequestSideEffects(
     return;
   }
 }
-
-// --- Notifications ---------------------------------------------------------
 
 async function notifyExaminateur(modif: CarcasseModificationRequest) {
   const carcasse = await prisma.carcasse.findUnique({
@@ -318,7 +260,6 @@ async function notifyExaminateur(modif: CarcasseModificationRequest) {
   const title = chasseDate ? `Chasse du ${chasseDate}` : 'Demande de modification';
   const link = `${FRONTEND_URL}/app/chasseur/demandes-de-modification`;
 
-  // Ton informatif : la modification est déjà appliquée, l'examinateur n'a rien à débloquer.
   let body: string;
   let push: PushWording;
   if (modif.type === CarcasseModificationRequestType.BRACELET_RENAME) {
@@ -370,7 +311,6 @@ async function notifyRequester(modif: CarcasseModificationRequest) {
   const isRename = modif.type === CarcasseModificationRequestType.BRACELET_RENAME;
   const title = bracelet ? `Carcasse numéro ${bracelet}` : 'Demande traitée';
   const chasse = `la chasse du ${chasseDate}${commune ? ` à ${commune}` : ''}`;
-  // Le retour de l'examinateur est un avis : seul le refus d'un ajout de carcasse a un effet.
   let body: string;
   if (isRename) {
     body = approved
@@ -387,7 +327,6 @@ async function notifyRequester(modif: CarcasseModificationRequest) {
       user: requester,
       title,
       email: body,
-      // Le texte est déjà court et sans lien : le même corps convient aux deux canaux.
       push: { title: bracelet ? `Carcasse n°${bracelet}` : 'Demande traitée', body },
       notificationLogAction: `MODIF_${modif.status}_${modif.id}`,
     });

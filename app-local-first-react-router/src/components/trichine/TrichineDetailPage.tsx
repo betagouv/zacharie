@@ -1,14 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 
-/**
- * Gabarit commun aux pages de détail trichine (échantillon, pool, FTP).
- * Identité + actions en haut, chaîne de traçabilité juste dessous, puis deux colonnes :
- * le contenu à gauche, ce qui situe l'objet dans le temps à droite.
- *
- * `banniere` sert aux décisions qu'on ne peut pas laisser passer : elle colle en haut de l'écran
- * pendant tout le défilement, là où les actions de l'en-tête disparaissent dès qu'on lit la page.
- */
 export default function TrichineDetailPage({
   surtitre,
   titre,
@@ -23,7 +15,6 @@ export default function TrichineDetailPage({
   surtitre: string;
   titre: string;
   retour: { to: string; label: string };
-  /** Action à ne pas manquer : reste visible au défilement, au-dessus du reste de la page. */
   banniere?: ReactNode;
   badges?: ReactNode;
   actions?: ReactNode;
@@ -61,7 +52,6 @@ export default function TrichineDetailPage({
   );
 }
 
-/** Bloc de contenu : c'est l'unité de découpage des pages de détail. */
 export function TrichineCard({
   titre,
   hint,
@@ -89,12 +79,6 @@ export function TrichineCard({
   );
 }
 
-/**
- * Liste de couples libellé / valeur.
- * `grille` (défaut) pour la colonne principale, large : deux colonnes, libellé au-dessus.
- * `lignes` pour la colonne latérale, étroite : une ligne par donnée, valeur alignée à droite —
- * deux colonnes y couperaient les valeurs longues (une adresse email) en plein milieu d'un mot.
- */
 export function TrichineFields({
   fields,
   disposition = 'grille',
@@ -132,10 +116,6 @@ export function TrichineFields({
   );
 }
 
-/**
- * Qui contacter au sujet de l'objet affiché. L'email et le téléphone sont des liens :
- * un laboratoire qui a une question sur un colis appelle ou écrit depuis la page.
- */
 export function TrichineContact({
   nom,
   organisation,
@@ -175,7 +155,6 @@ export function TrichineContact({
   );
 }
 
-/** Filet de séparation entre deux blocs d'une même carte. */
 export function TrichineSeparateur() {
   return <div className="fr-my-2w border-t border-gray-100" />;
 }

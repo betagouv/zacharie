@@ -37,7 +37,6 @@ const anomaliesAbatsModal = createModal({
   id: 'modif-anomalies-abats-modal',
 });
 
-// Encadré blanc, même bloc visuel que les autres pages fiche/carcasse.
 function Bloc({
   title,
   children,
@@ -64,9 +63,6 @@ function Definition({ label, value }: { label: string; value: string }) {
   );
 }
 
-// Page de détail d'une demande. La modification est déjà appliquée : l'examinateur donne son avis.
-// - RENAME : avant → après + confirmer ou contester.
-// - NEW    : formulaire d'examen initial à remplir par l'examinateur + signature.
 export default function ChasseurDemandeDeModificationDetail() {
   const { request_id } = useParams<{ request_id: string }>();
   const navigate = useNavigate();
@@ -90,14 +86,12 @@ export default function ChasseurDemandeDeModificationDetail() {
   const requestUser = request ? users[request.requested_by_user_id] : null;
   const entityLabel = requestEntity?.nom_d_usage?.trim() || "l'intermédiaire";
 
-  // Hooks must run unconditionally
   const [anomaliesCarcasse, setAnomaliesCarcasse] = useState<Array<string>>([]);
   const [anomaliesAbats, setAnomaliesAbats] = useState<Array<string>>([]);
   const [examinateurCommentaire, setExaminateurCommentaire] = useState('');
   const [sansAnomalie, setSansAnomalie] = useState(false);
   const [approbationMiseSurLeMarche, setApprobationMiseSurLeMarche] = useState(true);
   const [rejectionReason, setRejectionReason] = useState('');
-  // Le désaccord est un chemin secondaire : on ne déplie son formulaire qu'à la demande.
   const [isRejecting, setIsRejecting] = useState(false);
 
   const isPetitGibier = carcasse?.type === CarcasseType.PETIT_GIBIER;
@@ -267,7 +261,6 @@ export default function ChasseurDemandeDeModificationDetail() {
               />
             )}
 
-            {/* Ce qui a changé -------------------------------------------- */}
             <Bloc title={isRename ? 'Ce qui a changé' : 'Carcasse pré-remplie'}>
               {isRename ? (
                 <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
@@ -333,7 +326,6 @@ export default function ChasseurDemandeDeModificationDetail() {
               )}
             </Bloc>
 
-            {/* Votre examen initial (NEW_CARCASSE) ------------------------- */}
             {!isRename && !alreadyTreated && (
               <Bloc title="Votre examen initial">
                 <Checkbox
@@ -436,7 +428,6 @@ export default function ChasseurDemandeDeModificationDetail() {
               </Bloc>
             )}
 
-            {/* Votre retour ----------------------------------------------- */}
             {!alreadyTreated && (
               <Bloc title="Votre retour">
                 {!isRejecting ? (

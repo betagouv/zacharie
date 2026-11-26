@@ -5,10 +5,6 @@ import carcasseRouter from '~/controllers/carcasse';
 import prisma from '~/prisma';
 import { UserRoles } from '@prisma/client';
 
-// GET /carcasse — le périmètre se lit sur les carcasses, donc une fiche sans carcasse n'y entre pas.
-// Ses rattachés directs (créateur, examinateur initial) la reçoivent quand même : sans ça, elle
-// disparaît de leur appareil après une déconnexion, alors qu'elle existe en base.
-
 const examinateur = {
   id: 'user-examinateur',
   roles: [UserRoles.CHASSEUR],

@@ -3,16 +3,12 @@ import type { Page } from '@playwright/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Scenario 158 — Chaque écriture faite depuis /admin est journalisée (AdminAuditLog, écrit par
-// api-express/src/middlewares/admin-audit-log.ts) et se relit sur /app/admin/journal.
-
 const API_URL = 'http://localhost:3291';
 
 test.beforeEach(async () => {
   await resetDb();
 });
 
-// Le login mot de passe ouvre une session normale ; /app/admin exige en plus ProConnect (voir 136)
 async function openAdminJournal(page: Page) {
   await connectWith(page, 'admin@example.fr');
   await expect(page).toHaveURL(/\/app\/chasseur/);
@@ -36,7 +32,6 @@ test("les écritures de l'admin apparaissent dans le journal, réussies ou refus
 
   const unblock = await page.request.post(`${API_URL}/admin/user/${userId}/unblock`);
   expect(unblock.status()).toBe(200);
-  // un utilisateur n'a qu'un seul rôle : l'API refuse d'en poser deux
   const twoRoles = await page.request.post(`${API_URL}/admin/user/${userId}`, {
     data: { roles: ['CHASSEUR', 'ETG'] },
   });
@@ -56,7 +51,6 @@ test("les écritures de l'admin apparaissent dans le journal, réussies ou refus
   await expect(page.getByText('Données envoyées')).toBeVisible();
   await expect(page.getByText('"ETG"')).toBeVisible();
 
-  // le lien de la cible mène à la fiche de l'utilisateur
   await unblockRow.getByRole('link', { name: 'examinateur@example.fr' }).click();
   await expect(page).toHaveURL(new RegExp(`/app/admin/user/${userId}`));
 });

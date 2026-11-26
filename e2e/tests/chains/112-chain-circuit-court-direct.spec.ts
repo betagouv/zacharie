@@ -4,7 +4,6 @@ import { connectWith } from '../../utils/connect-with';
 import { ajouterVenteDon } from '../../utils/vente-don';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
-// Scenario 112 — Chain circuit court direct : PD → Commerce de detail (sans ETG, sans transport).
 test.setTimeout(120_000);
 
 test.use({ launchOptions: { slowMo: 100 } });
@@ -17,12 +16,10 @@ test('Chain circuit court : PD → Commerce de détail (sans ETG)', async ({ pag
   test.setTimeout(120_000);
   const feiId = 'ZACH-20250707-QZ6E0-155242';
 
-  // 1. PD prend en charge + transmet directement au commerce de detail — circuit court = no transport
   await page.setViewportSize({ width: 350, height: 667 });
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
 
-  // Circuit court: NO transport step needed
   await ajouterVenteDon(page, { destinataire: /Commerce de Détail 1/i });
   const transmettreBtn = page.getByRole('button', { name: 'Transmettre' });
   await transmettreBtn.scrollIntoViewIfNeeded();
@@ -31,7 +28,6 @@ test('Chain circuit court : PD → Commerce de détail (sans ETG)', async ({ pag
     timeout: 15000,
   });
 
-  // 2. Commerce de detail recoit
   await page.setViewportSize({ width: 1280, height: 900 });
   await logoutAndConnect(page, 'commerce-de-detail@example.fr');
   await expect(page).toHaveURL(/\/app\/circuit-court/);

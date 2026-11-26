@@ -5,12 +5,8 @@ import 'react-dsfr-chart/css';
 import type { MotifDatum } from '@app/utils/bph-motifs';
 import { getMotifShortLabel } from '@app/utils/lesions';
 
-// Borne minimale de l'axe des valeurs. Les décomptes sont entiers : sous 6,
-// l'axe se graduerait en demis (0 / 0,5 / 1).
 export const MIN_COUNT_AXIS = 6;
 
-// Palette `neutral` + `highlightIndex` : les motifs d'hygiène prennent la
-// couleur d'accent, les autres le gris neutre.
 const HYGIENE_COLOR = 'var(--rdc-default)';
 const NON_HYGIENE_COLOR = 'var(--rdc-neutral)';
 

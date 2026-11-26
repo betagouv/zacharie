@@ -19,7 +19,6 @@ const router: express.Router = express.Router();
 const TIMELINE_TYPES: Array<AdminHistoryTimelineType> = ['fei', 'carcasse', 'user', 'entity'];
 const SUBJECT_TYPES = Object.keys(HISTORY_SOURCES) as Array<AdminHistorySubjectType>;
 
-// Page « Historique » : dernières modifications lues dans les tables d'historique, toutes tables confondues
 router.get(
   '/history',
   catchErrors(async (req: express.Request, res: express.Response<AdminHistoryPageResponse>) => {
@@ -58,7 +57,6 @@ router.get(
   })
 );
 
-// Onglet « Historique » d'une fiche, d'une carcasse, d'un utilisateur ou d'une entité
 router.get(
   '/history/:type/:id',
   catchErrors(async (req: express.Request, res: express.Response<AdminHistoryTimelineResponse>) => {

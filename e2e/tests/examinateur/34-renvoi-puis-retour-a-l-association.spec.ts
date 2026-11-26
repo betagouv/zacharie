@@ -28,13 +28,9 @@ function proprietaireInitialSelect(page: Page) {
   return page.locator('select[name="next_owner"]');
 }
 
-// Scenario 34 — Fiche transmise à l'ETG puis renvoyée. Le chasseur change de propriétaire initial,
-// puis remet l'association : les carcasses portent alors next_owner_entity_id = l'association (rôle
-// PREMIER_DETENTEUR). Elles ne doivent pas apparaître comme une vente déjà transmise à l'ETG.
 test("Renvoi par l'ETG puis retour à l'association : aucune vente fantôme, la fiche reste à transmettre", async ({
   page,
 }) => {
-  // Chasseur en mobile, ETG en desktop
   await page.setViewportSize({ width: 350, height: 667 });
   await connectWith(page, 'examinateur-premier-detenteur@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
@@ -87,7 +83,6 @@ test("Renvoi par l'ETG puis retour à l'association : aucune vente fantôme, la 
   await transmettre.click();
   await expect(page.getByText(/ETG 1 a été notifié/i)).toBeVisible({ timeout: 10000 });
 
-  // L'ETG renvoie la fiche à l'expéditeur
   await page.setViewportSize({ width: 1280, height: 900 });
   await logoutAndConnect(page, 'etg-1@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/etg');
@@ -101,7 +96,6 @@ test("Renvoi par l'ETG puis retour à l'association : aucune vente fantôme, la 
   await page.getByRole('button', { name: 'Confirmer le renvoi' }).click();
   await expect(page.getByText("La fiche a été renvoyée à l'expéditeur")).toBeVisible({ timeout: 10000 });
 
-  // Le chasseur change de propriétaire initial, puis remet l'association
   await page.setViewportSize({ width: 350, height: 667 });
   await logoutAndConnect(page, 'examinateur-premier-detenteur@example.fr');
   await page.goto(`http://localhost:3290/app/chasseur/fei/${feiNumero}`);
@@ -125,7 +119,6 @@ test("Renvoi par l'ETG puis retour à l'association : aucune vente fantôme, la 
   await continuer.click();
   await expect(select).toHaveValue('5b916331-632e-4c29-be2e-12a834e92688', { timeout: 10000 });
 
-  // La carcasse est à attribuer de nouveau, pas « Envoyée à ETG 1 », et on peut créer une vente
   await expect(page.getByText(/Renvoyée par ETG 1, à attribuer de nouveau/)).toBeVisible({ timeout: 10000 });
   await expect(page.getByText(/Envoyée à ETG 1/)).toHaveCount(0);
   await expect(page.getByRole('button', { name: /Ajouter un destinataire/i }).first()).toBeVisible();

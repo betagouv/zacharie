@@ -42,10 +42,6 @@ import {
 
 type FtpDuPool = { numero_fiche: string; statut_logistique: TrichineStatutLogistiqueFTP } & LaboExpediteur;
 
-/**
- * Détail d'un pool reçu au laboratoire : composition, provenance, et saisie du résultat —
- * la même carte que sur la fiche de transmission, pour que le geste soit identique des deux côtés.
- */
 export default function LaboratoirePoolDetail() {
   const { reference } = useParams();
   const [pool, setPool] = useState<LaboPoolDetail | null>(null);
@@ -101,9 +97,7 @@ export default function LaboratoirePoolDetail() {
     ? ftp.ExpediteurEntity.nom_d_usage || ftp.ExpediteurEntity.raison_sociale
     : null;
   const receptionne = !!pool.date_reception;
-  // La référence du laboratoire passe en titre, celle de Zacharie en sous-titre
   const maReference = monAlias(pool.Aliases, mesEntites)?.reference;
-  // Le LNR reçoit lui-même la fiche de confirmation : l'encadré d'envoi ne concerne que le LVD
   const ftpConfirmation = isLnr
     ? null
     : (pool.TrichinePoolFTPs.map((lien) => lien.TrichineFTP).find(

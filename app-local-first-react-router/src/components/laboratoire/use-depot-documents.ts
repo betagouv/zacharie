@@ -8,10 +8,6 @@ type DeposerFichier = (file: {
   content: string;
 }) => Promise<{ ok: boolean; error: string }>;
 
-/**
- * Dépôt d'un ou plusieurs fichiers (contrôle du format et de la taille, envoi en base64).
- * Le serveur calcule la clé de stockage.
- */
 export function useDepotDocuments(deposerFichier: DeposerFichier, onDone: () => void) {
   const [isUploading, setIsUploading] = useState(false);
 

@@ -19,18 +19,13 @@ interface PartenaireNouveauProps {
   defaultRaisonSociale?: string;
   onFinish: (entity: UserEntityResponse['data']['entity']) => void;
 }
-// une même page peut afficher plusieurs formulaires d'entité : on préfixe les id des champs
-// pour qu'ils restent uniques dans le document
 const ID_PREFIX = 'partenaire-nouveau';
 const fieldId = (field: string) => `${ID_PREFIX}-${field}`;
 
-// les établissements venant de l'annuaire des entreprises ne sont pas des entités Zacharie :
-// on les préfixe pour les reconnaître à la sélection
 const ANNUAIRE_OPTION_PREFIX = 'annuaire-';
 
 type SelectOption = EntitiesById[string];
 
-// raccourcis pour remplir la qualité du destinataire, qui reste un champ libre
 const QUALITES_PRESETS = [
   'Boucherie',
   'Restaurant',
@@ -61,17 +56,12 @@ function toAnnuaireGroups(etablissements: Array<EtablissementTrouve>) {
   return [{ label: 'Annuaire des entreprises', options: etablissements.map(toAnnuaireOption) }];
 }
 
-// Le chasseur ne voit jamais les partenaires enregistrés par d'autres chasseurs : un commerce ne veut pas
-// que ses concurrents sachent qu'il est livré via Zacharie. Il saisit toujours le partenaire en entier
-// (aidé par l'annuaire des entreprises) et c'est le serveur qui le rattache à une fiche existante ou en crée une.
 export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: PartenaireNouveauProps) {
   const entities = useZustandStore((state) => state.entities);
 
   const [newEntityNomDUsage, setNewEntityNomDUsage] = useState<string | undefined>(
     defaultRaisonSociale || undefined
   );
-  // le chasseur dit seulement si le destinataire est un particulier ou un professionnel :
-  // le type précis du professionnel est déduit côté serveur de la qualité qu'il saisit librement
   const [particulier, setParticulier] = useState(false);
   const [qualite, setQualite] = useState('');
   const [qualiteLibre, setQualiteLibre] = useState(false);
@@ -87,8 +77,6 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
       } as SelectOption)
     : undefined;
 
-  // les champs adresse/SIRET sont non contrôlés : on les remonte avec une clé
-  // qui change à chaque nouveau préremplissage
   const prefillKey = annuairePrefill?.siret ?? 'vide';
 
   function selectAnnuaireEtablissement(etablissement: EtablissementTrouve) {
@@ -101,8 +89,6 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
     setAnnuairePrefill(null);
   }
 
-  // l'annuaire est interrogé à chaque frappe : on attend 300 ms de pause avant l'appel réseau,
-  // et on annule la requête précédente pour qu'une réponse lente n'écrase pas la plus récente
   const annuaireTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const annuaireAbort = useRef<AbortController | null>(null);
   function searchAnnuaire(inputValue: string): Promise<Array<EtablissementTrouve>> {
@@ -122,8 +108,6 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
     return toAnnuaireGroups(await searchAnnuaire(inputValue));
   }
 
-  // la raison sociale arrive préremplie depuis la recherche de destinataire : on interroge l'annuaire
-  // tout de suite, et le menu s'ouvre sur ses résultats
   const [annuaireInitial, setAnnuaireInitial] = useState<ReturnType<typeof toAnnuaireGroups>>();
   const [chargementAnnuaireInitial, setChargementAnnuaireInitial] = useState(!!defaultRaisonSociale);
   useEffect(() => {
@@ -145,7 +129,6 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
       const formData = new FormData(event.currentTarget);
       const body: Partial<Entity> & { particulier?: boolean } = Object.fromEntries(formData.entries());
       body.particulier = particulier;
-      // le particulier n'a pas de raison sociale : on le nomme par son nom
       if (particulier) {
         body.raison_sociale =
           `${formData.get('prenom') ?? ''} ${formData.get('nom_de_famille') ?? ''}`.trim();
@@ -244,14 +227,11 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
               loadOptions={loadRaisonSocialeOptions}
               defaultOptions={annuaireInitial}
               isLoading={chargementAnnuaireInitial}
-              // le nom est dans le champ de saisie (et non comme valeur choisie) pour que le curseur soit à la fin
               defaultInputValue={defaultRaisonSociale}
               autoFocus={!!defaultRaisonSociale}
               openMenuOnFocus
               loadingMessage={() => "Recherche dans l'annuaire des entreprises..."}
               value={newEntity}
-              // la saisie devient la raison sociale au fil de la frappe : sur mobile, react-select quitte le
-              // champ juste après le choix d'un résultat, un onBlur écraserait ce choix par le texte tapé
               onInputChange={(inputValue, { action }) => {
                 if (action === 'input-change') setNewEntityNomDUsage(inputValue);
               }}
@@ -286,7 +266,6 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
             <Input
               label="Qualité du destinataire *"
               hintText={
-                // les raccourcis ne s'affichent que tant que le champ est vide et que « Autre » n'est pas choisi
                 !qualite && !qualiteLibre ? (
                   <>
                     {QUALITES_PRESETS.map((preset) => (
@@ -325,7 +304,6 @@ export default function PartenaireNouveau({ defaultRaisonSociale, onFinish }: Pa
                 onChange: (e) => setQualite(e.target.value),
               }}
             />
-            {/* le SIRET n'est plus saisi : il vient de l'annuaire et sert au serveur à repérer les doublons */}
             <input
               type="hidden"
               key={'SIRET' + prefillKey}

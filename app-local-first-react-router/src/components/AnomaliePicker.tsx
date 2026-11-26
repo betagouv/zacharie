@@ -5,21 +5,16 @@ import { Input } from '@app/components/Input';
 import { canonicalOf, normalizeText, type AnomalieItem } from '@app/utils/anomalies-referentiel';
 import { track } from '@app/services/matomo';
 
-// Une section = un site anatomique (groupe + site), avec ses anomalies,
-// les canonicals déjà sélectionnés et le toggle branché sur le store / state local.
 export type AnomaliePickerSection = {
   groupe: string;
   site: string | null;
   anomalies: AnomalieItem[];
   selected: string[];
   onToggle: (canonical: string) => void;
-  // Libellé de la saisie libre proposée par la famille, null si elle n'en propose pas.
   champLibre: string | null;
-  // Saisies libres déjà faites dans cette famille.
   autres: AnomaliePickerAutres;
 };
 
-// Anomalies saisies en texte libre, hors référentiel.
 export type AnomaliePickerAutres = {
   values: string[];
   onAdd: (value: string) => void;
@@ -28,8 +23,6 @@ export type AnomaliePickerAutres = {
 
 const sectionKey = (s: AnomaliePickerSection) => `${s.groupe}|||${s.site ?? ''}`;
 const siteLabel = (s: AnomaliePickerSection) => s.site ?? s.groupe;
-// La saisie libre de la famille compte comme une anomalie de la famille : c'est ce que comptent
-// les compteurs en aval (carte, bouton « Anomalies (N) », modale de confirmation).
 const sectionCount = (s: AnomaliePickerSection) => s.selected.length + s.autres.values.length;
 
 export default function AnomaliePicker({
@@ -39,14 +32,11 @@ export default function AnomaliePicker({
 }: {
   sections: AnomaliePickerSection[];
   autres: AnomaliePickerAutres;
-  // Appelé quand il n'y a plus de niveau interne à remonter (sortie du picker).
   onBack?: () => void;
 }) {
-  // Si une seule section (ex. petit gibier), on va directement à la liste des anomalies.
   const singleSection = sections.length === 1 ? sections[0] : null;
   const [activeKey, setActiveKey] = useState<string | null>(singleSection ? sectionKey(singleSection) : null);
   const [query, setQuery] = useState('');
-  // Anomalie dont on affiche la photo en grand (avec sa description en légende).
   const [zoomItem, setZoomItem] = useState<AnomalieItem | null>(null);
   useEffect(() => {
     track('anomalie', 'ouvrir-selecteur', singleSection ? 'petit-gibier' : 'grand-gibier');
@@ -67,19 +57,16 @@ export default function AnomaliePicker({
     setZoomItem(item);
   };
 
-  // Ajout hors famille, depuis une recherche infructueuse.
   const addAutreGlobal = (value: string) => {
     const trimmed = value.trim();
     if (!trimmed || autres.values.includes(trimmed)) return;
     track('anomalie', 'saisir-libre', 'recherche-vide');
     autres.onAdd(trimmed);
-    // On sort de la recherche : la nouvelle anomalie est visible dans la vue racine.
     setQuery('');
   };
 
   const activeSection = activeKey ? (sections.find((s) => sectionKey(s) === activeKey) ?? null) : null;
 
-  // Regroupe les sections par groupe pour les en-têtes de la vue 1.
   const groups = useMemo(() => {
     const map = new Map<string, AnomaliePickerSection[]>();
     for (const section of sections) {
@@ -92,7 +79,6 @@ export default function AnomaliePicker({
 
   const normalizedQuery = normalizeText(query.trim());
 
-  // Recherche : globale en vue 1, restreinte à la section active en vue 2.
   const searchResults = useMemo(() => {
     if (!normalizedQuery) return [];
     const scope = activeSection ? [activeSection] : sections;
@@ -108,7 +94,6 @@ export default function AnomaliePicker({
     return results;
   }, [normalizedQuery, activeSection, sections]);
 
-  // Une seule mesure par recherche, quand l'utilisateur arrête de taper.
   const hasSearchResults = searchResults.length > 0;
   useEffect(() => {
     if (!normalizedQuery) return;
@@ -119,8 +104,6 @@ export default function AnomaliePicker({
     return () => clearTimeout(timer);
   }, [normalizedQuery, hasSearchResults]);
 
-  // Retour contextuel : remonte d'un niveau à la fois
-  // (recherche → famille → liste des sites → sortie du picker via onBack).
   const handleBack = useCallback(() => {
     if (query) {
       setQuery('');
@@ -134,10 +117,6 @@ export default function AnomaliePicker({
   }, [query, activeKey, singleSection, onBack]);
   const showBack = !!onBack || !!query || (!!activeSection && !singleSection);
 
-  // Quand le picker est rendu dans une modale DSFR, le « Fermer » de l'en-tête remonte d'un niveau
-  // au lieu de fermer la modale : on perdrait la carcasse en cours de saisie. On intercepte le clic
-  // en phase capture sur le dialog, avant qu'il n'atteigne le bouton et son handler DSFR.
-  // Une fois sorti du picker, le bouton retrouve son comportement normal.
   const rootRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const dialog = rootRef.current?.closest('dialog.fr-modal');
@@ -153,9 +132,6 @@ export default function AnomaliePicker({
   }, [handleBack]);
 
   return (
-    // Un plancher de hauteur, pour que la modale hôte ne saute pas d'une vue à l'autre. Pas de plafond :
-    // le corps de la modale DSFR est déjà un conteneur de scroll, en ajouter un ici donnerait deux
-    // barres de défilement imbriquées.
     <div
       ref={rootRef}
       className="flex min-h-64 flex-col gap-3"
@@ -178,7 +154,6 @@ export default function AnomaliePicker({
             value: query,
             placeholder: 'Rechercher une anomalie…',
             onChange: (e) => setQuery(e.target.value),
-            // Évite la soumission du <form> parent (rendu dans un form de création).
             onKeyDown: (e) => {
               if (e.key === 'Enter') e.preventDefault();
             },
@@ -193,7 +168,6 @@ export default function AnomaliePicker({
 
       <div>
         {normalizedQuery.length > 0 ? (
-          /* --- Résultats de recherche --- */
           <div className="flex flex-col gap-2">
             {searchResults.length === 0 ? (
               <div className="flex flex-col items-start gap-2">
@@ -221,7 +195,6 @@ export default function AnomaliePicker({
             )}
           </div>
         ) : !activeSection ? (
-          /* --- Vue 1 : choix du site anatomique, groupé --- */
           <div className="flex flex-col gap-3">
             {groups.map(([groupe, groupSections]) => (
               <div
@@ -254,7 +227,6 @@ export default function AnomaliePicker({
             ))}
           </div>
         ) : (
-          /* --- Vue 2 : anomalies du site sélectionné --- */
           <div className="flex flex-col gap-4">
             {activeSection.selected.length > 0 && (
               <div className="flex flex-wrap gap-2">
@@ -312,8 +284,6 @@ export default function AnomaliePicker({
         )}
       </div>
 
-      {/* Liste des sites : saisie libre pour ce qui ne relève d'aucune famille. En petit gibier,
-          cette vue n'existe pas — la famille unique porte déjà son propre champ libre. */}
       {!normalizedQuery && !activeSection && (
         <AutreAnomalieBlock
           title="Autre anomalie (non listée)"
@@ -333,8 +303,6 @@ export default function AnomaliePicker({
   );
 }
 
-// Saisie d'une anomalie absente du référentiel, avec les valeurs déjà saisies en pastilles.
-// Utilisé pour la saisie libre d'une famille comme pour celle, hors famille, de la vue racine.
 function AutreAnomalieBlock({
   title,
   placeholder,
@@ -391,11 +359,7 @@ function AutreAnomalieBlock({
             value: draft,
             placeholder,
             onChange: (e) => setDraft(e.target.value),
-            // Le CTA de la modale (« Ajouter la carcasse », « Terminer ») vit hors du picker et
-            // reste cliquable : un texte saisi mais non validé serait perdu sans un mot. On le
-            // verse à la perte de focus — la pastille apparaît aussitôt, et se retire d'un clic.
             onBlur: () => add(),
-            // Évite la soumission du <form> parent (rendu dans un form de création).
             onKeyDown: (e) => {
               if (e.key !== 'Enter') return;
               e.preventDefault();
@@ -416,8 +380,6 @@ function AutreAnomalieBlock({
   );
 }
 
-// Ligne d'anomalie : vignette photo (clic = agrandir) + intitulé (clic = sélectionner).
-// Deux boutons distincts côte à côte (pas de bouton imbriqué).
 function AnomalieItemRow({
   item,
   context,
@@ -474,7 +436,6 @@ function AnomalieItemRow({
           <span className="font-medium">{item.intitule}</span>
           {context && <span className="text-xs text-gray-500">{context}</span>}
         </span>
-        {/* Rond vide / rond plein : c'est lui qui signale qu'on peut sélectionner. */}
         <span
           className={[
             'shrink-0',
@@ -487,12 +448,9 @@ function AnomalieItemRow({
   );
 }
 
-// Superposition plein écran : photo agrandie (carrousel si plusieurs) + description en légende.
-// La hauteur est figée au viewport : seule la légende peut scroller, jamais la page derrière.
 function PhotoOverlay({ item, onClose }: { item: AnomalieItem; onClose: () => void }) {
   const photos = item.photos;
   const [index, setIndex] = useState(0);
-  // Position du doigt au début du geste, pour détecter un swipe horizontal.
   const touchStartX = useRef<number | null>(null);
 
   useEffect(() => setIndex(0), [item]);
@@ -509,7 +467,6 @@ function PhotoOverlay({ item, onClose }: { item: AnomalieItem; onClose: () => vo
       if (photos.length > 1 && e.key === 'ArrowRight') go(1);
     };
     document.addEventListener('keydown', onKey);
-    // Verrouille le scroll de la page tant que l'overlay est ouvert.
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
@@ -518,10 +475,6 @@ function PhotoOverlay({ item, onClose }: { item: AnomalieItem; onClose: () => vo
     };
   }, [onClose, go, photos.length]);
 
-  // Rendu dans <body> et pas sur place : la modale DSFR pose un `filter: drop-shadow` sur
-  // `.fr-modal__body`, ce qui en fait un bloc conteneur pour `position: fixed`. Sans le portail,
-  // l'overlay se cale sur la modale — taille variable, photo plus ou moins grande, et la liste
-  // d'anomalies continue de scroller derrière.
   return createPortal(
     <div
       className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/90 p-4"
@@ -541,8 +494,6 @@ function PhotoOverlay({ item, onClose }: { item: AnomalieItem; onClose: () => vo
         onClick={(e) => e.stopPropagation()}
       >
         {photos.length > 0 ? (
-          /* Les flèches sont hors de l'image, sur le fond noir : elles restent lisibles
-             quelle que soit la photo affichée. */
           <div className="flex h-[55vh] w-full shrink-0 items-center gap-2">
             {photos.length > 1 && (
               <button

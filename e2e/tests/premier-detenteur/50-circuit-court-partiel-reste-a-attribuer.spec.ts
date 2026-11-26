@@ -15,8 +15,6 @@ test.beforeEach(async () => {
   await resetDb('PREMIER_DETENTEUR');
 });
 
-// Scenario 50 — Une vente au circuit court est clôturée dès l'envoi. Ce lot clôturé ne doit pas
-// verrouiller la fiche : le premier détenteur répartit encore les carcasses restées chez lui.
 test("Vente d'une partie des carcasses au commerce de détail : le reste peut encore être réparti", async ({
   page,
 }) => {
@@ -24,7 +22,6 @@ test("Vente d'une partie des carcasses au commerce de détail : le reste peut en
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
 
-  // 1 carcasse sur 4 part au commerce de détail.
   await ajouterVenteDon(page, { destinataire: /Commerce de Détail 1/i, carcasses: [0] });
   const transmettre = page.getByRole('button', { name: /^Transmettre/ });
   await transmettre.scrollIntoViewIfNeeded();
@@ -37,10 +34,8 @@ test("Vente d'une partie des carcasses au commerce de détail : le reste peut en
   await attribuerRestantes.scrollIntoViewIfNeeded();
   await attribuerRestantes.click();
 
-  // Seules les 3 carcasses restées chez le premier détenteur sont encore supprimables.
   await expect(page.getByTitle('Supprimer la carcasse')).toHaveCount(3, { timeout: 10000 });
 
-  // Les 3 carcasses restantes partent à l'ETG 1.
   await ajouterVenteDon(page, { destinataire: /ETG 1 - 75000 Paris/ });
   await transmettre.scrollIntoViewIfNeeded();
   await transmettre.click();

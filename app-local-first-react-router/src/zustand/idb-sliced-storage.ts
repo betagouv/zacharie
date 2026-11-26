@@ -1,17 +1,3 @@
-/**
- * Sliced IndexedDB storage for Zustand persist.
- *
- * Instead of storing the entire store as one giant JSON string under a single
- * IndexedDB key, this splits each top-level state key into its own entry
- * as native objects (structured clone, no JSON serialization).
- *
- * - A slice that is a map by id (`recordKeys`) is stored record by record (`zs:carcasses/<id>`):
- *   a change of one carcasse writes that carcasse only, not the 100k others.
- * - Any other slice is stored under one key (`zs:lastUpdateFromServer`).
- * - Only changed slices / records are written (reference equality check), in one transaction
- *   with the meta, so data and cursor are always written together.
- * - Migrates transparently from the old single-key format
- */
 import { get, del, keys, entries, createStore, promisifyRequest, type UseStore } from 'idb-keyval';
 import { toast } from 'react-toastify';
 import { capture } from '@app/services/sentry';
@@ -21,16 +7,12 @@ const META_KEY = `${PREFIX}__meta__`;
 const OLD_KEY = 'zacharie-zustand-store';
 const PERSIST_ERROR_TOAST_ID = 'idb-persist-error';
 
-// même base et même table que le store par défaut d'idb-keyval (lectures, clearCache)
 let keyvalStore: UseStore | null = null;
 function getKeyvalStore() {
   keyvalStore ??= createStore('keyval-store', 'keyval');
   return keyvalStore;
 }
 
-// iOS WKWebView : le système peut fermer la connexion IndexedDB (app reprise depuis l'arrière-plan,
-// process IndexedDB tué). idb-keyval garde la connexion en cache, donc toute transaction échoue
-// ensuite avec « The database connection is closing ». On jette le store pour rouvrir une connexion.
 function resetKeyvalStoreIfConnectionClosed(error: unknown): boolean {
   const closed =
     error instanceof Error &&
@@ -39,7 +21,6 @@ function resetKeyvalStoreIfConnectionClosed(error: unknown): boolean {
   return closed;
 }
 
-// écritures et suppressions dans une seule transaction : tout est écrit, ou rien
 function writeBatch(puts: Array<[IDBValidKey, unknown]>, deletes: Array<IDBValidKey>): Promise<void> {
   return getKeyvalStore()('readwrite', (store) => {
     for (const [key, value] of puts) store.put(value, key);
@@ -60,8 +41,6 @@ function waitUntilVisible(): Promise<void> {
   });
 }
 
-// iOS WKWebView : quand l'app passe en arrière-plan, WebKit annule les transactions en cours sans
-// objet d'erreur (rejet avec null). On réessaie une fois, l'app au premier plan.
 async function writeBatchWithRetry(
   puts: Array<[IDBValidKey, unknown]>,
   deletes: Array<IDBValidKey>
@@ -96,8 +75,6 @@ function describeSlice(value: unknown): number | string {
   return typeof value;
 }
 
-// Vrai pendant clearLocalAppState() : aucune écriture persistée ni aucun chargement ne doit
-// démarrer, sinon des données de l'ancienne session réapparaissent après le nettoyage.
 let localTeardownInProgress = false;
 
 export function setLocalTeardownInProgress(inProgress: boolean) {
@@ -124,22 +101,12 @@ export function createSlicedIDBStorage<S extends Record<string, unknown>>(
   recordKeys: string[] = []
 ): SlicedStorage<S> {
   const isRecordKey = new Set(recordKeys);
-  // Track previous value references so we only write changed slices
   const prevRefs = new Map<string, unknown>();
-  // Block writes until the first getItem completes, so early setState calls
-  // (e.g. refreshUser before hydration) don't overwrite IDB with empty state.
-  // If the read fails, writes stay blocked for the whole session: writing would overwrite
-  // the data on disk that we could not read.
   let hydrated = false;
   let writeErrorCaptured = false;
-  // Une seule écriture à la fois : chaque écriture ne contient que l'écart avec la précédente, donc
-  // si une écriture échoue, la suivante doit repartir du dernier état bien écrit. Pendant une
-  // écriture, seul le dernier état demandé est gardé pour la suivante.
   let nextValue: StorageValue<S> | null = null;
   let writing: Promise<void> | null = null;
 
-  // Ce qu'il faut écrire pour passer d'une valeur de tranche à l'autre : la tranche entière, ou
-  // seulement les enregistrements ajoutés, modifiés (autre référence) ou supprimés.
   const slicePuts = (key: string, current: unknown, prev: unknown) => {
     if (!isRecordKey.has(key)) {
       return { puts: [[`${PREFIX}${key}`, current]] as Array<[IDBValidKey, unknown]>, deletes: [] };
@@ -158,7 +125,6 @@ export function createSlicedIDBStorage<S extends Record<string, unknown>>(
   };
 
   const readFromIDB = async (): Promise<StorageValue<S> | null> => {
-    // ── Try new (sliced) format first ──
     const allEntries = await entries<IDBValidKey, unknown>(getKeyvalStore());
     const meta = allEntries.find(([key]) => key === META_KEY)?.[1] as { version: number } | undefined;
     if (meta != null) {
@@ -178,18 +144,15 @@ export function createSlicedIDBStorage<S extends Record<string, unknown>>(
             value;
           continue;
         }
-        // clé d'une tranche qui n'est plus persistée (ou plus sous cette forme)
         orphanKeys.push(idbKey);
       }
       for (const [key, value] of Object.entries(state)) prevRefs.set(key, value);
-      // Clean up legacy key if still around
       del(OLD_KEY).catch(() => {});
       Promise.all(orphanKeys.map((key) => del(key))).catch(() => {});
       hydrated = true;
       return { state: state as S, version: meta.version };
     }
 
-    // ── Migrate from old single-key format (JSON string → native objects) ──
     const oldData = await get<string>(OLD_KEY, getKeyvalStore());
     if (oldData != null) {
       try {
@@ -230,10 +193,8 @@ export function createSlicedIDBStorage<S extends Record<string, unknown>>(
     for (const key of persistedKeys) {
       if (!(key in state)) continue;
       const current = state[key];
-      // Only write slices whose reference actually changed
       if (current === prevRefs.get(key)) continue;
       const changes = slicePuts(key, current, prevRefs.get(key));
-      // boucles plutôt que push(...) : une tranche peut compter plus de 100 000 enregistrements
       for (const put of changes.puts) puts.push(put);
       for (const deletion of changes.deletes) deletes.push(deletion);
       previous.set(key, prevRefs.get(key));
@@ -245,7 +206,6 @@ export function createSlicedIDBStorage<S extends Record<string, unknown>>(
     try {
       await writeBatchWithRetry(puts, deletes);
     } catch (error) {
-      // Restore the refs so the failed slices are written again on the next setItem
       for (const [key, prevRef] of previous) prevRefs.set(key, prevRef);
       if (!writeErrorCaptured) {
         writeErrorCaptured = true;

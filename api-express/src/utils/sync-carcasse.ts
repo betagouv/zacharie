@@ -30,15 +30,6 @@ export interface SaveCarcasseResult {
   isDeleted: boolean;
 }
 
-// opts permet au /sync en masse d'éviter les requêtes redondantes quand on synchronise beaucoup
-// de carcasses de la même fiche d'un coup :
-// - existingFei : fiche déjà chargée par l'appelant (évite un findUnique par carcasse)
-// - existingCarcasse : carcasse déjà chargée par l'appelant (évite un findFirst par carcasse).
-//   `undefined` = pas fournie (on requête), `null` = fournie et absente en base (on crée).
-// - ensuredRelations : relation CAN_TRANSMIT en cours ou faite dans ce lot, par entité (évite un
-//   findFirst/create par carcasse pour le même destinataire, et les doublons en sync parallèle).
-// - deletedEntityIds : entités supprimées parmi celles référencées par le lot (évite une requête
-//   par carcasse).
 interface SyncCarcasseOpts {
   existingFei?: Fei | null;
   existingCarcasse?: Carcasse | null;
@@ -69,17 +60,12 @@ export async function syncCarcasse(
   if (!zacharie_carcasse_id) {
     throw new Error('Le numéro de la carcasse est obligatoire');
   }
-  // Tant que le compte n'est pas activé (CFEI non validé), l'examinateur initial peut préparer
-  // sa fiche et désigner le premier détenteur (next_owner = PREMIER_DETENTEUR), mais pas la
-  // transmettre en aval : on rejette l'assignation d'un prochain détenteur au-delà du 1er détenteur.
   if (!user.activated) {
     const transmitsToNextDetenteur =
       !!body.next_owner_role &&
       body.next_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
       body.next_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL;
     if (transmitsToNextDetenteur) {
-      // Erreur transitoire, pas un `SyncRejectedError` : `activated` bascule dès que l'admin valide
-      // le compte, et le client doit repousser la carcasse à ce moment-là sans recharger l'app.
       throw new Error('Votre compte doit être validé avant de pouvoir transmettre une fiche');
     }
   }
@@ -92,18 +78,13 @@ export async function syncCarcasse(
             fei_numero: fei_numero,
           },
         });
-  // Deny by default : on ne modifie une carcasse que si elle est dans le périmètre de
-  // l'utilisateur, et on n'en crée une que sur une fiche à laquelle il participe.
   if (existingCarcasse) {
-    // Les droits par rôle se lisent sur la fiche du corps : elle doit être celle de la carcasse.
     if (existingCarcasse.fei_numero !== fei_numero) {
       throw new SyncRejectedError("Cette carcasse n'appartient pas à cette fiche");
     }
     if (!(await scope.canWriteCarcasse(existingCarcasse.zacharie_carcasse_id))) {
       throw new SyncRejectedError("Vous n'avez pas accès à cette carcasse");
     }
-    // Version périmée : on ne l'écrit pas, et on touche `updated_at` pour que le prochain delta du
-    // client (/carcasse, fondé sur `carcasse.updated_at`) lui apporte la version à jour.
     if (isStaleWrite(existingCarcasse, body.version, user)) {
       await prisma.carcasse.update({
         where: { zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id },
@@ -128,9 +109,8 @@ export async function syncCarcasse(
           zacharie_carcasse_id,
           fei_numero,
           numero_bracelet: body.numero_bracelet,
-          // le créateur est l'auteur de la requête, jamais une valeur fournie par le client
           created_by_user_id: user.id,
-          created_at: body.created_at ?? undefined, // pour garder le même ordre de tri des carcasses dans le frontend
+          created_at: body.created_at ?? undefined,
           is_synced: true,
         },
       });
@@ -144,41 +124,17 @@ export async function syncCarcasse(
         throw new SyncRejectedError("Cette carcasse n'appartient pas à cette fiche");
       }
     }
-    // La ligne créée n'a encore aucune colonne de rattachement — celles-ci ne sont écrites que par
-    // l'update en fin de fonction. On accorde l'accès tout de suite, pour les sections suivantes de
-    // la même requête (intermédiaire, demande de modification) qui portent sur cette carcasse.
-    // Attention : la portée s'arrête à la requête. Si l'update en fin de fonction échoue, la ligne
-    // nue survit sans colonne de rattachement, donc hors du périmètre de tout le monde — au prochain
-    // envoi elle passe par `canWriteCarcasse` (elle existe désormais) et se fait refuser
-    // définitivement. Cas connu, non traité.
     scope.grant(zacharie_carcasse_id);
   }
 
-  // Le premier détenteur porté par la carcasse est une copie de la fiche. Pour un détenteur aval, on
-  // prend la valeur de la fiche plutôt que celle du corps de la requête : sinon il s'inscrit comme
-  // premier détenteur. Il peut toujours ajouter une carcasse manquante — elle hérite simplement de la
-  // fiche. L'examinateur initial, lui, est toujours repris de la fiche, quel que soit l'auteur.
   const canWriteOwnership = scope.isFeiOwner(existingFei);
 
-  // Chaque groupe de champs appartient à un rôle. Pour un autre utilisateur, la valeur du corps est
-  // ignorée au lieu de rejeter la carcasse : le client renvoie toujours la carcasse entière, avec les
-  // champs des autres rôles tels qu'il les a reçus.
-  // L'examen (anomalies, signature) n'appartient qu'à l'examinateur qui l'a fait.
   const isExaminateur = existingFei.examinateur_initial_user_id === user.id;
-  // Stockage, transport et consommation personnelle sont les choix du premier détenteur.
   const isPremierDetenteur = scope.isPremierDetenteur(existingFei);
-  // Même règle que `canWriteApprobationExaminateur` dans `sync-fei` : la carcasse en porte une copie.
   const canWriteApprobationExaminateur = canWriteOwnership || isPremierDetenteur;
-  // Un intermédiaire peut ajouter une carcasse manquante (demande NEW_CARCASSE) : il en saisit
-  // l'identité (numéro, espèce, nombre), pas l'examen.
   const isCreator = existingCarcasse.created_by_user_id === user.id;
   const canWriteIdentity = isExaminateur || isCreator;
   const isSvi = user.roles.includes(UserRoles.SVI);
-  // La transmission (détenteurs, SVI assigné) et la décision de l'intermédiaire (refus, manque,
-  // clôture) n'appartiennent qu'au détenteur en cours : le détenteur actuel ou le prochain détenteur
-  // de la carcasse enregistrée. Tant que la carcasse est chez les chasseurs (pas encore de détenteur
-  // aval), les rattachés à la fiche les écrivent aussi : l'examinateur désigne le premier détenteur
-  // et le lui transmet avant d'en être un.
   function isUserOrEntityOfUser(userId: string | null, entityId: string | null): boolean {
     return (!!userId && userId === user.id) || (!!entityId && scope.entityIds.includes(entityId));
   }
@@ -191,9 +147,6 @@ export async function syncCarcasse(
     isUserOrEntityOfUser(existingCarcasse.current_owner_user_id, existingCarcasse.current_owner_entity_id) ||
     isUserOrEntityOfUser(existingCarcasse.next_owner_user_id, existingCarcasse.next_owner_entity_id) ||
     (isChezLesChasseurs && canWriteApprobationExaminateur);
-  // Un refus ou un manque déjà enregistré n'est levé ou réécrit que par l'entité qui l'a déclaré :
-  // sa ligne d'intermédiaire, pointée par `intermediaire_carcasse_refus_intermediaire_id`, doit être
-  // celle d'une entité de l'utilisateur.
   let ownsExistingDecision: boolean | undefined;
   async function canWriteDecisionIntermediaire(): Promise<boolean> {
     if (!canWriteTransmission) return false;
@@ -226,10 +179,6 @@ export async function syncCarcasse(
   const canWriteDecision = changesDecision ? await canWriteDecisionIntermediaire() : true;
 
   if (body.deleted_at) {
-    // L'examinateur ou le premier détenteur suppriment une carcasse tant qu'elle n'est pas prise en
-    // charge en aval. L'auteur d'une carcasse ajoutée en aval la supprime en annulant sa demande, tant
-    // que le SVI n'est pas passé dessus (même règle que l'annulation côté client). Au-delà, la
-    // suppression passe par le superadmin.
     const canDelete =
       isExaminateur || isPremierDetenteur
         ? !isCarcassePriseEnChargeEnAval(existingCarcasse)
@@ -237,7 +186,6 @@ export async function syncCarcasse(
     if (!canDelete) {
       throw new SyncRejectedError('Vous ne pouvez pas supprimer cette carcasse');
     }
-    // existingCarcasse est garantie non-nulle ici (créée juste au-dessus si absente).
     const deletedCarcasse = await prisma.carcasse.update({
       where: {
         zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
@@ -255,7 +203,6 @@ export async function syncCarcasse(
     return { savedCarcasse: deletedCarcasse, existingCarcasse, isDeleted: true };
   }
 
-  // Avant toute écriture : le bloc `next_owner_entity_id` plus bas crée une relation vers l'entité.
   await assertNoNewDeletedEntity(
     body,
     existingCarcasse,
@@ -267,14 +214,10 @@ export async function syncCarcasse(
     opts.deletedEntityIds
   );
 
-  // Pas de gel après l'inspection SVI : toute écriture est tracée (logs, `version_user_id`), donc une
-  // modification tardive se retrouve. On préfère pouvoir corriger que bloquer à tort.
   const nextCarcasse: Prisma.CarcasseUncheckedUpdateInput = {
     is_synced: true,
   };
 
-  // Les colonnes qui nomment l'auteur d'une action : l'auteur est toujours l'utilisateur courant, qui
-  // agit pour une entité dont il est membre. Une valeur déjà enregistrée est conservée telle quelle.
   function actorUserId(field: keyof Carcasse): string | null | undefined {
     const value = body[field as keyof typeof body] as string | null | undefined;
     if (!value || value === existingCarcasse![field]) return value;
@@ -339,13 +282,11 @@ export async function syncCarcasse(
     }
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_initial_offline)) {
-    // Même règle que la fiche (`sync-fei`) : seul l'examinateur l'écrit.
     nextCarcasse.examinateur_initial_offline = isExaminateur
       ? body[Prisma.CarcasseScalarFieldEnum.examinateur_initial_offline]
       : existingFei.examinateur_initial_offline;
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_initial_user_id)) {
-    // Copie de la fiche, que la synchro ne modifie jamais (voir `sync-fei`).
     nextCarcasse.examinateur_initial_user_id = existingFei.examinateur_initial_user_id;
   }
   if (
@@ -378,8 +319,6 @@ export async function syncCarcasse(
   if (isExaminateur && body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at)) {
     nextCarcasse.examinateur_signed_at = body.examinateur_signed_at;
   }
-  // Un détenteur aval qui renvoie la carcasse au premier détenteur efface stockage et transport (il
-  // les choisira de nouveau) : tout le monde peut les effacer, seul le premier détenteur les remplit.
   const canWritePremierDetenteurChoice = (value: unknown) => isPremierDetenteur || value == null;
   if (
     canWritePremierDetenteurChoice(body.premier_detenteur_depot_entity_id) &&
@@ -432,10 +371,6 @@ export async function syncCarcasse(
     nextCarcasse.premier_detenteur_prochain_detenteur_id_cache =
       body.premier_detenteur_prochain_detenteur_id_cache || null;
   }
-  // Une carcasse ajoutée par un intermédiaire (demande NEW_CARCASSE) reprend les choix du premier
-  // détenteur d'une autre carcasse de la fiche dans le périmètre de l'intermédiaire : elle suit ainsi
-  // la même transmission que les carcasses de sa branche, et pas celle d'une autre branche. Une
-  // carcasse créée par l'examinateur n'a pas encore de choix du premier détenteur à reprendre.
   if (isJustCreated && !canWriteOwnership && !isPremierDetenteur && scope.carcasseAccessWhere) {
     const carcasseSoeur = await prisma.carcasse.findFirst({
       where: {
@@ -444,7 +379,6 @@ export async function syncCarcasse(
             fei_numero,
             deleted_at: null,
             NOT: { zacharie_carcasse_id },
-            // une autre carcasse ajoutée dans le même lot n'a pas encore ces choix
             premier_detenteur_prochain_detenteur_id_cache: { not: null },
           },
           scope.carcasseAccessWhere,
@@ -465,7 +399,6 @@ export async function syncCarcasse(
     if (carcasseSoeur) Object.assign(nextCarcasse, carcasseSoeur);
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_offline)) {
-    // Même règle que la fiche (`sync-fei`) : membre de l'asso désignée premier détenteur compris.
     nextCarcasse.premier_detenteur_offline = canWriteApprobationExaminateur
       ? body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_offline]
       : existingFei.premier_detenteur_offline;
@@ -534,8 +467,6 @@ export async function syncCarcasse(
     nextCarcasse.latest_intermediaire_name_cache =
       body[Prisma.CarcasseScalarFieldEnum.latest_intermediaire_name_cache];
   }
-  // svi_assigned_at et svi_entity_id sont écrits par l'ETG qui assigne la fiche à un SVI,
-  // pas par le SVI lui-même : ils restent hors du bloc réservé au rôle SVI plus bas.
   if (canWriteTransmission && body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_assigned_at)) {
     nextCarcasse.svi_assigned_at = await getSviAssignedAt(
       body[Prisma.CarcasseScalarFieldEnum.svi_assigned_at],
@@ -652,11 +583,6 @@ export async function syncCarcasse(
     nextCarcasse.intermediaire_carcasse_refus_motif =
       body[Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif];
   }
-  // Le statut est recalculé par le client à chaque modification de carcasse, quel que soit le rôle
-  // (un refus ETG passe la carcasse en REFUSE) : il ne peut pas être réservé au rôle SVI. Mais hors
-  // SVI, il ne peut prendre que les statuts que le client calcule sans décision SVI.
-  // Hors SVI, changer le statut revient à prendre une décision d'intermédiaire : réservé au détenteur
-  // en cours, et sortir d'un refus ou d'un manque l'est à l'entité qui l'a déclaré.
   const nextStatus = body.svi_carcasse_status;
   const changesStatus = nextStatus !== undefined && nextStatus !== existingCarcasse.svi_carcasse_status;
   const leavesDecisionIntermediaire =
@@ -719,7 +645,6 @@ export async function syncCarcasse(
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm1_decision)) {
       const nextDecision = body[Prisma.CarcasseScalarFieldEnum.svi_ipm1_decision];
-      // Un sanglier n'est accepté qu'avec un résultat de recherche de trichine négatif (cf doc/trichine.md §9)
       const espece = nextCarcasse.espece ?? existingCarcasse.espece;
       if (
         TRICHINE_FEATURE_ENABLED &&
@@ -837,9 +762,6 @@ export async function syncCarcasse(
     data: { ...nextCarcasse, ...nextVersion(user.id) },
   });
 
-  // L'utilisateur peut désormais transmettre à ce destinataire : seulement s'il vient de le choisir
-  // (valeur changée, écriture acceptée). Un client qui renvoie la carcasse telle qu'il l'a reçue
-  // porte le destinataire choisi par un autre acteur.
   const nextOwnerEntityId = nextCarcasse.next_owner_entity_id as string | null | undefined;
   if (nextOwnerEntityId && nextOwnerEntityId !== existingCarcasse.next_owner_entity_id) {
     await ensureCanTransmitRelation(user, nextOwnerEntityId, opts.ensuredRelations);
@@ -848,9 +770,6 @@ export async function syncCarcasse(
   return { savedCarcasse: updatedCarcasse, existingCarcasse, isDeleted: false };
 }
 
-// En sync de masse, les carcasses transmises au même destinataire sont traitées en parallèle : la
-// promesse est gardée par entité pour ne créer la relation qu'une fois, sans doublon concurrent.
-// La carcasse est déjà écrite : un échec ici est remonté à Sentry sans faire échouer le sync.
 function ensureCanTransmitRelation(
   user: User,
   entityId: string,
@@ -878,9 +797,6 @@ function ensureCanTransmitRelation(
   return promise;
 }
 
-// L'auteur d'une carcasse ajoutée en aval l'annule avec sa demande NEW_CARCASSE encore en attente
-// (les carcasses sont synchronisées avant les demandes : l'annulation de la demande arrive après).
-// Une carcasse créée et annulée avant sa première synchro n'a pas encore de demande côté serveur.
 async function canCreatorCancelCarcasse(carcasse: Carcasse, isJustCreated: boolean, user: User) {
   if (
     carcasse.svi_ipm1_signed_at ||
@@ -903,14 +819,8 @@ async function canCreatorCancelCarcasse(carcasse: Carcasse, isJustCreated: boole
   return pendingRequests > 0;
 }
 
-// Délai maximal toléré entre une assignation faite hors ligne et sa réception par le serveur.
 const SVI_ASSIGNED_AT_MAX_DELAY_HOURS = 48;
 
-// La date d'assignation ouvre l'acceptation automatique à J+10 : une date antidatée permettrait
-// d'accepter la carcasse sans inspection. On garde la date du client (toutes les carcasses d'une
-// transmission partagent la même) si elle est récente, ou si c'est déjà celle de la carcasse ou
-// d'une autre carcasse de la fiche (carcasse manquante ajoutée après l'assignation). Sinon, c'est
-// la date du serveur.
 async function getSviAssignedAt(
   value: Prisma.CarcasseUncheckedCreateInput['svi_assigned_at'],
   existingCarcasse: Carcasse
@@ -937,12 +847,9 @@ const NON_SVI_STATUSES: Array<CarcasseStatus> = [
   CarcasseStatus.REFUS_ETG_COLLECTEUR,
 ];
 
-// Statuts qu'un non-SVI peut écrire, d'après `updateCarcasseStatus` côté client.
 function canNonSviWriteStatus(existing: Carcasse, next: CarcasseStatus | null | undefined): boolean {
   if (next === undefined || next === existing.svi_carcasse_status) return true;
   const isSviInspected = !!existing.svi_ipm1_date || !!existing.svi_ipm2_date;
-  // Un manque ou un refus de l'intermédiaire passe avant une acceptation automatique : le client
-  // les calcule en priorité.
   if (
     existing.svi_carcasse_status === CarcasseStatus.ACCEPTE &&
     !isSviInspected &&
@@ -950,10 +857,8 @@ function canNonSviWriteStatus(existing: Carcasse, next: CarcasseStatus | null | 
   ) {
     return true;
   }
-  // Une décision du SVI ne peut être réécrite que par le SVI.
   if (existing.svi_carcasse_status && !NON_SVI_STATUSES.includes(existing.svi_carcasse_status)) return false;
   if (next && NON_SVI_STATUSES.includes(next)) return true;
-  // Acceptation automatique : 10 jours après l'assignation au SVI, sans inspection.
   return (
     next === CarcasseStatus.ACCEPTE &&
     !isSviInspected &&

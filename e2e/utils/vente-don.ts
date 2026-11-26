@@ -1,17 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 
-// Le premier détenteur répartit ses carcasses en « ventes / dons » : une carte par destinataire,
-// remplie dans une modale à étapes (Destinataire → Carcasses → Stockage → Transport).
-// L'étape Transport n'existe que quand le premier détenteur doit l'organiser (ni collecteur,
-// ni circuit court).
-// Voir app-local-first-react-router/src/routes/chasseur/premier-detenteur-select-next.tsx
-
 export const venteDonModal = (page: Page) => page.locator('#dispatch-modal-pd');
 
-// Étape « Carcasses » : on part des carcasses encore libres, et on retire celles qui ne partent
-// pas chez ce destinataire. Chaque carcasse est un tag cliquable : « Retirer … » quand elle est
-// dans le lot, « Remettre … » sinon. Trois zones — retenues, « Reste à attribuer », et
-// « Part ailleurs » (déjà attribuées à une autre vente / un autre don, reprenables).
 export const carcassesRetenues = (page: Page) =>
   venteDonModal(page)
     .locator('#vente-don-carcasses-retenues')
@@ -22,8 +12,6 @@ export const carcassesRetirees = (page: Page) =>
     .locator('#vente-don-carcasses-retirees')
     .getByRole('button', { name: /^Remettre / });
 
-// Sous-zone « Part ailleurs » : les carcasses d'une autre vente / d'un autre don, qu'on peut
-// reprendre pour le lot en cours. Incluse dans carcassesRetirees, qui couvre les deux sous-zones.
 export const carcassesAutreLot = (page: Page) =>
   venteDonModal(page)
     .locator('#vente-don-carcasses-part-ailleurs')
@@ -36,8 +24,6 @@ export async function openVenteDon(page: Page) {
   await expect(venteDonModal(page)).toBeVisible({ timeout: 10000 });
 }
 
-// Les radios DSFR « rich » couvrent tout le libellé d'un calque : cliquer un <span> à l'intérieur
-// du <label> est intercepté. On remonte donc toujours au <label>, seul élément vraiment cliquable.
 function radioLabel(page: Page, texte: string) {
   return venteDonModal(page).getByText(texte).first().locator('xpath=ancestor-or-self::label[1]');
 }
@@ -49,11 +35,7 @@ export async function choisirRepartition(page: Page, choix: 'toutes' | 'partie')
   await radio.click();
 }
 
-// Ne garde que les carcasses aux indices donnés. L'ordre de référence est celui des tags de
-// l'étape « Carcasses », toutes zones confondues (retenues, à attribuer, déjà attribuées ailleurs).
 export async function garderCarcasses(page: Page, indices: Array<number>) {
-  // La modale s'ouvre sur « toutes les carcasses restantes » : passer sur « une partie » déroule
-  // les tags.
   await choisirRepartition(page, 'partie');
   const tags = venteDonModal(page).getByRole('button', { name: /^(Retirer|Remettre) / });
   await expect(tags.first()).toBeVisible({ timeout: 10000 });
@@ -61,8 +43,6 @@ export async function garderCarcasses(page: Page, indices: Array<number>) {
     elements.map((element) => (element.getAttribute('aria-label') ?? '').replace(/^\S+ /, ''))
   );
   for (const [index, nom] of noms.entries()) {
-    // « Retirer X » = X est dans le lot, « Remettre X » = X est hors du lot : on ne clique que le
-    // tag qui est du mauvais côté, les autres n'existent pas sous ce libellé.
     const verbe = indices.includes(index) ? 'Remettre' : 'Retirer';
     const tag = venteDonModal(page).getByRole('button', { name: `${verbe} ${nom}`, exact: true });
     if ((await tag.count()) === 0) continue;
@@ -71,7 +51,6 @@ export async function garderCarcasses(page: Page, indices: Array<number>) {
   }
 }
 
-// `nom` = l'intitulé du tag, ex. « Daim N° MM-001-002 ».
 export async function retirerCarcasse(page: Page, nom: string) {
   const tag = venteDonModal(page).getByRole('button', { name: `Retirer ${nom}` });
   await tag.scrollIntoViewIfNeeded();
@@ -84,9 +63,6 @@ export async function remettreCarcasse(page: Page, nom: string) {
   await tag.click();
 }
 
-// Étape « Destinataire » : les destinataires habituels (enregistrés par le chasseur) sont des boutons
-// radio, avec « Moi-même » ou « Repas de chasse » ; les autres se cherchent dans le champ texte,
-// ouvert par « Envoyer à un autre destinataire ».
 export async function selectDestinataire(page: Page, optionName: string | RegExp) {
   const modal = venteDonModal(page);
   await expect(modal.getByText('Prochain détenteur des carcasses').first()).toBeVisible({ timeout: 10000 });
@@ -101,7 +77,6 @@ export async function selectDestinataire(page: Page, optionName: string | RegExp
   }
 
   const recherche = await ouvrirRechercheDestinataire(page);
-  // la recherche ignore la casse et les accents : le libellé attendu, sans échappement, suffit
   await recherche.fill(typeof optionName === 'string' ? optionName : optionName.source.replace(/\\/g, ''));
   const resultat = modal.getByRole('button', { name: optionName }).first();
   await resultat.scrollIntoViewIfNeeded();
@@ -120,8 +95,6 @@ export async function ouvrirRechercheDestinataire(page: Page) {
   return recherche;
 }
 
-// Un nom introuvable dans la recherche propose « Créer « nom » », qui ouvre le formulaire d'ajout
-// d'un destinataire avec la raison sociale préremplie.
 export async function creerDestinataire(page: Page, nom: string) {
   const modal = venteDonModal(page);
   await expect(modal.getByText('Prochain détenteur des carcasses').first()).toBeVisible({ timeout: 10000 });
@@ -157,7 +130,6 @@ export async function choisirTransport(page: Page, transport: 'moi' | 'collecteu
   await radio.click();
 }
 
-// Raccourci « maintenant » des champs date : le libellé est la date du jour formatée (DD/MM/YYYY HH:mm).
 export async function remplirDateMaintenant(page: Page) {
   const raccourci = venteDonModal(page)
     .getByRole('button', { name: /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/ })
@@ -166,12 +138,9 @@ export async function remplirDateMaintenant(page: Page) {
   await raccourci.click();
 }
 
-// Étapes possibles de la modale, dans l'ordre.
 const ETAPES = ['Destinataire', 'Carcasses', 'Stockage', 'Transport'] as const;
 export type EtapeVenteDon = (typeof ETAPES)[number];
 
-// Avance jusqu'à l'étape voulue. Les étapes « Carcasses » et « Transport » n'existent pas
-// toujours : on se cale sur le titre du Stepper plutôt que sur un nombre de clics.
 export async function allerAEtape(page: Page, etape: EtapeVenteDon) {
   for (let i = 0; i < ETAPES.length; i++) {
     const titre = (await etapeCourante(page).textContent()) ?? '';
@@ -200,22 +169,17 @@ export async function enregistrerVenteDon(page: Page) {
   await expect(venteDonModal(page)).toBeHidden({ timeout: 10000 });
 }
 
-// Titre de l'étape courante affiché en tête de la modale.
 export function etapeCourante(page: Page) {
   return venteDonModal(page).locator('#vente-don-etape-courante');
 }
 
 interface VenteDon {
   destinataire: string | RegExp;
-  // Indices des carcasses à GARDER pour cette vente / ce don (les autres sont retirées).
-  // Par défaut on garde la proposition « toutes mes carcasses ».
   carcasses?: number[];
-  // Stockage en chambre froide. Sans ccg : « pas de stockage ».
   ccg?: string | RegExp;
   transport?: 'moi' | 'collecteur';
 }
 
-// Ajoute une vente / un don complète depuis la carte d'ajout jusqu'à l'enregistrement.
 export async function ajouterVenteDon(page: Page, venteDon: VenteDon) {
   await openVenteDon(page);
   await selectDestinataire(page, venteDon.destinataire);
@@ -234,8 +198,6 @@ export async function ajouterVenteDon(page: Page, venteDon: VenteDon) {
     await choisirStockage(page, 'aucun');
   }
 
-  // L'étape « Transport » n'existe que si le premier détenteur doit l'organiser : sur la dernière
-  // étape la modale propose « Enregistrer » à la place de « Suivant ».
   const aUneEtapeTransport = await venteDonModal(page)
     .getByRole('button', { name: 'Suivant', exact: true })
     .isVisible();

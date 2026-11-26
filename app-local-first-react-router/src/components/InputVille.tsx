@@ -61,8 +61,6 @@ export default function InputVille(props: InputVilleProps) {
           },
         }}
       />
-      {/* la liste reste montée même vide : sans elle le champ devient `:last-child` et le DSFR
-          lui retire sa marge basse */}
       <div
         className={
           isVisible ? '-mt-6 flex max-h-60 w-full flex-col overflow-y-auto border border-gray-200' : 'hidden'
@@ -77,9 +75,6 @@ export default function InputVille(props: InputVilleProps) {
                   setVilleSearched(ville);
                   if (onSelect) onSelect(ville);
                   setIsOpen(false);
-                  // the parent form is submitted on blur
-                  // trigger a focus event then a blur again to submit the form
-                  // this is a hack to submit the form on blur again
                   ref.current?.focus();
                 }}
                 type="button"

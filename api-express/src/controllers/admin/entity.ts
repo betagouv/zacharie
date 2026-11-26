@@ -38,7 +38,6 @@ router.get(
       next: express.NextFunction
     ) => {
       const { search, type, zacharie_compatible } = req.query as Record<string, string | undefined>;
-      // Admin : on renvoie toutes les entités, supprimées incluses (affichées avec un badge).
       const where: Prisma.EntityWhereInput = {};
       if (type) where.type = type as EntityTypes;
       if (zacharie_compatible) where.zacharie_compatible = zacharie_compatible === 'true';
@@ -75,8 +74,6 @@ router.get(
         counts[t] = typeCounts[i];
       });
 
-      // carcasses et fiches (non supprimées) qui passent par l'entité à n'importe quelle étape du circuit :
-      // premier détenteur, dépôt (CCG), intermédiaire, SVI, ou propriétaire précédent / actuel / suivant
       const activityRows = await prisma.$queryRaw<
         Array<{ entity_id: string; carcasses: number; fiches: number }>
       >`
@@ -129,7 +126,6 @@ router.get(
       res: express.Response<AdminGetEntityResponse>,
       next: express.NextFunction
     ) => {
-      // Admin : on peut ouvrir une entité supprimée pour la restaurer.
       const entity = await prisma.entity.findUnique({
         where: {
           id: req.params.entity_id,
@@ -304,12 +300,12 @@ router.post(
         data: {
           name: `${entity.nom_d_usage} - Clé API dédiée`,
           slug_for_context: slugify(entity.nom_d_usage, {
-            replacement: '-', // replace spaces with replacement character
-            remove: undefined, // remove colons and parentheses
-            lower: true, // convert to lower case, defaults to `false`
-            strict: true, // strip special characters except replacement, defaults to `false`
+            replacement: '-',
+            remove: undefined,
+            lower: true,
+            strict: true,
             locale: 'fr',
-            trim: true, // trim leading and trailing replacement chars, defaults to `true`
+            trim: true,
           }),
           dedicated_to_entity_id: entity.id,
           description: `Clé API dédiée pour l'entité ${entity.nom_d_usage}`,
@@ -333,7 +329,6 @@ router.post(
   )
 );
 
-// le consommateur final n'est pas une entité : un admin ne le pré-enregistre pas
 const adminDestinataireTypes: Array<EntityTypes> = [
   EntityTypes.COMMERCE_DE_DETAIL,
   EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
@@ -362,14 +357,11 @@ router.post(
 
       const type = body[Prisma.EntityScalarFieldEnum.type] as EntityTypes;
 
-      // le consommateur final n'est pas une entité : il n'est jamais créé depuis l'admin
       if (type === EntityTypes.CONSOMMATEUR_FINAL) {
         res.status(406);
         return next(new Error("Le consommateur final n'est pas une entité"));
       }
 
-      // un destinataire porte aussi son représentant et son adresse : même formulaire, même
-      // création que côté chasseur, sans la relation « je lui transmets des carcasses »
       if (adminDestinataireTypes.includes(type)) {
         const parsed = adminDestinataireSchema.safeParse(body);
         if (!parsed.success) {
@@ -401,8 +393,6 @@ router.post(
         entityType === EntityTypes.PREMIER_DETENTEUR ||
         entityType === EntityTypes.SVI ||
         entityType === EntityTypes.CCG;
-      // Deux créations concurrentes peuvent tomber sur le même code trichine : il est @unique,
-      // le P2002 nous fait recalculer.
       const createdEntity = await withReferenceRetry(async () =>
         prisma.entity.create({
           data: {
@@ -513,9 +503,6 @@ router.post(
   )
 );
 
-// Soft delete : pose deleted_at. L'entité disparaît des listes et pickers user-facing
-// (qui filtrent deleted_at: null), mais ses données historiques (fiches, carcasses) restent
-// référencées. Les FK Fei/Carcasse → Entity sont onDelete: Cascade, donc jamais de hard delete.
 router.post(
   '/entity/:entity_id/soft-delete',
   catchErrors(
@@ -534,7 +521,6 @@ router.post(
   )
 );
 
-// Restaure une entité soft-deleted : remet deleted_at à null.
 router.post(
   '/entity/:entity_id/restore',
   catchErrors(

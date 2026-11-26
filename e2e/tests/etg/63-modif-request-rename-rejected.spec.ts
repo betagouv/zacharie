@@ -9,9 +9,6 @@ test.beforeEach(async () => {
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Scenario 63 — L'examinateur CONTESTE une correction de marquage.
-// Le numéro NE revient PAS à l'ancien : c'est l'intermédiaire qui a la carcasse sous les yeux.
-// Le désaccord est enregistré dans l'historique et signalé sur la carte.
 test('Rename contesté : le numéro corrigé reste, le désaccord est tracé', async ({ page }) => {
   const feiId = 'ZACH-20250707-QZ6E0-235242';
 
@@ -29,7 +26,6 @@ test('Rename contesté : le numéro corrigé reste, le désaccord est tracé', a
     timeout: 10000,
   });
 
-  // Examinateur conteste.
   await logoutAndConnect(page, 'examinateur@example.fr');
   await expect(page.getByRole('heading', { name: 'Modifications signalées sur vos carcasses' })).toBeVisible({
     timeout: 10000,
@@ -37,13 +33,11 @@ test('Rename contesté : le numéro corrigé reste, le désaccord est tracé', a
   await page.getByRole('button', { name: 'Voir la modification' }).click();
   await page.getByRole('link', { name: 'Voir la modification' }).first().click();
 
-  // Le chemin « désaccord » est replié par défaut : on l'ouvre, on motive, on envoie.
   await page.getByRole('button', { name: 'Contester le numéro' }).click();
   await page.getByLabel('Motif (optionnel)').fill("Non, c'est bien 002");
   await page.getByRole('button', { name: 'Envoyer ma contestation' }).click();
   await expect(page).toHaveURL(/\/app\/chasseur\/demandes-de-modification$/);
 
-  // ETG side: le numéro corrigé est CONSERVÉ (le refus ne rétablit pas l'ancien).
   await logoutAndConnect(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
 
@@ -51,11 +45,9 @@ test('Rename contesté : le numéro corrigé reste, le désaccord est tracé', a
     timeout: 10000,
   });
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-002 Mise à' })).toHaveCount(0);
-  // La bannière « en cours » a disparu, la carte affiche le compteur de modifications.
   await expect(page.getByText('Numéro de marquage corrigé')).toHaveCount(0);
   await expect(page.getByText('1 modification').first()).toBeVisible();
 
-  // Open the modal — la timeline trace la contestation et son motif.
   await page.getByRole('button', { name: 'Daim N° MM-001-Z99 Mise à' }).click();
   await expect(page.getByText(/Numéro de marquage contesté/).first()).toBeVisible();
   await expect(page.getByText(/Motif.*Non, c'est bien 002/).first()).toBeVisible();

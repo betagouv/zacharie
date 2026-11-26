@@ -61,19 +61,12 @@ import type { LaboResultsImportResponse, LaboResultsPreviewResponse, LimsResultR
 
 const router: express.Router = express.Router();
 
-/**
- * Routes laboratoire (LVD et LNR, rôle LABORATOIRE).
- * Visibilité stricte (cf doc/trichine.md §10.2) : ces endpoints construisent une
- * projection côté serveur — carcasse minimale + émetteur — sans réutiliser /carcasse/:id.
- */
-
 function sendError(res: express.Response, status: number, error: string) {
   res.status(status).send({ ok: false, data: null, error });
 }
 
 type LaboContext = {
   entityIds: string[];
-  // true si l'utilisateur travaille pour le LNR
   isLnr: boolean;
 };
 
@@ -106,8 +99,6 @@ async function guardLabo(req: RequestWithUser, res: express.Response): Promise<L
   };
 }
 
-// Projection stricte : seules données carcasse visibles par le labo
-// (la commune de mise à mort est portée par la FEI)
 const carcasseLaboSelect = {
   numero_bracelet: true,
   espece: true,
@@ -121,7 +112,6 @@ const echantillonLaboInclude = Prisma.validator<Prisma.TrichineEchantillonInclud
   ...trichineAliasesInclude,
 });
 
-// Émetteur : nom + contact uniquement (facturation / relance)
 const expediteurLaboSelect = {
   ExpediteurUser: {
     select: { prenom: true, nom_de_famille: true, email: true, telephone: true },
@@ -137,7 +127,6 @@ const expediteurLaboSelect = {
   },
 } as const;
 
-// Fiche liée (d'origine ou de confirmation) : de quoi l'afficher et vérifier l'accès du labo
 const ftpLieeSelect = {
   numero_fiche: true,
   statut_logistique: true,
@@ -148,8 +137,6 @@ const ftpLieeSelect = {
 
 type FtpLiee = Prisma.TrichineFTPGetPayload<{ select: typeof ftpLieeSelect }>;
 
-// Le LNR reçoit une fiche de confirmation sans être partie prenante de la fiche d'origine :
-// on ne lui montre le lien que si la fiche liée lui appartient aussi.
 function ftpLieeVisible(ftp: FtpLiee, context: LaboContext) {
   if (ftp.deleted_at || ftp.statut_logistique === TrichineStatutLogistiqueFTP.BROUILLON) return false;
   return (
@@ -195,7 +182,6 @@ type LaboPool = Prisma.TrichinePoolGetPayload<{ include: typeof poolForLaboInclu
 type LaboLink = LaboPool['TrichinePoolFTPs'][number];
 type LaboFtp = LaboLink['TrichineFTP'];
 
-// Le lien (non brouillon) par lequel le pool est arrivé dans un des laboratoires de l'utilisateur.
 function pickLaboLink(pool: LaboPool, context: LaboContext): LaboLink | null {
   return (
     pool.TrichinePoolFTPs.find(
@@ -204,10 +190,6 @@ function pickLaboLink(pool: LaboPool, context: LaboContext): LaboLink | null {
   );
 }
 
-/**
- * Retrouve le pool + le lien (et donc la FTP) par lequel il est arrivé dans un des laboratoires
- * de l'utilisateur (le plus récent, hors brouillons).
- */
 async function findPoolForLabo(poolId: string, context: LaboContext) {
   const pool = await prisma.trichinePool.findUnique({
     where: { id: poolId },
@@ -222,8 +204,6 @@ async function findPoolForLabo(poolId: string, context: LaboContext) {
 
 type PoolTrouve = { pool: LaboPool; ftp: LaboFtp };
 
-// Dès qu'un pool part en confirmation au LNR, son résultat appartient au LNR : le LVD ne peut plus
-// ni le refuser ni le corriger.
 function poolTransmisAuLnr(pool: LaboPool) {
   return pool.TrichinePoolFTPs.some(
     ({ TrichineFTP: ftp }) => isFtpPartie(ftp) && ftp.DestinataireEntity.is_lnr
@@ -233,13 +213,6 @@ function poolTransmisAuLnr(pool: LaboPool) {
 const ERREUR_POOL_TRANSMIS_AU_LNR =
   'Le pool a été transmis au laboratoire national de référence : seul le LNR peut modifier son résultat';
 
-/**
- * Variante batchée : rapproche des références lues dans un fichier aux pools destinés aux
- * laboratoires de l'utilisateur. Une référence est soit celle de Zacharie (P-YY-…), qui prime
- * toujours, soit l'alias que le laboratoire a donné au pool (casse ignorée, comme son unicité).
- * Un alias porté par deux pools (deux laboratoires de l'utilisateur) est ambigu : il ne rapproche
- * rien. Sert à l'import de résultats (une requête pour tout le fichier).
- */
 async function findPoolsForLabo(references: string[], context: LaboContext) {
   const parReference = new Map<string, PoolTrouve>();
   const parAlias = new Map<string, PoolTrouve | 'ambigu'>();
@@ -248,8 +221,6 @@ async function findPoolsForLabo(references: string[], context: LaboContext) {
     return parReference.get(reference) ?? (parAliasTrouve === 'ambigu' ? undefined : parAliasTrouve);
   };
   if (!references.length) return trouver;
-  // Égalité stricte sur lower(reference), comme l'index unique : le filtre insensible à la casse de
-  // Prisma passe par ILIKE, où un `%` ou un `_` lu dans le fichier vaudrait joker
   const referencesMinuscules = [...new Set(references.map((reference) => reference.toLowerCase()))];
   const aliasTrouves = await prisma.$queryRaw<Array<{ pool_id: string }>>`
     SELECT "pool_id" FROM "TrichineAlias"
@@ -285,10 +256,6 @@ async function findPoolsForLabo(references: string[], context: LaboContext) {
   return trouver;
 }
 
-/* -------------------------------------------------------------------------- */
-/* Mon laboratoire                                                             */
-/* -------------------------------------------------------------------------- */
-
 router.get(
   '/me',
   passport.authenticate('user', { session: false }),
@@ -313,18 +280,12 @@ router.get(
   })
 );
 
-/* -------------------------------------------------------------------------- */
-/* FTP reçues                                                                  */
-/* -------------------------------------------------------------------------- */
-
 router.get(
   '/ftp',
   passport.authenticate('user', { session: false }),
   catchErrors(async (req: RequestWithUser, res: express.Response) => {
     const context = await guardLabo(req, res);
     if (!context) return;
-    // Un LVD est destinataire des colis qu'il reçoit, mais expéditeur de la FTP de confirmation
-    // générée vers le LNR sur un résultat douteux : les deux lui appartiennent.
     const ftps = await prisma.trichineFTP.findMany({
       where: {
         OR: [
@@ -346,8 +307,6 @@ router.get(
               omit: avecNombreLarves,
               include: {
                 ...trichineAliasesInclude,
-                // Uniquement pour compter les carcasses en attente d'IPM2 : la projection
-                // renvoyée au labo (§10.2) ne contient pas les échantillons.
                 TrichineEchantillons: {
                   where: { deleted_at: null },
                   select: { Carcasse: { select: { svi_ipm2_date: true } } },
@@ -367,7 +326,6 @@ router.get(
           direction: context.entityIds.includes(ftp.destinataire_entity_id)
             ? ('recue' as const)
             : ('envoyee' as const),
-          // Une IPM2 signifie que le SVI a statué sur la carcasse : le résultat trichine est traité
           carcasses_sans_ipm2: TrichinePoolFTPs.reduce(
             (total, lien) =>
               total +
@@ -389,8 +347,6 @@ router.get(
   })
 );
 
-// Détail par référence (cf convention d'adressage dans controllers/trichine.ts) :
-// c'est le numéro que le laboratoire lit sur la fiche papier jointe au colis.
 router.get(
   '/ftp/:reference',
   passport.authenticate('user', { session: false }),
@@ -447,7 +403,6 @@ router.get(
           ...ftpSansLiens,
           TrichinePoolFTPs,
           FTPParent: FTPParent && ftpLieeVisible(FTPParent, context) ? projeterFtpLiee(FTPParent) : null,
-          // id et pools portés : le labo émetteur télécharge la fiche à joindre au colis depuis chaque pool
           FTPChildren: FTPChildren.filter((enfant) => ftpLieeVisible(enfant, context)).map((enfant) => ({
             ...projeterFtpLiee(enfant),
             id: enfant.id,
@@ -462,7 +417,6 @@ router.get(
   })
 );
 
-// Même document que celui imprimé par l'émetteur (le colis peut arriver sans son papier)
 router.get(
   '/ftp/:ftp_id/pdf',
   passport.authenticate('user', { session: false }),
@@ -479,8 +433,6 @@ router.get(
         deleted_at: true,
       },
     });
-    // Mêmes droits que le détail : le labo lit la fiche qu'il reçoit comme celle qu'il envoie
-    // (FTP de confirmation générée vers le LNR sur résultat douteux)
     const estDestinataire = !!ftp && context.entityIds.includes(ftp.destinataire_entity_id);
     const estExpediteur = !!ftp?.expediteur_entity_id && context.entityIds.includes(ftp.expediteur_entity_id);
     if (
@@ -501,8 +453,6 @@ router.get(
   })
 );
 
-// Détail d'un pool reçu, par sa référence : le labo saisit son résultat depuis cette page
-// comme depuis la fiche de transmission. Projection carcasse stricte (§10.2).
 router.get(
   '/pool/:reference',
   passport.authenticate('user', { session: false }),
@@ -541,7 +491,6 @@ router.get(
         Documents: { where: { deleted_at: null } },
       },
     });
-    // Le pool doit être arrivé par une FTP non brouillon destinée à un des laboratoires de l'utilisateur
     const ftp = pool?.TrichinePoolFTPs.map((link) => link.TrichineFTP).find(
       (candidate) =>
         !candidate.deleted_at &&
@@ -633,10 +582,6 @@ router.post(
     res.status(200).send({ ok: true, data: { ftp: updatedFtp }, error: '' });
   })
 );
-
-/* -------------------------------------------------------------------------- */
-/* Saisie des résultats                                                        */
-/* -------------------------------------------------------------------------- */
 
 router.post(
   '/pool/:pool_id/resultat',
@@ -748,12 +693,6 @@ const retraitEchantillonSchema = z.object({
   motif: z.string().trim().min(1),
 });
 
-/**
- * Retrait d'un échantillon de son pool par le laboratoire (échantillon absent du colis, abîmé,
- * mal identifié…), à réception ou en cours d'analyse. L'échantillon sort du pool : il n'hérite
- * pas du résultat, sa carcasse repasse à prélever. Possible tant que le laboratoire peut encore
- * saisir le résultat du pool (cf PoolCard côté front).
- */
 router.post(
   '/echantillon/:echantillon_id/retirer-du-pool',
   passport.authenticate('user', { session: false }),
@@ -783,18 +722,15 @@ router.post(
     if (!isLnr && poolTransmisAuLnr(pool)) {
       return sendError(res, 400, ERREUR_POOL_TRANSMIS_AU_LNR);
     }
-    // Le LNR confirme un pool douteux : il garde la main tant qu'il n'a pas rendu son résultat
     const resultatEnAttente =
       pool.resultat_analyse === null || (isLnr && pool.resultat_analyse === TrichineResultatAnalyse.DOUTEUX);
     if (!resultatEnAttente) {
       return sendError(res, 400, 'Un résultat a déjà été saisi pour ce pool');
     }
-    // Un pool vide n'existe pas : sans échantillon analysable, c'est le pool entier qu'on refuse
     if (pool.TrichineEchantillons.length <= 1) {
       return sendError(res, 400, 'Dernier échantillon du pool : refusez plutôt le pool');
     }
 
-    // Filtre sur pool_id : deux retraits simultanés n'en appliquent qu'un
     const { count } = await prisma.trichineEchantillon.updateMany({
       where: { id: echantillon.id, pool_id: pool.id },
       data: {
@@ -827,8 +763,6 @@ router.post(
     await recomputeEchantillonTrichine(echantillon.id, req.user.id);
     await recomputePoolAndLinkedFTPs(pool.id, req.user.id);
 
-    // Le pool vient du détenteur ou du SVI : sur une fiche de confirmation, c'est l'émetteur de la
-    // fiche d'origine qui doit re-prélever, le LVD est seulement tenu informé
     const destinataires = new Map<string, TrichineNotifiableUser>();
     for (const user of await getFtpEmitterUsers(ftp)) destinataires.set(user.id, user);
     if (ftp.ftp_parent_id) {
@@ -877,13 +811,6 @@ const correctionSchema = resultatSchema.extend({
   raison: z.string().min(1),
 });
 
-/**
- * Correction d'un résultat déjà rendu (cf doc/trichine.md — édition/annulation).
- * Garde-fous : le SVI ne doit pas avoir statué sur les carcasses (passé l'IPM2, une
- * décision sanitaire a été prise et se rattrape hors application), un DOUTEUX n'est pas
- * corrigeable puisque le colis est déjà reparti au LNR, et un LVD ne corrige jamais un pool
- * transmis au LNR (le résultat de confirmation est celui du LNR).
- */
 router.post(
   '/pool/:pool_id/corriger-resultat',
   passport.authenticate('user', { session: false }),
@@ -894,7 +821,6 @@ router.post(
     if (!bodyResult.success) {
       return sendError(res, 400, 'La raison de la correction est obligatoire');
     }
-    // Les analyses du pool sont terminées : la référence du laboratoire est figée (cf trichine-alias)
     const { raison, reference_labo: _referenceFigee, ...body } = bodyResult.data;
 
     const found = await findPoolForLabo(req.params.pool_id, context);
@@ -925,8 +851,6 @@ router.post(
     }
 
     const ancienResultat = pool.resultat_analyse;
-    // On remet le pool à zéro pour que applyPoolResult applique la correction par le même
-    // chemin qu'une saisie : mêmes gardes, mêmes effets de bord, mêmes notifications.
     await prisma.trichinePool.update({
       where: { id: pool.id },
       data: {
@@ -945,7 +869,6 @@ router.post(
       origine: 'saisie',
     });
     if (outcome.kind === 'error') {
-      // La correction est refusée : on restitue le résultat d'origine
       await prisma.trichinePool.update({
         where: { id: pool.id },
         data: {
@@ -1003,10 +926,6 @@ router.post(
   })
 );
 
-/* -------------------------------------------------------------------------- */
-/* Documents                                                                   */
-/* -------------------------------------------------------------------------- */
-
 const documentSchema = z.object({
   type: z.enum([TrichineDocumentType.RAPPORT_COFRAC, TrichineDocumentType.AUTRE]).optional(),
   file: uploadedFileSchema,
@@ -1040,8 +959,6 @@ router.post(
   })
 );
 
-// Téléchargement d'un document déposé sur un pool (rapport d'analyse).
-// Le fichier transite par l'API plutôt que par une URL publique : les droits sont ceux du pool.
 router.get(
   '/pool/:pool_id/document/:document_id',
   passport.authenticate('user', { session: false }),
@@ -1073,11 +990,6 @@ router.get(
   })
 );
 
-/**
- * Échantillon d'un pool reçu par un des laboratoires de l'utilisateur. Un échantillon retiré du
- * pool reste accessible en lecture (ses documents déjà déposés restent téléchargeables), mais
- * n'accepte plus de nouveau document.
- */
 async function findEchantillonForLabo(
   echantillonId: string,
   context: LaboContext,
@@ -1159,7 +1071,6 @@ const photosSchema = z.object({
   files: z.array(uploadedPhotoSchema).min(1).max(MAX_PHOTOS_PAR_DEPOT),
 });
 
-// LVD : upload des photographies de larves sur la FTP de confirmation à destination du LNR
 router.post(
   '/ftp/:ftp_id/photos',
   passport.authenticate('user', { session: false }),
@@ -1197,7 +1108,6 @@ router.post(
   })
 );
 
-// Téléchargement d'une photographie de larve déposée sur une FTP de confirmation : mêmes droits que le dépôt
 router.get(
   '/ftp/:ftp_id/document/:document_id',
   passport.authenticate('user', { session: false }),
@@ -1234,12 +1144,6 @@ router.get(
   })
 );
 
-/* -------------------------------------------------------------------------- */
-/* Import de résultats : fichier CSV au format Zacharie (cf utils/lims-parse.ts) */
-/* -------------------------------------------------------------------------- */
-
-// Classe une ligne lue du fichier selon le pool retrouvé + les règles de saisie.
-// referenceRefusee : motif pour lequel la référence labo de la ligne ne sera pas posée (le résultat l'est).
 function classifyLimsRow(
   mapped: MappedLimsRow,
   found: { pool: LaboPool; ftp: LaboFtp } | undefined,
@@ -1296,7 +1200,6 @@ function classifyLimsRow(
   };
 }
 
-// Pools encore sans résultat de chaque fiche : une fiche reçue se clôture quand ils en ont tous un
 async function poolsSansResultatParFtp(ftpIds: string[]) {
   const liens = await prisma.trichinePoolFTP.findMany({
     where: { ftp_id: { in: ftpIds }, TrichinePool: { deleted_at: null, resultat_analyse: null } },
@@ -1309,7 +1212,6 @@ async function poolsSansResultatParFtp(ftpIds: string[]) {
   return parFtp;
 }
 
-// Fichier CSV transmis encodé en base64
 const previewSchema = z.object({
   filename: z.string().optional(),
   content: z.string().min(1),
@@ -1352,15 +1254,11 @@ router.post(
     ] as string[];
     const poolsSansResultat = await poolsSansResultatParFtp(ftpIds);
     const rows: Array<LimsResultRow> = [];
-    // Un pool ne reçoit qu'un résultat : seule sa première ligne importable dans le fichier est retenue
     const poolsDejaRetenus = new Set<string>();
     for (const raw of lignes) {
       const found = trouverPool(raw.reference_pool.trim());
-      // non_negatif n'a pas le même sens pour un LVD et pour le LNR : on lit la valeur selon le
-      // laboratoire destinataire de la fiche par laquelle le pool est arrivé
       const row = mapRow(raw, found ? found.ftp.DestinataireEntity.is_lnr : context.isLnr);
       const reference = row.reference_labo?.trim();
-      // Une référence labo refusée n'empêche pas l'import du résultat : on prévient dès l'aperçu
       const referenceRefusee =
         found && reference
           ? await aliasReferenceRefusee({
@@ -1434,7 +1332,6 @@ router.post(
     if (!bodyResult.success) {
       return sendError(res, 400, 'Lignes invalides');
     }
-    // On ne fait jamais confiance aux ids côté client : on re-résout chaque pool dans le scope du labo.
     const trouverPool = await findPoolsForLabo(
       bodyResult.data.rows.map((row) => row.reference_pool),
       context
@@ -1444,8 +1341,6 @@ router.post(
     let skipped = 0;
     let errors = 0;
     const results: LaboResultsImportResponse['data']['results'] = [];
-    // Les pools sont lus une fois avant la boucle : un pool déjà traité ne doit pas recevoir un second
-    // résultat (sa version lue n'a pas encore de résultat, la validation ne l'arrêterait pas)
     const poolsTraites = new Set<string>();
 
     for (const row of bodyResult.data.rows) {
@@ -1493,7 +1388,6 @@ router.post(
           });
         }
       } catch (error) {
-        // Le résultat a pu être écrit en partie : pas de seconde tentative sur ce pool
         poolsTraites.add(found.pool.id);
         capture(error as Error, { extra: { reference_pool: row.reference_pool } });
         errors++;
@@ -1510,11 +1404,6 @@ router.post(
   })
 );
 
-/* -------------------------------------------------------------------------- */
-/* Registre : listes plates échantillons / pools reçus par le labo              */
-/* -------------------------------------------------------------------------- */
-
-// Rattaché à une FTP non-brouillon destinée à un des laboratoires de l'utilisateur
 const laboFtpMatch = (entityIds: string[]): Prisma.TrichinePoolFTPListRelationFilter => ({
   some: {
     TrichineFTP: {

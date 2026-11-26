@@ -96,7 +96,6 @@ export default function Filters<T extends Filter = Filter>({
         </div>
         <div className="w-full min-w-0">
           {filters.map((filter: T, index: number) => {
-            // filter: field, value, type
             const filterValues = getFilterOptionsByField(filter.field!, base, index);
             const onChangeField = (newField: (typeof filterFields)[number] | null) => {
               console.log('newField', newField);
@@ -143,28 +142,6 @@ export default function Filters<T extends Filter = Filter>({
                   <p className="m-0 w-full text-left sm:text-right">{index === 0 ? 'Filtrer par' : 'ET'}</p>
                 </div>
                 <div className="w-full sm:w-96 sm:min-w-[200px]">
-                  {/* <Select
-                    label=""
-                    nativeSelectProps={{
-                      id: `filter-field-${index}`,
-                      name: `filter-field-${index}`,
-                      onChange: (e) => {
-                        const field = base.find((field) => field.name === e.target.value);
-                        if (field) {
-                          onChangeField(field);
-                        }
-                      },
-                      value: filter.field ?? '',
-                    }}
-                  >
-                    {filterFields.map((field) => {
-                      return (
-                        <option key={field.field} value={field.field}>
-                          {field.label}
-                        </option>
-                      );
-                    })}
-                  </Select> */}
                   <div className="sm:tw-w-96 sm:tw-min-w-[200px] w-full">
                     <SelectCustom
                       // @ts-expect-error: The expected type comes from property 'options' which is declared here on type 'IntrinsicAttributes & SelectCustomProps<T, false, GroupBase<T>>'
@@ -327,25 +304,6 @@ function ValueSelector({ index, field, filterValues, value, onChangeValue, base 
             value?.comparator !== 'unfilled' ? 'w-full sm:basis-1/2 sm:pr-2' : 'w-full sm:basis-full sm:pr-4',
           ].join(' ')}
         >
-          {/* <Select
-            label=""
-            nativeSelectProps={{
-              id: name,
-              name: name,
-              value: value?.comparator,
-              onChange: (e) => {
-                if (!e.target?.value) return setComparator('');
-                setComparator(e.target.value);
-                onChangeValue({ date: value?.date, comparator: e.target.value });
-              },
-            }}
-          >
-            {dateOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </Select> */}
           <SelectCustom
             options={dateOptions}
             value={dateOptions.find((opt) => opt.value === value?.comparator)}
@@ -383,25 +341,6 @@ function ValueSelector({ index, field, filterValues, value, onChangeValue, base 
             !['unfilled', 'between'].includes(value?.comparator) ? 'w-full sm:basis-1/2' : '',
           ].join(' ')}
         >
-          {/* <Select
-            label=""
-            nativeSelectProps={{
-              id: name,
-              name: name,
-              value: value?.comparator,
-              onChange: (e) => {
-                if (!e.target?.value) return setComparator('');
-                setComparator(e.target.value);
-                onChangeValue({ number: value?.number, comparator: e.target.value });
-              },
-            }}
-          >
-            {numberOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </Select> */}
           <SelectCustom
             options={numberOptions}
             value={numberOptions.find((opt) => opt.value === value?.comparator)}

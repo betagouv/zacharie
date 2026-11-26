@@ -6,8 +6,6 @@ import { UserRoles, EntityRelationType, CarcasseStatus, FeiOwnerRole } from '@pr
 import type { User } from '@prisma/client';
 import { fakeSyncScope } from './fake-sync-scope';
 
-// Ce fichier couvre le mapping des champs. L'autorisation d'écriture a ses propres tests
-// (permissions-sync-write.test.ts), on passe ici un périmètre permissif.
 const scope = fakeSyncScope();
 
 const chasseur = {
@@ -223,8 +221,6 @@ describe('syncCarcasse — update', () => {
 describe('syncCarcasse — deletion', () => {
   test('soft-delete cascades to CarcasseIntermediaire', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
-    // First findFirst → returns existing carcasse for the initial lookup
-    // Second findFirst → returns existing carcasse for the delete branch
     vi.mocked(prisma.carcasse.findFirst)
       .mockResolvedValueOnce(baseCarcasse)
       .mockResolvedValueOnce(baseCarcasse);
@@ -343,8 +339,6 @@ describe('syncCarcasse — SVI-only fields', () => {
     expect(updateCall.data.svi_closed_by_user_id).toBe('user-svi');
   });
 
-  // L'assignation au SVI est faite par l'ETG, et le statut est recalculé par le client à chaque
-  // modification quel que soit le rôle : ces champs ne doivent pas tomber dans le périmètre SVI.
   test('assignation SVI et statut restent écrivables par un non-SVI', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(baseCarcasse);
@@ -398,7 +392,6 @@ describe('syncCarcasse — next_owner_entity_id side effect', () => {
     });
   });
 
-  // Le chasseur renvoie la carcasse telle qu'il l'a reçue, après que l'ETG l'a transmise au SVI.
   test('unchanged next_owner_entity_id → no relation', async () => {
     const carcasseTransmiseAuSvi = { ...baseCarcasse, next_owner_entity_id: 'entity-svi' };
     vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(carcasseTransmiseAuSvi);
@@ -467,7 +460,6 @@ describe('syncCarcasse — champs réservés à un rôle', () => {
     activated: true,
     isZacharieAdmin: false,
   } as unknown as User;
-  // L'ETG détient la carcasse mais n'est ni examinateur, ni premier détenteur.
   const etgScope = fakeSyncScope({ isFeiOwner: () => false, isPremierDetenteur: () => false });
   const carcasseDuChasseur = {
     ...baseCarcasse,
@@ -476,7 +468,6 @@ describe('syncCarcasse — champs réservés à un rôle', () => {
     current_owner_entity_id: 'entity-etg',
   };
 
-  // Fiche et carcasse passées en opts, comme le fait le /sync en masse.
   async function syncAsEtg(body: object, existing = carcasseDuChasseur) {
     vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(existing);
     await syncCarcasse('FEI-1', 'ZC-1', { fei_numero: 'FEI-1', ...body } as any, etgUser, etgScope, {
@@ -566,7 +557,6 @@ describe('syncCarcasse — champs réservés à un rôle', () => {
   test('une carcasse ajoutée en aval reprend les choix du premier détenteur des autres carcasses', async () => {
     const carcasseCreee = { ...baseCarcasse, created_by_user_id: etgUser.id };
     vi.mocked(prisma.carcasse.create).mockResolvedValueOnce(carcasseCreee);
-    // d'autres tests de ce fichier laissent des valeurs findFirst non consommées dans la file
     vi.mocked(prisma.carcasse.findFirst).mockReset();
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce({
       premier_detenteur_depot_type: 'AUCUN',
@@ -844,7 +834,6 @@ describe('syncCarcasse — transmission et décision réservées au détenteur e
     roles: [UserRoles.CHASSEUR],
     activated: true,
   } as unknown as User;
-  // L'examinateur est rattaché à la fiche mais n'est membre d'aucune entité aval.
   const examinateurScope = fakeSyncScope({
     entityIds: [],
     isFeiOwner: () => true,
@@ -857,7 +846,6 @@ describe('syncCarcasse — transmission et décision réservées au détenteur e
     isPremierDetenteur: () => false,
   });
 
-  // L'ETG a pris la carcasse en charge puis l'a refusée.
   const carcasseRefuseeParEtg = {
     ...baseCarcasse,
     current_owner_role: FeiOwnerRole.ETG,
@@ -917,7 +905,6 @@ describe('syncCarcasse — transmission et décision réservées au détenteur e
     });
     expect(data).not.toHaveProperty('intermediaire_carcasse_refus_intermediaire_id');
     expect(data).not.toHaveProperty('svi_carcasse_status');
-    // la transmission reste à l'ETG détenteur
     expect(data.next_owner_entity_id).toBe('entity-etg-2');
   });
 

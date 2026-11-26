@@ -13,12 +13,6 @@ test.beforeEach(async () => {
   await resetDb('PREMIER_DETENTEUR');
 });
 
-// Scenario 106 — Service worker cache : reload offline.
-// SKIP: e2e webServer runs Vite dev mode, where __WB_MANIFEST is empty (no precache) and
-// HMR-hashed JS URLs prevent reliable runtime caching by the SW. Reload-offline returns
-// net::ERR_INTERNET_DISCONNECTED because the SW didn't intercept the dev-mode bundle.
-// To unskip: switch the e2e webServer to a production preview (build + vite preview) so
-// the precache manifest is populated.
 test.skip('Service worker : reload offline charge depuis le runtime cache', async ({ page, context }) => {
   const feiId = 'ZACH-20250707-QZ6E0-155242';
   await connectWith(page, 'premier-detenteur@example.fr');

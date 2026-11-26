@@ -15,12 +15,9 @@ test('91 - Liste /app/circuit-court triable par statut', async ({ page }) => {
 
   await expect(page.getByRole('link', { name: feiId })).toBeVisible({ timeout: 10000 });
 
-  // Filtre statut
   const filterBtn = page.getByRole('button', { name: /Filtrer par statut/i });
   if (await filterBtn.isVisible().catch(() => false)) {
     await filterBtn.click();
-    // Fiche attendue "À compléter" ou "En cours"
   }
-  // TODO: verify filter menu aria-role structure
   await expect(page.getByRole('link', { name: feiId })).toBeVisible();
 });

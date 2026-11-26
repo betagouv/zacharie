@@ -1,8 +1,6 @@
 import { UserRoles } from '@prisma/client';
 import { VITE_APP_URL } from '../config';
 
-// URL de la fiche côté app, selon le rôle du destinataire. Le chasseur consulte la fiche entière ;
-// les autres rôles consultent une transmission (fiche + prochain détenteur du premier détenteur).
 export function getFeiUrlForRole(
   role: UserRoles | undefined,
   feiNumero: string,
@@ -21,7 +19,6 @@ export function getFeiUrlForRole(
   return url;
 }
 
-// Le circuit court n'a qu'une vue passive : une seule route, pas de rôle à interpréter.
 export function getCircuitCourtFeiUrl(feiNumero: string, prochainDetenteurIdCache: string | null): string {
   return `${VITE_APP_URL}/app/circuit-court/fei/${feiNumero}/${prochainDetenteurIdCache}`;
 }

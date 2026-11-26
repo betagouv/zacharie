@@ -72,7 +72,6 @@ router.get(
         })
         .then((entities) => entities.map((entity) => ({ ...entity, EntityRelationsWithUsers: [] as any })));
 
-      // Entités dont j'ai le droit (relation validée) → relations complètes, PII des membres autorisée
       const authorizedEntities = await prisma.entity.findMany({
         where: {
           deleted_at: null,
@@ -88,7 +87,6 @@ router.get(
         include: {
           EntityRelationsWithUsers: {
             ...entityAdminInclude.EntityRelationsWithUsers,
-            // les admins Zacharie rattachés à une entité (support, tests) n'apparaissent pas parmi ses membres
             where: { OR: [{ owner_id: user.id }, { UserRelatedWithEntity: { isZacharieAdmin: false } }] },
           },
         },
@@ -97,7 +95,6 @@ router.get(
         },
       });
 
-      // Entités dont je n'ai pas (encore) le droit (demande en attente) → ma seule relation, aucune PII tierce
       const pendingEntities = await prisma.entity.findMany({
         where: {
           deleted_at: null,
@@ -144,7 +141,6 @@ router.get(
   )
 );
 
-// les types de partenaires "circuit court" qu'un chasseur peut enregistrer et livrer
 const PARTENAIRE_TYPES = [
   EntityTypes.COMMERCE_DE_DETAIL,
   EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
@@ -161,10 +157,6 @@ router.get(
     async (req: RequestWithUser, res: express.Response<PartenairesResponse>, next: express.NextFunction) => {
       const user = req.user!;
 
-      // On ne renvoie que MES partenaires. Les autres partenaires enregistrés sur Zacharie restent
-      // confidentiels : un commerce ne veut pas que ses concurrents sachent qu'il est livré via Zacharie.
-      // Le statut de la relation CAN_TRANSMIT n'a pas de rôle fonctionnel : toute relation active compte.
-      // On ne renvoie jamais les autres relations du partenaire (contact administrateur, autres chasseurs).
       const myPartenaires = await prisma.entity.findMany({
         where: {
           deleted_at: null,
@@ -268,7 +260,6 @@ router.post(
       zacharie_compatible: true,
     };
 
-    // filet anti double-submit : si l'utilisateur a déjà cette association, on renvoie l'existante
     const existingRelation = await prisma.entityAndUserRelations.findFirst({
       where: {
         owner_id: user.id,
@@ -332,8 +323,6 @@ router.post(
   catchErrors(
     async (req: RequestWithUser, res: express.Response<UserEntityResponse>, next: express.NextFunction) => {
       const user = req.user!;
-      // un destinataire (circuit court ou collecteur pro) n'est ajouté que par le premier détenteur
-      // (ou par l'admin, depuis /admin) : l'ETG et le collecteur ne transmettent pas au circuit court
       if (!user.roles.includes(UserRoles.CHASSEUR)) {
         res.status(403);
         return next(new Error('Seulement un chasseur peut ajouter un destinataire'));
@@ -355,9 +344,6 @@ router.post(
 
       if (created.existingEntity) {
         const existingEntity = created.existingEntity;
-        // Le chasseur ne doit pas pouvoir savoir que ce partenaire existait déjà (ni qui le livre,
-        // ni qui le représente) : on le rattache et on répond exactement comme pour une création.
-        // Le contact saisi est ignoré ; l'équipe Zacharie est prévenue pour arbitrer si besoin.
         const relationWhere: Prisma.EntityAndUserRelationsUncheckedCreateInput = {
           owner_id: user.id,
           entity_id: existingEntity.id,
@@ -398,7 +384,6 @@ router.post(
         return;
       }
 
-      // le destinataire est enregistré par un chasseur ou un ETG : il devient un de ses partenaires
       const createdEntityRelation = await prisma.entityAndUserRelations.create({
         data: {
           owner_id: user.id,
@@ -449,7 +434,6 @@ router.post(
     const body = result.data;
     const numeroDdecpp = sanitize(body[Prisma.EntityScalarFieldEnum.numero_ddecpp]) || null;
 
-    // numero_ddecpp est unique : si le CCG existe déjà, on y rattache le chasseur au lieu d'en créer un
     const existingEntity = numeroDdecpp
       ? await prisma.entity.findUnique({ where: { numero_ddecpp: numeroDdecpp } })
       : null;
@@ -622,8 +606,6 @@ const etgParametresSchema = z.object({
   [Prisma.EntityScalarFieldEnum.etg_demande_numero_bon_reception]: z.boolean(),
 });
 
-// Réglages de prise en charge d'un ETG : ils valent pour toute l'entreprise,
-// n'importe lequel de ses salariés peut les modifier.
 router.post(
   '/etg/:entityId/parametres',
   passport.authenticate('user', { session: false, failWithError: true }),
@@ -672,11 +654,7 @@ router.post(
   )
 );
 
-// Ensemble des utilisateurs ayant interagi avec les entités ETG de l'utilisateur connecté
-// (premier détenteur, examinateur, SVI, intermédiaires des carcasses passées par ces ETG),
-// hors membres des ETG. Sert de périmètre d'autorisation pour la liste et le détail.
 async function getEtgInteractedUserIds(userId: User['id']): Promise<Set<string>> {
-  // ETG entities the user can handle carcasses on behalf of
   const userEntityRelations = await prisma.entityAndUserRelations.findMany({
     where: {
       owner_id: userId,
@@ -693,7 +671,6 @@ async function getEtgInteractedUserIds(userId: User['id']): Promise<Set<string>>
     return new Set<string>();
   }
 
-  // User IDs from carcasses that passed through these ETG entities
   const carcasses = await prisma.carcasse.findMany({
     where: {
       deleted_at: null,
@@ -721,7 +698,6 @@ async function getEtgInteractedUserIds(userId: User['id']): Promise<Set<string>>
     select: { intermediaire_user_id: true },
   });
 
-  // Collecteurs ayant transporté des carcasses passées par l'ETG
   const collecteurs = await prisma.carcasseIntermediaire.findMany({
     where: {
       zacharie_carcasse_id: { in: carcasses.map((c) => c.zacharie_carcasse_id) },
@@ -731,7 +707,6 @@ async function getEtgInteractedUserIds(userId: User['id']): Promise<Set<string>>
     select: { intermediaire_user_id: true },
   });
 
-  // Members of the ETG entities (employees) — excluded from the list
   const members = await prisma.entityAndUserRelations.findMany({
     where: {
       entity_id: { in: etgEntityIds },

@@ -68,6 +68,13 @@ jobs:
           cd app-local-first-react-router
           npm run typecheck
 
+      # pas de commentaires dans le code : voir doc/adr/0001-pas-de-commentaires-dans-le-code.md
+      - name: No comments
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: |
+          (cd api-express && npm run lint:comments)
+          (cd app-local-first-react-router && npm run lint:comments)
+
       # npm run build = prisma generate + react-dsfr update-icons + vite build.
       # Les e2e tournent en `vite dev`, donc c'est le seul endroit où le bundle
       # de production est vérifié.

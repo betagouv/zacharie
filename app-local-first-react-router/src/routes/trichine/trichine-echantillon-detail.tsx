@@ -87,9 +87,7 @@ export default function TrichineEchantillonDetailPage() {
     ? derniereFtp.DestinataireEntity.nom_d_usage || derniereFtp.DestinataireEntity.raison_sociale
     : null;
   const lienCarcasse = carcasseLink(echantillon.Carcasse);
-  // Une fois le colis parti, la fiche papier fait foi : plus rien n'est modifiable
   const fige = !!pool && poolEstFige(pool);
-  // Retiré par le laboratoire : l'échantillon reste tel qu'il a été reçu, pour la traçabilité
   const retire = estRetireParLabo(echantillon);
   const etape = etapeEchantillon(echantillon);
 
@@ -347,7 +345,6 @@ function ModifierModalContent({
   const [commentaire, setCommentaire] = useState(echantillon.commentaire ?? '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Réaligne le formulaire sur l'échantillon rechargé après un enregistrement
   useEffect(() => {
     setSite(echantillon.site_prelevement);
     setMasse(String(echantillon.masse_grammes));

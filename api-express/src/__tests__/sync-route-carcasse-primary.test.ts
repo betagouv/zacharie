@@ -5,12 +5,6 @@ import syncRouter from '~/controllers/sync';
 import prisma from '~/prisma';
 import { UserRoles } from '@prisma/client';
 
-// Sister to sync-route.test.ts. Where that file pins the *current* FEI-first
-// ordering, this one pins the contract from the perspective of the upcoming
-// carcasse-first refactor: the route must still accept partial payloads
-// (e.g. carcasses-only, intermediaires-only) and must not blow up when the
-// FEI array is absent or empty.
-
 vi.mock('~/utils/sync-fei', () => ({ syncFei: vi.fn() }));
 vi.mock('~/utils/sync-carcasse', () => ({ syncCarcasse: vi.fn() }));
 vi.mock('~/utils/sync-carcasse-intermediaire', () => ({ syncCarcasseIntermediaire: vi.fn() }));
@@ -153,8 +147,8 @@ describe('Identity forwarding (refactor will mutate field names — pin this)', 
     );
 
     const call = vi.mocked(syncCarcasse).mock.calls[0];
-    expect(call[0]).toBe('FEI-ABCDEF'); // fei_numero positional arg
-    expect(call[1]).toBe('ZC-XYZ'); // zacharie_carcasse_id positional arg
+    expect(call[0]).toBe('FEI-ABCDEF');
+    expect(call[1]).toBe('ZC-XYZ');
     expect(call[2]).toMatchObject({
       fei_numero: 'FEI-ABCDEF',
       zacharie_carcasse_id: 'ZC-XYZ',
@@ -223,7 +217,7 @@ describe('Side effects on carcasse-only payload', () => {
         .send({
           carcasses: [
             { fei_numero: 'F1', zacharie_carcasse_id: 'C1' },
-            { fei_numero: 'F1', zacharie_carcasse_id: 'C2' }, // fails
+            { fei_numero: 'F1', zacharie_carcasse_id: 'C2' },
             { fei_numero: 'F1', zacharie_carcasse_id: 'C3' },
           ],
         })
@@ -231,7 +225,6 @@ describe('Side effects on carcasse-only payload', () => {
 
     expect(res.status).toBe(200);
     expect(syncCarcasse).toHaveBeenCalledTimes(3);
-    // C2 failed → only C1 and C3 trigger side effects
     expect(runCarcasseUpdateSideEffects).toHaveBeenCalledTimes(2);
     expect(res.body.data.carcasses).toHaveLength(2);
     expect(res.body.data.carcasses.map((c: any) => c.zacharie_carcasse_id)).toEqual(['C1', 'C3']);
@@ -270,8 +263,6 @@ describe('Response shape preserved for partial payloads', () => {
     );
     expect(res.body.data.feis).toEqual([]);
     expect(res.body.data.carcasses).toHaveLength(2);
-    // fei.findMany ne sert qu'au pré-chargement des fiches des carcasses (dédupliqué),
-    // pas de re-fetch peuplé puisqu'aucune FEI n'est synchronisée.
     expect(prisma.fei.findMany).toHaveBeenCalledTimes(1);
     expect(prisma.fei.findMany).toHaveBeenCalledWith({ where: { numero: { in: ['F1'] } } });
   });

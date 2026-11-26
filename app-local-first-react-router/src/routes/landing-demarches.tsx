@@ -1,7 +1,6 @@
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { SideMenu } from '@codegouvfr/react-dsfr/SideMenu';
 
-// import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { Link } from 'react-router';
 import useMinimumWidth from '@app/utils/useMinimumWidth';
 import { useState } from 'react';
@@ -67,7 +66,6 @@ export default function LandingDemarchesPage() {
         </div>
         <main className="fr-container my-auto flex min-h-[50vh] flex-col justify-center border-l border-gray-100">
           <div className="fr-grid-row fr-grid-row--gutters fr-py-6w my-auto flex flex-col justify-center">
-            {/* <CTA mobile /> */}
             <section
               className={[
                 'mt-8 flex flex-col items-start px-8',
@@ -305,35 +303,6 @@ export default function LandingDemarchesPage() {
     </>
   );
 }
-
-// function CTA({ mobile, desktop }: { mobile?: boolean; desktop?: boolean }) {
-//   const user = useMostFreshUser('landing CTA');
-//   const isLoggedIn = !!user?.id;
-
-//   return (
-//     <div
-//       className={[
-//         'my-4 flex-col items-center justify-center gap-4 md:my-16',
-//         mobile && !desktop && 'flex md:hidden',
-//         !mobile && desktop && 'hidden md:flex',
-//         mobile && desktop && 'flex',
-//       ]
-//         .filter(Boolean)
-//         .join(' ')}
-//     >
-//       <Button
-//         className="m-0"
-//         priority={isLoggedIn ? 'tertiary no outline' : 'primary'}
-//         linkProps={{
-//           to: isLoggedIn ? '/app/connexion' : '/app/connexion/creation-de-compte',
-//           href: '#',
-//         }}
-//       >
-//         {isLoggedIn ? 'Accéder à mon compte' : 'Créer mon compte'}
-//       </Button>
-//     </div>
-//   );
-// }
 
 interface SectionProps {
   title: string;

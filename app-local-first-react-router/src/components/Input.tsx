@@ -4,9 +4,6 @@ import { Input as DsfrInput, type InputProps } from '@codegouvfr/react-dsfr/Inpu
 
 export type { InputProps };
 
-// Le piège à focus des modales DSFR prend tout <input> sans attribut `type` pour un bouton radio,
-// et plante (« Cannot read properties of undefined (reading 'keep') ») quand la page contient un radio.
-// Le composant DSFR ne pose pas de `type` par défaut : on pose `text`.
 export function Input({ ref, ...props }: InputProps & { ref?: Ref<HTMLDivElement> }) {
   if (props.textArea) {
     return (

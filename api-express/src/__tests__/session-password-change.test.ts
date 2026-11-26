@@ -24,9 +24,7 @@ vi.mock('~/third-parties/sentry', () => ({
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
 
 type Verify = (payload: object, done: (error: Error | null, user: unknown, info?: unknown) => void) => void;
-// lu avant tout vi.clearAllMocks() : passport.use est appelé une seule fois, au chargement de middlewares/passport
 const verifyByStrategy = Object.fromEntries(
-  // passport-jwt garde la fonction de vérification dans `_verify`
   vi.mocked(passport.use).mock.calls.map((c) => [c[0], (c[1] as unknown as { _verify: Verify })._verify])
 ) as Record<'user' | 'admin', Verify>;
 function authenticate(name: 'user' | 'admin', payload: object) {

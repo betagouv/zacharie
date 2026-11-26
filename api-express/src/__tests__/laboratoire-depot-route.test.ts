@@ -7,9 +7,6 @@ import { sendError } from '~/middlewares/errors';
 import prisma from '~/prisma';
 import { uploadToCellar } from '~/third-parties/cellar';
 
-// Dépôts de fichiers d'un laboratoire : valeurs bornées (type de document, nombre et format des
-// photos) et limite de débit par utilisateur.
-
 vi.mock('~/third-parties/cellar', () => ({
   IS_CELLAR_CONFIGURED: true,
   getFromCellar: vi.fn(),
@@ -110,8 +107,6 @@ describe('POST /laboratoire/ftp/:ftp_id/photos', () => {
 });
 
 describe('limite de débit des dépôts', () => {
-  // La limite est désactivée en NODE_ENV=test pour ne pas gêner les autres suites :
-  // elle est réactivée le temps de ce test.
   test('61e dépôt du même utilisateur en 15 min → 429, un autre utilisateur passe', async () => {
     const nodeEnv = process.env.NODE_ENV;
     process.env.NODE_ENV = 'production';

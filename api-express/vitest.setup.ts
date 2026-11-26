@@ -1,6 +1,5 @@
 import { vi } from 'vitest';
 
-// Mock Prisma for tests
 vi.mock('./src/prisma', () => ({
   default: {
     $executeRaw: vi.fn(),
@@ -178,11 +177,9 @@ vi.mock('./src/prisma', () => ({
   },
 }));
 
-// Mock passport authentication for tests
 vi.mock('passport', () => ({
   default: {
     authenticate: vi.fn((strategy: string, options: any) => (req: any, res: any, next: any) => {
-      // 'user' strategy: set req.user from x-test-user header (JSON-encoded user object)
       if (strategy === 'user') {
         const testUser = req.headers['x-test-user'];
         if (!testUser) {
@@ -196,7 +193,6 @@ vi.mock('passport', () => ({
         return next();
       }
 
-      // API key strategy (used by v1 routes)
       const authHeader = req.headers.authorization;
 
       if (!authHeader || authHeader === 'Bearer invalid-key') {
@@ -225,18 +221,15 @@ vi.mock('passport', () => ({
       });
     }),
     initialize: vi.fn(() => (req: any, res: any, next: any) => next()),
-    // appelé au chargement de middlewares/passport.ts (enregistrement des stratégies)
     use: vi.fn(),
   },
 }));
 
-// Mock the API utilities
 vi.mock('./src/utils/api', async () => {
   const actual = await vi.importActual('./src/utils/api');
   return {
     ...actual,
     checkApiKeyIsValidMiddleware: vi.fn((scopes: any) => (req: any, res: any, next: any) => {
-      // Mock successful scope validation for test API key
       if (req.apiKey && req.apiKey.id === 'test-key-id') {
         return next();
       }

@@ -59,7 +59,6 @@ export default function DestinataireIntermediaire({
   const etgsIds = useEtgIds();
   const svisIds = useSviIds();
   const collecteursProIds = useCollecteursProIds();
-  // const circuitCourtIds = useCircuitCourtIds();
 
   const isCCGModalOpen = useIsModalOpen(ccgModal);
 
@@ -75,7 +74,6 @@ export default function DestinataireIntermediaire({
   const ccgs = ccgsIds.map((id) => entities[id]);
   const etgs = etgsIds.map((id) => entities[id]);
   const collecteursPros = collecteursProIds.map((id) => entities[id]);
-  // const circuitCourt = circuitCourtIds.map((id) => entities[id]);
   const svis = svisIds.map((id) => entities[id]);
 
   const intermediaireEntity = intermediaire?.intermediaire_entity_id
@@ -89,11 +87,9 @@ export default function DestinataireIntermediaire({
         ...svis.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
         ...etgs.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
         ...collecteursPros.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
-        // ...circuitCourt.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
       ];
     }
     return [
-      // ...circuitCourt.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
       ...etgs.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
       ...collecteursPros.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
     ];
@@ -140,7 +136,6 @@ export default function DestinataireIntermediaire({
   const prochainDetenteur = prochainDetenteurEntityId ? entities[prochainDetenteurEntityId] : null;
   const prochainDetenteurType = prochainDetenteur?.type;
 
-  // Depot only for Collecteur Pro intermediaires, not ETG
   const needDepot = intermediaireEntityType !== EntityTypes.ETG;
 
   const [depotEntityId, setDepotEntityId] = useState(() => {

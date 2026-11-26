@@ -6,7 +6,6 @@ import useDownloadFtpPdf from '@app/utils/download-ftp-pdf';
 
 const apercuModal = createModal({ id: 'trichine-ftp-apercu-pdf', isOpenedByDefault: false });
 
-/** Aperçu du PDF de la fiche de transmission dans une modale, et téléchargement pour l'impression. */
 export default function TrichineFTPPdfActions({
   space,
   ftpId,
@@ -20,7 +19,6 @@ export default function TrichineFTPPdfActions({
     useDownloadFtpPdf(space);
   const isApercuOpen = useIsModalOpen(apercuModal);
 
-  // La modale se ferme aussi par la croix, Échap ou le fond : on libère l'aperçu dans tous les cas
   useEffect(() => {
     if (!isApercuOpen) closePreview();
   }, [isApercuOpen, closePreview]);

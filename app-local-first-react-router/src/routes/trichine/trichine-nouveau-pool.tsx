@@ -26,7 +26,6 @@ import {
   repartirEnPools,
 } from '@app/utils/trichine-repartition';
 
-/** Une carcasse et ses prélèvements en attente : les limites du pool se comptent par carcasse. */
 type CarcasseProposee = {
   zacharie_carcasse_id: string;
   numero_bracelet: string | null;
@@ -34,13 +33,6 @@ type CarcasseProposee = {
   echantillons: Array<TrichineEchantillonWithCarcasse>;
 };
 
-/**
- * Création d'un pool à partir d'échantillons déjà prélevés mais pas encore regroupés
- * (max 19 carcasses / 100 g, cf doc/trichine.md §9). Le pool est initial par défaut ; rattaché
- * à un pool douteux, c'est une analyse de 2e intention et les limites du rang s'appliquent.
- *
- * Écran en deux colonnes : à gauche ce qui reste à regrouper, à droite le pool en construction.
- */
 export default function TrichineNouveauPool() {
   const navigate = useNavigate();
   const basePath = useTrichineBasePath();
@@ -49,7 +41,6 @@ export default function TrichineNouveauPool() {
   const [pools, setPools] = useState<Array<TrichinePoolPopulated>>([]);
   const [parentId, setParentId] = useState('');
   const [recherche, setRecherche] = useState('');
-  // Pré-sélection quand on arrive depuis la liste des échantillons, déjà dans le pool
   const [searchParams] = useSearchParams();
   const [preselection] = useState<Array<string>>(() =>
     (searchParams.get('echantillons') ?? '').split(',').filter(Boolean)
@@ -70,8 +61,6 @@ export default function TrichineNouveauPool() {
       .finally(() => setChargement(false));
   }, []);
 
-  // Un pool douteux appelle une 2e intention, tant que la hiérarchie mère / fille / petite-fille
-  // n'est pas épuisée. C'est la seule façon de rattacher un pool à un parent depuis cet écran.
   const parentsPossibles = useMemo(
     () =>
       pools.filter(
@@ -94,8 +83,6 @@ export default function TrichineNouveauPool() {
       ? LIMITES_POOL_PETITE_FILLE
       : LIMITES_POOL_FILLE;
 
-  // Sans parent, on ne regroupe que des prélèvements initiaux ; avec parent, que les
-  // complémentaires prélevés sur les carcasses de ce pool.
   const echantillonsProposes = useMemo(() => {
     if (!parent) {
       return echantillons.filter((echantillon) => echantillon.type === TrichineType.INITIAL);
@@ -112,7 +99,6 @@ export default function TrichineNouveauPool() {
     );
   }, [echantillons, parent]);
 
-  // Une carcasse peut porter plusieurs échantillons : les limites se comptent par carcasse
   const carcassesProposees = useMemo(() => {
     const parCarcasse = new Map<string, CarcasseProposee>();
     for (const echantillon of echantillonsProposes) {
@@ -132,13 +118,11 @@ export default function TrichineNouveauPool() {
     return [...parCarcasse.values()];
   }, [echantillonsProposes]);
 
-  // Le pool en construction, colonne de droite
   const selected = useMemo(
     () => echantillonsProposes.filter((echantillon) => selectedIds.includes(echantillon.id)),
     [echantillonsProposes, selectedIds]
   );
 
-  // Ce qui reste à regrouper, colonne de gauche : un échantillon retenu quitte la liste
   const disponibles = useMemo(
     () => echantillonsProposes.filter((echantillon) => !selectedIds.includes(echantillon.id)),
     [echantillonsProposes, selectedIds]
@@ -169,8 +153,6 @@ export default function TrichineNouveauPool() {
 
   const erreur = selected.length ? erreurPool(massesParCarcasse, limites) : null;
 
-  // Pré-sélection devenue caduque (échantillon regroupé entre-temps) : on le dit. Choisir un
-  // pool de rattachement vide de toute façon la sélection, l'avertissement n'a plus lieu d'être.
   const preselectionIgnoree =
     chargement || parent
       ? 0
@@ -181,7 +163,6 @@ export default function TrichineNouveauPool() {
   const retirer = (echantillonId: string) =>
     setSelectedIds((previous) => previous.filter((id) => id !== echantillonId));
 
-  // Remplit le pool jusqu'aux limites du rang, sans défaire ce qui est déjà retenu
   const remplir = () => {
     const dejaRetenues = new Set(selected.map((echantillon) => echantillon.zacharie_carcasse_id));
     const ordonnees = [...carcassesProposees].sort(
@@ -221,7 +202,6 @@ export default function TrichineNouveauPool() {
                   value: parentId,
                   onChange: (event) => {
                     setParentId(event.target.value);
-                    // Les échantillons proposés changent avec le rang : le pool repart de zéro
                     setSelectedIds([]);
                     setRecherche('');
                   },
@@ -485,10 +465,6 @@ export default function TrichineNouveauPool() {
   );
 }
 
-/**
- * Ce que contient le pool en construction, face aux limites de son rang : le nombre de carcasses
- * et la masse sont les deux seules contraintes réglementaires, on les montre en continu.
- */
 function Jauge({
   label,
   valeur,

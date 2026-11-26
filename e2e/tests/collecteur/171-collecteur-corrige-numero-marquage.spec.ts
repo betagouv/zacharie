@@ -9,12 +9,9 @@ test.beforeEach(async () => {
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Scenario 171 — Le collecteur corrige un numéro de marquage, comme l'ETG (scénario 62) :
-// le numéro change tout de suite, l'examinateur initial est informé et confirme.
 test('Rename marquage : collecteur corrige → maj immédiate → examinateur confirme', async ({ page }) => {
   const feiId = 'ZACH-20250707-QZ6E0-245242';
 
-  // ----- Step 1: le collecteur corrige le numéro depuis la modale de la carcasse ------------------
   await connectWith(page, 'collecteur-pro@example.fr');
   await page.getByRole('link', { name: new RegExp(feiId) }).click();
   await expect(page).toHaveURL(new RegExp(`/app/collecteur/fei/${feiId}`));
@@ -38,7 +35,6 @@ test('Rename marquage : collecteur corrige → maj immédiate → examinateur co
   });
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' })).toHaveCount(0);
 
-  // ----- Step 2: l'examinateur initial est informé et confirme -----------------------------------
   await logoutAndConnect(page, 'examinateur@example.fr');
   await expect(page.getByRole('heading', { name: 'Modifications signalées sur vos carcasses' })).toBeVisible({
     timeout: 10000,
@@ -55,7 +51,6 @@ test('Rename marquage : collecteur corrige → maj immédiate → examinateur co
   await expect(page).toHaveURL(/\/app\/chasseur\/demandes-de-modification$/);
   await expect(page.getByText(/Aucune demande en cours/)).toBeVisible({ timeout: 10000 });
 
-  // ----- Step 3: retour collecteur — le marquage corrigé est persisté, la bannière a disparu ------
   await logoutAndConnect(page, 'collecteur-pro@example.fr');
   await page.getByRole('link', { name: new RegExp(feiId) }).click();
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-FIX Mise à' })).toBeVisible({

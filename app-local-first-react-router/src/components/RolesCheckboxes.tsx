@@ -18,9 +18,6 @@ export default function RolesCheckBoxes({
   const [isAdmin, setIsAdmin] = useState(user?.isZacharieAdmin || false);
 
   const canChange = me?.isZacharieAdmin;
-  // if (!me.activated) {
-  //   canChange = true;
-  // }
 
   const handleRoleChange = (role: UserRoles) => {
     setSelectedRole(role);
@@ -127,7 +124,6 @@ export default function RolesCheckBoxes({
     },
   ];
 
-  // Rattachement à une fédération sans être chasseur : attribué uniquement par l'équipe Zacharie
   const federationOption = {
     label: 'Fédération des Chasseurs (FDC / FRC / FNC)',
     hintText:

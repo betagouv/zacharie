@@ -53,14 +53,11 @@ import { signSessionToken } from '~/utils/session-token';
 import { SECRET, VITE_APP_URL } from '~/config';
 import { hasAllRequiredFields } from '~/utils/user';
 import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
-// import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 import { z } from 'zod';
 import { normalizeNumeroCfei, sanitize } from '~/utils/sanitize';
 import { inviteUser } from '~/utils/invite-user';
 import { requestCarcassesReload } from '~/utils/carcasses-reload';
-// import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
-// Schemas for validation
 const loginSchema = z.object({
   email: z.string().email('Email invalide'),
   username: z.string().optional(),
@@ -91,7 +88,6 @@ const resetPasswordSchema = z.object({
   resetPasswordToken: z.string().min(1, "L'URL de réinitialisation de mot de passe est invalide"),
 });
 
-// Route: POST /user/login - Connexion (compte existant)
 router.post(
   '/login',
   catchErrors(
@@ -118,7 +114,6 @@ router.post(
           level: 'info',
           extra: { email, message: 'Spam detected' },
         });
-        // honey pot
         res.status(200).send({ ok: true, data: null, message: null, error: null });
         return;
       }
@@ -271,7 +266,6 @@ router.post(
         },
       });
 
-      // Un admin ouvre une session normale ici, mais /admin exige ensuite ProConnect (middlewares/passport.ts)
       const token = signSessionToken({ userId: user.id });
       user = await prisma.user.update({
         where: { id: user.id },
@@ -283,7 +277,6 @@ router.post(
   )
 );
 
-// Route: POST /user/signup - Création de compte
 router.post(
   '/signup',
   catchErrors(
@@ -310,7 +303,6 @@ router.post(
           level: 'info',
           extra: { email, message: 'Spam detected' },
         });
-        // honey pot
         res.status(200).send({ ok: true, data: null, message: null, error: null });
         return;
       }
@@ -351,12 +343,7 @@ router.post(
           email,
           activated: false,
           prefilled: false,
-          // la création de compte vaut connexion : on ouvre une session dans la foulée
           last_login_at: new Date(),
-          // depuis le 14 octobre 2025, on ne peut plus créer de compte ETG/SVI/COLLECTEUR_PRO
-          // sans avoir au préalable été invité par un membre de son entreprise/service
-          // de sorte que tous les utilisateurs créés depuis le 14 octobre 2025 sont CHASSEURS
-          // et qu'en mettant ce rôle ici, on permet de passer à l'étape suivante dans l'onboarding (ie. mes coordonnées)
           roles: [UserRoles.CHASSEUR],
         },
       });
@@ -386,7 +373,6 @@ router.post(
   )
 );
 
-// Route: POST /user/signup - Création de compte
 router.post(
   '/signup-with-invitation-token',
   catchErrors(
@@ -413,7 +399,6 @@ router.post(
           level: 'info',
           extra: { email, message: 'Spam detected' },
         });
-        // honey pot
         res.status(200).send({ ok: true, data: null, message: null, error: null });
         return;
       }
@@ -485,8 +470,6 @@ router.post(
         });
         return;
       }
-      // un compte qui a déjà un mot de passe ne passe plus par l'invitation : le jeton présent en base
-      // est alors un jeton de réinitialisation, utilisable seulement sur /reset-password
       const isOk = !existingPassword.password && existingPassword.reset_password_token === invitationToken;
       if (!isOk) {
         await prisma.securityLog.create({
@@ -555,7 +538,6 @@ router.post(
   )
 );
 
-// Route: POST /user/forget-password - Demande de réinitialisation de mot de passe
 router.post(
   '/forget-password',
   catchErrors(
@@ -582,7 +564,6 @@ router.post(
           level: 'info',
           extra: { email, message: 'Spam detected' },
         });
-        // honey pot
         res.status(200).send({ ok: true, data: null, message: null, error: null });
         return;
       }
@@ -608,8 +589,6 @@ router.post(
         return;
       }
 
-      // compte sans mot de passe (invitation jamais acceptée) : pas de lien de réinitialisation,
-      // il écraserait le jeton d'invitation et serait accepté comme tel pendant 7 jours
       const existingPassword = await prisma.password.findUnique({ where: { user_id: user.id } });
       if (!existingPassword?.password) {
         await prisma.securityLog.create({
@@ -655,7 +634,6 @@ router.post(
         },
       });
 
-      // Pour des raisons de sécurité, on ne révèle pas si l'email existe ou non
       res.status(200).send({
         ok: true,
         data: { user: null },
@@ -667,7 +645,6 @@ router.post(
   )
 );
 
-// Route: POST /user/reset-mot-de-passe - Réinitialisation de mot de passe avec token
 router.post(
   '/reset-password',
   catchErrors(
@@ -693,7 +670,6 @@ router.post(
           level: 'info',
           extra: { message: 'Spam detected' },
         });
-        // honey pot
         res.status(200).send({ ok: true, data: null, message: null, error: null });
         return;
       }
@@ -804,7 +780,6 @@ const changePasswordSchema = z.object({
   newPassword: z.string().min(12, 'Le nouveau mot de passe doit contenir au moins 12 caractères'),
 });
 
-// Route: POST /user/change-password - Changement de mot de passe depuis le profil
 router.post(
   '/change-password',
   passport.authenticate('user', { session: false, failWithError: true }),
@@ -886,7 +861,6 @@ router.post(
         text: `Bonjour, le mot de passe de votre compte Zacharie vient d'être modifié. Si vous n'êtes pas à l'origine de ce changement, réinitialisez votre mot de passe depuis ${VITE_APP_URL}/app/connexion/mot-de-passe-oublie et contactez-nous à contact@zacharie.beta.gouv.fr`,
       });
 
-      // nouveau jeton pour la session courante : les jetons émis avant le changement sont refusés
       const token = jwt.sign({ userId: user.id }, SECRET, {
         expiresIn: JWT_MAX_AGE,
       });
@@ -962,7 +936,6 @@ router.post(
         });
         return;
       }
-      // seul l'examinateur initial de la fiche peut rechercher son premier détenteur
       const fei = await prisma.fei.findFirst({
         where: {
           numero: body[Prisma.FeiScalarFieldEnum.numero],
@@ -983,7 +956,6 @@ router.post(
           email: body[Prisma.UserScalarFieldEnum.email].toLowerCase(),
         },
       });
-      // même réponse pour un email inconnu et pour un non-chasseur : la route ne dit pas qui a un compte
       if (!nextPremierDetenteur || !nextPremierDetenteur.roles.includes(UserRoles.CHASSEUR)) {
         res.status(400).send({
           ok: false,
@@ -1058,7 +1030,6 @@ router.post(
       return next(error);
     }
     const isFederation = FEDERATION_ENTITY_TYPES.includes(entity.type);
-    // un chasseur n'invite que dans sa fédération
     if (user.roles.includes(UserRoles.CHASSEUR) && !isFederation) {
       const error = new Error('Un chasseur ne peut pas inviter un utilisateur à une entité');
       res.status(400);
@@ -1086,8 +1057,6 @@ router.post(
         data: {
           id: await createUserId(),
           email,
-          // un nouvel utilisateur invité a le rôle de celui qui l'invite (un seul rôle par utilisateur),
-          // sauf dans une fédération : l'invité n'est pas forcément chasseur
           roles: isFederation ? [UserRoles.FEDERATION] : [user.roles[0]],
           isZacharieAdmin: false,
           activated: true,
@@ -1118,7 +1087,6 @@ router.post(
 
     await inviteUser(newUser, user, entity);
 
-    // on ne renvoie que l'identifiant et l'email : l'invitant n'a pas à lire la fiche de l'invité
     res
       .status(200)
       .send({ ok: true, error: '', data: { newUser: { id: newUser.id, email: newUser.email } } });
@@ -1227,8 +1195,6 @@ router.post(
         nextUser.telephone = sanitize(body[Prisma.UserScalarFieldEnum.telephone] as string);
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.email)) {
-        // les formulaires de coordonnées renvoient l'email inchangé à chaque enregistrement : on l'accepte,
-        // mais aucun écran ne permet de changer son email, l'API le refuse donc aussi
         const nextEmail = body[Prisma.UserScalarFieldEnum.email]!.toLowerCase().trim();
         if (nextEmail !== user.email?.toLowerCase().trim()) {
           await prisma.securityLog.create({
@@ -1282,8 +1248,6 @@ router.post(
       }
 
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.numero_cfei)) {
-        // un numéro vide vaut « pas de numéro » : on stocke null, sinon un champ laissé vide
-        // serait enregistré comme '' et compterait comme un changement de numéro
         const numeroCfei = normalizeNumeroCfei(body[Prisma.UserScalarFieldEnum.numero_cfei]);
         nextUser.numero_cfei = numeroCfei;
         if (numeroCfei !== user.numero_cfei) {
@@ -1316,9 +1280,6 @@ router.post(
       const userHasNowAllRequiredFields =
         !hasAllRequiredFields(user, `original user update ${savedUser.id}`) &&
         hasAllRequiredFields(savedUser, `saved user update ${savedUser.id}`);
-      // On ne notifie l'équipe du numéro CFEI que lorsqu'un chasseur déjà inscrit le renseigne ou
-      // le modifie : le compte doit alors être vérifié puis activé à la main. Pendant l'inscription,
-      // la notice « Nouvelle ouverture de compte » suffit.
       const userChangedCFEINumber = !!user.onboarded_at && user.numero_cfei !== savedUser.numero_cfei;
 
       if (userHasNowAllRequiredFields || userChangedCFEINumber) {
@@ -1342,9 +1303,6 @@ ${savedUser.roles.includes(UserRoles.CHASSEUR) && savedUser.est_forme_a_l_examen
         });
       }
 
-      // Mail de fin d'onboarding : envoyé à tout utilisateur dès que son inscription est terminée
-      // (onboarded_at vient d'être renseigné). Le compte n'est PAS activé automatiquement : il
-      // attend une validation manuelle, ce que dit le template Brevo (« examinée sous 48h »).
       const userJustFinishedOnboarding = !user.onboarded_at && !!savedUser.onboarded_at;
       if (userJustFinishedOnboarding) {
         await sendOnboardingEmailOnce({
@@ -1354,9 +1312,6 @@ ${savedUser.roles.includes(UserRoles.CHASSEUR) && savedUser.est_forme_a_l_examen
         });
       }
 
-      // Mail « compte activé » : dédupliqué une seule fois par compte (sendOnboardingEmailOnce),
-      // pour ne pas le renvoyer à chaque transition activated false→true (ex. passage sans CFEI
-      // qui ré-auto-active, ou réactivation admin).
       if (savedUser.activated && !user.activated) {
         await sendOnboardingEmailOnce({
           user: savedUser,
@@ -1471,17 +1426,6 @@ router.get(
       next: express.NextFunction
     ) => {
       const user = req.user!;
-      /*
-      I need to fetch
-      - the entities the user can handle carcasses on behalf of (salarié, dirigeant, etc.)
-      - the SVI linked to the ETGs the user can handle carcasses on behalf of
-      - the entities the user can transmit carcasses to (ETG, SVI, etc.)
-
-      I need to return
-      - the entities I can handle carcasses on behalf of
-      - the entities I can transmit carcasses to
-      - the other entities I could work with (partnership not confirmed), which are all the rest
-      */
 
       const entitiesICanHandleCarcassOnBehalf = await prisma.entityAndUserRelations
         .findMany({
@@ -1489,7 +1433,6 @@ router.get(
             owner_id: user.id,
             relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
             deleted_at: null,
-            // l'appartenance à une fédération ne sert qu'au tableau de bord, pas à la circulation des carcasses
             EntityRelatedWithUser: { type: { notIn: FEDERATION_ENTITY_TYPES } },
           },
           include: {
@@ -1561,15 +1504,13 @@ router.get(
         .findMany({
           where: {
             deleted_at: null,
-            // for_testing: ETG test, CCG test, SVI test, etc.
             ...(user.isZacharieAdmin ? {} : { for_testing: false }),
             type: {
               notIn: [
-                EntityTypes.CCG, // les CCG doivent rester confidentiels contrairement aux ETG et SVI
-                EntityTypes.PREMIER_DETENTEUR, // les associations de chasse doivent rester confidentielles
-                EntityTypes.SVI, // les SVI sont déjà inclus dans les ETGs
-                EntityTypes.CONSOMMATEUR_FINAL, // les collecteurs pro sont déjà inclus dans les associations de chasse
-                // le circuit court reste confidentiel : un chasseur ne voit que les partenaires qu'il a lui-même enregistrés
+                EntityTypes.CCG,
+                EntityTypes.PREMIER_DETENTEUR,
+                EntityTypes.SVI,
+                EntityTypes.CONSOMMATEUR_FINAL,
                 EntityTypes.COMMERCE_DE_DETAIL,
                 EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
                 EntityTypes.ASSOCIATION_CARITATIVE,
@@ -1626,7 +1567,7 @@ router.get(
         ...entitiesICanTransmitCarcasseTo,
         ...svisICanTransmitCarcassesTo,
         ...allOtherEntities.map((entity) => ({ ...entity, relation: EntityRelationType.NONE })),
-      ].filter((entity, index, array) => array.findIndex((e) => e.id === entity.id) === index); // remove duplicates
+      ].filter((entity, index, array) => array.findIndex((e) => e.id === entity.id) === index);
 
       const ccgs = entitiesICanTransmitCarcasseTo.filter((entity) => entity.type === EntityTypes.CCG);
 
@@ -1659,7 +1600,6 @@ router.get(
         data: {
           user: user satisfies User,
           detenteursInitiaux: detenteursInitiaux satisfies Array<UserPartenaire>,
-          // examinateursInitiaux: examinateursInitiaux satisfies Array<User>,
           associationsDeChasse: associationsDeChasse satisfies Array<EntityWithUserRelation>,
           ccgs: ccgs satisfies Array<EntityWithUserRelation>,
           collecteursPro: collecteursPro satisfies Array<EntityWithUserRelation>,

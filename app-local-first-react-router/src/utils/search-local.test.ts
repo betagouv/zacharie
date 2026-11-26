@@ -76,22 +76,15 @@ describe('searchLocally', () => {
       intermediaire_carcasse_manquante: true,
     });
     const res = searchLocally('mm-001', chasseur, byId(deleted, refused, manquante), feisById(fei()), {});
-    // aucune carcasse recherchable → on retombe sur la recherche par n° de fiche (pas de match ici)
     expect(res.data).toEqual([]);
   });
 
-  // Les seules carcasses du store qui ne sont pas dans le périmètre de l'utilisateur sont celles
-  // renvoyées par /carcasse/refusees : refusées ou manquantes en amont, dans un de SES groupes de
-  // dispatch. Elles ne doivent apparaître dans aucune des trois branches de la recherche.
-  // Les deux premières les excluent via isCarcasseSearchable ; la recherche par n° de fiche n'a pas
-  // ce filtre et repose sur la déduplication par transmission — d'où ce test.
   it('recherche par n° de fiche → une carcasse refusée en amont ne crée pas de résultat en plus', () => {
     const mienne = carcasse();
     const refuseeEnAmont = carcasse({
       zacharie_carcasse_id: 'x_ref_amont',
       numero_bracelet: 'MM-001-007',
       intermediaire_carcasse_refus_intermediaire_id: 'refus-1',
-      // même groupe de dispatch que la mienne : c'est la seule chose que la route renvoie désormais
       premier_detenteur_prochain_detenteur_id_cache: 'etg-1',
     });
     const res = searchLocally('zach-test', etg, byId(mienne, refuseeEnAmont), feisById(fei()), {});

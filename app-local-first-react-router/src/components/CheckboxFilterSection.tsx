@@ -14,7 +14,6 @@ interface CheckboxFilterSectionProps {
   scroll?: boolean;
 }
 
-// Section de filtre à cases à cocher (multi-sélection), même design que la page « Mes fiches ».
 export default function CheckboxFilterSection({
   title,
   options,

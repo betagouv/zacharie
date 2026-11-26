@@ -7,7 +7,6 @@ import { UserConnexionResponse } from '@api/src/types/responses';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function useMostFreshUser(_calledFrom: string) {
-  // console.log('useMostFreshUser called from', calledFrom);
   const cachedUser = useUser((state) => state.user);
   const isOnline = useZustandStore((state) => state.isOnline);
   if (!isOnline) {
@@ -22,9 +21,6 @@ export function useMostFreshUser(_calledFrom: string) {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function refreshUser(_calledFrom?: string) {
   const isOnline = useZustandStore.getState().isOnline;
-  // Hors ligne côté appareil, le service worker renverrait le dernier GET /user/me en cache, ce qui
-  // rendrait prochain_bracelet_a_utiliser obsolète. Si on est hors ligne seulement à cause d'une
-  // connexion très lente (navigator.onLine encore vrai), on retente : un succès nous remet en ligne.
   if (!isOnline && !navigator.onLine) {
     return null;
   }
@@ -41,7 +37,7 @@ export async function refreshUser(_calledFrom?: string) {
   try {
     const timeout = new Promise<null>((_, reject) => {
       timeoutId = setTimeout(() => {
-        controller.abort(); // Abort the fetch when the timeout occurs
+        controller.abort();
         reject(new Error('Timeout'));
       }, 5000);
     });
@@ -53,8 +49,6 @@ export async function refreshUser(_calledFrom?: string) {
       .then((res) => res as UserConnexionResponse)
       .then(async (userResponse) => {
         if (userResponse?.ok && userResponse.data?.user) {
-          // API.get renvoie { ok: false } sans lever d'erreur quand le réseau tombe :
-          // seule une vraie réponse prouve que la connexion est revenue
           window.dispatchEvent(new Event('good-connection'));
           const user = userResponse.data.user as User;
           useUser.setState({ user });
@@ -85,7 +79,6 @@ export async function refreshUser(_calledFrom?: string) {
     return await Promise.race([timeout, fetchPromise]);
   } catch (error) {
     if (error instanceof Error && error.message === 'Timeout') {
-      // Timeout specific handling
       window.dispatchEvent(new Event('very-bad-connection'));
     } else if (error instanceof Error && error.name === 'AbortError') {
       console.warn('Fetch aborted due to timeout.');

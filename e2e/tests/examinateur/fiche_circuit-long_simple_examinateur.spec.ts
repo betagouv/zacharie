@@ -29,10 +29,8 @@ test("Création d'une fiche", async ({ page }) => {
   await page.getByRole('button', { name: dayjs.utc().format('dddd DD MMMM') }).click();
   await page.getByRole('textbox', { name: 'Commune de prélèvement du gibier' }).fill('CHASS');
   await page.getByRole('button', { name: 'CHASSENARD' }).click();
-  // Select premier détenteur
   await page.getByRole('button', { name: 'Pierre Petit' }).click();
   await page.getByRole('button', { name: 'Continuer' }).first().click();
-  // Bloc 2 — Carcasses
   await page.getByRole('button', { name: 'Ajouter une carcasse' }).click();
   await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Daim');
   await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
@@ -46,10 +44,8 @@ test("Création d'une fiche", async ({ page }) => {
   await page.getByRole('button', { name: 'Ajouter une carcasse' }).click();
   await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
   await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
-  // Confirm all carcasses entered
   await page.getByRole('button', { name: 'Continuer' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Continuer' }).click();
-  // Fill hours
   await page
     .getByRole('textbox', { name: 'Heure du prélèvement de la première carcasse' })
     .fill(dayjs().startOf('day').add(1, 'hour').format('HH:mm'));
@@ -58,13 +54,11 @@ test("Création d'une fiche", async ({ page }) => {
     .getByRole('textbox', { name: 'Heure d’éviscération de la dernière carcasse' })
     .fill(dayjs().startOf('day').add(2, 'hour').format('HH:mm'));
   await page.getByRole('textbox', { name: 'Heure d’éviscération de la dernière carcasse' }).blur();
-  // Bloc 4 — Validation
   await page.getByRole('button', { name: dateApprobationDuJour() }).click();
   await page.getByText('Je, Martin Marie, certifie qu').click();
   await expect(page.getByRole('button', { name: 'Transmettre', exact: true })).not.toBeDisabled();
   await page.getByRole('button', { name: 'Transmettre', exact: true }).click();
   await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 10000 });
-  // get fei id
   const feiId = RegExp(/ZACH-\d+-\w+-\d+/).exec(page.url())?.[0];
   expect(feiId).toBeDefined();
   await page.getByRole('link', { name: 'Voir toutes les fiches' }).click();

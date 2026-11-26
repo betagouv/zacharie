@@ -102,11 +102,8 @@ export default function TrichinePoolDetailPage() {
     0
   );
   const etape = etapePool(pool);
-  // Un pool douteux appelle des analyses de 2e intention
   const poolDouteux = pool.resultat_analyse === TrichineResultatAnalyse.DOUTEUX;
-  // La décision est prise dès qu'un pool fille existe : la bannière n'a plus lieu d'être.
   const decisionAPrendre = poolDouteux && pool.PoolsFilles.length === 0;
-  // Une fois le colis parti, la fiche papier fait foi : la composition ne bouge plus
   const fige = poolEstFige(pool);
 
   const etapes: Array<ChaineEtape> = [
@@ -172,7 +169,6 @@ export default function TrichinePoolDetailPage() {
       badges={
         <>
           <Badge severity={etape.severity}>{etape.label}</Badge>
-          {/* La bannière collante porte déjà la consigne, inutile de la répéter juste en dessous */}
           {!decisionAPrendre && (
             <p className="fr-text--sm fr-mb-0 max-w-prose basis-full text-gray-600">{etape.explication}</p>
           )}
@@ -198,7 +194,6 @@ export default function TrichinePoolDetailPage() {
               </Button>
             </>
           )}
-          {/* Tant que la décision est à prendre, les actions vivent dans la bannière collante */}
           {poolDouteux && !decisionAPrendre && (
             <Button
               priority="secondary"
@@ -299,7 +294,6 @@ export default function TrichinePoolDetailPage() {
                       : ''}
                   </p>
                 </div>
-                {/* Ce qui compte pour le pool — la masse — porte le poids visuel, le reste situe le prélèvement */}
                 <div className="shrink-0 text-right">
                   <p className="fr-text--sm fr-mb-0 font-medium text-gray-900">
                     au moins {echantillon.masse_grammes} g
@@ -473,7 +467,6 @@ function ModifierModalContent({ pool, onDone }: { pool: TrichinePoolDetail; onDo
   const [commentaire, setCommentaire] = useState(pool.commentaire ?? '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Réaligne le formulaire sur le pool rechargé après un enregistrement
   useEffect(() => {
     setDateConstitution(dayjs(pool.date_constitution).format('YYYY-MM-DD'));
     setCommentaire(pool.commentaire ?? '');
@@ -523,13 +516,6 @@ function ModifierModalContent({ pool, onDone }: { pool: TrichinePoolDetail; onDo
   );
 }
 
-/**
- * Ajout d'échantillons à un pool déjà constitué, tant qu'il n'est pas parti au laboratoire.
- * Les échantillons proposés suivent la règle de composition du rang du pool : les prélèvements
- * initiaux en attente pour un pool initial, les complémentaires réalisés sur les carcasses du
- * pool parent pour une 2e intention. Une carcasse déjà présente n'est plus proposée : un pool
- * ne porte qu'un échantillon par carcasse.
- */
 function AjouterEchantillonModalContent({ pool, onDone }: { pool: TrichinePoolDetail; onDone: () => void }) {
   const isOpen = useIsModalOpen(ajouterModal);
   const referenceParent = pool.PoolParent?.reference_pool ?? null;
@@ -540,7 +526,6 @@ function AjouterEchantillonModalContent({ pool, onDone }: { pool: TrichinePoolDe
   const [selectedIds, setSelectedIds] = useState<Array<string>>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Les échantillons libres bougent vite : on repart des données du serveur à chaque ouverture
   useEffect(() => {
     if (!isOpen) return;
     setSelectedIds([]);
@@ -590,7 +575,6 @@ function AjouterEchantillonModalContent({ pool, onDone }: { pool: TrichinePoolDe
 
   const selected = proposes.filter((echantillon) => selectedIds.includes(echantillon.id));
 
-  // Les limites du pool se comptent par carcasse : on additionne l'existant et la sélection
   const massesParCarcasse = new Map<string, number>();
   for (const echantillon of [...pool.TrichineEchantillons, ...selected]) {
     massesParCarcasse.set(

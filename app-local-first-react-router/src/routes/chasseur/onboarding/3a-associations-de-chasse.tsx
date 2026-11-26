@@ -14,7 +14,6 @@ import { MAX_ASSOCIATIONS_DE_CHASSE } from '@app/utils/max-associations-de-chass
 
 const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
   [EntityTypes.PREMIER_DETENTEUR]: {},
-  // UNUSED - just for typing purposes with the API
   [EntityTypes.CCG]: {},
   [EntityTypes.COLLECTEUR_PRO]: {},
   [EntityTypes.ETG]: {},
@@ -96,7 +95,6 @@ export default function ChasseurOnboardingMesAssociationsDeChasse() {
     ? (selectOptions.find((option) => option.id === 'nouvelle') ?? undefined)
     : (selectOptions.find((option) => option.id === currentEntityId) ?? undefined);
 
-  // un ref et pas un state : il bloque aussi deux submits déclenchés dans le même tick React
   const isSubmittingRef = useRef(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const handleEntitySubmit = useCallback(

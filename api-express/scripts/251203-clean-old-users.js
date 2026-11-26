@@ -1,9 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import readline from 'readline';
 
-// Configuration de la connexion DB
-// Vous pouvez soit passer la connexion en variable d'environnement :
-// Soit la modifier directement dans ce fichier
 const DATABASE_URL = process.env.POSTGRESQL_ADDON_URI;
 
 if (!DATABASE_URL) {
@@ -11,10 +8,7 @@ if (!DATABASE_URL) {
   process.exit(1);
 }
 
-// Liste des emails à supprimer - MODIFIEZ CETTE LISTE
-const EMAILS_TO_DELETE = [
-  // ADD EMAILS TO DELETE HERE
-];
+const EMAILS_TO_DELETE = [];
 
 if (EMAILS_TO_DELETE.length === 0) {
   console.error('❌ Erreur: La liste EMAILS_TO_DELETE est vide. Ajoutez des emails à supprimer.');
@@ -29,7 +23,6 @@ const prisma = new PrismaClient({
   },
 });
 
-// Interface pour lire les entrées utilisateur
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
@@ -58,99 +51,82 @@ async function findUserRelations(userId) {
     apiKeyLogs: [],
   };
 
-  // Password
   relations.password = await prisma.password.findUnique({
     where: { user_id: userId },
   });
 
-  // UserRelations (en tant que owner)
   relations.userRelationsAsOwner = await prisma.userRelations.findMany({
     where: { owner_id: userId, deleted_at: null },
   });
 
-  // UserRelations (en tant que related)
   relations.userRelationsAsRelated = await prisma.userRelations.findMany({
     where: { related_id: userId, deleted_at: null },
   });
 
-  // EntityAndUserRelations
   relations.entityAndUserRelations = await prisma.entityAndUserRelations.findMany({
     where: { owner_id: userId, deleted_at: null },
   });
 
-  // Feis créés par l'utilisateur
   relations.feisCreated = await prisma.fei.findMany({
     where: { created_by_user_id: userId, deleted_at: null },
     select: { id: true, numero: true },
   });
 
-  // Feis où l'utilisateur est current user
   relations.feisCurrentUser = await prisma.fei.findMany({
     where: { fei_current_owner_user_id: userId, deleted_at: null },
     select: { id: true, numero: true },
   });
 
-  // Feis où l'utilisateur est premier détenteur
   relations.feisPremierDetenteur = await prisma.fei.findMany({
     where: { premier_detenteur_user_id: userId, deleted_at: null },
     select: { id: true, numero: true },
   });
 
-  // Feis où l'utilisateur est examinateur initial
   relations.feisExaminateurInitial = await prisma.fei.findMany({
     where: { examinateur_initial_user_id: userId, deleted_at: null },
     select: { id: true, numero: true },
   });
 
-  // Feis où l'utilisateur est SVI user
   relations.feisSviUser = await prisma.fei.findMany({
     where: { svi_user_id: userId, deleted_at: null },
     select: { id: true, numero: true },
   });
 
-  // Feis fermés par l'utilisateur (SVI)
   relations.feisSviClosedBy = await prisma.fei.findMany({
     where: { svi_closed_by_user_id: userId, deleted_at: null },
     select: { id: true, numero: true },
   });
 
-  // Feis où l'utilisateur est next user
   relations.feisNextUser = await prisma.fei.findMany({
     where: { fei_next_owner_user_id: userId, deleted_at: null },
     select: { id: true, numero: true },
   });
 
-  // Feis sous-traités par l'utilisateur
   relations.feisSoustraiteByUser = await prisma.fei.findMany({
     where: { fei_next_owner_sous_traite_by_user_id: userId, deleted_at: null },
     select: { id: true, numero: true },
   });
 
-  // Carcasses avec IPM1 user
   relations.carcassesIpm1 = await prisma.carcasse.findMany({
     where: { svi_ipm1_user_id: userId, deleted_at: null },
     select: { zacharie_carcasse_id: true, numero_bracelet: true, fei_numero: true },
   });
 
-  // Carcasses intermédiaires
   relations.carcassesIntermediaire = await prisma.carcasseIntermediaire.findMany({
     where: { intermediaire_user_id: userId, deleted_at: null },
     select: { intermediaire_id: true, fei_numero: true, zacharie_carcasse_id: true },
   });
 
-  // Notification logs
   relations.notificationLogs = await prisma.notificationLog.findMany({
     where: { user_id: userId, deleted_at: null },
     select: { id: true, type: true, action: true, created_at: true },
   });
 
-  // API Key Approvals
   relations.apiKeyApprovals = await prisma.apiKeyApprovalByUserOrEntity.findMany({
     where: { user_id: userId },
     select: { id: true, api_key_id: true, status: true },
   });
 
-  // API Key Logs
   relations.apiKeyLogs = await prisma.apiKeyLog.findMany({
     where: { user_id: userId },
     select: { id: true, api_key_id: true, action: true, created_at: true },
@@ -273,9 +249,6 @@ function displayRelations(user, relations) {
 }
 
 async function deleteUser(userId) {
-  // La suppression de l'utilisateur devrait automatiquement supprimer les relations
-  // grâce aux cascades définies dans le schéma Prisma
-  // Mais on vérifie quand même avant de supprimer
   await prisma.user.delete({
     where: { id: userId },
   });
@@ -306,7 +279,6 @@ async function main() {
       console.log(`  - ${user.email || 'Sans email'} (ID: ${user.id})`);
     });
 
-    // Afficher toutes les relations
     console.log('\n' + '='.repeat(80));
     console.log('🔍 VÉRIFICATION DES RELATIONS');
     console.log('='.repeat(80));
@@ -318,7 +290,6 @@ async function main() {
       displayRelations(user, relations);
     }
 
-    // Demander confirmation
     console.log('\n' + '='.repeat(80));
     console.log(
       '⚠️  ATTENTION: Cette action va supprimer définitivement les utilisateurs et leurs relations'
@@ -332,7 +303,6 @@ async function main() {
       return;
     }
 
-    // Supprimer les utilisateurs
     console.log('\n🗑️  Suppression en cours...\n');
 
     for (const { user, relations } of allRelations) {

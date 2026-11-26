@@ -23,8 +23,6 @@ import { USAGE_DOMESTIQUE_ID, USAGE_DOMESTIQUE_LABEL } from '@app/utils/usage-do
 import { track } from '@app/services/matomo';
 import { syncData } from '@app/utils/sync-data';
 
-// Gravité du référentiel (1 bénin → 4 danger) vers la sévérité DSFR.
-// Sans niveau renseigné on reste sur l'avertissement : l'anomalie porte quand même un message.
 function alertSeverity(alertLevel: number | null): 'info' | 'warning' | 'error' {
   if (alertLevel === 4) return 'error';
   if (alertLevel === 1) return 'info';
@@ -58,8 +56,6 @@ export default function CarcassesExaminateur({
     const grouped: Record<string, Carcasse[]> = {};
     for (const c of carcasses) {
       if (!isCarcasseDejaEnvoyee(c)) {
-        // Le destinataire a renvoyé la carcasse à l'expéditeur : il vide next_owner mais le
-        // destinataire choisi par le premier détenteur reste en cache jusqu'au prochain envoi.
         const renvoyeurId = c.premier_detenteur_prochain_detenteur_id_cache;
         if (!renvoyeurId) {
           restantesList.push(c);
@@ -69,8 +65,6 @@ export default function CarcassesExaminateur({
         renvoyees[renvoyeurId].push(c);
         continue;
       }
-      // Côté chasseur, on ne regroupe que par le destinataire choisi par le premier détenteur.
-      // Le reste de la chaîne aval (ETG suivant, SVI…) ne le concerne pas.
       const destinataireId = c.consommateur_final_usage_domestique
         ? USAGE_DOMESTIQUE_ID
         : c.premier_detenteur_prochain_detenteur_id_cache!;
@@ -96,25 +90,15 @@ export default function CarcassesExaminateur({
   ).current;
   const isAddModalOpen = useIsModalOpen(addModal);
 
-  // CTA « Ajouter la carcasse » rendu dans le footer natif de la modale (épinglé, hors scroll).
-  // NouvelleCarcasse expose sa soumission via addSubmitRef et remonte libellé/état via onAddFooterChange.
   const addSubmitRef = useRef<(() => void) | null>(null);
   const [addFooter, setAddFooter] = useState({ label: 'Ajouter la carcasse', disabled: true });
   const onAddFooterChange = useCallback((f: { label: string; disabled: boolean }) => setAddFooter(f), []);
 
-  // La confirmation est invalidée par le parent dès qu'une carcasse est créée ou modifiée :
-  // ouvrir puis refermer cette modale sans rien créer ne change donc rien.
   const openAddModal = () => addModal.open();
 
-  // Synthèse des anomalies renseignées sur l'ensemble des carcasses de la fiche,
-  // pour la modale de confirmation. `total` = nombre total renseigné ;
-  // `avecMessage` = anomalies distinctes porteuses d'un avertissement (dédupliquées).
   const { total: anomaliesTotal, avecMessage: anomaliesAvecMessage } = useMemo(() => {
     let total = 0;
     const seen = new Set<string>();
-    // On garde le canonical : un même intitulé existe dans plusieurs familles
-    // (« Abcès », « Echinococcose », « Lésions hémorragiques » sont chacun sur deux systèmes)
-    // avec des messages différents. C'est lui qui identifie l'anomalie, pas l'intitulé.
     const avecMessage: Array<{ canonical: string; message: string; alertLevel: number | null }> = [];
     for (const carcasse of carcasses) {
       const canonicals = [
@@ -135,14 +119,10 @@ export default function CarcassesExaminateur({
         }
       }
     }
-    // Les plus graves en tête ; celles dont le référentiel ne donne pas le niveau ferment la marche.
     avecMessage.sort((a, b) => (b.alertLevel ?? 0) - (a.alertLevel ?? 0));
     return { total, avecMessage };
   }, [carcasses]);
 
-  // On n'affiche la modale de confirmation que s'il y a un message d'anomalie à montrer,
-  // ou si aucune anomalie n'a été renseignée. Des anomalies déclarées sans message
-  // passent directement, sans modale.
   const shouldConfirmWithModal = anomaliesAvecMessage.length > 0 || anomaliesTotal === 0;
 
   const renderCarcasseCard = (carcasse: Carcasse) => (
@@ -309,8 +289,6 @@ export default function CarcassesExaminateur({
   );
 }
 
-// memo : ajouter une carcasse ne re-rend pas les autres cartes de la liste (les objets carcasse
-// non modifiés gardent la même référence dans le store)
 export const CarcasseExaminateur = memo(function CarcasseExaminateur({
   carcasse,
   canEditAsPremierDetenteur,
@@ -327,10 +305,6 @@ export const CarcasseExaminateur = memo(function CarcasseExaminateur({
   const editModal = useLazyModal(`carcasse-edit-${carcasse.zacharie_carcasse_id}`);
   const confirmDeleteModal = useLazyModal(`carcasse-delete-${carcasse.zacharie_carcasse_id}`);
 
-  // Une carcasse prise en charge par l'aval ne se modifie ni ne se supprime plus, même si d'autres
-  // carcasses de la fiche sont restées et rouvrent les droits d'édition du chasseur. Tant que la
-  // prise en charge n'a pas eu lieu, le chasseur reste détenteur et peut encore la corriger.
-  // Idem pour une carcasse clôturée sans prise en charge (circuit court, clôturé dès l'envoi).
   if (
     isCarcassePriseEnChargeEnAval(carcasse) ||
     carcasse.svi_automatic_closed_at ||
@@ -339,10 +313,6 @@ export const CarcasseExaminateur = memo(function CarcasseExaminateur({
   ) {
     return <CardCarcasse carcasse={carcasse} />;
   }
-
-  // Seul l'examinateur initial édite l'examen (espèce, numéro, anomalies) via la modale.
-  // Le premier détenteur, propriétaire de la fiche, consulte en lecture seule mais peut
-  // supprimer une carcasse avant transmission (corbeille + confirmation navigateur).
 
   const doDelete = () => {
     const nextPartialCarcasse: Partial<Carcasse> = {
@@ -364,13 +334,11 @@ export const CarcasseExaminateur = memo(function CarcasseExaminateur({
     syncData('examinateur-carcasse-delete');
   };
 
-  // Examinateur : suppression via la modale de confirmation DSFR.
   const handleDelete = () => {
     doDelete();
     confirmDeleteModal.close();
   };
 
-  // Premier détenteur : suppression via la corbeille de la carte + confirmation navigateur.
   const handleTrashDelete = () => {
     if (window.confirm('Voulez-vous supprimer cette carcasse ? Cette opération est irréversible')) {
       doDelete();
@@ -404,8 +372,6 @@ export const CarcasseExaminateur = memo(function CarcasseExaminateur({
               iconId: 'fr-icon-delete-bin-line',
               className: 'text-error-main-525',
               doClosesModal: false,
-              // On ferme la modale d'édition avant d'ouvrir la confirmation :
-              // les modales DSFR ne s'empilent pas proprement (verrou de scroll booléen).
               onClick: () => {
                 editModal.close();
                 confirmDeleteModal.open();
@@ -446,7 +412,6 @@ export const CarcasseExaminateur = memo(function CarcasseExaminateur({
   );
 });
 
-// === Carte d'ajout : même gabarit que les cartes remplies, en squelette ===
 function AddCarcasseCard({ id, onClick }: { id: string; onClick: () => void }) {
   return (
     <button

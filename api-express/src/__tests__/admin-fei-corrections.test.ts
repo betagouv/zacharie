@@ -8,10 +8,6 @@ import { sendError } from '~/middlewares/errors';
 import prisma from '~/prisma';
 import { notifyNextOwnerEntity, notifyNextOwnerUser } from '~/utils/carcasse-side-effects';
 
-// Corrections admin d'une fiche transmise : date, commune, premier détenteur, ajout et suppression de
-// carcasse. Contrat épinglé ici : les champs recopiés sur les carcasses le sont, chaque écriture monte la
-// version (synchro delta), et rien n'est possible sur une fiche clôturée.
-
 vi.mock('~/third-parties/sentry', () => ({ capture: vi.fn(), captureException: vi.fn() }));
 vi.mock('~/utils/carcasse-side-effects', () => ({
   notifyNextOwnerUser: vi.fn(),
@@ -74,7 +70,6 @@ describe('POST /fei/:fei_numero/corrections', () => {
       where: { numero },
       data: { date_mise_a_mort, ...version },
     });
-    // toutes les carcasses, supprimées comprises, comme syncCarcasseDates
     expect(prisma.carcasse.updateMany).toHaveBeenCalledWith({
       where: { fei_numero: numero },
       data: { date_mise_a_mort, ...version },
@@ -167,7 +162,6 @@ describe('POST /fei/:fei_numero/corrections', () => {
     };
     vi.mocked(prisma.user.findUnique).mockImplementation((({ where }: any) =>
       Promise.resolve(where.email ? chasseur : examinateur)) as any);
-    // 1er appel : la recherche de clôture (aucune), 2e : la carcasse qui attend le premier détenteur
     vi.mocked(prisma.carcasse.findFirst)
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce(carcasseEnAttente as any);
@@ -264,7 +258,6 @@ describe('POST /fei/:fei_numero/carcasse', () => {
   const body = { numero_bracelet: 'MM-002', espece: 'Chevreuil', type: CarcasseType.GROS_GIBIER };
 
   test("la carcasse ajoutée reprend l'état de transmission d'une carcasse de la fiche", async () => {
-    // 1er appel : la recherche de clôture (aucune), 2e : la carcasse modèle, 3e : un doublon (aucun)
     vi.mocked(prisma.carcasse.findFirst)
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce(carcasseModele as any)

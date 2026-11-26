@@ -24,8 +24,6 @@ interface CCGNouveauProps {
   onFinish: (entity: UserEntityResponse['data']['entity']) => void;
 }
 
-// une même page peut afficher plusieurs formulaires d'entité : on préfixe les id des champs
-// pour qu'ils restent uniques dans le document
 const ID_PREFIX = 'ccg-nouveau';
 const fieldId = (field: string) => `${ID_PREFIX}-${field}`;
 
@@ -37,7 +35,6 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  // Quick add by numero_ddecpp
   const handleQuickAdd = useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
@@ -79,7 +76,6 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
     [user.id, entities, onFinish]
   );
 
-  // Full pre-registration form
   const handleFullSubmit = useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();

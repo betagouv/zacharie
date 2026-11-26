@@ -36,8 +36,6 @@ describe('getCircuitValorisation', () => {
     FeiOwnerRole.ASSOCIATION_CARITATIVE,
     FeiOwnerRole.CONSOMMATEUR_FINAL,
   ])('une carcasse transmise par le premier détenteur à %s est comptée en circuit non agréé', (role) => {
-    // le destinataire du circuit court ne prend jamais en charge : le premier détenteur reste
-    // propriétaire courant, le destinataire est en `next_owner_role`
     expect(getCircuitValorisation(carcasse({ next_owner_role: role }))).toBe('nonAgree');
   });
 

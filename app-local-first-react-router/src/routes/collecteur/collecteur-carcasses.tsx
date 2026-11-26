@@ -76,8 +76,6 @@ type CatalogColumn = {
 export default function CollecteurCarcasses() {
   const user = useMostFreshUser('collecteur-carcasses')!;
   const carcassesRegistry = useCarcassesRegistry();
-  // Le collecteur travaille avec la Transmission (dérivée des carcasses), jamais avec le store `feis`.
-  // commune_mise_a_mort vit sur transmissions[fei_numero].fei (les autres champs filtrables sont sur la carcasse).
   const transmissions = useTransmissions();
   const [selectedCarcassesIds, setSelectedCarcassesIds] = useState<Array<string>>([]);
   const [loading, setLoading] = useState(true);
@@ -141,9 +139,6 @@ export default function CollecteurCarcasses() {
     itemsPerPage,
   ].join('|');
 
-  // on réinitialise la page seulement quand les filtres changent vraiment :
-  // setSearchParams change d'identité à chaque navigation (react-router), donc on
-  // compare la valeur précédente de filtersKey plutôt que de garder le 1er render.
   const prevFiltersKey = useRef(filtersKey);
   useEffect(() => {
     if (prevFiltersKey.current === filtersKey) return;
@@ -162,10 +157,7 @@ export default function CollecteurCarcasses() {
     useMemo(() => {
       const _feiMetaByFeiNumero: Record<Carcasse['fei_numero'], FeiQuickFilterMeta> = {};
       const _ccgNames: Record<NonNullable<Carcasse['premier_detenteur_depot_entity_name_cache']>, true> = {};
-      const _motifs: Record<
-        string, // one of 'svi_ipm2_lesions_ou_motifs',
-        true
-      > = {};
+      const _motifs: Record<string, true> = {};
       const _especeOptions: Record<NonNullable<Carcasse['espece']>, true> = {};
       // @ts-expect-error Type '{}' is missing the following properties
       const _statusOptions: Record<CarcasseStatusLabel, boolean> = {};
@@ -206,7 +198,6 @@ export default function CollecteurCarcasses() {
       };
     }, [carcassesRegistry, transmissions]);
 
-  // Séparé des options : taper dans un filtre ne recalcule que le filtrage et le tri.
   const filteredData = useMemo(() => {
     const _filteredData: Array<Carcasse> = [];
     const braceletQuery = quickFilterBracelet.trim().toLowerCase();

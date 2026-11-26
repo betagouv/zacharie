@@ -8,16 +8,11 @@ dayjs.locale('fr');
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Scenario 155 — GET /user/me échoue pendant le passage hors ligne.
-// L'échec de cette requête ne doit pas faire croire à l'app qu'elle est en ligne : sinon le vrai
-// retour en ligne est ignoré et la fiche créée hors ligne n'est jamais synchronisée.
-
 test.use({
   viewport: { width: 350, height: 667 },
   hasTouch: true,
   isMobile: true,
   launchOptions: { slowMo: 100 },
-  // sans service worker, page.route voit directement la requête /user/me de la page
   serviceWorkers: 'block',
 });
 
@@ -33,7 +28,6 @@ test("Un échec de /user/me pendant la coupure n'empêche pas la synchro au reto
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
   await expect(page.getByText('En ligne')).toBeVisible({ timeout: 10000 });
 
-  // /user/me reste en attente jusqu'à la coupure réseau
   const pendingUserMe: Route[] = [];
   let userMeRequested: () => void;
   const userMeRequestedPromise = new Promise<void>((resolve) => {
@@ -47,7 +41,6 @@ test("Un échec de /user/me pendant la coupure n'empêche pas la synchro au reto
   await page.reload();
   await userMeRequestedPromise;
 
-  // Le téléphone passe hors ligne pendant que /user/me tourne, puis la requête échoue
   await context.setOffline(true);
   await expect(page.getByText('Hors ligne')).toBeVisible({ timeout: 10000 });
   for (const route of pendingUserMe) {
@@ -55,7 +48,6 @@ test("Un échec de /user/me pendant la coupure n'empêche pas la synchro au reto
   }
   await page.unroute('**/user/me');
 
-  // Création d'une fiche hors ligne
   await page.getByRole('button', { name: 'Nouvelle fiche' }).first().click();
   await expect(page.getByText('Date de la chasse')).toBeVisible();
   await page.getByRole('button', { name: dayjs.utc().format('dddd DD MMMM') }).click();
@@ -65,7 +57,6 @@ test("Un échec de /user/me pendant la coupure n'empêche pas la synchro au reto
   const feiNumero = page.url().match(/ZACH-[A-Z0-9-]+/)?.[0];
   expect(feiNumero).toBeDefined();
 
-  // Retour en ligne : la fiche part au serveur sans recharger la page
   const syncResponse = page.waitForResponse(
     (res) =>
       res.url().includes('/sync') &&

@@ -16,10 +16,8 @@ const app = express();
 
 app.use(compression());
 
-// http://expressjs.com/en/advanced/best-practice-security.html#at-a-minimum-disable-x-powered-by-header
 app.disable('x-powered-by');
 
-// Security headers (Mozilla Observatory recommendations)
 app.use((req, res, next) => {
   res.setHeader(
     'Content-Security-Policy',
@@ -29,9 +27,7 @@ app.use((req, res, next) => {
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https://developer.apple.com https://play.google.com",
       "font-src 'self' data:",
-      // review app d'une PR : l'API est sur une URL cleverapps.io propre à la PR
       `connect-src 'self' https://api.zacharie.beta.gouv.fr https://*.ingest.sentry.io https://sentry.incubateur.net https://metabase.zacharie.beta.gouv.fr https://stats.beta.gouv.fr https://api.zacharie.incubateur.net https://recherche-entreprises.api.gouv.fr${process.env.REVIEW_APP === 'true' ? ` ${process.env.VITE_API_URL}` : ''}`,
-      // blob: pour l'aperçu des PDF (fiche de transmission) affichés dans une iframe
       'frame-src blob: https://metabase.zacharie.beta.gouv.fr https://www.youtube.com',
       "object-src 'none'",
       "base-uri 'self'",
@@ -58,15 +54,10 @@ if (viteDevServer) {
     next();
   });
 } else {
-  // Vite fingerprints its assets so we can cache forever.
   app.use('/assets', express.static('build/assets', { immutable: true, maxAge: '1y' }));
-  // Un fichier d'un ancien build (onglet ouvert avant un déploiement) n'existe plus : on répond 404,
-  // pas index.html. Sinon le navigateur reçoit du HTML à la place d'un JS, et le service worker le
-  // met en cache sous l'URL du JS.
   app.use('/assets', (req, res) => res.status(404).end());
 }
 
-// Universal Links (iOS) & App Links (Android)
 app.get('/.well-known/apple-app-site-association', (req, res) => {
   res.json({
     applinks: {
@@ -97,12 +88,8 @@ app.get('/.well-known/assetlinks.json', (req, res) => {
   ]);
 });
 
-// index.html, the service worker and spa-manifest.json (read by the mobile app to download the web
-// assets) reference the hashed assets of the current build:
-// never cache them, so a deploy reaches users on the next load.
 const noStoreFiles = ['index.html', 'service-worker.js', 'spa-manifest.json'];
 
-// Serve static files from the build/client directory
 app.use(
   express.static(path.join(process.cwd(), 'build'), {
     setHeaders: (res, filePath) => {
@@ -111,8 +98,6 @@ app.use(
   })
 );
 
-// For any other routes, send the index.html file.
-// Read once at startup: no file system access per request (in dev, Vite serves index.html).
 const indexHtml = viteDevServer
   ? null
   : fs.readFileSync(path.join(process.cwd(), 'build', 'index.html'), 'utf8');

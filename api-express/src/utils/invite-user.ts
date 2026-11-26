@@ -11,7 +11,6 @@ export async function inviteUser(newUser: User, me: User, entity?: Entity) {
       user_id: newUser.id,
     },
   });
-  // compte sans mot de passe (invitation jamais acceptée) : on renvoie un nouveau lien d'invitation
   const accountAlreadyExists = !!password?.password;
   if (!accountAlreadyExists) {
     const token = crypto.randomUUID();

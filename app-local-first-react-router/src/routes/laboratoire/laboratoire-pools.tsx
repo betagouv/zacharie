@@ -206,7 +206,6 @@ export default function LaboratoirePools() {
   );
 }
 
-// La référence du laboratoire d'abord, celle de Zacharie en dessous
 function ReferencePool({ pool, mesEntites }: { pool: LaboPoolRegistre; mesEntites: Array<string> }) {
   const maReference = monAlias(pool.Aliases, mesEntites)?.reference;
   if (!maReference) return <span className="font-semibold">{pool.reference_pool}</span>;

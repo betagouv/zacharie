@@ -9,11 +9,8 @@ test.use({
   launchOptions: { slowMo: 100 },
 });
 
-// Seed : « Association de chasseurs » a deux admins, premier-detenteur@ et examinateur-premier-detenteur@.
 const ASSOCIATION = 'Association de chasseurs';
 const ASSOCIATION_ID = '5b916331-632e-4c29-be2e-12a834e92688';
-// Lien du mail et de la notification push envoyés aux admins quand un chasseur demande à rejoindre
-// l'association (cf. api-express/src/controllers/user-entity.ts).
 const NOTIFICATION_PATH = `/app/chasseur/profil/informations-de-chasse?open-entity=${ASSOCIATION_ID}`;
 
 test.beforeAll(async () => {

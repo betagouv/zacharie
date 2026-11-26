@@ -11,9 +11,6 @@ import laboratoireRouter from '~/controllers/laboratoire';
 import prisma from '~/prisma';
 import { applyPoolResult } from '~/utils/trichine-result';
 
-// POST /laboratoire/results/preview — l'export LIMS peut citer le pool par sa référence Zacharie
-// ou par l'alias que le laboratoire lui a donné.
-
 vi.mock('~/third-parties/sentry', () => ({ capture: vi.fn() }));
 vi.mock('~/utils/trichine-result', async (importOriginal) => ({
   ...(await importOriginal<typeof import('~/utils/trichine-result')>()),
@@ -67,7 +64,6 @@ describe('POST /laboratoire/results/preview', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.data.rows[0]).toMatchObject({ reference_pool: 'LIMS-0087', status: 'matched' });
-    // L'alias n'est cherché que parmi ceux des laboratoires de l'utilisateur, casse ignorée
     const [, entityIds, references] = vi.mocked(prisma.$queryRaw).mock.calls[0] as Array<any>;
     expect(entityIds.values).toEqual(['labo-1']);
     expect(references.values).toEqual(['lims-0087']);
@@ -78,7 +74,6 @@ describe('POST /laboratoire/results/preview', () => {
   test('un % ou un _ du fichier ne sert pas de joker', async () => {
     await preview('reference_pool,resultat_analyse\nLIMS-%,negatif\n');
 
-    // Comparaison par égalité sur lower(reference), jamais par LIKE / ILIKE
     const [sql] = vi.mocked(prisma.$queryRaw).mock.calls[0] as Array<any>;
     expect(sql.join('?')).toMatch(/lower\("reference"\) IN/);
     expect(sql.join('?')).not.toMatch(/LIKE/i);
@@ -123,7 +118,6 @@ describe('POST /laboratoire/results/import', () => {
 
   test('la référence Zacharie prime sur un alias identique posé sur un autre pool', async () => {
     vi.mocked(prisma.trichinePool.findMany).mockResolvedValue([
-      // Alias saisi par erreur avec la référence Zacharie de pool-1
       {
         ...poolRecu,
         id: 'pool-2',

@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import { Carcasse, CarcasseStatus, CarcasseType, FeiOwnerRole } from '@prisma/client';
 import { deriveCarcasseUiState, getCarcasseCardDisplay } from './get-carcasse-card-display';
 
-// Minimal carcasse factory — only the fields the ui-state logic reads.
 function c(overrides: Partial<Carcasse> = {}): Carcasse {
   return {
     zacharie_carcasse_id: 'FEI-TEST_MM-001-001',
@@ -63,9 +62,6 @@ describe('deriveCarcasseUiState — possession lue au niveau carcasse', () => {
     expect(deriveCarcasseUiState(carcasse, undefined, {})).toBe('transmise');
   });
 
-  // Circuit court (commerce de détail, particulier…) est un destinataire terminal.
-  // Il ne « prend jamais en charge » : current_owner_role reste PREMIER_DETENTEUR et
-  // seul next_owner_role pointe vers le destinataire. La carcasse est « Transmise ».
   it('carcasse transmise par le PD à un destinataire de circuit court → "transmise-circuit-court"', () => {
     const carcasse = c({
       current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
@@ -74,8 +70,6 @@ describe('deriveCarcasseUiState — possession lue au niveau carcasse', () => {
     expect(deriveCarcasseUiState(carcasse, undefined, {})).toBe('transmise-circuit-court');
   });
 
-  // Gardée par le premier détenteur : même signature de possession qu'une carcasse en création
-  // (owner = PD, pas de prochain détenteur), mais son sort est réglé.
   it('carcasse gardée pour usage domestique privé → "usage-domestique"', () => {
     const carcasse = c({
       current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
@@ -85,9 +79,6 @@ describe('deriveCarcasseUiState — possession lue au niveau carcasse', () => {
     expect(deriveCarcasseUiState(carcasse, undefined, {})).toBe('usage-domestique');
   });
 
-  // Régression : après un « Retour à l'envoyeur » d'un ETG, seul next_owner_role de la
-  // carcasse repasse à null. La carte doit lire la carcasse (et non le snapshot FEI périmé)
-  // → l'état repasse à "creation", actionnable, et non "transmise".
   it('carcasse renvoyée par l\'ETG (next_owner repassé à null) → "creation"', () => {
     const carcasse = c({
       current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,

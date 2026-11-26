@@ -2,11 +2,6 @@ import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Scenario 153 — Un utilisateur connecté qui ouvre la page de création de compte ou d'invitation
-// (ex. lien d'un email) est renvoyé vers son tableau de bord après un nettoyage du stockage local.
-// Après un rechargement, ses fiches doivent toujours être listées : le store zustand doit être
-// remis à zéro avec le stockage, sinon le curseur de synchro est réécrit sans les fiches.
-
 test.use({
   viewport: { width: 350, height: 667 },
   hasTouch: true,
@@ -29,11 +24,9 @@ for (const route of ['creation-de-compte', 'invitation']) {
     await expect(page.getByRole('link', { name: feiId })).toBeVisible({ timeout: 15000 });
 
     await page.goto(`http://localhost:3290/app/connexion/${route}`);
-    // Utilisateur déjà connecté : redirection vers son tableau de bord
     await expect(page).toHaveURL('http://localhost:3290/app/chasseur', { timeout: 15000 });
     await expect(page.getByRole('link', { name: feiId })).toBeVisible({ timeout: 15000 });
 
-    // Le chargement des données a réécrit le curseur de synchro dans IndexedDB
     await expect
       .poll(() =>
         page.evaluate(
