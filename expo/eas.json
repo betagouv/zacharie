@@ -16,6 +16,16 @@
     },
     "production": {
       "autoIncrement": false
+    },
+    "pentest": {
+      "distribution": "internal",
+      "environment": "production",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_APP_URL": "https://pentest.zacharie.incubateur.net/"
+      }
     }
   },
   "submit": {

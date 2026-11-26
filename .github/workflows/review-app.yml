@@ -4,8 +4,9 @@ name: Review app
 # - API : pr-<n>-zacharie-api.cleverapps.io (api-express/), avec sa propre base PostgreSQL remplie par
 #   une copie de la base de staging (sans les tables de logs, cf api-express/scripts/copy-db-from-source.sh)
 # - App : pr-<n>-zacharie.cleverapps.io (app-local-first-react-router/)
+# - Bac à sable API : pr-<n>-zacharie-api-playground.cleverapps.io (api-playground/), avec sa propre base vide
 # Les variables d'environnement sont copiées des apps de staging, puis REVIEW_APP=true (cf IS_REVIEW_APP).
-# Redéploie à chaque push, supprime les deux apps et la base à la fermeture de la PR.
+# Redéploie à chaque push, supprime les apps et les bases à la fermeture de la PR.
 # Si la première création échoue à mi-chemin : fermer puis rouvrir la PR.
 #
 # Secrets : CLEVER_TOKEN, CLEVER_SECRET (dans ~/.config/clever-cloud/clever-tools.json), CLEVER_ORGA_ID,
@@ -36,12 +37,18 @@ jobs:
       ORGA_ID: ${{ secrets.CLEVER_ORGA_ID }}
       STAGING_API_APP_ID: ${{ secrets.CLEVER_STAGING_API_APP_ID }}
       STAGING_APP_APP_ID: ${{ secrets.CLEVER_STAGING_APP_APP_ID }}
+      # TEST-zacharie-api-playground (un id d'app n'est pas un secret)
+      STAGING_PLAYGROUND_APP_ID: app_f33cd251-d974-4f44-9739-aa5f8a3e6e37
       API_NAME: pr-${{ github.event.pull_request.number }}-zacharie-api
       APP_NAME: pr-${{ github.event.pull_request.number }}-zacharie
       DB_NAME: pr-${{ github.event.pull_request.number }}-zacharie-db
+      PLAYGROUND_NAME: pr-${{ github.event.pull_request.number }}-zacharie-api-playground
+      PLAYGROUND_DB_NAME: pr-${{ github.event.pull_request.number }}-zacharie-api-playground-db
       # pas API_HOST / APP_HOST : clever-tools lit API_HOST comme l'URL de l'API Clever Cloud
-      REVIEW_API_HOST: pr-${{ github.event.pull_request.number }}-zacharie-api.cleverapps.io
-      REVIEW_APP_HOST: pr-${{ github.event.pull_request.number }}-zacharie.cleverapps.io
+      # domaines du pentest EY, déjà ajoutés aux apps
+      REVIEW_API_HOST: api.pentest.zacharie.incubateur.net
+      REVIEW_APP_HOST: pentest.zacharie.incubateur.net
+      REVIEW_PLAYGROUND_HOST: api-playground.pentest.zacharie.incubateur.net
       DB_PLAN: xxs_sml
     steps:
       - uses: actions/checkout@v4
@@ -64,12 +71,14 @@ jobs:
       - name: Delete review app
         if: github.event.action == 'closed'
         run: |
-          for name in "$API_NAME" "$APP_NAME"; do
+          for name in "$API_NAME" "$APP_NAME" "$PLAYGROUND_NAME"; do
             if clever env --app "$name" --format json > /dev/null 2>&1; then
               clever delete --app "$name" --yes
             fi
           done
           clever addon delete "$DB_NAME" --org "$ORGA_ID" --yes || echo "Pas de base $DB_NAME à supprimer"
+          clever addon delete "$PLAYGROUND_DB_NAME" --org "$ORGA_ID" --yes \
+            || echo "Pas de base $PLAYGROUND_DB_NAME à supprimer"
 
       - name: Create review app
         id: create
@@ -137,12 +146,48 @@ jobs:
 
           api-express/scripts/copy-db-from-source.sh --yes --force-target "$source_url" "$target_url"
 
+      # étape à part : ajoute aussi le bac à sable à une review app créée sans lui
+      - name: Create API playground
+        if: github.event.action != 'closed'
+        run: |
+          set -euo pipefail
+          if clever env --app "$PLAYGROUND_NAME" --format json > /dev/null 2>&1; then
+            clever link "$PLAYGROUND_NAME" --org "$ORGA_ID" --alias playground
+          else
+            clever create --type node "$PLAYGROUND_NAME" --alias playground --org "$ORGA_ID" --region par
+            clever domain add "$REVIEW_PLAYGROUND_HOST" --alias playground
+            build_flavor=$(clever status --app "$STAGING_PLAYGROUND_APP_ID" --format json \
+              | jq -r 'if .separateBuild then .buildFlavor else "disabled" end')
+            clever scale --build-flavor "$build_flavor" --alias playground
+
+            # variables de staging, sans sa base
+            clever env --app "$STAGING_PLAYGROUND_APP_ID" --format json \
+              | jq '[.env[] | select((.name | startswith("POSTGRESQL_ADDON_")) or .name == "DATABASE_URL" | not)]' \
+              | clever env import --alias playground --json
+
+            # base vide : le bac à sable crée sa table `users` au premier appel
+            clever addon create postgresql-addon "$PLAYGROUND_DB_NAME" --plan "$DB_PLAN" \
+              --org "$ORGA_ID" --region par --link playground --yes
+            database_url=$(clever env --alias playground --format json \
+              | jq -r '[.fromAddons[].env[] | select(.name == "POSTGRESQL_ADDON_URI") | .value][0]')
+            echo "::add-mask::$database_url"
+            clever env set DATABASE_URL "$database_url" --alias playground
+          fi
+          clever env set ZACHARIE_API_URL "https://$REVIEW_API_HOST" --alias playground
+          clever env set ZACHARIE_APP_URL "https://$REVIEW_APP_HOST" --alias playground
+          clever env set VITE_BAC_A_SABLE_URL "https://$REVIEW_PLAYGROUND_HOST" --alias app
+          for alias in api app; do
+            clever env set VITE_API_URL "https://$REVIEW_API_HOST" --alias "$alias"
+            clever env set VITE_APP_URL "https://$REVIEW_APP_HOST" --alias "$alias"
+          done
+
       - name: Deploy
         if: github.event.action != 'closed'
         run: |
           # l'API d'abord : elle applique les migrations de la branche au démarrage
           clever deploy --alias api --force --same-commit-policy rebuild
           clever deploy --alias app --force --same-commit-policy rebuild
+          clever deploy --alias playground --force --same-commit-policy rebuild
 
       - name: Comment PR
         if: always()
@@ -153,7 +198,8 @@ jobs:
           elif [ "${{ job.status }}" = success ]; then
             status="🚀 Review app déployée (commit ${{ github.event.pull_request.head.sha }}) :
           - App : https://$REVIEW_APP_HOST
-          - API : https://$REVIEW_API_HOST"
+          - API : https://$REVIEW_API_HOST
+          - Bac à sable API : https://$REVIEW_PLAYGROUND_HOST"
           else
             status="❌ Échec du déploiement de la review app : $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           fi
