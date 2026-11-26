@@ -23,10 +23,13 @@ export type TransmissionStepForCollecteurPro =
   | 'Transport';
 
 export type TransmissionStepForChasseur =
-  | 'Examen initial'
-  | 'Choix des destinataires'
-  | 'Traitement des carcasses'
-  | 'Carcasses traitées';
+  | 'Carcasses traitées'
+  | 'Prise en charge par le transporteur'
+  | `Prise en charge par le transporteur ${string}`
+  | 'Information manquante'
+  | 'Validation par le premier détenteur'
+  | 'Fiche envoyée, pas encore prise en charge'
+  | 'Traitement des carcasses';
 
 export type TransmissionStepForSvi = 'Traitement des carcasses' | 'Clôturée';
 
@@ -42,6 +45,6 @@ export type TransmissionStep =
 
 export type TransmissionNextStep =
   | 'Réception par un établissement de traitement'
-  | 'Choix des destinataires'
+  | 'Validation par le premier détenteur'
   | 'Traitement des carcasses'
   | 'Clôturée';

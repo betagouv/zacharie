@@ -59,7 +59,7 @@ describe('getCurrentStepLabel — dispatch by role', () => {
         UserRoles.CHASSEUR,
         noEntities
       )
-    ).toBe('Choix des destinataires');
+    ).toBe('Validation par le premier détenteur');
   });
 
   it('delegates to the ETG label when in progress', () => {
@@ -103,53 +103,46 @@ describe('getCurrentStepLabelForChasseur', () => {
     expect(getCurrentStepLabelForChasseur('Clôturée', t())).toBe('Carcasses traitées');
   });
 
-  it('examinateur initial, examen pas encore approuvé → examen initial', () => {
-    expect(
-      getCurrentStepLabelForChasseur(
-        'À compléter',
-        t({
-          current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
-          examinateur_initial_date_approbation_mise_sur_le_marche: null,
-        })
-      )
-    ).toBe('Examen initial');
-  });
-
-  it('examinateur initial, examen approuvé → choix des destinataires', () => {
+  it('examinateur initial without next owner → information manquante', () => {
     expect(
       getCurrentStepLabelForChasseur(
         'En cours',
-        t({
-          current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
-          next_owner_role: 'PREMIER_DETENTEUR',
-          examinateur_initial_date_approbation_mise_sur_le_marche: new Date(),
-        })
+        t({ current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL, next_owner_role: null })
       )
-    ).toBe('Choix des destinataires');
+    ).toBe('Information manquante');
   });
 
-  it('premier détenteur without next owner → choix des destinataires', () => {
+  it('examinateur initial with next owner → validation par le premier détenteur', () => {
+    expect(
+      getCurrentStepLabelForChasseur(
+        'En cours',
+        t({ current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL, next_owner_role: 'PREMIER_DETENTEUR' })
+      )
+    ).toBe('Validation par le premier détenteur');
+  });
+
+  it('premier détenteur without next owner → validation par le premier détenteur', () => {
     expect(
       getCurrentStepLabelForChasseur(
         'En cours',
         t({ current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR, next_owner_role: null })
       )
-    ).toBe('Choix des destinataires');
+    ).toBe('Validation par le premier détenteur');
   });
 
-  it('premier détenteur with next owner (transmise) → traitement des carcasses', () => {
+  it('premier détenteur with next owner → fiche envoyée, pas encore prise en charge', () => {
     expect(
       getCurrentStepLabelForChasseur(
         'En cours',
         t({ current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR, next_owner_role: 'ETG' })
       )
-    ).toBe('Traitement des carcasses');
+    ).toBe('Fiche envoyée, pas encore prise en charge');
   });
 
-  it('owned by collecteur pro → traitement des carcasses', () => {
+  it('owned by collecteur pro → prise en charge par le transporteur', () => {
     expect(
       getCurrentStepLabelForChasseur('En cours', t({ current_owner_role: FeiOwnerRole.COLLECTEUR_PRO }))
-    ).toBe('Traitement des carcasses');
+    ).toBe('Prise en charge par le transporteur');
   });
 
   it('owned by anyone else (ETG) → traitement des carcasses', () => {
@@ -374,8 +367,8 @@ describe('getNextStepLabel', () => {
     expect(getNextStepLabel(current)).toBe(expected);
   });
 
-  it('Examen initial → Choix des destinataires', () => {
-    expect(getNextStepLabel('Examen initial')).toBe('Choix des destinataires');
+  it('Information manquante → Validation par le premier détenteur', () => {
+    expect(getNextStepLabel('Information manquante')).toBe('Validation par le premier détenteur');
   });
 
   it.each([
@@ -384,7 +377,7 @@ describe('getNextStepLabel', () => {
     'Fiche reçue, pas encore prise en charge',
     'Prise en charge par le transporteur',
     "Prise en charge par l'atelier",
-    'Choix des destinataires',
+    'Validation par le premier détenteur',
   ] as const)('%s → Traitement des carcasses', (current) => {
     expect(getNextStepLabel(current)).toBe('Traitement des carcasses');
   });
@@ -406,8 +399,10 @@ describe('IconStep', () => {
     expect(IconStep({ displayLabel: 'whatever', simpleStatus: 'Clôturée' }).type).toBe(RiCheckboxCircleLine);
   });
 
-  it('examen initial → edit icon', () => {
-    expect(IconStep({ displayLabel: 'Examen initial', simpleStatus: 'À compléter' }).type).toBe(RiEdit2Line);
+  it('information manquante → edit icon', () => {
+    expect(IconStep({ displayLabel: 'Information manquante', simpleStatus: 'En cours' }).type).toBe(
+      RiEdit2Line
+    );
   });
 
   it('transport label → truck icon', () => {
