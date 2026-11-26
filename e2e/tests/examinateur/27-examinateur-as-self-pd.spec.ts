@@ -19,19 +19,10 @@ test.beforeAll(async () => {
   await resetDb('EXAMINATEUR_INITIAL');
 });
 
-// PR #399 — `nextIsMe` branch of examinateur-select-next.tsx.
-//
-// FIXME: marked `.fixme` because the PR removed the argument from the only call site:
-//   `handleSubmitFromSelect(nextOwnerUser?.id)` → `handleSubmitFromSelect()`
-// so `nextOwnerUserId` is always `undefined` and `nextIsMe = (undefined === user.id)` is
-// always false. The `nextIsMe` branch is now unreachable; picking yourself falls through
-// to the external branch instead. Restore the arg at the call site (and adjust the carcasse
-// transmission to clear next_owner_user_id on self-handoff) before un-fixme-ing this test.
-//
-// Expected behavior once fixed: the user picks themselves as PD; after Transmettre, the form
-// transitions inline to the PD dispatch view (ETG 1 pill visible) — no "Votre fiche a été
-// transmise" page. Distinct from spec #08 which already covers `nextIsMyAssociation`.
-test.fixme('Examinateur picks themselves as PD — inline transition to dispatch view', async ({ page }) => {
+// `nextIsMe` branch of examinateur-select-next.tsx: the user picks themselves as PD; after
+// Transmettre, the form transitions inline to the PD dispatch view (ETG 1 pill visible) — no
+// "Votre fiche a été transmise" page. Distinct from spec #08 which covers `nextIsMyAssociation`.
+test('Examinateur picks themselves as PD — inline transition to dispatch view', async ({ page }) => {
   // `examinateur@example.fr` (Marie Martin) is a CHASSEUR with CFEI formation. The API
   // unconditionally unshifts the current user into `detenteursInitiaux` for chasseurs, so
   // her own pill ("Marie Martin") appears in the destinataire selector.

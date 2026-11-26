@@ -148,10 +148,11 @@ export default function SelectNextForExaminateur({
         premier_detenteur_name_cache: `${user.prenom} ${user.nom_de_famille}`,
         premier_detenteur_entity_id: null,
       };
+      // pas de destinataire à notifier : l'examinateur reste détenteur des carcasses
       nextCarcassesTransmission = {
         next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-        next_owner_user_id: user.id,
-        next_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
+        next_owner_user_id: null,
+        next_owner_user_name_cache: null,
         next_owner_entity_id: null,
         premier_detenteur_offline: navigator.onLine ? false : true,
         premier_detenteur_user_id: user.id,
@@ -361,7 +362,7 @@ export default function SelectNextForExaminateur({
               <Button
                 type="button"
                 disabled={disabled}
-                onClick={() => handleSubmitFromSelect()}
+                onClick={() => handleSubmitFromSelect(nextOwnerUser?.id)}
               >
                 Continuer
               </Button>
