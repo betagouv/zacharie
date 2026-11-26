@@ -4,7 +4,7 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { UserEtgRoles, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
-import type { AdminUsersResponse, AdminOfficialCfeisResponse, OfficialCfei } from '@api/src/types/responses';
+import type { AdminUsersResponse, OfficialCfei } from '@api/src/types/responses';
 import Chargement from '@app/components/Chargement';
 import FiltersSidebar from '@app/components/FiltersSidebar';
 import CheckboxFilterSection from '@app/components/CheckboxFilterSection';
@@ -200,7 +200,8 @@ const UserRow = memo(function UserRow({
 export default function AdminUsers() {
   const [users, setUsers] = useState<Array<AdminUser>>([]);
   const [counts, setCounts] = useState<AdminUserCounts>({});
-  const [officialCfeis, setOfficialCfeis] = useState<Array<OfficialCfei>>([]);
+  const [officialCfeis, setOfficialCfeis] = useState<AdminUsersResponse['data']['officialCfeis']>({});
+  const [hasOfficialCfeis, setHasOfficialCfeis] = useState(false);
   const { searchParams, setFilters, replaceFilters } = useUrlFilters();
   const urlSearchQuery = searchParams.get('q') ?? '';
   const [searchQuery, setSearchQuery] = useDebouncedUrlText(urlSearchQuery, (value) =>
@@ -213,28 +214,20 @@ export default function AdminUsers() {
   const selectedStatuses = useUrlList(searchParams, 'statut');
   const sortBy = searchParams.get('tri') || 'created_desc';
 
-  const officialCfeiMap = useMemo(() => {
-    const map = new Map<string, OfficialCfei>();
-    officialCfeis.forEach((cfei) => {
-      map.set(cfei.numero_cfei.toUpperCase(), cfei);
-    });
-    return map;
-  }, [officialCfeis]);
-
   const getCfeiValidationStatus = useCallback(
-    (user: { numero_cfei: string | null }): CfeiValidationStatus => {
+    (user: { id: string; numero_cfei: string | null }): CfeiValidationStatus => {
       if (!user.numero_cfei) return 'missing';
-      return officialCfeiMap.has(user.numero_cfei.toUpperCase()) ? 'valid' : 'invalid';
+      return officialCfeis[user.id] ? 'valid' : 'invalid';
     },
-    [officialCfeiMap]
+    [officialCfeis]
   );
 
   const getOfficialCfeiDetails = useCallback(
-    (user: { numero_cfei: string | null }): OfficialCfei | null => {
+    (user: { id: string; numero_cfei: string | null }): OfficialCfei | null => {
       if (!user.numero_cfei) return null;
-      return officialCfeiMap.get(user.numero_cfei.toUpperCase()) || null;
+      return officialCfeis[user.id] ?? null;
     },
-    [officialCfeiMap]
+    [officialCfeis]
   );
 
   const roleOptions = useMemo(() => {
@@ -320,7 +313,7 @@ export default function AdminUsers() {
         });
         if (!match) return false;
       }
-      if (selectedCfeiValidations.length && officialCfeis.length > 0) {
+      if (selectedCfeiValidations.length && hasOfficialCfeis) {
         if (!selectedCfeiValidations.includes(getCfeiValidationStatus(user))) return false;
       }
       return true;
@@ -333,7 +326,7 @@ export default function AdminUsers() {
     selectedCfeiStatuses,
     selectedOnboardingStatuses,
     selectedCfeiValidations,
-    officialCfeis.length,
+    hasOfficialCfeis,
     getCfeiValidationStatus,
   ]);
 
@@ -393,16 +386,15 @@ export default function AdminUsers() {
   }, []);
 
   useEffect(() => {
-    Promise.all([
-      API.get({ path: 'admin/users' }).then((res) => res as AdminUsersResponse),
-      API.get({ path: 'admin/official-cfeis' }).then((res) => res as AdminOfficialCfeisResponse),
-    ]).then(([usersRes, cfeisRes]) => {
-      if (usersRes.ok) {
+    API.get({ path: 'admin/users' })
+      .then((res) => res as AdminUsersResponse)
+      .then((usersRes) => {
+        if (!usersRes.ok) return;
         setUsers(usersRes.data.users);
         setCounts(usersRes.data.counts);
-      }
-      if (cfeisRes.ok) setOfficialCfeis(cfeisRes.data.officialCfeis);
-    });
+        setOfficialCfeis(usersRes.data.officialCfeis);
+        setHasOfficialCfeis(usersRes.data.hasOfficialCfeis);
+      });
   }, []);
 
   if (!users?.length) {
@@ -480,7 +472,7 @@ export default function AdminUsers() {
             selected={selectedOnboardingStatuses}
             onChange={(next) => setFilters({ onboarding: next })}
           />
-          {officialCfeis.length > 0 && (
+          {hasOfficialCfeis && (
             <CheckboxFilterSection
               title="Validation CFEI"
               options={[
@@ -532,7 +524,7 @@ export default function AdminUsers() {
                   user={user}
                   cfeiStatus={isChasseur ? getCfeiValidationStatus(user) : null}
                   officialDetails={isChasseur ? getOfficialCfeiDetails(user) : null}
-                  showCfeiShield={officialCfeis.length > 0}
+                  showCfeiShield={hasOfficialCfeis}
                   counts={counts[user.id] ?? NO_COUNTS}
                   onActivate={onActivate}
                 />

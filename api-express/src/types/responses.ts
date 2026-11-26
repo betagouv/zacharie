@@ -217,6 +217,10 @@ export interface AdminUsersResponse {
   data: {
     users: Array<User>;
     counts: Record<User['id'], { carcasses: number; fiches: number }>;
+    // entrée de la liste officielle correspondant au numéro saisi, par id de compte (absent si non trouvé)
+    officialCfeis: Record<User['id'], OfficialCfei>;
+    // false tant que la liste officielle n'a pas été importée (le statut CFEI n'est alors pas affiché)
+    hasOfficialCfeis: boolean;
   };
   error: string;
 }
@@ -507,14 +511,6 @@ export interface OfficialCfei {
   nom: string | null;
   prenom: string | null;
   departement: string | null;
-}
-
-export interface AdminOfficialCfeisResponse {
-  ok: boolean;
-  data: {
-    officialCfeis: Array<OfficialCfei>;
-  };
-  error: string;
 }
 
 export interface AdminCarcassesIntermediairesResponse {

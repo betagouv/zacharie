@@ -85,11 +85,12 @@ Julie
 Thomas
 Christine
 */
-  // Liste officielle des CFEI : Martin et Petit y figurent, Moreau (CFEI-075-25-003) non → « CFEI introuvable »
+  // Liste officielle des CFEI (forme canonique, comme l'import) : Martin et Petit y figurent malgré leur
+  // saisie « CFEI-075-… », Moreau (CFEI-075-25-003) non → « CFEI introuvable »
   await prisma.officialCfei.createMany({
     data: [
-      { numero_cfei: 'CFEI-075-25-001', nom: 'Martin', prenom: 'Marie', departement: '75' },
-      { numero_cfei: 'CFEI-075-25-002', nom: 'Petit', prenom: 'Pierre', departement: '75' },
+      { numero_cfei: 'CFEI-75-25-1', nom: 'Martin', prenom: 'Marie', departement: '75' },
+      { numero_cfei: 'CFEI-75-25-2', nom: 'Petit', prenom: 'Pierre', departement: '75' },
     ],
   });
 

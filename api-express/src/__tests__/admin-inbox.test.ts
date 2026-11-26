@@ -27,11 +27,24 @@ describe('GET /inbox', () => {
         Promise.resolve(where.activated === false ? 2 : 3)
       );
     (prisma as any).entity.count = vi.fn().mockResolvedValue(4);
-    (prisma as any).$queryRaw = vi.fn().mockImplementation((strings: TemplateStringsArray) => {
-      const sql = strings.join('?');
-      if (sql.includes('"OfficialCfei"')) return Promise.resolve([{ count: 1 }]);
-      return Promise.resolve([compteBloque]);
-    });
+    // le premier numéro est saisi avec des zéros de tête : il correspond quand même à la liste officielle
+    (prisma as any).user.findMany = vi
+      .fn()
+      .mockResolvedValue([
+        { numero_cfei: 'cfei-045-13-0577' },
+        { numero_cfei: 'CFEI-99-99-998' },
+        { numero_cfei: 'CFEI-99-99-999' },
+      ]);
+    (prisma as any).officialCfei.findMany = vi
+      .fn()
+      .mockImplementation(({ where }) =>
+        Promise.resolve(
+          where.numero_cfei.in.includes('CFEI-45-13-577')
+            ? [{ numero_cfei: 'CFEI-45-13-577', nom: null, prenom: null, departement: '45' }]
+            : []
+        )
+      );
+    (prisma as any).$queryRaw = vi.fn().mockResolvedValue([compteBloque]);
   });
 
   test('renvoie les compteurs de chaque catégorie et la liste des comptes bloqués', async () => {
@@ -42,7 +55,7 @@ describe('GET /inbox', () => {
       ok: true,
       data: {
         en_attente_activation: 2,
-        cfei_introuvable: 1,
+        cfei_introuvable: 2,
         onboarding_incomplet: 3,
         comptes_bloques: [compteBloque],
         entites_non_pretes: 4,
