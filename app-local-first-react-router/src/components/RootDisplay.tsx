@@ -10,6 +10,27 @@ import API from '@app/services/api';
 import { useLocation } from 'react-router';
 import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
 import { disconnect } from '@app/utils/disconnect';
+import { syncData } from '@app/utils/sync-data';
+import { hasUnsyncedData } from '@app/utils/has-unsynced-data';
+import useZustandStore from '@app/zustand/store';
+import { createModal } from '@app/components/Modal';
+import { matomoClickId } from '@app/services/matomo';
+
+// Attente maximale de l'envoi des modifications locales avant une déconnexion manuelle.
+const LOGOUT_SYNC_TIMEOUT_MS = 15_000;
+
+// La déconnexion vide le stockage local : on envoie d'abord ce qui n'est pas synchronisé.
+// Renvoie vrai si plus rien n'attend d'être envoyé.
+async function syncBeforeLogout() {
+  if (!hasUnsyncedData(useZustandStore.getState())) return true;
+  if (useZustandStore.getState().isOnline) {
+    await Promise.race([
+      syncData('logout'),
+      new Promise((resolve) => setTimeout(resolve, LOGOUT_SYNC_TIMEOUT_MS)),
+    ]);
+  }
+  return !hasUnsyncedData(useZustandStore.getState());
+}
 
 const environment = import.meta.env.VITE_ENV || 'development';
 
@@ -33,6 +54,16 @@ export default function RootDisplay({
   const user = useMostFreshUser('RootDisplay ' + id);
   const isOnline = useIsOnline();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const unsyncedLogoutModal = useRef(
+    createModal({ id: `deconnexion-donnees-non-envoyees-${id}`, isOpenedByDefault: false })
+  ).current;
+
+  async function logout() {
+    setIsLoggingOut(true);
+    await API.post({ path: '/user/logout' });
+    await disconnect({ reason: 'logout' });
+    setIsLoggingOut(false);
+  }
 
   const RenderedSearchInput = useRef(SearchInput).current;
 
@@ -49,10 +80,15 @@ export default function RootDisplay({
       iconId: 'ri-logout-box-line',
       buttonProps: {
         onClick: async () => {
+          if (isLoggingOut) return;
           setIsLoggingOut(true);
-          await API.post({ path: '/user/logout' });
-          await disconnect({ reason: 'logout' });
-          setIsLoggingOut(false);
+          const allSent = await syncBeforeLogout();
+          if (!allSent) {
+            setIsLoggingOut(false);
+            unsyncedLogoutModal.open();
+            return;
+          }
+          await logout();
         },
       },
       text: isLoggingOut ? 'Déconnexion en cours...' : 'Déconnexion',
@@ -142,6 +178,34 @@ export default function RootDisplay({
         serviceTagline="Garantir des viandes de gibier sauvage saines et sûres"
         serviceTitle={<>Zacharie</>}
       />
+      {user && (
+        <unsyncedLogoutModal.Component
+          title="Des modifications ne sont pas encore envoyées"
+          buttons={[
+            {
+              children: 'Annuler',
+              priority: 'secondary',
+              doClosesModal: true,
+              nativeButtonProps: matomoClickId('deconnexion-annuler-donnees-non-envoyees'),
+            },
+            {
+              children: 'Se déconnecter quand même',
+              doClosesModal: true,
+              onClick: logout,
+              nativeButtonProps: matomoClickId('deconnexion-forcer-donnees-non-envoyees'),
+            },
+          ]}
+        >
+          <p>
+            Des modifications ne sont pas encore envoyées au serveur (pas de connexion internet ou envoi en
+            échec). Si vous vous déconnectez maintenant, elles seront perdues.
+          </p>
+          <p>
+            Cliquez sur « Annuler », puis reconnectez-vous à internet : les modifications seront envoyées
+            automatiquement. Vous pourrez ensuite vous déconnecter.
+          </p>
+        </unsyncedLogoutModal.Component>
+      )}
       {children}
       <Footer
         accessibility="partially compliant"
