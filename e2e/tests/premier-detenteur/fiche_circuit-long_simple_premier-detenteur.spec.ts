@@ -53,7 +53,7 @@ test('Pas de stockage - Transporter les carcasses soi-même', async ({ page }) =
   await page.getByRole('button', { name: 'Pigeons (10) N° MM-001-003 Mise à' }).click();
   await page.getByLabel('Pigeons - N° MM-001-').getByTitle('Fermer').click();
 
-  await expect(page.getByText('Validation par le premier détenteur')).toBeVisible();
+  await expect(page.getByText('Choix des destinataires')).toBeVisible();
   await openVenteDon(page);
   await selectDestinataire(page, 'ETG 1 - 75000 Paris');
   await allerAEtape(page, 'Stockage');

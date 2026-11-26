@@ -526,7 +526,7 @@ describe('computeTransmissions — chasseur fresh FEI (no carcasses yet)', () =>
     const tr = t[buildTransmissionId('FEI-FRESH')];
     expect(tr).toBeDefined();
     expect(tr.labels.simpleStatus).toBe('À compléter');
-    expect(tr.labels.currentStepLabel).toBe('Traitement des carcasses');
+    expect(tr.labels.currentStepLabel).toBe('Examen initial');
     expect(tr.carcasses).toEqual([]);
   });
 

@@ -82,19 +82,14 @@ export function getCurrentStepLabelForChasseur(
 ): TransmissionStepForChasseur {
   if (simpleStatus === 'Clôturée') return 'Carcasses traitées';
   if (transmission.current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL) {
-    if (!transmission.next_owner_role) {
-      return 'Information manquante';
+    if (!transmission.examinateur_initial_date_approbation_mise_sur_le_marche) {
+      return 'Examen initial';
     }
-    return 'Validation par le premier détenteur';
+    return 'Choix des destinataires';
   }
-  if (transmission.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) {
-    if (!transmission.next_owner_role) {
-      return 'Validation par le premier détenteur';
-    }
-    return 'Fiche envoyée, pas encore prise en charge';
-  }
-  if (transmission.current_owner_role === FeiOwnerRole.COLLECTEUR_PRO) {
-    return 'Prise en charge par le transporteur';
+  // le premier détenteur n'a pas encore transmis la fiche
+  if (transmission.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR && !transmission.next_owner_role) {
+    return 'Choix des destinataires';
   }
   return 'Traitement des carcasses';
 }
@@ -173,15 +168,15 @@ export function getNextStepLabel(currentStepLabel: TransmissionStep): Transmissi
     case 'Transport':
     case 'Transport vers un autre établissement de traitement':
       return 'Réception par un établissement de traitement';
-    case 'Information manquante':
-      return 'Validation par le premier détenteur';
+    case 'Examen initial':
+      return 'Choix des destinataires';
+    case 'Choix des destinataires':
     case 'Fiche envoyée, pas encore prise en charge':
     case 'Prise en charge par un autre atelier':
     case 'Fiche reçue, pas encore prise en charge':
     case 'Prise en charge par le transporteur':
     case "En attente de prise en charge par l'atelier":
     case "Prise en charge par l'atelier":
-    case 'Validation par le premier détenteur':
       return 'Traitement des carcasses';
     case 'Inspection vétérinaire terminée':
     case 'Carcasses traitées':
@@ -202,7 +197,7 @@ export function IconStep({
   simpleStatus: TransmissionSimpleStatus;
 }): ReactElement {
   if (simpleStatus === 'Clôturée') return createElement(RiCheckboxCircleLine);
-  if (displayLabel === 'Information manquante') return createElement(RiEdit2Line);
+  if (displayLabel === 'Examen initial') return createElement(RiEdit2Line);
   if (/transport/i.test(displayLabel)) return createElement(RiTruckLine);
   if (/atelier/i.test(displayLabel)) return createElement(RiDoorOpenLine);
   return createElement(RiHourglassFill);
