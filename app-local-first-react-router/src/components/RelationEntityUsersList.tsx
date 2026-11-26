@@ -11,6 +11,9 @@ interface RelationEntityUserProps {
   entity: EntityWithUserRelations;
   refreshKey?: number;
   user: User;
+  relationType?: EntityRelationType;
+  // CCG : l'admin voit les utilisateurs, seule l'équipe Zacharie modifie les rattachements
+  readOnly?: boolean;
   onChange?: () => void;
 }
 
@@ -18,6 +21,8 @@ export default function RelationEntityUsersList({
   entity,
   refreshKey,
   user,
+  relationType = EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+  readOnly = false,
   onChange,
 }: RelationEntityUserProps) {
   const [searchParams] = useSearchParams();
@@ -35,15 +40,10 @@ export default function RelationEntityUsersList({
   //     relation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
   // );
   const canHandleCarcassesForEntity = entity.EntityRelationsWithUsers?.find(
-    (relation) =>
-      relation.owner_id === user.id &&
-      relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
+    (relation) => relation.owner_id === user.id && relation.relation === relationType
   );
 
-  const isAdminOfEntity = !canHandleCarcassesForEntity
-    ? false
-    : canHandleCarcassesForEntity.status === EntityRelationStatus.ADMIN &&
-      canHandleCarcassesForEntity.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY;
+  const isAdminOfEntity = canHandleCarcassesForEntity?.status === EntityRelationStatus.ADMIN;
 
   useEffect(() => {
     if (
@@ -66,7 +66,7 @@ export default function RelationEntityUsersList({
         const userB = `${b.UserRelatedWithEntity.prenom} ${b.UserRelatedWithEntity.nom_de_famille}`;
         return userA.localeCompare(userB);
       }).map((otherUserRelation) => {
-        if (otherUserRelation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY) {
+        if (otherUserRelation.relation !== relationType) {
           return null;
         }
         return (
@@ -80,8 +80,8 @@ export default function RelationEntityUsersList({
             displayUser={true}
             onChange={onChange}
             refreshKey={refreshKey}
-            canApproveRelation={isAdminOfEntity}
-            canDelete={isAdminOfEntity}
+            canApproveRelation={isAdminOfEntity && !readOnly}
+            canDelete={isAdminOfEntity && !readOnly}
           />
         );
       })}

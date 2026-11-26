@@ -6,11 +6,13 @@ import RootDisplay from '@app/components/RootDisplay';
 import BottomNavigation from '@app/components/BottomNavigation';
 import Chargement from '@app/components/Chargement';
 import useZustandStore from '@app/zustand/store';
-import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
+import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
+import { loadData } from '@app/utils/load-data';
 
 export default function FederationLayout() {
   const user = useMostFreshUser('FederationLayout');
   const _hasHydrated = useZustandStore((state) => state._hasHydrated);
+  const ccgEntityIds = useZustandStore((state) => state.ccgEntityIds);
   const location = useLocation();
   const navigation: MainNavigationProps.Item[] = [
     {
@@ -18,6 +20,16 @@ export default function FederationLayout() {
       isActive: location.pathname.startsWith('/app/federation/tableau-de-bord'),
       linkProps: { to: '/app/federation/tableau-de-bord', href: '#' },
     },
+    // fiches déposées dans les CCG dont l'utilisateur est propriétaire
+    ...(ccgEntityIds.length
+      ? [
+          {
+            text: 'Mes fiches',
+            isActive: location.pathname.startsWith('/app/federation/fiches'),
+            linkProps: { to: '/app/federation/fiches', href: '#' },
+          },
+        ]
+      : []),
     {
       text: 'Paramètres',
       isActive: location.pathname.startsWith('/app/federation/profil'),
@@ -26,6 +38,11 @@ export default function FederationLayout() {
           text: 'Fédération',
           isActive: location.pathname === '/app/federation/profil/ma-federation',
           linkProps: { to: '/app/federation/profil/ma-federation', href: '#' },
+        },
+        {
+          text: 'Chambres froides',
+          isActive: location.pathname.startsWith('/app/federation/profil/ccgs'),
+          linkProps: { to: '/app/federation/profil/ccgs', href: '#' },
         },
         {
           text: 'Coordonnées',
@@ -47,7 +64,8 @@ export default function FederationLayout() {
   ];
 
   useEffect(() => {
-    refreshUser('FederationLayout');
+    // charge aussi les fiches des CCG dont l'utilisateur est propriétaire
+    loadData('FederationLayout');
   }, []);
 
   if (!user) {

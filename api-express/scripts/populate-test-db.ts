@@ -1214,6 +1214,61 @@ Christine
       });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (ETG taken charge)`);
     }
+    // Propriétaires du « CCG Chasseurs » : fnc@example.fr (rôle FEDERATION) et fdc@example.fr (chasseur).
+    // Une fiche y a été déposée par le premier détenteur puis sortie par l'ETG 1, qui a refusé MM-001-002 ;
+    // le SVI a saisi MM-001-001. Les deux voient la fiche, sans le refus ni la saisie.
+    if ((role as string) === 'FEDERATION_CCG') {
+      await prisma.entityAndUserRelations.createMany({
+        data: ['fnc@example.fr', 'fdc@example.fr'].map((email) => ({
+          owner_id: users.find((u) => u.email === email)?.id ?? '',
+          entity_id: '4f67364a-8373-49f9-a4f6-31a0d88ba27b',
+          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+          status: EntityRelationStatus.ADMIN,
+        })),
+      });
+      // fiche de la saison en cours : la liste des fiches du chasseur n'affiche que celle-ci par défaut
+      const today = dayjs().startOf('day').toDate();
+      const fei = await prisma.fei.create({
+        data: {
+          ...feiTakenChargeByEtgAndAssignedToSvi,
+          numero: 'ZACH-20250707-QZ6E0-245242',
+          date_mise_a_mort: today,
+        },
+      });
+      const devenir: Record<string, Partial<Prisma.CarcasseUncheckedCreateInput>> = {
+        'MM-001-001': {
+          svi_carcasse_status: CarcasseStatus.SAISIE_TOTALE,
+          svi_ipm2_lesions_ou_motifs: ['Tuberculose'],
+        },
+        'MM-001-002': {
+          svi_carcasse_status: CarcasseStatus.REFUS_ETG_COLLECTEUR,
+          intermediaire_carcasse_refus_motif: 'Carcasse avariée',
+        },
+      };
+      const carcasses = await prisma.carcasse.createMany({
+        data: getCarcasses(fei, ownershipTakenChargeByEtgAndAssignedToSvi).map((c) => ({
+          ...c,
+          date_mise_a_mort: today,
+          ...devenir[c.numero_bracelet],
+        })),
+      });
+      const etg1UserId = users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '';
+      await prisma.carcasseIntermediaire.createMany({
+        data: getCarcasses(fei).map((c) => ({
+          fei_numero: fei.numero,
+          numero_bracelet: c.numero_bracelet,
+          zacharie_carcasse_id: c.zacharie_carcasse_id!,
+          intermediaire_id: `${fei.numero}_2a8bc866-a709-47d9-aebe-2768fceb2ecb_${etg1UserId}`,
+          intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+          intermediaire_user_id: etg1UserId,
+          intermediaire_role: FeiOwnerRole.ETG,
+          prise_en_charge: c.numero_bracelet !== 'MM-001-002',
+          refus: c.numero_bracelet === 'MM-001-002' ? 'Carcasse avariée' : null,
+          prise_en_charge_at: '2025-07-08T09:30:00.000Z',
+        })),
+      });
+      console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (déposées au CCG de la FDC)`);
+    }
     // Tableau de bord ETG 1 : une fiche du jour (saison en cours), 3 daims + 1 lot de 10 pigeons.
     //   - MM-001-001 : acceptée, saisie totale pour balle d'abdomen (motif BPH et disqualifiant)
     //   - MM-001-002 : refusée par l'ETG

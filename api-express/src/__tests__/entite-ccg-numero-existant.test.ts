@@ -78,6 +78,7 @@ describe('POST /entite/ccg avec un numéro déjà enregistré', () => {
       data: {
         owner_id: 'user-1',
         relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        status: EntityRelationStatus.MEMBER,
         entity_id: 'ccg-existant',
       },
     });
@@ -115,7 +116,7 @@ describe('POST /entite/ccg avec un numéro déjà enregistré', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.createdEntity.id).toBe('nouveau-ccg');
     expect(prisma.entityAndUserRelations.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ status: EntityRelationStatus.ADMIN, entity_id: 'nouveau-ccg' }),
+      data: expect.objectContaining({ status: EntityRelationStatus.MEMBER, entity_id: 'nouveau-ccg' }),
     });
     expect(sendEmail).toHaveBeenCalled();
   });

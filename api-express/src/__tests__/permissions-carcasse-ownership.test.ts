@@ -92,10 +92,11 @@ beforeEach(() => {
   vi.mocked(prisma.fei.findMany).mockResolvedValue([]);
   (prisma.carcasseIntermediaire as any).findMany.mockResolvedValue([]);
   (prisma.carcasse as any).count.mockResolvedValue(0);
-  vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValue([
-    { entity_id: 'entity-1' } as any,
-    { entity_id: 'entity-2' } as any,
-  ]);
+  // aucun CCG dont l'utilisateur est propriétaire
+  vi.mocked(prisma.entityAndUserRelations.findMany).mockImplementation((async (args: any) =>
+    args?.where?.relation === 'CAN_TRANSMIT_CARCASSES_TO_ENTITY'
+      ? []
+      : [{ entity_id: 'entity-1' }, { entity_id: 'entity-2' }]) as any);
 });
 
 describe('Auth / activation / query validation', () => {

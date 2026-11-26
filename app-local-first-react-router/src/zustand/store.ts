@@ -50,6 +50,8 @@ const PERSISTED_KEYS: (keyof State)[] = [
   'carcassesReloadVersion',
   'logs',
   'feiIdsRenvoiToHide',
+  'ccgEntityIds',
+  'ccgCarcasseIds',
 ];
 
 // Tranches qui sont des maps par id : stockées enregistrement par enregistrement, pour qu'une
@@ -89,6 +91,9 @@ export interface State {
   // loadCarcasses les redescend et retire la fiche de cette liste.
   feiIdsRenvoiToHide: Array<Fei['numero']>;
   logs: Array<Log>;
+  ccgEntityIds: Array<string>;
+  // carcasses des CCG, hors du périmètre du rôle : servies sans statut, jamais modifiables
+  ccgCarcasseIds: Array<Carcasse['zacharie_carcasse_id']>;
   // Items que le serveur a refusé d'écrire lors d'une synchro de cette session, avec le `updated_at`
   // (en ms) de la version refusée. Cette version n'est plus renvoyée ; une nouvelle modification
   // locale de l'item l'est (voir sync-data.ts).
@@ -170,6 +175,8 @@ function initialState(): State {
     carcasses: {},
     carcassesIntermediaireById: {},
     modifRequestsByCarcasseId: {},
+    ccgEntityIds: [],
+    ccgCarcasseIds: [],
     syncRejections: [],
     _hasHydrated: false,
   };

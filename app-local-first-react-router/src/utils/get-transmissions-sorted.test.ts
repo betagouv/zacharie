@@ -657,6 +657,7 @@ describe('getTransmissionsShared', () => {
       feis: { 'FEI-1': fei() },
       user: admin,
       entities: noEntities,
+      ccgCarcasseIds: [] as Array<string>,
     };
   }
 
@@ -680,10 +681,25 @@ describe('getTransmissionsShared', () => {
     ['feis', { 'FEI-1': fei() }],
     ['user', svi],
     ['entities', {}],
+    ['ccgCarcasseIds', []],
   ] as const)('recalcule quand %s change de référence', (key, value) => {
     const shared = inputs();
     const first = getTransmissionsShared(shared);
     expect(getTransmissionsShared({ ...shared, [key]: value })).not.toBe(first);
+  });
+});
+
+describe('computeTransmissions — fiches de CCG', () => {
+  it('une carcasse lue comme propriétaire du CCG a le statut « Dépôt en chambre froide »', () => {
+    const result = computeTransmissions({
+      carcasses: { C1: carcasse({ zacharie_carcasse_id: 'C1' }) },
+      carcassesIntermediaireById: {},
+      feis: { 'FEI-1': fei() },
+      user: admin,
+      entitiesWorkingDirectlyFor: noEntities,
+      ccgCarcasseIds: new Set(['C1']),
+    });
+    expect(result[TID].labels.simpleStatus).toBe('Dépôt en chambre froide');
   });
 });
 

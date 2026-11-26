@@ -117,6 +117,9 @@ export default function AdminLayout() {
   if (user.roles.includes(UserRoles.LABORATOIRE)) {
     mainLink = '/app/laboratoire';
   }
+  if (user.roles.includes(UserRoles.FEDERATION)) {
+    mainLink = '/app/federation/tableau-de-bord';
+  }
 
   return (
     <RootDisplay

@@ -81,6 +81,11 @@ async function checkIfUserIsAdmin(body: z.infer<typeof userEntitySchema>, user: 
   if (!body.owner_id) {
     return false;
   }
+  // propriétaire d'un CCG : il voit les utilisateurs et les fiches du CCG, mais seule l'équipe Zacharie
+  // gère les rattachements et les statuts (routes /admin/user-entity)
+  if (entity.type === EntityTypes.CCG) {
+    return false;
+  }
 
   const isCurrentUserAdminOfEntity = await prisma.entityAndUserRelations.findFirst({
     where: {
@@ -256,6 +261,9 @@ router.post(
         });
         if (!entityHasUsers) nextEntityRelation.status = EntityRelationStatus.ADMIN;
       }
+
+      // rejoindre un CCG permet seulement d'y déposer ses carcasses
+      if (entity.type === EntityTypes.CCG) nextEntityRelation.status = EntityRelationStatus.MEMBER;
 
       const relation = await prisma.entityAndUserRelations.create({
         data: nextEntityRelation,
@@ -490,7 +498,11 @@ router.delete(
       });
 
       if (existingEntityRelation) {
-        const lastAdminSituation = await getLastAdminSituation(existingEntityRelation);
+        // CCG : les admins sont nommés par l'équipe Zacharie, chacun peut quitter le CCG
+        const lastAdminSituation =
+          entity.type === EntityTypes.CCG
+            ? 'NOT_LAST_ADMIN'
+            : await getLastAdminSituation(existingEntityRelation);
         if (lastAdminSituation === 'LAST_ADMIN_WITH_OTHER_USERS') {
           res.status(409).send({
             ok: false,

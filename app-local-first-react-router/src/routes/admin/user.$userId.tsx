@@ -390,7 +390,7 @@ export default function AdminUser() {
     });
   }
 
-  if (user.roles.includes(UserRoles.CHASSEUR)) {
+  if (user.roles.includes(UserRoles.CHASSEUR) || user.roles.includes(UserRoles.FEDERATION)) {
     tabs.push({
       tabId: 'CCGs',
       label: `CCGs (${userEntitiesRelations.filter((rel) => rel.type === EntityTypes.CCG).length})`,
@@ -1277,6 +1277,10 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
           if (entity.type === EntityTypes.SVI) {
             entities.push(entity);
           }
+        } else if (user.roles.includes(UserRoles.FEDERATION)) {
+          if (entity.type === EntityTypes.CCG) {
+            entities.push(entity);
+          }
         }
       } else if (relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
         if (user.roles.includes(UserRoles.CHASSEUR)) {
@@ -1300,6 +1304,21 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
     }
     return entities;
   }, [allEntities, userEntitiesRelations, forCCG, forFederation, relationType, user.roles]);
+
+  // CCG : plusieurs milliers, on n'affiche que ceux qui correspondent à la recherche
+  const [ccgSearch, setCcgSearch] = useState('');
+  const shownEntities = useMemo(() => {
+    if (!forCCG) return potentialEntities;
+    const query = ccgSearch.trim().toLowerCase();
+    if (query.length < 2) return [];
+    return potentialEntities
+      .filter((entity) =>
+        [entity.nom_d_usage, entity.numero_ddecpp, entity.siret, entity.code_postal, entity.ville].some(
+          (value) => value?.toLowerCase().includes(query)
+        )
+      )
+      .slice(0, 20);
+  }, [forCCG, ccgSearch, potentialEntities]);
 
   return (
     <>
@@ -1352,7 +1371,9 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
                 user={user}
                 displayEntity
                 entityLink={`/app/admin/entity/${entity.id}`}
-                canApproveRelation={relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
+                canApproveRelation={
+                  relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY || forCCG
+                }
                 canDelete={!isSviLinkedToEtg}
                 userEntityPath="admin/user-entity"
                 onChange={() => {
@@ -1380,13 +1401,25 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
             utilisateur n'a que le rôle ETG mais peut cocher la case "Gérer le transport dans l'ETG"
           </Highlight>
         )}
-      {!!potentialEntities.length && (
+      {forCCG && (
+        <div className="p-4 md:p-8 md:pb-0">
+          <Input
+            label="Ajouter un CCG"
+            hintText="Nom, numéro, SIRET, code postal ou ville (2 caractères minimum)"
+            nativeInputProps={{
+              value: ccgSearch,
+              onChange: (event) => setCcgSearch(event.target.value),
+            }}
+          />
+        </div>
+      )}
+      {!!shownEntities.length && (
         <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline has-[a]:[&_td]:p-0!">
           <Table
             fixed
             noCaption
             className="[&_td]:align-middle"
-            data={potentialEntities.map((entity) => [
+            data={shownEntities.map((entity) => [
               <form
                 key={entity.id}
                 id={id}
