@@ -125,7 +125,7 @@ The message must answer **"what changes for the user?"**, not "what did I change
 - **Title**: same format as commits.
 - **Description** (in French): a short text of what changes for the user (one bullet per correction if several), then **always** a `## Comment tester` section. Write it so a non-dev can reproduce the fix/feat by hand. Reference: PR #776.
   - One `###` sub-section per correction.
-  - First line: `- Compte : \`<seed email>\` / \`secret-secret\`` (seed from @e2e/CLAUDE.md), then the starting state (seed fiche number if any).
+  - First lines, in plain words for a non-dev: `- Compte : <rôle>` (e.g. `SVI`, `ETG`, `Premier détenteur`), then `- Fiche : <état de départ>` (e.g. `clôturée par le SVI`, `prise en charge par l'ETG`). No seed email, no password, no fiche number, no seed name.
   - Then one bullet per concrete UI step, with the exact labels in « ».
   - End with two bullets: `- **Avant** (main) : <what goes wrong>` and `- **Après** (cette branche) : <what happens now>`. The Avant/Après pair is mandatory: it is how the reviewer checks the fix.
   - Last line(s): `Tests e2e :` + the spec path(s).
